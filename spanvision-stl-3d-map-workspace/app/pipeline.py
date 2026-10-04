@@ -60,7 +60,7 @@ def _area_key(bbox_rd: Bbox) -> str:
     return "|".join(f"{v:.1f}" for v in bbox_rd)
 
 
-def load_area(project: Project, *, refresh: bool = False) -> AreaData:
+def load_area(project: Project, *, refresh: bool = False, allow_partial: bool = False) -> AreaData:
     if not project.bbox_wgs84:
         raise ValueError("Select an area on the map first.")
 
@@ -75,7 +75,9 @@ def load_area(project: Project, *, refresh: bool = False) -> AreaData:
 
     key = _area_key(bbox_rd)
     if not refresh and key in _area_cache:
-        return _area_cache[key]
+        cached = _area_cache[key]
+        if cached.surfaces_error is None or allow_partial:
+            return cached
 
     log.info("fetching area %s (%.2f km2)", key, area_km2)
     buildings = fetch_buildings(bbox_rd, refresh=refresh)
@@ -94,9 +96,9 @@ def load_area(project: Project, *, refresh: bool = False) -> AreaData:
     area = AreaData(bbox_rd=bbox_rd, buildings=buildings, surfaces=surfaces,
                     surfaces_error=surfaces_error)
 
-    # Only cache a complete result, so "Load map data" retries the surfaces.
-    if surfaces_error is None:
-        _area_cache[key] = area
+    # Loading the map retries unavailable surfaces. Cloud export can reuse the
+    # data already shown to the user instead of repeating the same failed calls.
+    _area_cache[key] = area
     return area
 
 

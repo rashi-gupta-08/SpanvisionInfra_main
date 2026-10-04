@@ -216,7 +216,7 @@ def api_build(req: ProjectRequest) -> dict:
         set_export_dir(target_root)
 
     try:
-        area = load_area(project)
+        area = load_area(project, allow_partial=CLOUD)
         design = _design_for(project)
         detailed = None
         if project.settings.detailed_buildings and project.settings.include_buildings:

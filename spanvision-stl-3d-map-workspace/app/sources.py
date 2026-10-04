@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -44,7 +45,8 @@ OVERPASS_ENDPOINTS = [
     "https://overpass.private.coffee/api/interpreter",
     "https://overpass.osm.jp/api/interpreter",
 ]
-OVERPASS_TIMEOUT = 60  # seconds per endpoint; a healthy mirror answers in a few
+OVERPASS_TIMEOUT = 15 if os.environ.get('SPANVISION_CLOUD') == '1' else 60
+OVERPASS_REQUEST_TIMEOUT = (3, OVERPASS_TIMEOUT) if os.environ.get('SPANVISION_CLOUD') == '1' else OVERPASS_TIMEOUT
 
 _to_rd = Transformer.from_crs(CRS_WGS84, CRS_RD, always_xy=True)
 
@@ -462,7 +464,7 @@ def _overpass(query: str, *, refresh: bool = False) -> dict:
         for url in OVERPASS_ENDPOINTS:
             try:
                 r = requests.post(url, data={"data": query},
-                                  timeout=OVERPASS_TIMEOUT,
+                                  timeout=OVERPASS_REQUEST_TIMEOUT,
                                   headers={"User-Agent": USER_AGENT})
                 r.raise_for_status()
                 return r.json()

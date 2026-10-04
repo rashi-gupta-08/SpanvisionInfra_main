@@ -1,0 +1,33 @@
+{
+  "title": "Settings",
+  "resetToDefaults": "Reset to Defaults",
+  "resetConfirm": "Are you sure you want to reset all settings to their default values?",
+  "tabs": {
+    "general": "General",
+    "appearance": "Appearance",
+    "extensions": "Extensions",
+    "about": "About"
+  },
+  "general": {
+    "application": "Application",
+    "language": "Language"
+  },
+  "appearance": {
+    "theme": "Theme",
+    "light": "Light",
+    "forge": "Forge (dark)",
+    "dark": "Night (dark)",
+    "blueprint": "Blueprint",
+    "contrast": "High contrast",
+    "mono": "Spanvision Mono"
+  },
+  "about": {
+    "appName": "Spanvision Infra · Geotechnical",
+    "version": "Version",
+    "license": "License",
+    "description": "Geotechnical workspace for CPT data, boreholes, site drawings and reports.",
+    "openaecLink": "Spanvision Infra",
+    "builtOn": "Spanvision workspace",
+    "sourceLink": "Source code"
+  }
+}

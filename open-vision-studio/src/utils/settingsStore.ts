@@ -1,0 +1,658 @@
+import type {
+  WeekStartDay,
+  UITheme,
+  ScrollMode,
+  PositionDivision,
+  ModifierMap,
+  DocumentChromeStyle,
+  Layout,
+  DateNotation,
+  DurationDisplay,
+  BarSplitMode,
+  FilterNode,
+  SavedFilter,
+  UIFontFamily,
+} from '@/state/slices/types';
+import type { PersistedTaskGridPreferencesV1 } from '@/types/taskGrid';
+import type { LayoutOverlays } from '@/types/view';
+import { migrateSavedFilters } from '@/engine/view/layoutPresets';
+import {
+  legacyLayoutColumnsToTaskGridPreferences,
+  normalizePersistedTaskGridPreferences,
+  normalizeTaskGridColumnPreferences,
+} from '@/engine/taskGrid/preferences';
+
+/**
+ * Alle localStorage-toegang van de instellingenlaag loopt hierlangs (audit 2026-09-26). Is opslag
+ * geblokkeerd (privémodus, beleid: `SecurityError` bij élke toegang) of vol (`QuotaExceededError`),
+ * dan liet één kale `getItem`/`setItem` de hele `loadAllSettings()` verwerpen — alle instellingen
+ * vielen dan terug op de standaard — of werd een opslagactie een onafgehandelde rejection. Lezen
+ * geeft dan `null` (= "niet ingesteld"), schrijven waarschuwt één keer en gaat door.
+ */
+export function readLocal(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+let warnedSettingsWrite = false;
+export function writeLocal(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    if (!warnedSettingsWrite) {
+      warnedSettingsWrite = true;
+      console.warn('Instelling kon niet worden bewaard (opslag geblokkeerd of vol):', key, error);
+    }
+  }
+}
+
+export function removeLocal(key: string): void {
+  try { localStorage.removeItem(key); } catch { /* opslag geblokkeerd: niets te verwijderen */ }
+}
+
+export async function getSetting<T>(key: string): Promise<T | undefined> {
+  const raw = readLocal(`ops-${key}`);
+  if (raw === null) return undefined;
+  try { return JSON.parse(raw) as T; } catch { return raw as unknown as T; }
+}
+
+export async function setSetting<T>(key: string, value: T): Promise<void> {
+  writeLocal(`ops-${key}`, typeof value === 'string' ? value : JSON.stringify(value));
+}
+
+export async function syncSettingToLocalStorage(storeKey: string, localStorageKey: string): Promise<void> {
+  const value = readLocal(`ops-${storeKey}`);
+  if (value) {
+    writeLocal(localStorageKey, value);
+  }
+}
+
+export async function saveLocale(code: string): Promise<void> {
+  writeLocal('ops-locale', code);
+}
+
+export async function saveTheme(theme: UITheme): Promise<void> {
+  writeLocal('ops-theme', theme);
+}
+
+// Migration map: 7 oude thema's → 3 nieuwe, plus de
+// 'system'-voorkeur (volg het OS-kleurschema) die geen migratie nodig heeft maar wél in deze map
+// moet staan — een onbekende sleutel valt hieronder terug op 'dark'.
+// 'default' wordt de canonical 'dark'
+// 'light' blijft 'light'
+// 'highContrast' wordt 'high-contrast' (consistente naamgeving)
+// Alle andere oude thema's vallen terug op 'dark'
+//
+// Geëxporteerd (bewust klein oppervlak) zodat `tests/planning/check-theme-premirror.ts` deze map
+// woord-voor-woord kan vergelijken met de handkopie in `index.html` — zonder deze export zou die
+// poort niet kunnen bewijzen dat de twee elkaar niet zijn ontgroeid.
+export const THEME_MIGRATION: Record<string, UITheme> = {
+  'default': 'dark',
+  'light': 'light',
+  'dark': 'dark',
+  'blue': 'dark',
+  'amber-navy': 'dark',
+  'warm-ember': 'dark',
+  'highContrast': 'high-contrast',
+  'high-contrast': 'high-contrast',
+  'system': 'system',
+  'spanvision-mono': 'spanvision-mono',
+};
+
+export async function initTheme(): Promise<UITheme> {
+  const saved = readLocal('ops-theme');
+  if (!saved) return 'spanvision-mono';
+
+  const migrated = THEME_MIGRATION[saved] ?? 'spanvision-mono';
+  if (migrated !== saved) {
+    // Persisteer de migratie zodat dit een eenmalige conversie is
+    writeLocal('ops-theme', migrated);
+  }
+  return migrated;
+}
+
+/** Synchrone tegenhanger van `initTheme` voor de stóre-default: leest en migreert de
+ *  opgeslagen themavoorkeur zonder te persisteren. Zo start `ui.uiTheme` met hetzelfde thema als
+ *  het pre-paint-script in index.html en kan het `data-theme`-effect in App.tsx bij de eerste
+ *  commit nooit een verkeerde default terugzetten (een themaflits). Headless (Node,
+ *  geen localStorage) valt dit terug op 'spanvision-mono'; `initTheme` blijft de persisterende bron. */
+export function peekTheme(): UITheme {
+  try {
+    const saved = readLocal('ops-theme');
+    if (!saved) return 'spanvision-mono';
+    return THEME_MIGRATION[saved] ?? 'spanvision-mono';
+  } catch {
+    return 'spanvision-mono';
+  }
+}
+
+export interface PersistedZoomSettings {
+  enableQuarterHourZoom: boolean;
+  weekStartDay: WeekStartDay;
+  scrollMode: ScrollMode;
+  positionDivision: PositionDivision;
+  modifierMap: ModifierMap;
+}
+
+// De LOAD-kant van de zoom-instellingen (`loadZoomSettings`) + de `isValidModifierMap`-validator
+// staan in het settings-register (`src/utils/settingsRegistry.ts`). De SAVE-kant is hier een dunne
+// wrapper voor de UI-callsites.
+export async function saveZoomSettings(settings: Partial<PersistedZoomSettings>): Promise<void> {
+  if (settings.enableQuarterHourZoom !== undefined) await setSetting('enableQuarterHourZoom', settings.enableQuarterHourZoom);
+  if (settings.weekStartDay !== undefined) await setSetting('weekStartDay', settings.weekStartDay);
+  if (settings.scrollMode !== undefined) await setSetting('scrollMode', settings.scrollMode);
+  if (settings.positionDivision !== undefined) await setSetting('positionDivision', settings.positionDivision);
+  if (settings.modifierMap !== undefined) await setSetting('modifierMap', settings.modifierMap);
+}
+
+export async function saveDebugTerminalEnabled(value: boolean): Promise<void> {
+  await setSetting('debugTerminalEnabled', value);
+}
+
+// Breedte van de takentabel links in de Gantt (ui.leftPanelWidth); begrensd
+// zodat een corrupte localStorage-waarde de chart niet onbruikbaar maakt.
+export const TASK_TABLE_MIN_WIDTH = 150;
+export const TASK_TABLE_MAX_WIDTH = 800;
+
+export async function saveLeftPanelWidth(value: number): Promise<void> {
+  await setSetting('leftPanelWidth', Math.round(value));
+}
+
+// Breedte van het rechterpaneel (eigenschappen / gedockte resourcelijst, ui.rightPanelWidth).
+// Zelfde patroon als leftPanelWidth hierboven. De boven-klem is bewust ruim en statisch (i.p.v.
+// "60% van het venster", wat pas bij het slepen zelf bekend is) — dat voorkomt alleen dat een
+// corrupte localStorage-waarde de layout onbruikbaar maakt; de live drag-klem in App.tsx gebruikt
+// wel de venstergrootte.
+export const RIGHT_PANEL_MIN_WIDTH = 200;
+export const RIGHT_PANEL_MAX_WIDTH = 900;
+
+export async function saveRightPanelWidth(value: number): Promise<void> {
+  await setSetting('rightPanelWidth', Math.round(value));
+}
+
+// Hoogte van de Eigenschappen-sectie in de rail-accordeon (ui.railPropertiesHeight)
+// wanneer BEIDE secties openstaan. Zelfde categorie als histogramHeight hieronder: view-state, geen
+// instelling — persist via de ops-prefix, buiten de 3-plekken-regel. De boven-klem is bewust ruim en
+// statisch (een corrupte localStorage-waarde mag de rail niet onbruikbaar maken); de live klem
+// tijdens het slepen rekent met de werkelijke railhoogte, die pas op dat moment bekend is.
+export const RAIL_SECTION_MIN_HEIGHT = 120;
+export const RAIL_SECTION_MAX_HEIGHT = 2000;
+
+export async function saveRailPropertiesHeight(value: number): Promise<void> {
+  await setSetting('railPropertiesHeight', Math.round(value));
+}
+
+// Hoogte van het Waarschuwingenpaneel onderin de rail (ui.railWarningsHeight) — zelfde
+// categorie en klemmen als de Eigenschappen-sectie hierboven.
+export async function saveRailWarningsHeight(value: number): Promise<void> {
+  await setSetting('railWarningsHeight', Math.round(value));
+}
+
+export async function saveRibbonCompact(value: boolean): Promise<void> {
+  await setSetting('ribbonCompact', value);
+}
+
+// Histogramstrook: zichtbaarheid + hoogte zijn view-state (net als
+// leftPanelWidth), geen instellingen — persist via dezelfde ops-prefix, geen 3-plekken-regel.
+export async function saveShowHistogram(value: boolean): Promise<void> {
+  await setSetting('showHistogram', value);
+}
+
+export const HISTOGRAM_MIN_HEIGHT = 80;
+export const HISTOGRAM_MAX_HEIGHT = 480;
+
+export async function saveHistogramHeight(value: number): Promise<void> {
+  await setSetting('histogramHeight', Math.round(value));
+}
+
+// Baseline-/voortgang-overlays: view-state zoals showHistogram — geen
+// instellingen, persist via dezelfde ops-prefix, buiten de 3-plekken-regel.
+export async function saveShowBaselineOverlay(value: boolean): Promise<void> {
+  await setSetting('showBaselineOverlay', value);
+}
+
+export async function saveShowProgressLine(value: boolean): Promise<void> {
+  await setSetting('showProgressLine', value);
+}
+
+export async function saveShowStatusDateLine(value: boolean): Promise<void> {
+  await setSetting('showStatusDateLine', value);
+}
+
+/** De groene speling-band in de Gantt aan/uit — view-state, zelfde model als hierboven. */
+export async function saveShowFloatBand(value: boolean): Promise<void> {
+  await setSetting('showFloatBand', value);
+}
+
+export async function saveShowResourceAccent(value: boolean): Promise<void> {
+  await setSetting('showResourceAccent', value);
+}
+
+// Mini-map: app-globale zichtbaarheid, view-state zoals showHistogram —
+// persist via dezelfde ops-prefix (`ops-showMiniMap`), buiten de 3-plekken-regel.
+export async function saveShowMiniMap(value: boolean): Promise<void> {
+  await setSetting('showMiniMap', value);
+}
+
+export async function saveDocumentChromeStyle(value: DocumentChromeStyle): Promise<void> {
+  await setSetting('documentChromeStyle', value);
+}
+
+export type TaskGridPreferencesLoadResult =
+  | { status: 'missing' }
+  | { status: 'invalid' }
+  | { status: 'valid'; value: PersistedTaskGridPreferencesV1 };
+
+/** Eén versieerbare gebruikerssleutel voor beide surfaces en de gedeelde MRU. De status blijft
+ *  expliciet: alleen `missing` mag door bootstrap als eenmalige migratie worden opgeslagen;
+ *  `invalid` blijft rauw staan zodat corrupte data niet stil als geldig wordt overschreven. */
+export async function loadTaskGridPreferences(
+  defaults: PersistedTaskGridPreferencesV1,
+): Promise<TaskGridPreferencesLoadResult> {
+  const raw = readLocal('ops-taskGridPreferences');
+  if (raw === null) return { status: 'missing' };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { status: 'invalid' };
+  }
+  const value = normalizePersistedTaskGridPreferences(parsed, defaults);
+  return value ? { status: 'valid', value } : { status: 'invalid' };
+}
+
+export async function saveTaskGridPreferences(
+  preferences: PersistedTaskGridPreferencesV1,
+): Promise<void> {
+  await setSetting('taskGridPreferences', preferences);
+}
+
+// Layouts: app-globaal in localStorage, géén Tauri-store. Parse-guard: corrupte JSON
+// of een item zonder de juiste shape → weggelaten (nooit een crash op een handmatig geprutste
+// localStorage-waarde). `ops-lastLayoutId` moet naar een BESTAANDE layout wijzen, anders `null` —
+// die check gebeurt hier niet (de aanroeper kent de actuele lijst pas na `loadLayouts()`).
+const TASK_GRID_LAYOUTS_VERSION = 1;
+
+interface PersistedTaskGridLayoutsV1 {
+  version: 1;
+  layouts: Layout[];
+}
+
+interface LegacyColumnConfigLike {
+  field: Record<string, unknown>;
+  visible: boolean;
+  width: number;
+}
+
+/**
+ * Structurele check van het overlay-deel. Bewust zonder `barColorSettings` (dat
+ * importeert deze module): een categorieveld dat in dit project niet bestaat, vangt
+ * `effectiveBarColorSelection` bij het tekenen al op.
+ */
+function isLayoutOverlays(value: unknown): value is LayoutOverlays {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const o = value as Record<string, unknown>;
+  const flags = ['baseline', 'progressLine', 'statusDateLine', 'resourceAccent', 'floatBand'] as const;
+  if (!flags.every(flag => typeof o[flag] === 'boolean')) return false;
+  const colors = o.barColors as Record<string, unknown> | null | undefined;
+  if (!colors || typeof colors !== 'object') return false;
+  if (colors.mode === 'critical' || colors.mode === 'auto') return true;
+  const field = colors.field as Record<string, unknown> | null | undefined;
+  return colors.mode === 'category' && !!field && typeof field === 'object' && typeof field.src === 'string';
+}
+
+function baseLayout(v: unknown): Record<string, unknown> | null {
+  if (!v || typeof v !== 'object') return null;
+  const l = v as Record<string, unknown>;
+  // Elk deel is optioneel (afwezig = "laat met rust"), maar een AANWEZIG deel moet de
+  // juiste vorm hebben — een half kapotte layout wordt weggelaten, niet half toegepast.
+  return (
+    typeof l.id === 'string' &&
+    typeof l.name === 'string' &&
+    (l.group === undefined || Array.isArray(l.group)) &&
+    (l.sort === undefined || Array.isArray(l.sort)) &&
+    (l.filter === undefined || l.filter === null || typeof l.filter === 'object') &&
+    (l.timeScale === undefined || typeof l.timeScale === 'string') &&
+    (l.columns === undefined || Array.isArray(l.columns)) &&
+    (l.showRelations === undefined || typeof l.showRelations === 'boolean') &&
+    (l.overlays === undefined || isLayoutOverlays(l.overlays)) &&
+    (l.icon === undefined || typeof l.icon === 'string')
+  ) ? l : null;
+}
+
+function isLegacyColumnConfig(value: unknown): value is LegacyColumnConfigLike {
+  if (!value || typeof value !== 'object') return false;
+  const column = value as Record<string, unknown>;
+  if (typeof column.visible !== 'boolean'
+    || typeof column.width !== 'number'
+    || !Number.isFinite(column.width)
+    || !column.field
+    || typeof column.field !== 'object') return false;
+  const field = column.field as Record<string, unknown>;
+  return typeof field.src === 'string' && field.src.length > 0;
+}
+
+function normalizeLayout(v: unknown): Layout | null {
+  const l = baseLayout(v);
+  if (!l) return null;
+  const out: Layout = { id: l.id as string, name: l.name as string };
+  if (Array.isArray(l.columns)) {
+    const currentColumns = normalizeTaskGridColumnPreferences(l.columns);
+    const legacyColumns = currentColumns === null && l.columns.every(isLegacyColumnConfig)
+      ? legacyLayoutColumnsToTaskGridPreferences(l.columns)
+      : null;
+    const columns = currentColumns ?? legacyColumns;
+    if (columns === null) return null;
+    out.columns = columns;
+  }
+  if (l.group !== undefined) out.group = l.group as Layout['group'];
+  if (l.sort !== undefined) out.sort = l.sort as Layout['sort'];
+  if (l.filter !== undefined) out.filter = l.filter as Layout['filter'];
+  if (l.timeScale !== undefined) out.timeScale = l.timeScale as Layout['timeScale'];
+  if (l.showRelations !== undefined) out.showRelations = l.showRelations as boolean;
+  if (l.overlays !== undefined) {
+    // Vaste sleutelvolgorde en alleen de bekende sleutels, zodat vergelijken nooit op de opslag hangt.
+    const o = l.overlays as LayoutOverlays;
+    out.overlays = {
+      baseline: o.baseline, progressLine: o.progressLine, statusDateLine: o.statusDateLine,
+      resourceAccent: o.resourceAccent, floatBand: o.floatBand, barColors: o.barColors,
+    };
+  }
+  if (l.icon !== undefined) out.icon = l.icon as string;
+  return out;
+}
+
+function normalizeLayouts(raw: unknown): Layout[] | null {
+  if (!Array.isArray(raw)) return null;
+  // Eén kapotte legacy-layout mag zijn geldige buren niet verbergen. Dit bewaart het oude
+  // item-voor-item parsegedrag, terwijl iedere overlevende layout wel volledig wordt genormaliseerd.
+  return raw.map(normalizeLayout).filter((layout): layout is Layout => layout !== null);
+}
+
+async function loadStoredLayouts(): Promise<Layout[]> {
+  const current = await getSetting<unknown>('taskGridLayouts');
+  if (current && typeof current === 'object') {
+    const wrapper = current as Record<string, unknown>;
+    if (wrapper.version === TASK_GRID_LAYOUTS_VERSION) {
+      const normalized = normalizeLayouts(wrapper.layouts);
+      if (normalized) return normalized;
+    }
+  }
+  // Lazy legacy-read: de oude sleutel blijft ongewijzigd staan totdat de gebruiker expliciet
+  // opslaat/bijwerkt. Dynamische refs worden hier opaque, zonder actief project te raden.
+  const legacy = await getSetting<unknown>('layouts');
+  return normalizeLayouts(legacy) ?? [];
+}
+
+/**
+ * De losse opgeslagen filters gaan EENMALIG op in de layouts, als layouts
+ * die alleen een filter dragen. De vlag voorkomt dat een daarna verwijderde filter-layout bij de
+ * volgende start terugkomt. `ops-savedFilters` zelf blijft bewust staan: wie terugvalt naar een
+ * oudere versie houdt zijn filters.
+ */
+export async function loadLayouts(): Promise<Layout[]> {
+  const layouts = await loadStoredLayouts();
+  if (await getSetting<boolean>('savedFiltersMigrated')) return layouts;
+  const savedFilters = await loadSavedFilters();
+  const merged = migrateSavedFilters(layouts, savedFilters);
+  if (merged.length !== layouts.length) await saveLayouts(merged);
+  await setSetting('savedFiltersMigrated', true);
+  return merged;
+}
+
+export async function saveLayouts(layouts: Layout[]): Promise<void> {
+  const normalized = normalizeLayouts(layouts);
+  if (!normalized) return;
+  const payload: PersistedTaskGridLayoutsV1 = { version: 1, layouts: normalized };
+  await setSetting('taskGridLayouts', payload);
+}
+
+// Opgeslagen filters: net als layouts app-breed op dit apparaat, maar bewust alleen
+// de filterboom. Daardoor blijft de rest van de actuele weergave onaangetast bij snel wisselen.
+const FILTER_OPERATORS = new Set(['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'contains', 'startsWith', 'between', 'isEmpty', 'in']);
+
+function isFilterNode(value: unknown): value is FilterNode {
+  if (!value || typeof value !== 'object') return false;
+  const node = value as Record<string, unknown>;
+  if (node.kind === 'group') {
+    return (node.op === 'AND' || node.op === 'OR') && Array.isArray(node.children) && node.children.every(isFilterNode);
+  }
+  if (node.kind !== 'rule' || !FILTER_OPERATORS.has(node.operator as string)) return false;
+  const field = node.field;
+  if (!field || typeof field !== 'object') return false;
+  const ref = field as Record<string, unknown>;
+  return (ref.src === 'builtin' && typeof ref.key === 'string') ||
+    (ref.src === 'activityCode' && typeof ref.typeId === 'string') ||
+    (ref.src === 'customField' && typeof ref.defId === 'string') ||
+    ref.src === 'resource';
+}
+
+function isValidSavedFilter(value: unknown): value is SavedFilter {
+  if (!value || typeof value !== 'object') return false;
+  const filter = value as Record<string, unknown>;
+  return typeof filter.id === 'string' && filter.id.length > 0 &&
+    typeof filter.name === 'string' && filter.name.trim().length > 0 &&
+    isFilterNode(filter.filter);
+}
+
+export async function loadSavedFilters(): Promise<SavedFilter[]> {
+  const raw = await getSetting<unknown>('savedFilters');
+  return Array.isArray(raw) ? raw.filter(isValidSavedFilter) : [];
+}
+
+export async function saveSavedFilters(filters: SavedFilter[]): Promise<void> {
+  await setSetting('savedFilters', filters);
+}
+
+// Automatisch berekenen: app-instelling, dus WEL onder de 3-plekken-regel
+// (tandwiel, Instellingen-ribbontab, File-backstage delen allemaal SettingsPanelContent). Default
+// UIT — handmatig (F5) rekenen tenzij de gebruiker 'm expliciet aanzet.
+// Legacy-functie: de losse weergaveknoppen op Beeld zijn vervangen door de layoutknoppen
+// en de layoutdialoog; wie eraan gewend is zet ze hiermee terug. Default uit.
+export async function saveShowClassicViewControls(value: boolean): Promise<void> {
+  await setSetting('showClassicViewControls', value);
+}
+
+export async function saveAutoCalcCPM(value: boolean): Promise<void> {
+  await setSetting('autoCalcCPM', value);
+}
+
+// Bouwmodus (bouw-agnostische modus): app-instelling onder de 3-plekken-regel
+// (tandwiel/ribbontab/backstage delen SettingsPanelContent). AAN = huidige bouwgerichte app;
+// UIT = bouw-agnostisch (neutrale default-kalender, geen bouwvak/NL-feestdagen, alleen "Leeg"-
+// sjabloon, neutraal taaktype). Default AAN.
+// AFWIJKING van de meeste load*-helpers: dit paar is SYNCHROON (geen Promise) omdat de synchrone
+// default-kalenderfabriek (`createDefaultCalendar`/`buildGeneratedCalendar`) de vlag direct moet
+// kunnen uitlezen. De `typeof localStorage`-guard houdt de headless test-/Node-omgeving (geen
+// localStorage) op de default (bouwmodus aan), waar de CPM-suite op rekent.
+export function loadConstructionMode(): boolean {
+  if (typeof localStorage === 'undefined') return true;
+  const raw = readLocal('ops-constructionMode');
+  if (raw === null) return true;
+  try { return JSON.parse(raw) !== false; } catch { return true; }
+}
+
+export function saveConstructionMode(value: boolean): void {
+  if (typeof localStorage === 'undefined') return;
+  writeLocal('ops-constructionMode', JSON.stringify(value));
+}
+
+// Datumnotatie: app-instelling, dus WEL onder de 3-plekken-regel (tandwiel,
+// Instellingen-ribbontab, File-backstage delen allemaal SettingsPanelContent). Ontbrekende of
+// corrupte sleutel ⇒ undefined → de store houdt de default 'dmy' (dd-mm-jjjj), geen reset.
+export async function saveDateNotation(value: DateNotation): Promise<void> {
+  await setSetting('dateNotation', value);
+}
+
+// Lettertype-instellingen interface: app-instellingen onder de 3-plekken-regel
+// (tandwiel/ribbontab/backstage delen SettingsPanelContent). Ontbrekende/corrupte sleutel ⇒
+// undefined → de store houdt zijn default ('default' / 100), zonder reset van andere voorkeuren.
+export async function saveUIFontFamily(value: UIFontFamily): Promise<void> {
+  await setSetting('uiFontFamily', value);
+}
+
+export async function saveUIFontScale(value: number): Promise<void> {
+  await setSetting('uiFontScale', value);
+}
+
+// --- Urenplanning-instellingen. App-instellingen, dus onder de 3-plekken-regel
+//     (tandwiel/ribbontab/backstage delen SettingsPanelContent). Ontbrekende/corrupte sleutel ⇒
+//     undefined → de store houdt zijn default (hoofdschakelaar uit, gemengd aan, duurweergave
+//     automatisch, balk-opsplitsing bij selectie), zonder reset van andere voorkeuren.
+export async function saveEnableHourPlanning(value: boolean): Promise<void> {
+  await setSetting('enableHourPlanning', value);
+}
+
+/** "Toon taaktypes" — werkregel en resterend werk zichtbaar in de UI. */
+export async function saveShowTaskTypes(value: boolean): Promise<void> {
+  await setSetting('showTaskTypes', value);
+}
+
+/** App-brede UI-poort: de bestaande `ops-allowMixedDayHour`-sleutel blijft ongewijzigd leesbaar. */
+export async function saveAllowMixedDayHour(value: boolean): Promise<void> {
+  await setSetting('allowMixedDayHour', value);
+}
+
+export async function saveDurationDisplay(value: DurationDisplay): Promise<void> {
+  await setSetting('durationDisplay', value);
+}
+
+export async function saveBarSplitMode(value: BarSplitMode): Promise<void> {
+  await setSetting('barSplitMode', value);
+}
+
+// «alleen werkbare dagen tonen» — globale weergavevoorkeur, zelfde
+// 1-op-1-patroon als barSplitMode hierboven.
+export async function saveCompressNonWorkdays(value: boolean): Promise<void> {
+  await setSetting('compressNonWorkdays', value);
+}
+
+// Eigen werktijd-presets: app-niveau localStorage, NIET in het projectbestand — ze reizen
+// niet mee met een project maar zijn op elke machine van de gebruiker beschikbaar. Parse-guard:
+// corrupte JSON of een item zonder de juiste shape ⇒ weggelaten (nooit een crash op een handmatig
+// geprutste localStorage-waarde), analoog aan `loadLayouts`.
+import type { WorkTimePreset } from '@/utils/shiftPresets';
+
+function isValidWorkTimePreset(v: unknown): v is WorkTimePreset {
+  if (!v || typeof v !== 'object') return false;
+  const p = v as Record<string, unknown>;
+  return (
+    typeof p.id === 'string' &&
+    typeof p.name === 'string' &&
+    Array.isArray(p.workDays) &&
+    typeof p.workStartHour === 'number' &&
+    typeof p.workEndHour === 'number' &&
+    typeof p.hoursPerDay === 'number'
+  );
+}
+
+export async function loadWorkTimePresets(): Promise<WorkTimePreset[]> {
+  const raw = await getSetting<unknown>('workTimePresets');
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(isValidWorkTimePreset);
+}
+
+export async function saveWorkTimePresets(presets: WorkTimePreset[]): Promise<void> {
+  await setSetting('workTimePresets', presets);
+}
+
+export async function loadLastLayoutId(): Promise<string | null> {
+  const v = await getSetting<string>('lastLayoutId');
+  return typeof v === 'string' && v ? v : null;
+}
+
+export async function saveLastLayoutId(id: string | null): Promise<void> {
+  await setSetting('lastLayoutId', id);
+}
+
+// First-startup-ervaring: of de welkomstdialoog al gezien is.
+// Bewust géén appversie in de sleutel — eenmaal gezet, blijft de app 'm
+// nooit meer tonen, ook niet na een update. Zelfde ops-* localStorage-pad als alle andere
+// instellingen (geen Tauri plugin-store), patroon identiek aan loadShowHistogram/saveShowHistogram.
+export async function loadWelcomeSeen(): Promise<boolean | undefined> {
+  const v = await getSetting<boolean>('welcomeSeen');
+  return typeof v === 'boolean' ? v : undefined;
+}
+
+export async function saveWelcomeSeen(value: boolean): Promise<void> {
+  await setSetting('welcomeSeen', value);
+}
+
+// "Je bent net geüpdatet"-detectie (fase "kleine dingen"): de laatst gestarte appversie. Bij de
+// volgende start vergelijken we deze met `getVersion()`; verschillen ze, dan is er net geüpdatet.
+// Ontbreekt de sleutel (verse installatie), dan tonen we NIETS en schrijven we 'm alleen weg.
+// Zelfde ops-* localStorage-pad als alle andere instellingen.
+export async function loadLastVersion(): Promise<string | undefined> {
+  const v = await getSetting<string>('lastVersion');
+  return typeof v === 'string' && v ? v : undefined;
+}
+
+export async function saveLastVersion(value: string): Promise<void> {
+  await setSetting('lastVersion', value);
+}
+
+// --- MCP-bridge / AI-modus. -------------------------------------------------------------------------
+// Alle vier via de vertrouwde ops-* localStorage-prefix (geen Tauri plugin-store). `aiMode` en
+// `aiAutoBackup` zijn app-instellingen (async, patroon van saveAutoCalcCPM). `mcpPort` en `mcpToken`
+// zijn SYNCHROON (zelfde afwijking als loadConstructionMode): de bridge-levenscyclus (`server.ts`)
+// moet ze direct kunnen uitlezen bij het starten, en de headless test draait zonder async-bootstrap.
+// De `typeof localStorage`-guard houdt de Node-test-/headless-omgeving op de default zonder crash.
+
+/**
+ * AI-modus persisteren. Default UIT. Het LADEN loopt via de settingsRegistry
+ * (`setting({ key: 'aiMode', … })` in `settingsRegistry.ts`) → `loadAllSettings`, dus een aparte
+ * `loadAiMode` is er niet: die zou dode code zijn.
+ */
+export async function saveAiMode(value: boolean): Promise<void> {
+  await setSetting('aiMode', value);
+}
+
+/**
+ * Automatisch starten van de bridge bij het opstarten van de app. Default UIT — een luisterende
+ * poort openen blijft een bewuste keuze. Laden loopt, net als `aiMode`, via de settingsRegistry.
+ */
+export async function saveAiAutostart(value: boolean): Promise<void> {
+  await setSetting('aiAutostart', value);
+}
+
+/** Automatische AI-backup vóór de eerste mutatie per document. Default AAN. */
+export async function loadAiAutoBackup(): Promise<boolean> {
+  const v = await getSetting<boolean>('aiAutoBackup');
+  return typeof v === 'boolean' ? v : true;
+}
+
+export async function saveAiAutoBackup(value: boolean): Promise<void> {
+  await setSetting('aiAutoBackup', value);
+}
+
+/** Bridge-poort. Default 3877; een corrupte/ongeldige waarde (buiten 1..65535) valt terug op de default. */
+export const MCP_DEFAULT_PORT = 3877;
+
+export function loadMcpPort(): number {
+  if (typeof localStorage === 'undefined') return MCP_DEFAULT_PORT;
+  const raw = readLocal('ops-mcpPort');
+  if (raw === null) return MCP_DEFAULT_PORT;
+  let n: number;
+  try { n = Number(JSON.parse(raw)); } catch { return MCP_DEFAULT_PORT; }
+  return Number.isInteger(n) && n >= 1 && n <= 65535 ? n : MCP_DEFAULT_PORT;
+}
+
+export function saveMcpPort(value: number): void {
+  if (typeof localStorage === 'undefined') return;
+  writeLocal('ops-mcpPort', JSON.stringify(Math.round(value)));
+}
+
+/** Bridge-Bearer-token. Default null (nog niet gegenereerd); `server.ensureMcpToken` vult 'm bij eerste start. */
+export function loadMcpToken(): string | null {
+  if (typeof localStorage === 'undefined') return null;
+  const raw = readLocal('ops-mcpToken');
+  return typeof raw === 'string' && raw ? raw : null;
+}
+
+export function saveMcpToken(value: string): void {
+  if (typeof localStorage === 'undefined') return;
+  writeLocal('ops-mcpToken', value);
+}

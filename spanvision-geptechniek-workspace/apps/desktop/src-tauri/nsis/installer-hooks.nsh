@@ -1,0 +1,62 @@
+; NSIS installer hooks — Spanvision infra · geptechniek workspace
+;
+; Tauri 2.x's `fileAssociations` block doesn't expose a per-extension
+; `icon` field, so the default NSIS template uses the main app icon
+; for every registered extension. We override that here by writing
+; `HKCR\<ProgID>\DefaultIcon` to our per-type .ico files (bundled via
+; `bundle.resources` and installed alongside the .exe under
+; `$INSTDIR\resources\icons\file-associations\`).
+;
+; Macros to add custom install / uninstall actions:
+;   - NSIS_HOOK_POSTINSTALL  → runs at the very end of install
+;   - NSIS_HOOK_PREUNINSTALL → runs at the start of uninstall
+;
+; Both ProgIDs are the `name` we used in tauri.conf.json's
+; `fileAssociations[].name`.
+
+!macro NSIS_HOOK_POSTINSTALL
+  ; ── WebView2Loader.dll into application root ────────────────────
+  ; The .exe looks for WebView2Loader.dll in its OWN directory at
+  ; LoadLibrary time, so the DLL MUST end up at $INSTDIR\ root
+  ; (next to spanvision-geotechniek-workspace.exe), not in a subfolder.
+  ;
+  ; Strategy: explicitly embed the DLL into the installer at NSIS
+  ; compile-time via `File`, then write it out next to the .exe at
+  ; install-time via `SetOutPath`. The generated installer.nsi lives
+  ; at `target/release/nsis/x64/installer.nsi`, so `..\..\` lands us
+  ; at `target/release/` where our build.rs deposits the DLL each
+  ; release build.
+  SetOutPath "$INSTDIR"
+  File "/oname=WebView2Loader.dll" "..\..\WebView2Loader.dll"
+
+  ; ── Per-extension icons ────────────────────────────────────────
+  ; Tauri's NSIS template puts our bundle-resource icons at
+  ; $INSTDIR\icons\file-associations\*.ico (note: NOT under
+  ; resources\). The template's `APP_ASSOCIATE` macro registers a
+  ; DefaultIcon pointing at the main .exe, so we overwrite each
+  ; ProgID's DefaultIcon to point at the per-type .ico instead.
+  WriteRegStr SHCTX "Software\Classes\GEFSondering\DefaultIcon" "" \
+    "$INSTDIR\icons\file-associations\gef.ico,0"
+
+  WriteRegStr SHCTX "Software\Classes\SpanvisionGeotechniekProject\DefaultIcon" "" \
+    "$INSTDIR\icons\file-associations\ifcgis.ico,0"
+
+  WriteRegStr SHCTX "Software\Classes\GeotechniekObject\DefaultIcon" "" \
+    "$INSTDIR\icons\file-associations\ifcgeo.ico,0"
+
+  ; Refresh the Explorer icon cache so the new icons appear without
+  ; a logout/login cycle.
+  System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
+!macroend
+
+!macro NSIS_HOOK_PREUNINSTALL
+  ; Clean up our custom DefaultIcon entries on uninstall — Tauri's
+  ; own uninstaller already drops the ProgID itself.
+  DeleteRegKey SHCTX "Software\Classes\GEFSondering\DefaultIcon"
+  DeleteRegKey SHCTX "Software\Classes\SpanvisionGeotechniekProject\DefaultIcon"
+  DeleteRegKey SHCTX "Software\Classes\GeotechniekObject\DefaultIcon"
+
+  ; Remove the duplicated loader DLL from the install root; Tauri's
+  ; standard uninstall pass only knows about files under resources/.
+  Delete "$INSTDIR\WebView2Loader.dll"
+!macroend

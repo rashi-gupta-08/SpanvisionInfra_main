@@ -1,0 +1,12 @@
+{
+  "results": [
+    "Correct organization, 16 tools and dark default",
+    "Controls removed; drag and keyboard still affect the actual canvas",
+    "Automatic rotation respects motion preference and recolors on theme change",
+    "Eight responsive theme layouts, visible map dots and saved light preference",
+    "Route disposal/remount and retained COBE license",
+    "Reduced motion, visible texture, 2× display resolution and paused theme switching",
+    "Usable light/dark fallback when WebGL is unavailable"
+  ],
+  "errors": []
+}

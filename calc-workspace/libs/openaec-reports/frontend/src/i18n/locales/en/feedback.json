@@ -1,0 +1,16 @@
+{
+  "title": "Feedback / Report Issue",
+  "intro": "Report a bug, suggest a feature, or share general feedback. A GitHub issue will be created.",
+  "categoryBug": "Bug",
+  "categoryFeature": "Feature",
+  "categoryGeneral": "General",
+  "issueTitle": "Title",
+  "issueTitlePlaceholder": "Short description of the issue or suggestion",
+  "issueDescription": "Description",
+  "descriptionPlaceholder": "Provide a detailed description... (minimum 10 characters)",
+  "descriptionHeading": "Description",
+  "categoryLabel": "Category",
+  "issueFooter": "Created via OpenAEC Reports",
+  "submit": "Create on GitHub",
+  "ghNote": "A new tab will open on GitHub where you can review and submit the issue. A GitHub account is required."
+}

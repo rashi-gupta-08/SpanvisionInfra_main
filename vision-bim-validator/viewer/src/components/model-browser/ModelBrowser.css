@@ -1,0 +1,293 @@
+/**
+ * ModelBrowser + SpatialSubTree styles.
+ */
+
+.model-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.model-item-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.model-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 2px var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.model-item:hover {
+  background-color: var(--color-hover);
+}
+
+/* Expand/collapse chevron */
+.model-item__expand {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 2px;
+  padding: 0;
+}
+
+.model-item__expand:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+}
+
+.model-item__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.model-item__name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-item__size {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+/* Load state indicators */
+.model-item__state {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.model-item__state--pending {
+  background-color: var(--color-text-secondary);
+}
+
+.model-item__state--loading {
+  background-color: var(--friendly-yellow);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.model-item__state--loaded {
+  background-color: var(--verdigris);
+}
+
+.model-item__state--error {
+  background-color: var(--flaming-peach);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Visibility toggle */
+.model-item__visibility {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.model-item__visibility:hover {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+}
+
+.model-item__visibility--hidden {
+  opacity: 0.4;
+}
+
+/* Tree loading spinner in model row */
+.model-item__tree-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 4px 4px 4px 36px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* ========================
+   SpatialSubTree styles
+   ======================== */
+
+.spatial-subtree {
+  border-left: 1px solid var(--color-border);
+  margin-left: 11px;
+}
+
+/* Tree node row */
+.spatial-node__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px;
+  border-radius: var(--radius-sm);
+  cursor: default;
+  transition: background-color var(--transition-fast);
+}
+
+.spatial-node__row:hover {
+  background-color: var(--color-hover);
+}
+
+.spatial-node__row--selected {
+  background-color: var(--color-active);
+}
+
+.spatial-node__row--element {
+  cursor: pointer;
+}
+
+/* Toggle button (chevron) */
+.spatial-node__toggle {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 2px;
+  padding: 0;
+}
+
+.spatial-node__toggle:hover {
+  background-color: var(--color-hover);
+}
+
+/* Node label */
+.spatial-node__label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.spatial-node__label--type-group {
+  cursor: default;
+}
+
+.spatial-node__type {
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.spatial-node__type-name {
+  font-size: 12px;
+  color: var(--color-primary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.spatial-node__name {
+  font-size: 13px;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spatial-node__count {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* Element type group row */
+.spatial-node__row--type-group {
+  opacity: 0.9;
+}
+
+.spatial-node__row--type-group:hover {
+  opacity: 1;
+}
+
+/* Loading indicator */
+.spatial-node__loading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.spatial-node__loading-text {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Spinner */
+.spatial-node__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Show all button */
+.spatial-node__show-all {
+  padding: 2px 4px;
+}
+
+.spatial-node__show-all-btn {
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.spatial-node__show-all-btn:hover {
+  background-color: var(--color-hover);
+  text-decoration: underline;
+}

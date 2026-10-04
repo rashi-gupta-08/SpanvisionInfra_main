@@ -1,0 +1,42 @@
+{
+  "tabs": {
+    "file": "File",
+    "home": "Home",
+    "view": "View"
+  },
+  "home": {
+    "models": "Models",
+    "upload": "Add IFC",
+    "removeModel": "Remove",
+    "validation": "Validation",
+    "validate": "Validate",
+    "idsSelect": "IDS Standard",
+    "reset": "Reset",
+    "bcf": "BCF",
+    "exportBcf": "Export BCF",
+    "syncPlatform": "Sync",
+    "pushPlatform": "Push",
+    "bcfLogin": "Login",
+    "cloudSave": "Cloud Save",
+    "cloudOpen": "Cloud Open",
+    "project": "Project",
+    "save": "Save",
+    "saveAs": "Save As",
+    "open": "Open"
+  },
+  "view": {
+    "panels": "Panels",
+    "models": "Models",
+    "properties": "Properties",
+    "validation": "Validation",
+    "viewer": "3D View",
+    "zoomFit": "Zoom Fit",
+    "resetCamera": "Reset",
+    "resetView": "Reset View",
+    "sections": "Sections",
+    "sectionX": "Section X",
+    "sectionY": "Section Y",
+    "sectionZ": "Section Z",
+    "removeSections": "Clear sections"
+  }
+}

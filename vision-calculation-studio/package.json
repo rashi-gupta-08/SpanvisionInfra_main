@@ -1,0 +1,22 @@
+{
+  "name": "spanvision-calculation-studio",
+  "private": true,
+  "workspaces": [
+    "packages/core",
+    "packages/web",
+    "packages/desktop"
+  ],
+  "scripts": {
+    "icons": "node scripts/generate-icons.mjs && tauri icon packages/desktop/src-tauri/icon-source.png --output packages/desktop/src-tauri/icons",
+    "check": "npm --prefix packages/core run build && node scripts/check-alles.mjs",
+    "snapshot": "node scripts/snapshot-templates.mjs",
+    "dev": "npm run dev --workspace=@spanvision/calculations-web -- --host 127.0.0.1 --port 3022",
+    "build": "npm run build --workspace=@spanvision/calculations-core && npm run build --workspace=@spanvision/vision-calculation-studio && npm run build --workspace=@spanvision/calculations-web",
+    "preview": "npm run preview --workspace=@spanvision/calculations-web -- --host 127.0.0.1 --port 3023",
+    "verify:ui": "node scripts/verify-ui.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "sharp": "^0.34.5"
+  }
+}

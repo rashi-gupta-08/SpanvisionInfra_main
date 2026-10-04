@@ -1,0 +1,212 @@
+{
+  "organization": "Spanvision Infra",
+  "suiteName": "Spanvision Infra",
+  "language": "en",
+  "mark": "GW",
+  "theme": "spanvision-mono",
+  "services": {
+    "accountsEnabled": false,
+    "updaterEnabled": false,
+    "websiteUrl": null,
+    "supportUrl": null
+  },
+  "palette": {
+    "page": "#000000",
+    "surface": "#121212",
+    "canvas": "#1B1B1B",
+    "raised": "#202020",
+    "text": "#FFFFFF",
+    "textSoft": "#EEEEEE",
+    "muted": "#999999",
+    "border": "rgba(255,255,255,.16)",
+    "focus": "rgba(255,255,255,.58)"
+  },
+  "hub": {
+    "port": 4230,
+    "organization": "Spanvision Infra",
+    "mark": "SI"
+  },
+  "modules": [
+    {
+      "id": "cad",
+      "label": "CAD",
+      "productName": "CAD",
+      "organization": "Spanvision Infra",
+      "mark": "CAD",
+      "logo": "branding/cad-mark.svg",
+      "directory": "SpanvisionCAD",
+      "dist": "dist",
+      "port": 4173,
+      "path": "/app/",
+      "description": "Draft in 2D. Model in 3D. Work with DWG and DXF."
+    },
+    {
+      "id": "cad2d",
+      "label": "2D CAD",
+      "productName": "2D CAD",
+      "organization": "Spanvision Infra",
+      "mark": "CAD",
+      "logo": "branding/cad-mark.svg",
+      "directory": "spanvision-2d-cad-workspace",
+      "dist": "dist",
+      "port": 4220,
+      "path": "/",
+      "description": "Draw, measure and review. Recover your browser drafts."
+    },
+    {
+      "id": "bim",
+      "label": "Vision BIM Validator",
+      "productName": "Vision BIM Validator",
+      "mark": "SI",
+      "directory": "vision-bim-validator",
+      "frontendDirectory": "viewer",
+      "dist": "viewer/dist",
+      "port": 4260,
+      "path": "/home",
+      "description": "Inspect IFC models, validate information against IDS requirements and export BCF findings."
+    },
+    {
+      "id": "pdf",
+      "label": "PDF",
+      "directory": "spanvision-pdf-workspace/open-pdf-studio",
+      "dist": "dist",
+      "port": 3084,
+      "path": "/",
+      "description": "Annotate documents, measure drawings and organize pages."
+    },
+    {
+      "id": "ifc",
+      "label": "IFC",
+      "directory": "ifc-view",
+      "dist": "apps/desktop/dist",
+      "port": 3005,
+      "path": "/",
+      "description": "Inspect building models and explore construction sequences."
+    },
+    {
+      "id": "calc",
+      "label": "Calc",
+      "directory": "calc-workspace",
+      "dist": "dist",
+      "port": 4225,
+      "path": "/",
+      "description": "Build estimates, calculate quantities and prepare reports."
+    },
+    {
+      "id": "planner",
+      "label": "Open Vision Studio",
+      "productName": "Open Vision Studio",
+      "mark": "SV",
+      "kind": "studio",
+      "directory": "open-vision-studio",
+      "dist": "dist",
+      "port": 4265,
+      "path": "/",
+      "description": "Plan construction tasks, manage resources and review schedules in an IFC project."
+    },
+    {
+      "id": "fem",
+      "label": "FEM Vision Studio",
+      "productName": "FEM Vision Studio",
+      "mark": "SI",
+      "kind": "studio",
+      "directory": "fem-vision-studio",
+      "dist": "dist",
+      "port": 4270,
+      "path": "/",
+      "description": "Create finite element models, apply supports and loads, solve structures and inspect results."
+    },
+    {
+      "id": "frame",
+      "label": "Frame Vision Studio",
+      "productName": "Frame Vision Studio",
+      "mark": "SV",
+      "kind": "studio",
+      "directory": "frame-vision-studio",
+      "frontendDirectory": "ui",
+      "dist": "ui/dist",
+      "port": 4275,
+      "path": "/",
+      "description": "Design frames, edit profiles and explore engineering drawings, 3D views and production plans."
+    },
+    {
+      "id": "calculation",
+      "label": "Vision Calculation Studio",
+      "productName": "Vision Calculation Studio",
+      "mark": "SI",
+      "kind": "studio",
+      "directory": "vision-calculation-studio",
+      "frontendDirectory": "packages/web",
+      "dist": "packages/web/dist",
+      "port": 4280,
+      "path": "/",
+      "description": "Prepare structural calculations with visual designers, an editable calculation document and report previews."
+    },
+    {
+      "id": "geo",
+      "label": "Geotechnical",
+      "directory": "spanvision-geptechniek-workspace",
+      "frontendDirectory": "apps/desktop",
+      "dist": "apps/desktop/dist",
+      "port": 4235,
+      "path": "/",
+      "description": "Explore ground conditions, review CPT data and prepare site drawings and reports."
+    },
+    {
+      "id": "speech",
+      "label": "Speech",
+      "productName": "speech workspace",
+      "mark": "SW",
+      "directory": "spanvision-speech-workspace",
+      "dist": "dist",
+      "port": 4240,
+      "path": "/",
+      "description": "Dictate, transcribe recordings and capture meetings. Keep speech processing on your computer."
+    },
+    {
+      "id": "stl",
+      "label": "STL-3D Map",
+      "productName": "STL-3D map workspace",
+      "mark": "STL",
+      "directory": "spanvision-stl-3d-map-workspace",
+      "dist": "dist",
+      "port": 8765,
+      "path": "/",
+      "description": "Select a Netherlands map area, place your design and export printable STL and 3MF models."
+    },
+    {
+      "id": "field",
+      "label": "Field Workspace",
+      "productName": "Field Workspace",
+      "mark": "FW",
+      "directory": "spanvision-field-workspace",
+      "dist": "dist",
+      "port": 4245,
+      "path": "/",
+      "description": "Inspect sites, record defects on floor plans and prepare signed handover reports."
+    },
+    {
+      "id": "pointcloud",
+      "label": "Pointcloud Workspace",
+      "productName": "Pointcloud Workspace",
+      "mark": "PW",
+      "directory": "spanvision-pointcloud-workspace",
+      "dist": "dist",
+      "port": 4250,
+      "path": "/",
+      "description": "Import pointclouds, inspect scans, reconstruct surfaces and export geometry."
+    },
+    {
+      "id": "pile",
+      "label": "Pile Plane Workspace",
+      "productName": "Pile Plane Workspace",
+      "mark": "PPW",
+      "directory": "spanvision-pile-plane-workspace",
+      "frontendDirectory": "apps/pile-plan-studio",
+      "dist": "apps/pile-plan-studio/dist",
+      "port": 4255,
+      "path": "/",
+      "description": "Explore pile options, compare foundation plans and optimize assignments using the shared Rust engineering core."
+    }
+  ]
+}

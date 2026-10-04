@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "scenario": "responsive-import-render-controls-exports-selection-preferences-notices",
+      "width": 320,
+      "coloredPixels": 34973
+    },
+    {
+      "scenario": "responsive-import-render-controls-exports-selection-preferences-notices",
+      "width": 390,
+      "coloredPixels": 36565
+    },
+    {
+      "scenario": "responsive-import-render-controls-exports-selection-preferences-notices",
+      "width": 820,
+      "coloredPixels": 82447
+    },
+    {
+      "scenario": "responsive-import-render-controls-exports-selection-preferences-notices",
+      "width": 1440,
+      "coloredPixels": 42968
+    },
+    {
+      "scenario": "las-laz-real-import-rgb-classification-roundtrip"
+    },
+    {
+      "scenario": "surface-reconstruction-completion-obj-and-cancellation"
+    },
+    {
+      "scenario": "building-dialog-import-errors-and-corrupt-preferences"
+    },
+    {
+      "scenario": "unavailable-storage"
+    },
+    {
+      "scenario": "suite-launcher-and-preview-status"
+    }
+  ],
+  "errors": []
+}

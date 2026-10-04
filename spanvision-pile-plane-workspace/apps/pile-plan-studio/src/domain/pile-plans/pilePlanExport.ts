@@ -1,0 +1,31 @@
+import type { PilePlanExportInput } from "../../core/projectTypes.ts";
+import type { ProjectState } from "../project/projectState.ts";
+
+type PilePlanExportState = Pick<
+  ProjectState,
+  "loadPoints" | "selectedPileConfigurationsByLoadPoint" | "selectedCptsByLoadPointId"
+>;
+
+export function buildPilePlanExportInput(state: PilePlanExportState): PilePlanExportInput {
+  return {
+    loadPoints: state.loadPoints,
+    selectedPiles: new Map(state.selectedPileConfigurationsByLoadPoint),
+    selectedCpts: new Map(
+      [...state.selectedCptsByLoadPointId.entries()].map(([loadPointId, selectedCpts]) => [
+        loadPointId,
+        selectedCpts.map((selection) => selection.cpt.id),
+      ]),
+    ),
+  };
+}
+
+export function buildPilePlanExportInputForPlan(state: ProjectState, planId: string): PilePlanExportInput {
+  const plan = state.pilePlans.find((candidate) => candidate.id === planId);
+  if (!plan) throw new Error("unknown_plan");
+  return buildPilePlanExportInput({
+    loadPoints: state.loadPoints,
+    selectedPileConfigurationsByLoadPoint: planId === state.activePilePlanId
+      ? state.selectedPileConfigurationsByLoadPoint : plan.selectedPileConfigurationsByLoadPoint,
+    selectedCptsByLoadPointId: state.selectedCptsByLoadPointId,
+  });
+}

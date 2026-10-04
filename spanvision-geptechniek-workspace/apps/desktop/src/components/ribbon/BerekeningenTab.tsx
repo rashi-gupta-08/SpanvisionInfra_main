@@ -1,0 +1,41 @@
+import { useMemo } from "react";
+import { useCalculationsStore } from "../../calc/framework/store";
+import { useCptStore } from "../../store/useCptStore";
+import type { CalculationInstance } from "../../calc/framework/types";
+
+// Stabiele empty-array fallback om de zustand re-render loop te
+// voorkomen die `?? []` binnen een selector veroorzaakt.
+const EMPTY_LIST: readonly never[] = [];
+
+/** Ribbon-tab content voor "Berekeningen". Toont een snel-selecteer-lijst
+ *  van bestaande berekeningen in het actieve project. De "+ Nieuwe
+ *  berekening" knop is verwijderd uit de ribbon — die functionaliteit
+ *  zit nu enkel in het project-paneel (ProjectTreePanel). */
+export function BerekeningenTab() {
+  const activeDocId = useCptStore((s) => s.activeDocId);
+  const byDoc = useCalculationsStore((s) => s.byDoc);
+  const list = useMemo(
+    () => (activeDocId ? byDoc.get(activeDocId) ?? EMPTY_LIST : EMPTY_LIST),
+    [activeDocId, byDoc],
+  ) as CalculationInstance[];
+  const setActive = useCalculationsStore((s) => s.setActive);
+
+  return (
+    <div className="ribbon-content ribbon-berekeningen">
+      <div className="ribbon-calc-list">
+        {list.length === 0 && (
+          <span className="ribbon-empty">No calculations yet</span>
+        )}
+        {list.map((c) => (
+          <button
+            key={c.id}
+            className="ribbon-btn ribbon-btn-tab"
+            onClick={() => setActive(c.id)}
+          >
+            {c.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

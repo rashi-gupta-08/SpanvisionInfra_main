@@ -1,0 +1,650 @@
+{
+  "checkedAt": "2026-10-04T11:18:38.448Z",
+  "modules": [
+    {
+      "id": "hub",
+      "label": "Spanvision Infra",
+      "directory": "suite-hub",
+      "manifestVersion": "0.1.0",
+      "stamp": {
+        "brandDigest": "ad5928b043f984bc2566d3cfc82b75f1d24a40f1e92d4c1c1150bb19f05bcc4e",
+        "sourceFingerprint": "ec689f3f216a68e4c367ac3a5ee06fb55d8d9965098a808eabfb8980880b3bcc",
+        "builtAt": "2026-10-04T11:03:31.115Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "cad",
+      "label": "CAD",
+      "directory": "SpanvisionCAD",
+      "manifestVersion": null,
+      "stamp": {
+        "id": "cad",
+        "brandDigest": "26cf66067bd9f08aa19b3e8fdf2cf7e4919458612f52f3430f850bffe22fb6fd",
+        "sourceFingerprint": "8ee7e14a37073bf8d54e2a4ebe7678b37c140fd347b79262082596dfde9ec14d",
+        "builtAt": "2026-10-04T07:31:52.434Z",
+        "nativeBuiltAt": "2026-10-04T06:38:51.791Z",
+        "buildKind": "browser-assets"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "cad2d",
+      "label": "2D CAD",
+      "directory": "spanvision-2d-cad-workspace",
+      "manifestVersion": "0.35.0",
+      "stamp": {
+        "id": "cad2d",
+        "brandDigest": "4ae620af91e1aeea2c65cc14cc9d652a67ba29cb1f04f7ae72bf5c8edfb1f127",
+        "sourceFingerprint": "b21624bb5254371a6b0c8913ea303796250ce4f9bd2989ae75535fccda0ddf83",
+        "builtAt": "2026-10-04T07:33:43.337Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "bim",
+      "label": "Vision BIM Validator",
+      "directory": "vision-bim-validator",
+      "manifestVersion": "1.0.0",
+      "stamp": {
+        "id": "bim",
+        "brandDigest": "4e14f1b7eb71f52e686cca665f02feea2c581301d5e11f556f958152af312709",
+        "sourceFingerprint": "fd5770377a352b9b64804b496740af32330195e67bcd5cf3252eac79f88adaa6",
+        "builtAt": "2026-10-04T07:33:58.281Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "pdf",
+      "label": "PDF",
+      "directory": "spanvision-pdf-workspace/open-pdf-studio",
+      "manifestVersion": "2026.39.0",
+      "stamp": {
+        "id": "pdf",
+        "brandDigest": "dc827ebb87ec65242aa860e20c11f331e581b50da366d0904154959bc33a6cf4",
+        "sourceFingerprint": "cc437ca8f35e28a62c6f2007b5b4acdc2272479a5564da42c316a767bfc5c886",
+        "builtAt": "2026-10-04T07:34:24.579Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "ifc",
+      "label": "IFC",
+      "directory": "ifc-view",
+      "manifestVersion": "0.1.0",
+      "stamp": {
+        "id": "ifc",
+        "brandDigest": "47e26db47d97d5038fdc04b5a42cf0b6db2a49b5f904c4d4f797bb668a675438",
+        "sourceFingerprint": "30c42f9f2639f5fdd83c348054c45bb4c6313935916682d675edcb93552d48b2",
+        "builtAt": "2026-10-04T07:34:36.438Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "calc",
+      "label": "Calc",
+      "directory": "calc-workspace",
+      "manifestVersion": "0.13.0",
+      "stamp": {
+        "id": "calc",
+        "brandDigest": "ac7b22b70e1ebd95e67f5b159d0e423d157ac0a15770100f3316ec74096d5c94",
+        "sourceFingerprint": "a2440ca92f5bcc04f2e242f8da69855829d33055453f90cad99474b520186202",
+        "builtAt": "2026-10-04T07:35:10.970Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "planner",
+      "label": "Open Vision Studio",
+      "directory": "open-vision-studio",
+      "manifestVersion": "2026.9.0",
+      "stamp": {
+        "id": "planner",
+        "brandDigest": "8b8cb5e732f23ff41dc4701f60e42d05673ec11c11224d80e160e4b97d70b4f0",
+        "sourceFingerprint": "126db0a27bac9664209f0fbec678cdb4a4b74df4cb22739902e721b3df770186",
+        "builtAt": "2026-10-04T07:35:58.709Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "fem",
+      "label": "FEM Vision Studio",
+      "directory": "fem-vision-studio",
+      "manifestVersion": "1.0.0",
+      "stamp": {
+        "id": "fem",
+        "brandDigest": "5ff7966e16409ccf7cfd441bc348e365b32c1522aca2a80048a0f46a9d6e2862",
+        "sourceFingerprint": "544d1a13527985029a200d9d2a97b2cd3367e53128acf1b4fd967c59e254719e",
+        "builtAt": "2026-10-04T07:36:21.342Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "frame",
+      "label": "Frame Vision Studio",
+      "directory": "frame-vision-studio",
+      "manifestVersion": "0.6.0",
+      "stamp": {
+        "id": "frame",
+        "brandDigest": "0aa2a6f2d3ed9dd77c3460809c07a17db05eb3881a58d469d497df7268345bad",
+        "sourceFingerprint": "2319f965095781dc0057be1269c859f292d2f027de5f2f8a99b77b8d7c85964e",
+        "builtAt": "2026-10-04T07:36:31.430Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "calculation",
+      "label": "Vision Calculation Studio",
+      "directory": "vision-calculation-studio",
+      "manifestVersion": "0.1.0",
+      "stamp": {
+        "id": "calculation",
+        "brandDigest": "5280d312d5f8bb91f6b176de91b27cb98454774ee8906b37c352602378b77985",
+        "sourceFingerprint": "a0e79a57cb12bfd92389660d4f2d9d30411960d58e43f8bae9d2431d58e929a7",
+        "builtAt": "2026-10-04T07:36:55.326Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "geo",
+      "label": "Geotechnical",
+      "directory": "spanvision-geptechniek-workspace",
+      "manifestVersion": "0.4.1",
+      "stamp": {
+        "id": "geo",
+        "brandDigest": "4233d512d1766af155fe60137731404f49d8fa533aa4cecee2148f22b22286cd",
+        "sourceFingerprint": "86ebe7374cf2f5457281bf589df0ecb3fb183d63786abfc18d53b653faea2c26",
+        "builtAt": "2026-10-04T07:37:20.561Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "speech",
+      "label": "Speech",
+      "directory": "spanvision-speech-workspace",
+      "manifestVersion": "0.12.0",
+      "stamp": {
+        "id": "speech",
+        "brandDigest": "4dfcc314adb847f9683a3b43a268410c61f26571926df8028bf683471f861046",
+        "sourceFingerprint": "73326d5c48dd120017386280933b2f3e9df3738cd190e3b621238885becc045c",
+        "builtAt": "2026-10-04T07:37:26.606Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "stl",
+      "label": "STL-3D Map",
+      "directory": "spanvision-stl-3d-map-workspace",
+      "manifestVersion": null,
+      "stamp": {
+        "id": "stl",
+        "brandDigest": "7de7c3190333489b9adade32717559308c55fc12c185f28f0936203416ef97ff",
+        "sourceFingerprint": "d21ce57247f0429e84bdf52fd77fbc980c5772752b1da3d20f89f36e8dc0e9b9",
+        "builtAt": "2026-10-04T07:37:26.910Z",
+        "inputs": [
+          "LICENSE",
+          "app/__init__.py",
+          "app/appinfo.py",
+          "app/buildings3d.py",
+          "app/config.py",
+          "app/diagnostics.py",
+          "app/folder_dialog.py",
+          "app/geo.py",
+          "app/ifc_import.py",
+          "app/main.py",
+          "app/meshing.py",
+          "app/paths.py",
+          "app/pipeline.py",
+          "app/sources.py",
+          "app/status.py",
+          "app/updater.py",
+          "brand.json",
+          "legal/UPSTREAM-NOTICES.md",
+          "legal/inter-OFL.txt",
+          "legal/jetbrains-mono-OFL.txt",
+          "legal/python-licenses/PyYAML/LICENSE",
+          "legal/python-licenses/Pygments/LICENSE",
+          "legal/python-licenses/altgraph/LICENSE",
+          "legal/python-licenses/annotated-types/LICENSE",
+          "legal/python-licenses/anyio/LICENSE",
+          "legal/python-licenses/certifi/LICENSE",
+          "legal/python-licenses/charset-normalizer/LICENSE",
+          "legal/python-licenses/click/LICENSE.txt",
+          "legal/python-licenses/colorama/LICENSE.txt",
+          "legal/python-licenses/fastapi/LICENSE",
+          "legal/python-licenses/h11/LICENSE.txt",
+          "legal/python-licenses/httpcore/LICENSE.md",
+          "legal/python-licenses/httptools/LICENSE",
+          "legal/python-licenses/httptools/LICENSE-MIT",
+          "legal/python-licenses/httpx/LICENSE.md",
+          "legal/python-licenses/idna/LICENSE.md",
+          "legal/python-licenses/iniconfig/LICENSE",
+          "legal/python-licenses/isodate/LICENSE",
+          "legal/python-licenses/lark/LICENSE",
+          "legal/python-licenses/lxml/LICENSE.txt",
+          "legal/python-licenses/lxml/LICENSES.txt",
+          "legal/python-licenses/mapbox_earcut/LICENSE.md",
+          "legal/python-licenses/networkx/LICENSE.txt",
+          "legal/python-licenses/numpy/LICENSE.txt",
+          "legal/python-licenses/packaging/LICENSE",
+          "legal/python-licenses/packaging/LICENSE.APACHE",
+          "legal/python-licenses/packaging/LICENSE.BSD",
+          "legal/python-licenses/pefile/LICENSE",
+          "legal/python-licenses/pillow/LICENSE",
+          "legal/python-licenses/pluggy/LICENSE",
+          "legal/python-licenses/pydantic/LICENSE",
+          "legal/python-licenses/pydantic_core/LICENSE",
+          "legal/python-licenses/pyinstaller-hooks-contrib/LICENSE",
+          "legal/python-licenses/pyinstaller/COPYING.txt",
+          "legal/python-licenses/pyproj/LICENSE",
+          "legal/python-licenses/pyproj/LICENSE_proj",
+          "legal/python-licenses/pytest/LICENSE",
+          "legal/python-licenses/python-dateutil/LICENSE",
+          "legal/python-licenses/python-dotenv/LICENSE",
+          "legal/python-licenses/python-multipart/LICENSE.txt",
+          "legal/python-licenses/pywin32-ctypes/LICENSE.txt",
+          "legal/python-licenses/requests/LICENSE",
+          "legal/python-licenses/setuptools/LICENSE",
+          "legal/python-licenses/setuptools/LICENSE.APACHE",
+          "legal/python-licenses/setuptools/LICENSE.BSD",
+          "legal/python-licenses/setuptools/LICENSE.txt",
+          "legal/python-licenses/shapely/LICENSE.txt",
+          "legal/python-licenses/shapely/LICENSE_GEOS",
+          "legal/python-licenses/shapely/LICENSE_win32",
+          "legal/python-licenses/six/LICENSE",
+          "legal/python-licenses/starlette/LICENSE.md",
+          "legal/python-licenses/trimesh/LICENSE.md",
+          "legal/python-licenses/typing-inspection/LICENSE",
+          "legal/python-licenses/typing_extensions/LICENSE",
+          "legal/python-licenses/urllib3/LICENSE.txt",
+          "legal/python-licenses/uvicorn/LICENSE.md",
+          "legal/python-licenses/watchfiles/LICENSE",
+          "legal/python-licenses/websockets/LICENSE",
+          "legal/space-grotesk-OFL.txt",
+          "legal/vendor-notices.txt",
+          "requirements.txt",
+          "run_app.py",
+          "web/app.js",
+          "web/appearance.css",
+          "web/appearance.js",
+          "web/brand-palette.css",
+          "web/favicon.ico",
+          "web/index.html",
+          "web/stl-mark.svg",
+          "web/style.css",
+          "web/theme-init.js",
+          "web/vendor/fonts/inter.ttf",
+          "web/vendor/fonts/jetbrains-mono.ttf",
+          "web/vendor/fonts/space-grotesk.ttf",
+          "web/vendor/leaflet/images/layers-2x.png",
+          "web/vendor/leaflet/images/layers.png",
+          "web/vendor/leaflet/images/marker-icon-2x.png",
+          "web/vendor/leaflet/images/marker-icon.png",
+          "web/vendor/leaflet/images/marker-shadow.png",
+          "web/vendor/leaflet/leaflet.css",
+          "web/vendor/leaflet/leaflet.js"
+        ]
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "field",
+      "label": "Field Workspace",
+      "directory": "spanvision-field-workspace",
+      "manifestVersion": "0.3.6",
+      "stamp": {
+        "id": "field",
+        "brandDigest": "00e67a91746e18d257794b25dad7db677b67fb3fecdb139057114c9107d611cb",
+        "sourceFingerprint": "6d5cdbf554e4f662685cc7c19f39550c05177166e5a9e161888de72f6d975b04",
+        "builtAt": "2026-10-04T07:37:29.868Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "pointcloud",
+      "label": "Pointcloud Workspace",
+      "directory": "spanvision-pointcloud-workspace",
+      "manifestVersion": "0.3.0",
+      "stamp": {
+        "id": "pointcloud",
+        "brandDigest": "cb50754c3578e34dc293420afe28cab3bf361885ec85f6b7beb5ca66ee5c7d66",
+        "sourceFingerprint": "63d8f2fe8fc6be28737735319fdb0c65fe2909335e7b0b53821651f5bc853ad4",
+        "builtAt": "2026-10-04T07:37:52.614Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    },
+    {
+      "id": "pile",
+      "label": "Pile Plane Workspace",
+      "directory": "spanvision-pile-plane-workspace",
+      "manifestVersion": "0.4.2",
+      "stamp": {
+        "id": "pile",
+        "brandDigest": "94d3e45c991beb31f8495e88b0365a097312e480e8f6e860246adacc2b9d794a",
+        "sourceFingerprint": "a6dfa4026929e8864c613fc2d3d3208bf6f154332cdc2fa7b6244374e7233943",
+        "builtAt": "2026-10-04T07:38:36.178Z"
+      },
+      "sourceCurrent": true,
+      "brandCurrent": true
+    }
+  ],
+  "status": {
+    "modules": [
+      {
+        "id": "cad",
+        "label": "CAD",
+        "productName": "CAD",
+        "organization": "Spanvision Infra",
+        "mark": "CAD",
+        "logo": "branding/cad-mark.svg",
+        "directory": "SpanvisionCAD",
+        "dist": "dist",
+        "port": 4173,
+        "path": "/app/",
+        "description": "Draft in 2D. Model in 3D. Work with DWG and DXF.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "cad2d",
+        "label": "2D CAD",
+        "productName": "2D CAD",
+        "organization": "Spanvision Infra",
+        "mark": "CAD",
+        "logo": "branding/cad-mark.svg",
+        "directory": "spanvision-2d-cad-workspace",
+        "dist": "dist",
+        "port": 4220,
+        "path": "/",
+        "description": "Draw, measure and review. Recover your browser drafts.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "bim",
+        "label": "Vision BIM Validator",
+        "productName": "Vision BIM Validator",
+        "mark": "SI",
+        "directory": "vision-bim-validator",
+        "frontendDirectory": "viewer",
+        "dist": "viewer/dist",
+        "port": 4260,
+        "path": "/home",
+        "description": "Inspect IFC models, validate information against IDS requirements and export BCF findings.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "pdf",
+        "label": "PDF",
+        "directory": "spanvision-pdf-workspace/open-pdf-studio",
+        "dist": "dist",
+        "port": 3084,
+        "path": "/",
+        "description": "Annotate documents, measure drawings and organize pages.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "ifc",
+        "label": "IFC",
+        "directory": "ifc-view",
+        "dist": "apps/desktop/dist",
+        "port": 3005,
+        "path": "/",
+        "description": "Inspect building models and explore construction sequences.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "calc",
+        "label": "Calc",
+        "directory": "calc-workspace",
+        "dist": "dist",
+        "port": 4225,
+        "path": "/",
+        "description": "Build estimates, calculate quantities and prepare reports.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "planner",
+        "label": "Open Vision Studio",
+        "productName": "Open Vision Studio",
+        "mark": "SV",
+        "kind": "studio",
+        "directory": "open-vision-studio",
+        "dist": "dist",
+        "port": 4265,
+        "path": "/",
+        "description": "Plan construction tasks, manage resources and review schedules in an IFC project.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "fem",
+        "label": "FEM Vision Studio",
+        "productName": "FEM Vision Studio",
+        "mark": "SI",
+        "kind": "studio",
+        "directory": "fem-vision-studio",
+        "dist": "dist",
+        "port": 4270,
+        "path": "/",
+        "description": "Create finite element models, apply supports and loads, solve structures and inspect results.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "frame",
+        "label": "Frame Vision Studio",
+        "productName": "Frame Vision Studio",
+        "mark": "SV",
+        "kind": "studio",
+        "directory": "frame-vision-studio",
+        "frontendDirectory": "ui",
+        "dist": "ui/dist",
+        "port": 4275,
+        "path": "/",
+        "description": "Design frames, edit profiles and explore engineering drawings, 3D views and production plans.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "calculation",
+        "label": "Vision Calculation Studio",
+        "productName": "Vision Calculation Studio",
+        "mark": "SI",
+        "kind": "studio",
+        "directory": "vision-calculation-studio",
+        "frontendDirectory": "packages/web",
+        "dist": "packages/web/dist",
+        "port": 4280,
+        "path": "/",
+        "description": "Prepare structural calculations with visual designers, an editable calculation document and report previews.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "geo",
+        "label": "Geotechnical",
+        "directory": "spanvision-geptechniek-workspace",
+        "frontendDirectory": "apps/desktop",
+        "dist": "apps/desktop/dist",
+        "port": 4235,
+        "path": "/",
+        "description": "Explore ground conditions, review CPT data and prepare site drawings and reports.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "speech",
+        "label": "Speech",
+        "productName": "speech workspace",
+        "mark": "SW",
+        "directory": "spanvision-speech-workspace",
+        "dist": "dist",
+        "port": 4240,
+        "path": "/",
+        "description": "Dictate, transcribe recordings and capture meetings. Keep speech processing on your computer.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "stl",
+        "label": "STL-3D Map",
+        "productName": "STL-3D map workspace",
+        "mark": "STL",
+        "directory": "spanvision-stl-3d-map-workspace",
+        "dist": "dist",
+        "port": 8765,
+        "path": "/",
+        "description": "Select a Netherlands map area, place your design and export printable STL and 3MF models.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "field",
+        "label": "Field Workspace",
+        "productName": "Field Workspace",
+        "mark": "FW",
+        "directory": "spanvision-field-workspace",
+        "dist": "dist",
+        "port": 4245,
+        "path": "/",
+        "description": "Inspect sites, record defects on floor plans and prepare signed handover reports.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "pointcloud",
+        "label": "Pointcloud Workspace",
+        "productName": "Pointcloud Workspace",
+        "mark": "PW",
+        "directory": "spanvision-pointcloud-workspace",
+        "dist": "dist",
+        "port": 4250,
+        "path": "/",
+        "description": "Import pointclouds, inspect scans, reconstruct surfaces and export geometry.",
+        "available": true,
+        "message": "Ready to open"
+      },
+      {
+        "id": "pile",
+        "label": "Pile Plane Workspace",
+        "productName": "Pile Plane Workspace",
+        "mark": "PPW",
+        "directory": "spanvision-pile-plane-workspace",
+        "frontendDirectory": "apps/pile-plan-studio",
+        "dist": "apps/pile-plan-studio/dist",
+        "port": 4255,
+        "path": "/",
+        "description": "Explore pile options, compare foundation plans and optimize assignments using the shared Rust engineering core.",
+        "available": true,
+        "message": "Ready to open"
+      }
+    ]
+  },
+  "nativeArtifacts": [
+    {
+      "module": "field",
+      "file": "Field Workspace.exe",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\field\\windows\\Field Workspace.exe",
+      "bytes": 18093568,
+      "modified": "2026-10-03T06:30:28.852Z"
+    },
+    {
+      "module": "field",
+      "file": "Field Workspace_0.3.6_x64-setup.exe",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\field\\windows\\Field Workspace_0.3.6_x64-setup.exe",
+      "bytes": 5209513,
+      "modified": "2026-10-03T06:30:28.840Z"
+    },
+    {
+      "module": "geotechniek",
+      "file": "geptechniek workspace · Geotechniek_0.4.1_x64-setup.exe",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\geotechniek\\windows\\geptechniek workspace · Geotechniek_0.4.1_x64-setup.exe",
+      "bytes": 10704816,
+      "modified": "2026-10-03T03:57:34.137Z"
+    },
+    {
+      "module": "geotechniek",
+      "file": "SHA256SUMS.json",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\geotechniek\\windows\\SHA256SUMS.json",
+      "bytes": 344,
+      "modified": "2026-10-03T04:04:27.636Z"
+    },
+    {
+      "module": "geotechniek",
+      "file": "spanvision-geotechniek-workspace.exe",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\geotechniek\\windows\\spanvision-geotechniek-workspace.exe",
+      "bytes": 30598144,
+      "modified": "2026-10-03T03:57:34.195Z"
+    },
+    {
+      "module": "pile",
+      "file": "manifest.json",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\pile\\windows\\manifest.json",
+      "bytes": 138091,
+      "modified": "2026-10-03T11:37:17.084Z"
+    },
+    {
+      "module": "pile",
+      "file": "Pile Plane Workspace_0.4.2_x64-setup.exe",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\pile\\windows\\Pile Plane Workspace_0.4.2_x64-setup.exe",
+      "bytes": 8384424,
+      "modified": "2026-10-03T11:22:06.873Z"
+    },
+    {
+      "module": "pile",
+      "file": "pile-plane-workspace-0.4.2-source.zip",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\pile\\windows\\pile-plane-workspace-0.4.2-source.zip",
+      "bytes": 5828526,
+      "modified": "2026-10-03T11:37:07.286Z"
+    },
+    {
+      "module": "pile",
+      "file": "spanvision-pile-plane-workspace.exe",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\pile\\windows\\spanvision-pile-plane-workspace.exe",
+      "bytes": 23170560,
+      "modified": "2026-10-03T11:22:06.974Z"
+    },
+    {
+      "module": "stl",
+      "file": "artifacts.json",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\stl\\windows\\artifacts.json",
+      "bytes": 368,
+      "modified": "2026-10-03T04:57:23.084Z"
+    },
+    {
+      "module": "stl",
+      "file": "Spanvision-STL-3D-map-workspace-1.1.1-portable.zip",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\stl\\windows\\Spanvision-STL-3D-map-workspace-1.1.1-portable.zip",
+      "bytes": 75293692,
+      "modified": "2026-10-03T04:57:22.918Z"
+    },
+    {
+      "module": "stl",
+      "file": "Spanvision-STL-3D-map-workspace-1.1.1-Setup.exe",
+      "path": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\stl\\windows\\Spanvision-STL-3D-map-workspace-1.1.1-Setup.exe",
+      "bytes": 66025511,
+      "modified": "2026-10-03T04:57:09.284Z"
+    }
+  ]
+}

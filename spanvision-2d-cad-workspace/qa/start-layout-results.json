@@ -1,0 +1,257 @@
+{
+  "base": "http://127.0.0.1:4220/",
+  "results": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "drafts": 0,
+      "passed": true,
+      "top": {
+        "headerTop": 156.375,
+        "headerBottom": 198.375,
+        "viewport": 900,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 694.640625,
+        "footerBottom": 732.140625,
+        "captionTop": 864.5,
+        "captionBottom": 878,
+        "captionVisible": true,
+        "viewport": 900
+      }
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "drafts": 5,
+      "passed": true,
+      "top": {
+        "headerTop": 48,
+        "headerBottom": 90,
+        "viewport": 900,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 802.765625,
+        "footerBottom": 840.265625,
+        "captionTop": 864.265625,
+        "captionBottom": 877.765625,
+        "captionVisible": true,
+        "viewport": 900
+      }
+    },
+    {
+      "name": "compact-desktop",
+      "width": 1280,
+      "height": 550,
+      "drafts": 0,
+      "passed": true,
+      "top": {
+        "headerTop": 48,
+        "headerBottom": 90,
+        "viewport": 550,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 453.265625,
+        "footerBottom": 490.765625,
+        "captionTop": 514.765625,
+        "captionBottom": 528.265625,
+        "captionVisible": true,
+        "viewport": 550
+      }
+    },
+    {
+      "name": "compact-desktop",
+      "width": 1280,
+      "height": 550,
+      "drafts": 5,
+      "passed": true,
+      "top": {
+        "headerTop": 48,
+        "headerBottom": 90,
+        "viewport": 550,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 452.765625,
+        "footerBottom": 490.265625,
+        "captionTop": 514.265625,
+        "captionBottom": 527.765625,
+        "captionVisible": true,
+        "viewport": 550
+      }
+    },
+    {
+      "name": "zoomed-desktop",
+      "width": 960,
+      "height": 450,
+      "drafts": 0,
+      "passed": true,
+      "top": {
+        "headerTop": 48,
+        "headerBottom": 90,
+        "viewport": 450,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 352.90625,
+        "footerBottom": 390.40625,
+        "captionTop": 414.40625,
+        "captionBottom": 427.90625,
+        "captionVisible": true,
+        "viewport": 450
+      }
+    },
+    {
+      "name": "zoomed-desktop",
+      "width": 960,
+      "height": 450,
+      "drafts": 5,
+      "passed": true,
+      "top": {
+        "headerTop": 48,
+        "headerBottom": 90,
+        "viewport": 450,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 353.40625,
+        "footerBottom": 390.90625,
+        "captionTop": 414.90625,
+        "captionBottom": 428.40625,
+        "captionVisible": true,
+        "viewport": 450
+      }
+    },
+    {
+      "name": "tablet",
+      "width": 820,
+      "height": 1180,
+      "drafts": 0,
+      "passed": true,
+      "top": {
+        "headerTop": 308.984375,
+        "headerBottom": 350.984375,
+        "viewport": 1180,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 822.03125,
+        "footerBottom": 859.53125,
+        "captionTop": 1144.5,
+        "captionBottom": 1158,
+        "captionVisible": true,
+        "viewport": 1180
+      }
+    },
+    {
+      "name": "tablet",
+      "width": 820,
+      "height": 1180,
+      "drafts": 5,
+      "passed": true,
+      "top": {
+        "headerTop": 145.734375,
+        "headerBottom": 187.734375,
+        "viewport": 1180,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 985.28125,
+        "footerBottom": 1022.78125,
+        "captionTop": 1144.5,
+        "captionBottom": 1158,
+        "captionVisible": true,
+        "viewport": 1180
+      }
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "drafts": 0,
+      "passed": true,
+      "top": {
+        "headerTop": 28,
+        "headerBottom": 62,
+        "viewport": 844,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 535.53125,
+        "footerBottom": 571.53125,
+        "captionTop": 0,
+        "captionBottom": 0,
+        "captionVisible": false,
+        "viewport": 844
+      }
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "drafts": 5,
+      "passed": true,
+      "top": {
+        "headerTop": 28,
+        "headerBottom": 62,
+        "viewport": 844,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 753.03125,
+        "footerBottom": 789.03125,
+        "captionTop": 0,
+        "captionBottom": 0,
+        "captionVisible": false,
+        "viewport": 844
+      }
+    },
+    {
+      "name": "small-phone",
+      "width": 320,
+      "height": 740,
+      "drafts": 0,
+      "passed": true,
+      "top": {
+        "headerTop": 28,
+        "headerBottom": 62,
+        "viewport": 740,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 557.625,
+        "footerBottom": 593.625,
+        "captionTop": 0,
+        "captionBottom": 0,
+        "captionVisible": false,
+        "viewport": 740
+      }
+    },
+    {
+      "name": "small-phone",
+      "width": 320,
+      "height": 740,
+      "drafts": 5,
+      "passed": true,
+      "top": {
+        "headerTop": 28,
+        "headerBottom": 62,
+        "viewport": 740,
+        "overflow": false
+      },
+      "bottom": {
+        "footerTop": 649.125,
+        "footerBottom": 685.125,
+        "captionTop": 0,
+        "captionBottom": 0,
+        "captionVisible": false,
+        "viewport": 740
+      }
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "file": "Bestand",
+  "new": "Nieuw",
+  "open": "Openen",
+  "save": "Opslaan",
+  "saveAs": "Opslaan als...",
+  "print": "Afdrukken",
+  "import": "Importeren",
+  "export": "Exporteren",
+  "preferences": "Voorkeuren",
+  "about": "Over",
+  "exit": "Afsluiten",
+  "aboutPanel": {
+    "title": "Over",
+    "appName": "Vision Calculation Studio",
+    "version": "Versie",
+    "tagline": "Helderheid in elke berekening.",
+    "description": "Constructieve berekeningen, visueel ontwerpen en projectrapportage van Spanvision Infra.",
+    "companyName": "Spanvision Infra",
+    "companyDescription": "Een samenhangende werkruimte voor constructieve berekeningen, technische tekeningen en heldere projectrapporten.",
+    "license": "Licentie",
+    "stichting": "Spanvision Infra",
+    "copyright": "Vision Calculation Studio · Spanvision Infra",
+    "notices": "Open-sourcevermeldingen"
+  },
+  "openPanel": {
+    "browse": "Bladeren…",
+    "browseDesc": "Open een .cpd of .ifc-calculation bestand vanaf schijf",
+    "title": "Recente bestanden",
+    "noRecent": "Geen recente bestanden",
+    "clearAll": "Wis lijst",
+    "justNow": "Zojuist",
+    "remove": "Verwijderen"
+  },
+  "importPanel": {
+    "title": "Importeren",
+    "fromFile": "Importeren uit bestand",
+    "fromFileDesc": "Gegevens importeren uit ondersteunde bestandsindelingen",
+    "fromTemplate": "Importeren uit sjabloon",
+    "fromTemplateDesc": "Laad een vooraf gemaakt sjabloon als startpunt"
+  },
+  "extensions": "Extensies",
+  "extInstalled": "Geïnstalleerd",
+  "extBrowse": "Bladeren",
+  "extSearchPlaceholder": "Zoek extensies...",
+  "extInstallFile": "Installeren uit bestand",
+  "extInstalledBadge": "Geïnstalleerd",
+  "extInstallBtn": "Installeren",
+  "exportPanel": {
+    "title": "Exporteren",
+    "asPdf": "Exporteren als PDF",
+    "asPdfDesc": "Sla het huidige document op als een PDF-bestand",
+    "asImage": "Exporteren als afbeelding",
+    "asImageDesc": "Opslaan als PNG- of JPEG-afbeeldingsbestanden",
+    "asHtml": "Exporteren als HTML",
+    "asHtmlDesc": "Exporteer het document als een HTML-bestand"
+  }
+}

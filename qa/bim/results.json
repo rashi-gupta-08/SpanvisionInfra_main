@@ -1,0 +1,61 @@
+{
+  "results": [
+    {
+      "scenario": "CAD, 2D CAD and BIM are available; BIM backend can be reused",
+      "passed": true
+    },
+    {
+      "scenario": "Main preview company catalog and tool cards",
+      "passed": true,
+      "width": 320
+    },
+    {
+      "scenario": "BIM landing page deep link",
+      "passed": true,
+      "width": 320
+    },
+    {
+      "scenario": "Main preview company catalog and tool cards",
+      "passed": true,
+      "width": 390
+    },
+    {
+      "scenario": "BIM landing page deep link",
+      "passed": true,
+      "width": 390
+    },
+    {
+      "scenario": "Main preview company catalog and tool cards",
+      "passed": true,
+      "width": 820
+    },
+    {
+      "scenario": "BIM landing page deep link",
+      "passed": true,
+      "width": 820
+    },
+    {
+      "scenario": "Main preview company catalog and tool cards",
+      "passed": true,
+      "width": 1440
+    },
+    {
+      "scenario": "BIM landing page deep link",
+      "passed": true,
+      "width": 1440
+    },
+    {
+      "scenario": "Hub launches BIM and imports a geometric IFC model",
+      "passed": true
+    },
+    {
+      "scenario": "Real IFC/IDS validation reports a failing element and exports BCF",
+      "passed": true
+    },
+    {
+      "scenario": "Hub launches 2D CAD; drawn geometry survives the project download",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

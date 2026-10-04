@@ -1,0 +1,795 @@
+# Open Pile Plan Studio Release Notes
+
+## 0.4.2-alpha
+
+This alpha adds an MCP connection to the Windows desktop app. A local AI client
+such as ChatGPT Desktop or Claude Desktop can inspect the open project, propose
+edits, run optimization, and work with project files through the same Rust
+engineering rules used by the interface.
+
+### Added
+
+- Enable a local, token-protected MCP connection in Settings. Reading and
+  editing have separate session controls; editing starts disabled.
+- Read project settings, load points, CPTs, advice, groups, plans, costs,
+  technical assessments, and optimization results through MCP. Compare two
+  named plans without changing the active one.
+- Apply assignments, locks, manual CPT selections, grouping changes, settings,
+  legend styles, project properties, and targeted source corrections. Bulk
+  changes use Rust validation and one Undo step.
+- Start, monitor, stop, or cancel optimization through MCP. The same time-limit
+  preference is available in the app, including an explicit unlimited option.
+- Create or refresh a project from converted CSV source data, import an existing
+  pile plan, open or save IFCPP projects, and export a chosen plan to CSV/XLSX.
+  Native file dialogs require the user's choice for local files.
+
+### Improved and fixed
+
+- Keep foundation advice when only CPT positions or identifiers change and
+  equivalent CPTs can be reconciled during source refresh.
+- Clarify that the coherence cost allowance is measured against the optimizer's
+  cost reference, not the current pile plan.
+- Keep MCP work tied to the currently open project revision and reject stale
+  operations rather than applying them after the project changes.
+
+### Compatibility and limitations
+
+- MCP is available in the Windows desktop app. The browser app still uses the
+  same Rust engineering core but does not expose an MCP listener.
+- The MCP address stays local to this computer. Its access token is renewed
+  each time the bridge starts and must be updated in the AI client.
+- IFCPP project schema remains compatible with supported older projects.
+  Engineering results still require professional review.
+
+## 0.4.1-alpha
+
+This alpha makes load-point groups explicit planning and optimization units,
+with automatic grouping and project-saved manual overrides. It also improves
+viewer alignment and stability across zoom, window resizing, and display scales.
+
+### Added
+
+- Select a whole group by clicking one member, or inspect an individual member
+  from the selection list. Group and ungroup selected locations in the selection
+  panel or grouping settings, with explanations when an edit is unavailable.
+- Show group contours from the View ribbon. The contour follows Gabriel-connected
+  group members rather than a convex hull. Conflicting assignments use a red
+  contour and warning marker; complete selections use an orange contour.
+- Review the number of manual grouping changes in Grouping settings and undo all
+  of them. Manual groups and explicit separations are saved with the project and
+  participate in undo and redo.
+
+### Improved and fixed
+
+- Use complete, transitive groups as optimization units with one pile
+  configuration per group. Block disconnected manual groups and retain valid
+  overrides when refreshing load-point source data.
+- Preserve the project point at the viewer centre when resizing the window or
+  moving it between displays. Render symbols, rings, contours, CPT labels, and
+  tip-level regions in one SVG coordinate system, and stabilize grid lines on
+  the physical-pixel lattice.
+- Keep hover feedback on the pointed-at group member. Inspecting only one member
+  shows its orange ring and one gray group contour instead of overlapping
+  selection and related-member rings.
+
+### Compatibility and limitations
+
+- IFCPP schema version 5 stores manual grouping changes and group visibility.
+  Supported older projects migrate when opened.
+- This remains an alpha release; engineering results and assignment conflicts
+  require professional review.
+
+## 0.4.0-alpha
+
+This alpha introduces HiGHS optimization in both the browser and Windows app,
+with live results and more control over practical pile-plan coherence. It also
+makes the inspection panels and pile-option tables easier to customize.
+
+### Added
+
+- Minimize pile-plan costs within configurable tip-level, size and configuration
+  limits, or minimize differences between neighboring units within a cost budget.
+  The default additional-cost budget is 5%; configuration limits default to unlimited.
+- Use Quick improve for a local improvement without waiting for a full spatial
+  solve. Feasible current plans and improved starting solutions help warm-start
+  the solver.
+- Follow the best validated solution live, with its score, lower bound and gap.
+  View another pile plan while optimization continues, stop and use the best
+  result, or cancel and discard the preview. Completed results belong to the plan.
+- Choose specific candidate configurations using a matrix with row and column
+  selection, and optionally skip locations that have no valid configuration.
+- Inspect load points and CPTs together using the optional split view, with
+  compact CPT details and a resizable divider whose position is remembered.
+- Show, hide and drag-reorder pile-option columns. Preferences are remembered
+  separately for single-location and multiple-location selections.
+- Return from input sources to the active pile plan with a close button, keeping
+  the current selection and viewport.
+
+### Improved and fixed
+
+- Replace the former greedy optimizer with one optimization panel. Use collapsible
+  settings, clearer result quality, named output plans and preserved selections.
+- Reject non-positive net design resistance as an unavailable pile option rather
+  than accepting negative utilization.
+- Improve warning text and link contrast, themed controls, numeric field stepping,
+  validation styling and compact panel spacing.
+- Refresh application dependencies.
+
+### Compatibility and limitations
+
+- Supported older IFCPP projects continue to open; legacy optimizer settings are
+  normalized. New projects and saved optimizer outcomes use the current project format.
+- Browser and desktop use the same Rust optimization model, solved by HiGHS.
+  Search progress and run time can differ between platforms.
+- Quick improvement does not prove global optimality. A solver stopped early or
+  at its time limit returns the best validated result available, with its quality
+  reported separately from the cost reference.
+- This remains an alpha release; engineering results require professional review.
+
+## 0.3.4-alpha
+
+This maintenance alpha simplifies the Rust core and application structure while
+preserving the engineering model and project format. It also keeps grouped load
+points visually consistent across interface themes.
+
+### Improved
+
+- Split the Rust analysis and optimization implementation into focused feature
+  modules, including pile options, CPT selection, source data, optimization,
+  and pile-tip-level regions.
+- Build and reuse one foundation-advice index per analysis request, and use the
+  more precise `PileOptionAnalysisResult` name for the request-scoped result.
+- Remove unused legacy and test-only APIs from the core and application,
+  including obsolete pile-count handling.
+- Organize application state, core clients, domain helpers, viewer layers, and
+  side panels into clearer feature folders.
+- Keep the related-group selection ring at the same neutral contrast in light
+  and dark themes.
+- Document the current module boundaries, domain ownership, and viewer colour
+  invariants for future maintenance.
+
+### Compatibility
+
+- IFCPP schema version 4 remains current; no project migration is required.
+- Browser/WASM and desktop/Tauri continue to use the same Rust engineering
+  rules, with unchanged intended calculation outcomes.
+
+## 0.3.3-alpha
+
+This alpha supports millimetre-precise pile-tip levels, consolidates project
+interpretation and validation in the Rust core, and updates the built-in pile
+cost estimates with a documented CROW basis indexed to the latest definitive
+CBS GWW price level available during preparation of this release.
+
+### Added
+
+- Enter, import, store, compare, and optimize pile-tip levels at millimetre
+  precision, including projects whose available levels are less than 100 mm
+  apart.
+- Explain the source, price level, and scope of the built-in pile cost table in
+  the Cost Settings panel, with a detailed derivation in the documentation.
+- Validate persisted pile cost tables at the project boundary in the Rust core.
+
+### Improved
+
+- Use `Peil t.o.v. NAP` in Dutch and `Reference level` in English for the
+  project level from which pile length and cost are calculated. The tooltip
+  clarifies its relationship to the foundation and pile cut-off level.
+- Centralize IFCPP project normalization, validation, serialization, runtime
+  interpretation, and engineering decisions in the Rust core. Browser recovery
+  now keeps project content opaque until the core accepts it.
+- Remove superseded TypeScript, WebAssembly, and Tauri project-contract logic,
+  leaving TypeScript responsible for React state and interface choices.
+- Refresh built-in round and square concrete pile cost rates using CROW
+  foundation cost ranges and the CBS GWW input price index. Existing projects
+  and personal defaults remain unchanged unless the built-in defaults are
+  explicitly selected.
+
+### Compatibility
+
+- IFCPP schema version 4 remains current. Existing supported projects continue
+  to open and retain their stored pile cost table.
+- Pile-tip levels stored by older releases remain valid; new projects may now
+  preserve finer increments without rounding them to decimetres.
+
+## 0.3.2-alpha
+
+This alpha makes automatic load-point grouping configurable and visible,
+rejects ambiguous coincident load-point positions at project boundaries, and
+simplifies the spatial topology used for pile-tip-level regions. It also
+improves desktop project opening and Undo/Redo feedback.
+
+### Added
+
+- Enable or disable automatic load-point grouping and set the maximum distance
+  between connected group members. These settings are stored in the IFCPP
+  project and participate in Undo and Redo.
+- Show the other members of a selected group with neutral selection rings and
+  explain the number of involved groups and marked locations for both single
+  and multiple selections.
+- Open associated `.ifcpp` files directly in the desktop app, including files
+  opened while Pile Plan Studio is already running.
+
+### Improved
+
+- Reject load-point sources and IFCPP projects containing different locations
+  at exactly the same coordinates. Import previews identify every conflicting
+  location, and source refreshes leave the current project unchanged when the
+  replacement data is invalid.
+- Use load-point identifiers directly throughout the Gabriel graph, bounded
+  faces, pile-tip-level topology, WebAssembly contract, and viewer geometry.
+  The removed geometric-site indirection is no longer needed because
+  coincident positions are invalid.
+- Keep unavailable Undo and Redo buttons inactive while providing clear
+  keyboard-shortcut feedback for Ctrl+Z, Ctrl+Y, and Ctrl+Shift+Z.
+
+### Compatibility
+
+- IFCPP schema version 4 remains current. Existing supported projects without
+  explicit grouping settings use the automatic grouping defaults when opened.
+- Manual load-point grouping remains planned for a future release.
+
+## 0.3.1-alpha
+
+This alpha makes legend activation specific to each pile plan and extends the
+legend editor for comparing and coordinating multiple plan variants.
+
+### Added
+
+- Store active pile sizes and pile-tip levels separately for every pile plan,
+  so switching variants restores the intended legend configuration without
+  changing other plans.
+- Select one or more pile plans as the assignment scope in the legend editor.
+  The editor identifies configurations used outside that scope and explains
+  duplicate symbols and colours in the affected plans.
+- Encode pile size and pile-tip level with colour at the same time: pile-tip
+  level colours fill the connected regions, while pile-size colours and the
+  round or square shape from the cost table identify the load-point symbols.
+- Pick manual colours directly from the selected colour scheme in addition to
+  the native browser colour picker.
+
+### Improved
+
+- Reassign symbols and colours across the active legend items in the selected
+  plan scope while preserving inactive items.
+- Keep assigned configurations visible with a neutral marker when their legend
+  value is inactive, and keep optimizer candidates aligned with the active
+  configuration of the relevant pile plan.
+- Keep the legend editor compact with collapsible encoding and plan-scope
+  controls, equal active and inactive columns, and focused conflict details.
+
+### Compatibility
+
+- IFCPP schema version 4 stores legend activation per pile plan. Projects using
+  schema versions 1 through 3 remain supported and are normalized when opened.
+
+## 0.3.0-alpha
+
+This alpha adds connected pile-tip-level regions, makes grouped pile
+assignments and greedy optimization consistent, and provides clearer technical
+feedback when pile configurations cannot be assigned.
+
+### Added
+
+- Show connected pile-tip-level regions in the plan viewer. Region boundaries
+  are derived from the shared spatial topology and are coloured only where all
+  boundary load points use the same pile-tip level.
+- Treat nearby load points as assignment groups. Manual pile changes, default
+  selection, locking, and greedy optimization now apply one common
+  configuration to every group member or leave the complete group unchanged.
+- Inspect aggregated pile options for multiple selected load points, including
+  maximum utilization and the governing load point for each configuration.
+- Open a compact list of the CPTs whose bearing-capacity data is missing for a
+  configuration and navigate directly to those CPTs.
+
+### Improved
+
+- Distinguish missing bearing-capacity data, insufficient capacity, permanent
+  grouped technical conflicts, and configurations excluded only by optimizer
+  settings. The properties panel explains these states for single and multiple
+  selections without relying on marker tooltips.
+- Show every technically unassigned load point as a calm neutral marker while
+  retaining the question-mark marker for assignments blocked specifically by
+  optimization limits.
+- Count unresolved optimization results by both load point and group, without
+  treating permanent technical conflicts as optimizer failures.
+- Use canonical pile-configuration identities throughout Rust, WebAssembly,
+  project persistence, aggregation, grouping, and optimization.
+- Keep map selection and status overlays centred on exact marker coordinates
+  and below the selectable pile symbol.
+- Rename the region control consistently to **Puntniveaugebieden**, give it a
+  dedicated map-style icon, and enable the regions by default for the sample,
+  new imports, and older projects without an explicit preference.
+- Make symbol-size and preferred-utilization slider changes predictable in the
+  project history: immediate Undo and Redo work while a slider has focus, and
+  one continuous adjustment creates one history entry.
+
+### Notes
+
+- The optimizer remains a deterministic greedy heuristic and does not guarantee
+  a global optimum. A future optimization method is tracked separately.
+- Explicitly hidden pile-tip-level regions remain hidden when an existing
+  project is reopened or its sources are refreshed.
+
+## 0.2.2-alpha
+
+This alpha adds live CPT-selection feasibility feedback, restores coordinate
+inspection, and aligns selection behavior between source tables and the plan
+viewer.
+
+### Improved
+
+- Preview CPT-selection feasibility while editing: single load-point
+  selections show the design resistance for the assigned pile, while
+  multi-selections show how often each CPT is governing. Governing CPTs are
+  highlighted consistently in the table and viewer.
+- Show localized X/Y coordinates consistently for inspected load points and
+  CPTs in the properties panel and compact hover inspector, while omitting
+  misleading coordinate values for multi-selections.
+- Select load points and CPTs directly from their normalized source tables,
+  including shared row highlighting, Explorer-style `Ctrl` toggles and
+  `Shift` ranges for load points, selection persistence across workspace
+  views, and clearing from the source header or with `Escape`.
+- Use `Ctrl`+click to toggle individual load points in the plan viewer. Outside
+  persistent box-selection mode, `Shift`+drag replaces the selection and
+  `Ctrl`+`Shift`+drag adds to it; inside that mode, plain dragging replaces and
+  `Ctrl`+drag adds.
+- Source tables now measure their virtualized viewport immediately and after
+  layout changes, keep pointer-driven selections stable while scrolling, and
+  render all visible rows without requiring an initial scroll.
+- Keep the ribbon tabs visibly separated from the title bar across interface
+  scales.
+
+## 0.2.1-alpha
+
+This alpha makes constrained greedy optimization more predictable and easier
+to inspect, adds persistent lasso selection, and completes the Windows
+installer branding.
+
+### Added
+
+- Activate persistent box selection from the Plan ribbon. Plain dragging
+  replaces the selection, clicking empty space clears it, and `Shift`+drag
+  adds to the selection or controls the lasso during load-point lock editing.
+
+### Improved
+
+- Brand the Windows application, installer, and uninstaller with the Pile Plan
+  Studio logo.
+- Greedy optimization now keeps every enabled-value, utilization, size,
+  tip-level, configuration, lock, and whole-plan limit in the shared Rust
+  core instead of silently applying a fallback outside the selected
+  configurations.
+- Partial optimizer results explicitly report and persist load points that
+  could not be assigned within the configured limits. The viewer distinguishes
+  these outcomes from missing or invalid engineering options with a dedicated
+  compact marker.
+- Optimization summaries now report assigned, changed, and unassigned load
+  points separately in both Dutch and English.
+
+### Notes
+
+- Configuration selection remains a deterministic local greedy heuristic:
+  each step maximizes newly covered load points and then minimizes cost. It
+  does not guarantee a global optimum; follow-up limitations are tracked in
+  issue #31.
+
+## 0.2.0-alpha
+
+This alpha establishes a clearer project and application boundary, adds
+inspectable imported sources, and makes pile-cost data reusable without
+silently leaking project choices into other projects.
+
+### Added
+
+- Inspect normalized load points, CPTs, and foundation-advice rows directly
+  from the project explorer, with combined column filters and sorting.
+- Replace one imported source from its viewer while retaining matched pile
+  assignments, CPT selections, project settings, and other source data.
+- Store language, theme, interface scale, default currency, workspace panel
+  layout, and explicit user cost defaults in one versioned user-settings file.
+- Show or hide the explorer and properties panel from the View ribbon; both
+  panels remain resizable and remember their last useful width.
+- Require a pile head level when importing a new project and edit the project
+  name, pile head level, and project currency through Project information.
+- Add, edit, group, and remove pile-size cost rows. Project-used sizes are
+  protected, missing rows are reported, and unrelated saved sizes stay
+  available in a collapsed group.
+- Save, load, or remove a personal pile-cost default explicitly, or restore the
+  built-in catalog. Personal defaults apply automatically only to new imports.
+
+### Improved
+
+- IFCPP schema version 3 stores project currency, pile head level, viewer
+  presentation, and currency-neutral costs while retaining migration support
+  for schema versions 1 and 2.
+- Keep equal X/Y geometry in the plan viewer and anchor the adaptive coordinate
+  grid to the project origin, independent of panel dimensions.
+- Keep world positions stable while resizing or hiding side panels, including
+  across legend wrapping and application-scale changes.
+- Use one shared compact interface scale in browser and desktop builds, with
+  persistent desktop zoom controls and matching logical percentages.
+- Preserve algorithm selection labels while manually refining CPT selections,
+  and provide direct actions for restoring the algorithm or nearest CPT.
+- Improve themed selects, number inputs, scrollbars, table filters, settings
+  panels, and hover states across light and dark themes.
+- Project viewer presentation participates in Undo and browser recovery, while
+  workspace layout and reusable defaults remain application preferences.
+- New-project cost catalogs merge personal, built-in, imported, and
+  project-specific rows without dropping unmatched custom sizes.
+- Source-table filtering no longer reads released React events during state
+  updates.
+- Windows release builds no longer open an accompanying terminal window; debug
+  builds retain their console for development.
+- Windows production builds start from bundled application assets and no longer
+  depend on a running local development server.
+
+### Notes
+
+- Currency changes relabel amounts and do not convert numeric values.
+- Source tables show interpreted project data rather than raw spreadsheet
+  cells and remain read-only in this release.
+- Automatic refresh from remembered source paths and imperial units remain out
+  of scope.
+
+## 0.1.9-alpha
+
+This alpha adds project-scoped legend personalization and improves the visual
+consistency and scaling of both the browser and desktop applications.
+
+### Added
+
+- Personalize pile-size and tip-level appearances through the legend editor.
+- Choose whether pile size or tip level controls symbol shape, with the other
+  property controlling color.
+- Choose from 54 technical symbol and partial-fill combinations, including
+  manually assigned colors and symbols.
+- Reassign colors using Tableau Extended, Even Hue Spread,
+  Colorblind-friendly, Rainbow, Light to dark, or Cool to warm schemes.
+- Apply automatic symbol and color assignments to all legend items or only the
+  active items while preserving manual overrides until explicitly reassigned.
+- Scale the desktop interface from 50% to 150%, with `Ctrl+=`, `Ctrl+-`, and
+  `Ctrl+0`, and save projects with `Ctrl+S`.
+- Use a dedicated Pile Plan Studio application icon in the browser and Windows
+  desktop application.
+
+### Improved
+
+- Legend usage updates immediately when assignments or pile plans change,
+  without letting optimization alter project legend settings.
+- Triangle partial fills now represent half of the visible inner area, and
+  inactive editor items retain legible colors and controls.
+- The browser starts with a more compact interface while pointer selection,
+  lasso geometry, panel splitters, and modal placement remain coordinate-safe.
+- Bundled fonts, themed scrollbars, corrected undo and redo icons, and native
+  window controls improve consistency across light, dark, browser, and desktop
+  environments.
+- About views now show shared Pile Plan Studio product information and the
+  build version instead of stale template content.
+
+### Distribution
+
+- This release includes the first signed Windows x64 NSIS installer published
+  through the OpenAEC Azure Artifact Signing workflow.
+- The browser build and signed desktop installer use the same Rust calculation
+  core.
+
+## 0.1.8-alpha
+
+This alpha adds project history and browser recovery, and completes the first
+single-plan file workflow for projects that contain multiple pile plans.
+
+### Added
+
+- Undo and redo project changes from the title bar or with standard keyboard
+  shortcuts. History covers pile assignments, CPT selections, settings, pile
+  plan management, source imports, and other persisted project content.
+- Show a short history result near the bottom of the viewer, including the
+  affected plan and number of changed assignments where relevant.
+- Recover the latest browser project from IndexedDB after an accidental refresh
+  or interrupted browser session.
+- Resize the project explorer horizontally between compact and expanded widths,
+  using the same lightweight drag behavior as the properties panel.
+
+### Improved
+
+- Excel and CSV exports now state that they contain the active pile plan and use
+  that pile plan's name as the suggested file name.
+- Importing a standard or Legacy pile-plan table now creates and activates a new
+  pile plan named after the imported file. Existing plans remain unchanged and
+  duplicate names receive a numeric suffix.
+- Project pile-cost defaults once again come from the bundled sample data and
+  are no longer silently changed across projects by editing one project.
+- Activating the Load points or CPTs tab closes an open settings task panel,
+  while selecting objects in the viewer keeps that task panel available.
+
+### Notes
+
+- Browser recovery is a convenience safeguard, not a replacement for saving or
+  downloading an IFCPP project file.
+- Excel and CSV contain one active pile plan. IFCPP remains the format for
+  preserving all pile plans and project settings together.
+- This release does not publish a Windows installer. The browser build and
+  source code contain the 0.1.8-alpha changes.
+
+## 0.1.7-alpha
+
+This alpha adds per-plan load-point locking, a coordinate-based viewer grid,
+and a more focused settings workflow.
+
+### Added
+
+- Lock and unlock load points per pile plan. Locked locations remain visible
+  but dimmed, cannot be selected during ordinary plan editing, and are ignored
+  by greedy optimization.
+- Edit locked locations directly in the viewer using click and lasso
+  interactions, with Apply, Cancel, and Unlock all controls.
+- Show grid lines aligned to actual project coordinates, with adaptive spacing
+  and a View-ribbon toggle.
+
+### Improved
+
+- Project, plan, inspection, settings, locking, and optimization actions are
+  consolidated into a clearer ribbon layout.
+- CPT, cost, and optimization settings open as dedicated task panels while the
+  permanent right-panel tabs remain focused on load points and CPT inspection.
+- The maximum optimization utilization is entered as a percentage field and
+  configuration limits now allow temporary empty editing before validation.
+- Pile head level and CPT-selection number fields use the same deferred
+  validation on Enter or when leaving the field.
+- The feedback dialog accepts every non-empty message and opens issues in the
+  Pile Plan Studio repository.
+
+### Notes
+
+- This release does not publish a Windows installer. The browser build and
+  source code contain the 0.1.7-alpha changes.
+
+## 0.1.6-alpha
+
+This alpha adds multiple pile plans per project and introduces explicit,
+project-wide control over the pile-size and tip-level legend.
+
+### Added
+
+- Store multiple named pile plans in one IFCPP project and switch between them
+  from the project explorer.
+- Duplicate, rename, and remove pile plans while showing the estimated cost of
+  each plan.
+- Create a fresh pile plan from the cheapest valid assignments.
+- Optionally preserve the current plan as a separate variant when running the
+  greedy optimizer.
+- Edit enabled pile sizes and tip levels in a dedicated legend editor with
+  separate active and inactive groups.
+- Quickly activate only the sizes and tip levels used by the current pile plan
+  from the legend toolbar.
+
+### Improved
+
+- The legend now distinguishes used, unused, and disabled configurations
+  without changing project settings after optimization.
+- A used but disabled legend item remains visible with a warning, so existing
+  pile assignments never disappear silently.
+- Clicking a legend item selects all load points with that property;
+  Shift+click combines size and tip filters using the existing union and
+  intersection rules.
+- Legend usage updates immediately after pile assignment, optimization, or
+  switching to another pile plan.
+- The legend editor supports Apply and Cancel, bulk activation actions,
+  keyboard focus containment, and localized English and Dutch labels.
+
+### Notes
+
+- Enabled legend configurations belong to the project. Pile assignments and
+  locked locations belong to each individual pile plan.
+- This release does not publish a Windows installer. The browser build and
+  source code contain the 0.1.6-alpha changes.
+
+## 0.1.5-alpha
+
+This alpha improves control over the pile-plan viewer and makes dense or
+overlapping project data easier to inspect.
+
+### Added
+
+- Adjust viewer symbol size continuously from 10% to 200%.
+- Set a preferred utilization range and highlight assignments below or above
+  that range with progressively stronger green or red feedback.
+- Choose whether ordinary load points or CPTs are drawn in the foreground.
+- Configure a separate maximum utilization for greedy optimization.
+- Show total project cost and the current zoom level in the status bar.
+
+### Improved
+
+- Viewer zoom now supports levels up to 1000% while preserving sharp vector
+  symbols and responsive pan and zoom behavior.
+- Selection rings, CPT labels, hover hit areas, and overlap detection now track
+  the configured symbol size and exact project coordinates.
+- The active object beneath the pointer is always raised above the selected
+  foreground layer and can be cycled with Space when objects overlap.
+- Hover instructions now describe nearby objects directly and show
+  `Shift + Click` as an explicit multi-selection shortcut.
+- The preferred-range control now colours only the interval between its two
+  handles.
+- Space no longer activates focused ribbon, legend, or numeric input controls;
+  ordinary text fields retain normal text-entry behavior.
+
+### Notes
+
+- The preferred utilization range is a viewer setting. It does not redefine
+  the engineering resistance check used for pile-option status.
+- This release does not publish a new Windows installer. The browser build and
+  source code contain the 0.1.5-alpha changes.
+
+## 0.1.4-alpha
+
+This alpha expands CPT selection workflows and makes project-source refreshes
+safer for projects whose loads or source files change during design.
+
+### Added
+
+- Configure CPT-selection settings for all load points when no load point is
+  selected, or apply them only to the current selection.
+- Define a monopoly distance: when a CPT lies within this distance, it becomes
+  the only automatically selected CPT for that load point.
+- Edit manual CPT selections for multiple selected load points at once from the
+  CPT panel, including removing CPTs, selecting CPTs in the viewer, and choosing
+  only the nearest CPT.
+- Choose whether bulk CPT-setting changes may overwrite existing manual CPT
+  selections.
+- Connect common CPT selections with thin plan lines when all selected load
+  points use the same CPT set.
+- Refresh one or more imported project sources without creating a new project.
+
+### Improved
+
+- Source refreshes preserve pile assignments, manual CPT selections, local CPT
+  settings, and project identity wherever load points and CPTs can still be
+  matched reliably.
+- Refreshed load points are matched by validated ID first and then by a unique
+  coordinate fallback.
+- CPT-only refreshes show a non-blocking warning that the corresponding
+  foundation advice should also be refreshed.
+- Refresh requests accept persisted numeric identifiers consistently in both
+  the browser and desktop calculation paths.
+- Load points that cannot retain an existing assignment receive the cheapest
+  valid default pile without replacing assignments that were matched and
+  preserved.
+
+### Notes
+
+- Refreshing CPT coordinates without the matching foundation advice can make
+  capacities and pile configurations temporarily unavailable. Refresh both
+  sources together when the CPT set changes.
+- This release does not publish a new Windows installer. The browser build and
+  source code contain the 0.1.4-alpha changes.
+
+## 0.1.3-alpha
+
+This alpha adds pile-plan import and broadens compatibility with historical
+Pile Plan Studio and RFEM project data.
+
+### Added
+
+- Import pile assignments from the standard Pile Plan Studio Excel or CSV
+  table.
+- Import pile assignments from legacy `Vergrendeld.xlsx` workbooks.
+- Independently choose whether standard-table imports update pile assignments,
+  manual CPT selections, or both.
+- Preview matching results, coordinate fallbacks, skipped rows, and conflicts
+  before applying an imported pile plan.
+- Configure the coordinate matching tolerance, with a default of 1 mm.
+
+### Improved
+
+- Load points are matched by a validated ID first and then by one unique
+  coordinate match within tolerance.
+- Legacy RFEM names such as `Knoop 1603` are recognised as load-point IDs.
+- Historical or duplicate Legacy rows are reconciled safely: a current ID match
+  takes precedence, identical rows are deduplicated, and genuine conflicts are
+  still skipped with warnings.
+- RFEM import falls back to the first worksheet for nodes and the second for
+  nodal reactions when direct structural detection is unavailable.
+- RFEM reaction imports support both primed and unprimed PZ envelope layouts,
+  including `Min PZ'`, `Min PZ`, and `Min` rows.
+- The pile-plan import panel follows the existing OpenAEC backstage styling and
+  uses the shared import icon alignment.
+
+### Still Planned
+
+- Store multiple pile plans in one project and expose them in the project
+  explorer.
+- Export one selected pile plan or all project plans as a ZIP archive.
+- Edit manual CPT selections for multiple selected load points at once.
+
+## 0.1.2-alpha
+
+This alpha improves project-data exchange and adds an RFEM-oriented import
+workflow for load points.
+
+### Added
+
+- Automatic detection and manual selection of import profiles.
+- An RFEM Excel import profile that combines node coordinates and reactions
+  into load points.
+- Inline import previews with source diagnostics before project creation.
+- Excel and CSV export of the current pile assignments, including the selected
+  CPT identifiers for each load point.
+
+### Improved
+
+- Open, import, and export panels now share the OpenAEC backstage styling.
+- Import sources are presented as clear role-based blocks for load points,
+  CPTs, and foundation advice.
+- The RFEM profile can be selected before choosing a file and is automatically
+  restricted to compatible Excel sources.
+- Import warnings and profile information are localized consistently.
+- Browser-only actions are separated more clearly from desktop file actions.
+
+### Planned Next
+
+- Import pile assignments and CPT selections from the standard Pile Plan
+  Studio table and the legacy Excel format.
+- Store multiple pile plans in one project, expose them in the project
+  explorer, and export one plan or all plans as a ZIP archive.
+- Edit the manual CPT selection for multiple selected load points at once.
+
+## 0.1.1-alpha
+
+This alpha focuses on making dense pile plans easier to inspect and improving
+the visual clarity of selections and engineering information.
+
+### Added
+
+- A compact hover inspector for load points and CPTs.
+- Candidate detection for markers that overlap or lie very close together.
+- Spacebar cycling between multiple markers beneath the pointer before
+  selection.
+- Compact marker previews that preserve pile, CPT, missing-option, and
+  selection styling.
+
+### Improved
+
+- Viewer coordinates retain their full precision instead of being rounded for
+  marker positioning.
+- Overlapping marker selection now prioritizes the candidate nearest to the
+  pointer.
+- Candidate detection is limited to directly relevant visible markers, avoiding
+  large transitive overlap groups.
+- Selected CPTs remain above ordinary load points while selected load points
+  retain the highest interaction layer.
+- CPT numbers are positioned and scaled more consistently in both the plan and
+  hover inspector.
+- CPT names remain available when imported data does not contain a display
+  name.
+- CPT links in the selection and pile-option tables use consistent localized
+  terminology.
+- Selected CPT markers now use an opaque, light accent fill and accent contour
+  in every theme.
+- Pile-size symbols in the legend inherit the active theme text color.
+- The selected pile-option row has a subtle accent background in addition to
+  its accent bar.
+- Pile-option hover rows use a visible neutral background in light and dark
+  themes.
+
+### Engineering Model
+
+The pile-option calculation model, foundation-resistance checks, and greedy
+optimization behavior are unchanged in this release. The changes primarily
+improve inspection, marker selection, terminology, and visual feedback.
+
+## 0.1.0-alpha
+
+Initial public alpha with:
+
+- CSV and XLSX import for load points, CPT coordinates, and foundation advice;
+- IFCPP project save and reopen support;
+- Rust-based pile-option analysis in desktop and browser environments;
+- automatic and manual CPT selection;
+- pile cost settings and cheapest-valid default assignments;
+- multi-load-point selection and common pile options;
+- greedy pile-plan optimization;
+- browser demo and Windows desktop packaging.
+
+See [Known Alpha Limitations](docs/known-limitations.md) before using results in
+an engineering workflow.

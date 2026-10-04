@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Spanvision Infra · Geotechnical",
+  "version": "0.4.1",
+  "identifier": "com.spanvisioninfra.geotechniek",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:3020",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Spanvision Infra · Geotechnical — Spanvision Infra",
+        "width": 1000,
+        "height": 700,
+        "minWidth": 600,
+        "minHeight": 400,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis",
+      "dmg",
+      "deb",
+      "appimage"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "gef"
+        ],
+        "name": "GEFSondering",
+        "description": "Sondering (GEF)",
+        "role": "Editor",
+        "mimeType": "application/x-gef"
+      },
+      {
+        "ext": [
+          "ifcgeo"
+        ],
+        "name": "GeotechniekObject",
+        "description": "Spanvision Infra · Geotechnical project / CPT file",
+        "role": "Editor",
+        "mimeType": "application/x-ifcgeo+json"
+      }
+    ],
+    "resources": {
+      "tenants/": "tenants/",
+      "icons/file-associations/": "icons/file-associations/",
+      "vendor/WebView2Loader.dll": "WebView2Loader.dll"
+    },
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "installMode": "perMachine",
+        "installerIcon": "icons/icon.ico",
+        "installerHooks": "nsis/installer-hooks.nsh"
+      }
+    },
+    "publisher": "Spanvision Infra"
+  },
+  "mainBinaryName": "spanvision-geotechniek-workspace"
+}

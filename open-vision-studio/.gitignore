@@ -1,0 +1,46 @@
+node_modules
+node_modules/
+dist/
+.vite/
+*.local
+.DS_Store
+.claude/*
+# Deel alleen de project-specifieke skills en rules mee; de rest van .claude/ blijft lokaal
+!.claude/skills/
+!.claude/rules/
+.claude/skills/*
+!.claude/skills/release/
+!.claude/skills/wiki/
+!.claude/skills/docs-update/
+!.claude/skills/goed-plannen/
+temp/
+
+# Build-uitvoer van `npm run gen:tutorial-project` (de extensie-build haalt hem hier op)
+/build/tutorial-project/
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Playwright MCP self-test artifacts
+.playwright-mcp/
+
+# Playwright browser-test artifacts
+playwright-report/
+test-results/
+
+# Visual brainstorm companion mockups
+.superpowers/
+
+# Lokale QA-screenshots (niet committen). Gecommit schermbewijs bij een PR hoort juist in
+# artifacts/<onderwerp>/ — klein houden (PNG, ≤ ~150 KB, een handvol per PR); zie CLAUDE.md.
+qa/
+
+# Gegenereerde wiki (build-artefact van scripts/publish-wiki.mjs)
+tests/planning/.*.mjs
+.wiki-build/
+.wiki-repo/
+
+# Lokale promptnotities (PR #62)
+PROMPTS.md
+output/

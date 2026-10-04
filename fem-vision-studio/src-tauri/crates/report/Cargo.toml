@@ -1,0 +1,48 @@
+[package]
+name = "report"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+nationale-bijlage = { path = "../nationale-bijlage" }
+serde = { workspace = true }
+ts-rs = { workspace = true }
+# OpenAEC Foundation report layout engine — Rust equivalent of ReportLab Platypus.
+# Vendored from crates-warehouse/openaec-layout (May 2026) into ../openaec-layout.
+openaec-layout = { path = "../openaec-layout" }
+steel-check = { path = "../steel-check" }
+timber-check = { path = "../timber-check" }
+concrete-check = { path = "../concrete-check" }
+# De vierde, norm-onafhankelijke kern. Het rapport draagt haar resultaten mee
+# omdat een model met uitsluitend vrije materialen anders een PDF zonder één
+# getoetste staaf oplevert — en een rapport dat niets draagt, valt terug op een
+# norm die nergens is toegepast.
+spanning-check = { path = "../spanning-check" }
+# De plaattoets (wandschijven): het rapport draagt haar resultaten voor het
+# hoofdstuk "Platen" (issue #25), zoals het live rapport ze toont.
+plaat-check = { path = "../plaat-check" }
+# Alleen voor de betonfiguren (`betonfiguren.rs`): die leiden de doorsnede en de
+# korf af uit `ConcreteSection` / `ReinforcementCage` zelf, zodat de meetkunde
+# uit dezelfde bron komt als de tekening op het scherm.
+nen-en-1992-1-1 = { path = "../nen-en-1992-1-1" }
+# Voor de houtfiguren (`houtfiguren.rs`): het τ-verloop in de figuur wordt uit
+# `CltMechanics` bemonsterd — dezelfde mechanica die de toets zelf gebruikt —
+# in plaats van uit een tweede formulering van bijlage B. Daarmee is deze
+# crate geen dev-afhankelijkheid meer maar een gewone.
+nen-en-1995-1-1 = { path = "../nen-en-1995-1-1" }
+nen-en-1993-1-1-section = { path = "../nen-en-1993-1-1-section" }
+nen-en-1993-1-1-stability = { path = "../nen-en-1993-1-1-stability" }
+
+[dev-dependencies]
+mechanics = { path = "../mechanics" }
+# Alleen voor de PDF-proef in `tests/betonhoofdstuk_pdf.rs`: die pakt de
+# gerenderde PDF weer uit en zoekt de woorden van het hoofdstuk terug in de
+# inhoudsstroom. `lopdf` decomprimeert de stroom, `ttf-parser` vertaalt een
+# woord naar de glief-nummers waarmee het in de PDF staat. Beide zitten al in
+# de afhankelijkheidsboom (printpdf gebruikt ze), dus dit kost geen nieuwe crate.
+lopdf = "0.31"
+ttf-parser = "0.25"
+serde_json = { workspace = true }

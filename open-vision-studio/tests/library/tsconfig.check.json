@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    // I5 (T3-kwaliteitsreview): was `[]` met een losse `node-builtins.d.ts`-ambient-shim voor
+    // node:fs/url/path + een `declare const process` per check-bestand. Die shim declareerde een
+    // VERSE ambient module voor 'node:fs' — en omdat `tsconfig.tests.json` heel `tests/` in één
+    // programma neemt, gold die smalle shim (alleen een utf8-overload) ook voor bestanden buiten
+    // tests/library/ die 'm nooit bedoelden, zoals tests/planning/check-mpp-import.ts (binair
+    // lezen zonder encoding). Nu net als tests/planning/tsconfig.check.json: de echte
+    // @types/node-signatuur.
+    "types": ["node"]
+  },
+  // Was een handonderhouden opsomming naast ALL_CHECKS in run.sh — de twee liepen uit elkaar
+  // (check-distribute.ts ontbrak hier, dus draaide wél maar werd nooit getypecheckt). Een glob
+  // over alle check-*.ts in deze map kan per definitie niet meer afwijken van wat run.sh's eigen
+  // map-glob oppikt.
+  "include": [
+    "check-*.ts",
+    "../../src/types/file-system-access.d.ts"
+  ]
+}

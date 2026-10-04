@@ -1,0 +1,162 @@
+{
+  "results": [
+    {
+      "scenario": "fresh-mono-layout",
+      "width": 320
+    },
+    {
+      "scenario": "about-focus-and-notices",
+      "width": 320
+    },
+    {
+      "scenario": "keyboard-location-suggestions",
+      "width": 320
+    },
+    {
+      "scenario": "draw-area-boundary",
+      "width": 320
+    },
+    {
+      "scenario": "drag-box-and-click-mode",
+      "width": 320
+    },
+    {
+      "scenario": "hide-and-restore-buildings",
+      "width": 320
+    },
+    {
+      "scenario": "real-stl-import-and-keyboard-placement",
+      "width": 320
+    },
+    {
+      "scenario": "folder-choice-cancel-generate-download",
+      "width": 320
+    },
+    {
+      "scenario": "theme-and-project-persistence",
+      "width": 320
+    },
+    {
+      "scenario": "fresh-mono-layout",
+      "width": 390
+    },
+    {
+      "scenario": "about-focus-and-notices",
+      "width": 390
+    },
+    {
+      "scenario": "keyboard-location-suggestions",
+      "width": 390
+    },
+    {
+      "scenario": "draw-area-boundary",
+      "width": 390
+    },
+    {
+      "scenario": "drag-box-and-click-mode",
+      "width": 390
+    },
+    {
+      "scenario": "hide-and-restore-buildings",
+      "width": 390
+    },
+    {
+      "scenario": "real-stl-import-and-keyboard-placement",
+      "width": 390
+    },
+    {
+      "scenario": "folder-choice-cancel-generate-download",
+      "width": 390
+    },
+    {
+      "scenario": "theme-and-project-persistence",
+      "width": 390
+    },
+    {
+      "scenario": "fresh-mono-layout",
+      "width": 820
+    },
+    {
+      "scenario": "about-focus-and-notices",
+      "width": 820
+    },
+    {
+      "scenario": "keyboard-location-suggestions",
+      "width": 820
+    },
+    {
+      "scenario": "draw-area-boundary",
+      "width": 820
+    },
+    {
+      "scenario": "drag-box-and-click-mode",
+      "width": 820
+    },
+    {
+      "scenario": "hide-and-restore-buildings",
+      "width": 820
+    },
+    {
+      "scenario": "real-stl-import-and-keyboard-placement",
+      "width": 820
+    },
+    {
+      "scenario": "folder-choice-cancel-generate-download",
+      "width": 820
+    },
+    {
+      "scenario": "theme-and-project-persistence",
+      "width": 820
+    },
+    {
+      "scenario": "fresh-mono-layout",
+      "width": 1440
+    },
+    {
+      "scenario": "about-focus-and-notices",
+      "width": 1440
+    },
+    {
+      "scenario": "keyboard-location-suggestions",
+      "width": 1440
+    },
+    {
+      "scenario": "draw-area-boundary",
+      "width": 1440
+    },
+    {
+      "scenario": "drag-box-and-click-mode",
+      "width": 1440
+    },
+    {
+      "scenario": "hide-and-restore-buildings",
+      "width": 1440
+    },
+    {
+      "scenario": "real-stl-import-and-keyboard-placement",
+      "width": 1440
+    },
+    {
+      "scenario": "folder-choice-cancel-generate-download",
+      "width": 1440
+    },
+    {
+      "scenario": "theme-and-project-persistence",
+      "width": 1440
+    },
+    {
+      "scenario": "legacy-theme-dark"
+    },
+    {
+      "scenario": "legacy-theme-light"
+    },
+    {
+      "scenario": "legacy-theme-system"
+    },
+    {
+      "scenario": "interface-without-cdn-access"
+    }
+  ],
+  "errors": [],
+  "inheritedRequests": []
+}

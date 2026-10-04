@@ -1,0 +1,94 @@
+import type { PileConfigurationKey, PileConfigurationOption } from "../core/projectTypes.ts";
+import { samePileConfiguration } from "../core/pileConfigurationKey.ts";
+
+export type LegendSelectionFilter = {
+  pileSizes: number[];
+  pileTipLevels: number[];
+};
+
+export function replaceLegendSelectionFilter(
+  kind: "size" | "tip",
+  value: number,
+): LegendSelectionFilter {
+  return kind === "size"
+    ? { pileSizes: [value], pileTipLevels: [] }
+    : { pileSizes: [], pileTipLevels: [value] };
+}
+
+export function toggleLegendSelectionFilter(
+  filters: LegendSelectionFilter,
+  kind: "size" | "tip",
+  value: number,
+): LegendSelectionFilter {
+  return kind === "size"
+    ? { ...filters, pileSizes: toggleValue(filters.pileSizes, value, false) }
+    : { ...filters, pileTipLevels: toggleValue(filters.pileTipLevels, value, true) };
+}
+
+export function getLoadPointIdsForLegendSelection(
+  chosenOptions: Map<number, PileConfigurationOption | null>,
+  filters: LegendSelectionFilter,
+): number[] {
+  if (filters.pileSizes.length === 0 && filters.pileTipLevels.length === 0) {
+    return [];
+  }
+
+  return [...chosenOptions.entries()]
+    .filter(([, option]) => {
+      if (!option) {
+        return false;
+      }
+
+      const sizeMatches = filters.pileSizes.length === 0 || filters.pileSizes.includes(option.pile_size_mm);
+      const tipMatches = filters.pileTipLevels.length === 0
+        || filters.pileTipLevels.includes(option.configuration.pile_tip_level_mm);
+      return sizeMatches && tipMatches;
+    })
+    .map(([loadPointId]) => loadPointId);
+}
+
+export function shouldHighlightGoverningCpt(governingCptId: number | null, activeSelectedCptIds: number[]): boolean {
+  return governingCptId !== null && activeSelectedCptIds.includes(governingCptId);
+}
+
+export function getHighlightedGoverningCptId(input: {
+  activeSelectedCptIds: number[];
+  pileOptionsByLoadPointId: Map<number, PileConfigurationOption[]>;
+  selectedLoadPointIds: number[];
+  selectedPileConfigurationsByLoadPoint: Map<number, PileConfigurationKey>;
+}): number | null {
+  if (input.selectedLoadPointIds.length !== 1) {
+    return null;
+  }
+
+  const chosenConfigurations = input.selectedLoadPointIds.map(
+    (loadPointId) => input.selectedPileConfigurationsByLoadPoint.get(loadPointId),
+  );
+  const chosenConfiguration = chosenConfigurations[0];
+  if (!chosenConfiguration || chosenConfigurations.some(
+    (configuration) => !samePileConfiguration(configuration, chosenConfiguration),
+  )) {
+    return null;
+  }
+
+  const options = input.pileOptionsByLoadPointId.get(input.selectedLoadPointIds[0]) ?? [];
+  const governingCptId = options.find(
+    (option) => samePileConfiguration(option.configuration, chosenConfiguration),
+  )?.governing_cpt_id ?? null;
+
+  return shouldHighlightGoverningCpt(governingCptId, input.activeSelectedCptIds)
+    ? governingCptId
+    : null;
+}
+
+function toggleValue(values: number[], value: number, descending: boolean): number[] {
+  const nextValues = new Set(values);
+
+  if (nextValues.has(value)) {
+    nextValues.delete(value);
+  } else {
+    nextValues.add(value);
+  }
+
+  return [...nextValues].sort((left, right) => (descending ? right - left : left - right));
+}

@@ -1,0 +1,66 @@
+.playerControls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.playerBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--command-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.playerBtn:hover:not(:disabled) {
+    background: var(--command-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+}
+
+.playerBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.playBtn {
+    width: 48px;
+    height: 48px;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--bg-dark);
+}
+
+.playBtn:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.playing {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+@media (max-height: 760px) {
+    .playerControls {
+        margin-bottom: 10px;
+    }
+
+    .playerBtn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .playBtn {
+        width: 44px;
+        height: 44px;
+    }
+}

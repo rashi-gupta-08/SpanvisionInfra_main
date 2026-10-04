@@ -1,0 +1,304 @@
+[
+  {
+    "id": "hout-alu-67x114",
+    "name": "Hout-Aluminium 67x114mm",
+    "manufacturer": "Generiek",
+    "series": "Hout-Aluminium Combi",
+    "material": "wood_aluminum",
+    "materialSubtype": "meranti_alu",
+    "width": 67,
+    "depth": 114,
+    "sightline": 50,
+    "glazingRebate": 51,
+    "maxGlassWeight": 90,
+    "aluCapWidth": 40,
+    "aluCapDepth": 25,
+    "crossSection": [
+      [0, 0],
+      [67, 0],
+      [67, 63],
+      [50, 63],
+      [50, 114],
+      [0, 114]
+    ],
+    "ufValue": 1.5,
+    "applicableAs": [
+      "frame",
+      "sash"
+    ],
+    "finishes": [
+      "hout gegrond + alu gepoedercoat"
+    ],
+    "colors": [
+      "RAL9010",
+      "RAL9001",
+      "RAL9016",
+      "RAL7016",
+      "RAL7021",
+      "RAL9005",
+      "DB703"
+    ],
+    "sponning": {
+      "width": 51,
+      "depth": 17,
+      "type": "binnensponning"
+    },
+    "aanslagSponning": {
+      "depth": 29,
+      "clearance": 6
+    },
+    "glaslatWidth": 17,
+    "glaslatHeight": 17,
+    "achterhout": 13,
+    "sources": [
+      "KVT 12.2: sponninghoogte houten kern vast 17 mm (zichtlijn 50)",
+      "KVT-tekening 14.01 + DTS: binnensponning vast glas 51x17",
+      "TO-binnendetaillering 2024: aanslagsponning draaiend deel 29 mm, lucht 6 mm"
+    ],
+    "unverifiedFields": [
+      "ufValue",
+      "maxGlassWeight"
+    ],
+    "innerWalls": [
+      [
+        [0, 0],
+        [67, 0],
+        [67, 25],
+        [65, 25],
+        [65, 2],
+        [0, 2]
+      ],
+      [
+        [0, 2],
+        [65, 2],
+        [65, 25],
+        [61, 25],
+        [61, 6],
+        [0, 6]
+      ]
+    ]
+  },
+  {
+    "id": "hout-alu-67x130",
+    "name": "Hout-Aluminium 67x130mm (zwaar)",
+    "manufacturer": "Generiek",
+    "series": "Hout-Aluminium Combi",
+    "material": "wood_aluminum",
+    "materialSubtype": "meranti_alu",
+    "width": 67,
+    "depth": 130,
+    "sightline": 50,
+    "glazingRebate": 51,
+    "maxGlassWeight": 110,
+    "aluCapWidth": 40,
+    "aluCapDepth": 25,
+    "crossSection": [
+      [0, 0],
+      [67, 0],
+      [67, 79],
+      [50, 79],
+      [50, 130],
+      [0, 130]
+    ],
+    "ufValue": 1.4,
+    "applicableAs": [
+      "frame",
+      "sash"
+    ],
+    "finishes": [
+      "hout gegrond + alu gepoedercoat"
+    ],
+    "colors": [
+      "RAL9010",
+      "RAL9001",
+      "RAL9016",
+      "RAL7016",
+      "RAL7021",
+      "RAL9005",
+      "DB703"
+    ],
+    "sponning": {
+      "width": 51,
+      "depth": 17,
+      "type": "binnensponning"
+    },
+    "aanslagSponning": {
+      "depth": 29,
+      "clearance": 6
+    },
+    "glaslatWidth": 17,
+    "glaslatHeight": 17,
+    "achterhout": 13,
+    "sources": [
+      "KVT 12.2: sponninghoogte 17 mm; sponningbreedte 51 (KVT 14.01/DTS)"
+    ],
+    "unverifiedFields": [
+      "ufValue",
+      "maxGlassWeight",
+      "depth"
+    ],
+    "dataNotes": [
+      "diepte 130 valt buiten de KVT-reeks (90/102/114/139) — fabrieksmaat niet geverifieerd"
+    ],
+    "innerWalls": [
+      [
+        [0, 0],
+        [67, 0],
+        [67, 25],
+        [65, 25],
+        [65, 2],
+        [0, 2]
+      ],
+      [
+        [0, 2],
+        [65, 2],
+        [65, 25],
+        [61, 25],
+        [61, 6],
+        [0, 6]
+      ]
+    ]
+  },
+  {
+    "id": "hout-alu-67x114-dorpel",
+    "name": "Hout-Aluminium Onderdorpel 67x114mm",
+    "manufacturer": "Generiek",
+    "series": "Hout-Aluminium Combi",
+    "material": "wood_aluminum",
+    "materialSubtype": "meranti_alu",
+    "width": 67,
+    "depth": 114,
+    "sightline": 50,
+    "glazingRebate": 53,
+    "maxGlassWeight": null,
+    "aluCapWidth": 50,
+    "aluCapDepth": 30,
+    "crossSection": [
+      [0, 0],
+      [67, 0],
+      [67, 61],
+      [50, 61],
+      [50, 114],
+      [0, 114]
+    ],
+    "ufValue": 1.5,
+    "applicableAs": [
+      "sill"
+    ],
+    "finishes": [
+      "hout gegrond + alu gepoedercoat"
+    ],
+    "colors": [
+      "RAL9010",
+      "RAL7016",
+      "RAL9005"
+    ],
+    "sponning": {
+      "width": 53,
+      "depth": 17,
+      "type": "binnensponning",
+      "slopeDegrees": 10
+    },
+    "glaslatWidth": 17,
+    "glaslatHeight": 17,
+    "achterhout": 13,
+    "waterhol": true,
+    "sources": [
+      "KVT 61.1 + DTS + TO 2024: standaard onderdorpel 67x114 (verving 67x150 — geen reeks-/handelsmaat)",
+      "KVT 14.2: sponningbodem afwaterend >= 9 graden (praktijk 10); aluminium schaal werkt als lekdorpel"
+    ],
+    "unverifiedFields": [
+      "ufValue"
+    ],
+    "innerWalls": [
+      [
+        [0, 0],
+        [67, 0],
+        [67, 30],
+        [65, 30],
+        [65, 2],
+        [0, 2]
+      ],
+      [
+        [0, 2],
+        [65, 2],
+        [65, 30],
+        [61, 30],
+        [61, 6],
+        [0, 6]
+      ]
+    ]
+  },
+  {
+    "id": "hout-alu-90x114-tussenstijl",
+    "name": "Hout-Aluminium Tussenstijl 90x114mm",
+    "manufacturer": "Generiek",
+    "series": "Hout-Aluminium Combi",
+    "material": "wood_aluminum",
+    "materialSubtype": "meranti_alu",
+    "width": 90,
+    "depth": 114,
+    "sightline": 73,
+    "glazingRebate": 51,
+    "maxGlassWeight": null,
+    "aluCapWidth": 40,
+    "aluCapDepth": 25,
+    "crossSection": [
+      [0, 0],
+      [90, 0],
+      [90, 63],
+      [73, 63],
+      [73, 114],
+      [17, 114],
+      [17, 63],
+      [0, 63]
+    ],
+    "ufValue": 1.5,
+    "applicableAs": [
+      "divider"
+    ],
+    "finishes": [
+      "hout gegrond + alu gepoedercoat"
+    ],
+    "colors": [
+      "RAL9010",
+      "RAL7016"
+    ],
+    "sponning": {
+      "width": 51,
+      "depth": 17,
+      "type": "binnensponning"
+    },
+    "glaslatWidth": 17,
+    "glaslatHeight": 17,
+    "achterhout": 13,
+    "sources": [
+      "KVT 30.5.3 + TO 2024 p.11-12: tussenstijl 90x114 fabrieksstandaard; 54 mm bestaat niet als kozijn-tussenstijl"
+    ],
+    "unverifiedFields": [
+      "ufValue"
+    ],
+    "innerWalls": [
+      [
+        [0, 0],
+        [90, 0],
+        [90, 25],
+        [88, 25],
+        [88, 2],
+        [2, 2],
+        [2, 25],
+        [0, 25]
+      ],
+      [
+        [2, 2],
+        [88, 2],
+        [88, 25],
+        [84, 25],
+        [84, 6],
+        [6, 6],
+        [6, 25],
+        [2, 25]
+      ]
+    ]
+  }
+]

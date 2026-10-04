@@ -1,0 +1,288 @@
+{
+  "cad2d": [],
+  "bim": [],
+  "pdf": [
+    {
+      "file": "spanvision-pdf-workspace\\open-pdf-studio\\js\\drafting\\constructie\\constructieplan.js",
+      "text": "naam",
+      "kind": "StringLiteral"
+    }
+  ],
+  "ifc": [],
+  "calc": [
+    {
+      "file": "calc-workspace\\src\\App.tsx",
+      "text": "rapport",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "calc-workspace\\src\\components\\grid\\SubSheetTabBar.tsx",
+      "text": "rapport",
+      "kind": "StringLiteral"
+    }
+  ],
+  "planner": [
+    {
+      "file": "open-vision-studio\\src\\components\\dialogs\\CalendarGeneratorFields.tsx",
+      "text": "geen",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\components\\dialogs\\JustUpdatedDialog.tsx",
+      "text": "naar",
+      "kind": "TemplateMiddle"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\benchmark\\generateProject.ts",
+      "text": "Gegenereerd testproject voor de ingebouwde benchmark",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\baselineTools.ts",
+      "text": "Id van de baseline die actief moet worden (planner_list_baselines), of null voor geen actieve baseline.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\baselineTools.ts",
+      "text": "Id van de te hernoemen baseline (planner_list_baselines).",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\baselineTools.ts",
+      "text": "De nieuwe naam; mag niet leeg zijn.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\baselineTools.ts",
+      "text": "Id van de te verwijderen baseline (planner_list_baselines).",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\batchTool.ts",
+      "text": "Naam van de tool, inclusief `planner_`-prefix.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\batchTool.ts",
+      "text": "De args van die tool; weglaten voor tools zonder args.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Einde in MINUTEN vanaf middernacht van de STARTdag; over middernacht telt door (22:00→06:00 = 1800). Moet groter zijn dan `start`.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "De te wijzigen/aan te maken kalenders; alles in één transactie.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Begin van de pauze op een DAG-kalender, in MINUTEN vanaf middernacht (12:30 = 750). Leesveld van get_calendars. De netto uren (`hoursPerDay`) worden eruit afgeleid, zoals in de kalenderdialoog.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Pauzeduur in MINUTEN (0 = geen pauze). Moet binnen de werkdag vallen en mag hem niet helemaal beslaan. Leesveld van get_calendars.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Alleen NL; default `geen`.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "NL-bouwvak; weglaten = geen.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "AFGELEID leesveld van get_calendars — mag mee, wordt genegeerd (komt terug als `ignoredFields`).",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "AFGELEID leesveld van get_calendars — mag mee, wordt genegeerd.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "AFGELEID leesveld van get_calendars — mag mee, wordt genegeerd.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Bibliotheekstempel uit get_calendars (hoort bij het BRONdocument) — mag mee, wordt genegeerd (komt terug als `ignoredFields`); koppelen aan de bibliotheek gaat via de app.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Bij `add`: de bladtaak. Bij `move`: de NIEUWE bladtaak.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Bij `update`/`move`/`remove`; exact het id uit de leestools.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Beperk tot deze resources; weglaten = alle hernieuwbare resources (materiaal telt nooit mee).",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "ISO-datum (JJJJ-MM-DD). Anker voor NIEUWE taken; verschuift bestaande taken NIET.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Nieuwe projectstart als ISO-datum (JJJJ-MM-DD).",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\calendarResourceTools.ts",
+      "text": "Naam van de baseline; weglaten = \"Baseline N\".",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\documentTools.ts",
+      "text": "Projectnaam voor de kopie; weglaten ⇒ \"<naam> (variant N)\"",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\fileTools.ts",
+      "text": "true = een bestaand bestand vervangen (default false)",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+      "text": "ISO-datum ondergrens van het venster",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+      "text": "ISO-datum bovengrens van het venster",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+      "text": "Aantal per pagina (default 50)",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+      "text": "Aantal per pagina (default 50)",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\resourceTools.ts",
+      "text": "Vrije omschrijving; \"\" leegt hem.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\resourceTools.ts",
+      "text": "Meeteenheid, ALLEEN voor type MATERIAL (bijv. \"m3\"); `null` wist hem.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\taskFields.ts",
+      "text": "Blijvende taakeenheid. Altijd samen met `duration` opgeven; hours vereist concrete werkblokken.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\taskFields.ts",
+      "text": "Anker van de mijlpaal; null = automatisch.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\taskFields.ts",
+      "text": "Verplichte (contractuele) mijlpaal — markering voor rapportage.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\taskTools.ts",
+      "text": "ISO-datum; mag niet ná de statusdatum liggen. null wist hem. Verplicht bij voortgang op een taak zonder werkelijke start waarvan de geplande start ná de statusdatum ligt.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\taskTools.ts",
+      "text": "De volledige nieuwe lijst onderbrekingen (leeg = alles opheffen), in willekeurige volgorde.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\xerProvenanceTools.ts",
+      "text": "Verplichte expliciete XER-projectselector voor taskSourceRowsByProject.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "open-vision-studio\\src\\services\\mcp\\tools\\xerProvenanceTools.ts",
+      "text": "Aantal items/chunks; default 50, rawSource maximaal 8, includeRawRows maximaal 100.",
+      "kind": "StringLiteral"
+    }
+  ],
+  "fem": [],
+  "frame": [
+    {
+      "file": "frame-vision-studio\\ui\\src\\lib\\aiTools.js",
+      "text": "Section template: timber (standaard-67-meranti by default, standaard-67-accoya, zwaar-78-meranti, passief-90-meranti), uPVC (kunststof-82-veka, kunststof-88-kommerling), aluminum (aluminium-77-reynaers, aluminium-75-schuco).",
+      "kind": "StringLiteral"
+    }
+  ],
+  "calculation": [
+    {
+      "file": "vision-calculation-studio\\packages\\desktop\\src\\components\\calc\\ProjectBrowser.tsx",
+      "text": "gereed",
+      "kind": "StringLiteral"
+    }
+  ],
+  "geo": [
+    {
+      "file": "spanvision-geptechniek-workspace\\apps\\desktop\\src\\App.tsx",
+      "text": "tekening",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "spanvision-geptechniek-workspace\\apps\\desktop\\src\\App.tsx",
+      "text": "tekening",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "spanvision-geptechniek-workspace\\apps\\desktop\\src\\data\\sondeerbedrijven.ts",
+      "text": "Beemsterboer Boringen, Bemalingen en Sonderingen B.V.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "spanvision-geptechniek-workspace\\apps\\desktop\\src\\data\\sondeerbedrijven.ts",
+      "text": "Hooyberg Sonderingen",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "spanvision-geptechniek-workspace\\apps\\desktop\\src\\data\\sondeerbedrijven.ts",
+      "text": "Tjaden Adviesbureau voor Grondmechanica (vestiging Nieuw-Vennep)",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "spanvision-geptechniek-workspace\\apps\\desktop\\src\\data\\sondeerbedrijven.ts",
+      "text": "Van Dijk Geotechniek en Milieu B.V.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "spanvision-geptechniek-workspace\\apps\\desktop\\src\\data\\sondeerbedrijven.ts",
+      "text": "A.P. van den Berg Ingenieursbureau B.V.",
+      "kind": "StringLiteral"
+    },
+    {
+      "file": "spanvision-geptechniek-workspace\\apps\\desktop\\src\\data\\sondeerbedrijven.ts",
+      "text": "Van der Straaten Aannemingsmaatschappij B.V.",
+      "kind": "StringLiteral"
+    }
+  ],
+  "speech": [],
+  "stl": [],
+  "field": [],
+  "pointcloud": [],
+  "pile": []
+}

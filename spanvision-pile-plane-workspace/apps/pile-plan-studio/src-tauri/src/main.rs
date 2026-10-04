@@ -1,0 +1,713 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+mod profile_migration;
+
+use pile_plan_core::{
+    aggregate_pile_options_for_load_points,
+    apply_load_point_group_assignment as apply_load_point_group_assignment_core,
+    apply_load_point_group_assignment_batch as apply_load_point_group_assignment_batch_core,
+    apply_load_point_group_edit as apply_load_point_group_edit_core,
+    apply_load_point_group_ungroup_batch as apply_load_point_group_ungroup_batch_core,
+    assess_load_point_group_assignments as assess_load_point_group_assignments_core,
+    assess_technical_assignment as assess_technical_assignment_core,
+    build_load_point_topology as build_load_point_topology_core, build_pile_option_analysis,
+    build_tip_level_region_topology as build_tip_level_region_topology_core, calculate_pile_cost,
+    choose_default_pile_options, derive_load_point_groups as derive_load_point_groups_core,
+    evaluate_cpt_settings_edit as evaluate_cpt_settings_edit_core,
+    evaluate_load_point_grouping_settings as evaluate_load_point_grouping_settings_core,
+    evaluate_pile_cost_catalog_edit as evaluate_pile_cost_catalog_edit_core,
+    evaluate_mcp_project_edit as evaluate_mcp_project_edit_core,
+    import_project_from_sources, preview_import_source,
+    preview_load_point_group_edit as preview_load_point_group_edit_core, preview_pile_plan_import,
+    read_project_document as read_project_document_core, refresh_project_from_profiled_sources,
+    validate_load_point_lock_batch as validate_load_point_lock_batch_core,
+    validate_manual_cpt_selection_batch as validate_manual_cpt_selection_batch_core,
+    validate_project_tip_levels, write_pile_plan_csv as write_pile_plan_csv_bytes,
+    write_pile_plan_xlsx as write_pile_plan_xlsx_bytes,
+    write_project_document as write_project_document_core, AggregatedPileConfiguration,
+    ApplyLoadPointGroupAssignmentBatchInput, ApplyLoadPointGroupAssignmentBatchResult,
+    ApplyLoadPointGroupAssignmentInput, ApplyLoadPointGroupAssignmentResult, CptSelectionSettings,
+    CptSettingsEditInput, CptSettingsEditResult, DerivedLoadPointGroups, GroupAssignmentConflict,
+    ImportSource, ImportSourcePreview, InvalidPileTipLevels, LoadPointGroup,
+    LoadPointGroupEditInput, LoadPointGroupEditPreview, LoadPointGroupEditResult,
+    LoadPointGroupUngroupBatchInput, LoadPointGroupingSettings, LoadPointGroupingSettingsEditInput,
+    LoadPointGroupingSettingsEditResult, LoadPointLockBatchInput, LoadPointLockBatchResult,
+    LoadPointTopology, ManualCptSelectionBatchInput, ManualCptSelectionBatchResult,
+    PileConfigurationKey, PileConfigurationOption, PileCostCatalogEditInput,
+    PileCostCatalogEditResult, PileCostSettings, PileOptionAnalysisResult, PilePlanExportRequest,
+    McpProjectEditInput, McpProjectEditResult,
+    PilePlanImportPreview, PilePlanImportRequest, PilePlanProject, ProjectBearingCapacity,
+    ProjectCpt, ProjectDocumentDraft, ProjectDocumentError, ProjectLoadPoint,
+    TechnicalAssignmentAssessment, TechnicalAssignmentAssessmentError, TipLevelRegionAssignment,
+    TipLevelRegionTopology, ValidatedPilePlanProject,
+};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+use tauri::{Emitter, Manager, State};
+mod ilp_optimization;
+mod mcp_bridge;
+use ilp_optimization::{cancel_ilp_optimization, ilp_optimize, IlpJobs};
+use mcp_bridge::{mcp_bridge_start, mcp_bridge_stop, McpBridgeState};
+
+const PROJECT_OPEN_REQUESTED_EVENT: &str = "project-open-requested";
+
+#[derive(Debug, Default)]
+struct PendingProjectPaths {
+    paths: Mutex<Vec<String>>,
+}
+
+impl PendingProjectPaths {
+    fn new(paths: Vec<String>) -> Self {
+        Self {
+            paths: Mutex::new(paths),
+        }
+    }
+
+    fn extend(&self, paths: Vec<String>) {
+        self.paths
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .extend(paths);
+    }
+
+    fn take(&self) -> Vec<String> {
+        std::mem::take(
+            &mut *self
+                .paths
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner()),
+        )
+    }
+}
+
+fn project_paths_from_args<I, S>(args: I, cwd: &Path) -> Vec<String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    args.into_iter()
+        .skip(1)
+        .filter_map(|argument| {
+            let path = PathBuf::from(argument.as_ref());
+            let is_ifcpp = path
+                .extension()
+                .and_then(OsStr::to_str)
+                .is_some_and(|extension| extension.eq_ignore_ascii_case("ifcpp"));
+            if !is_ifcpp {
+                return None;
+            }
+            let path = if path.is_absolute() {
+                path
+            } else {
+                cwd.join(path)
+            };
+            Some(path.to_string_lossy().into_owned())
+        })
+        .collect()
+}
+
+#[derive(Debug, Deserialize)]
+struct PileOptionAnalysisRequest {
+    load_points: Vec<ProjectLoadPoint>,
+    cpts: Vec<ProjectCpt>,
+    bearing_capacities: Vec<ProjectBearingCapacity>,
+    global_settings: CptSelectionSettings,
+    settings_by_load_point: HashMap<u32, CptSelectionSettings>,
+    manual_cpt_ids_by_load_point: HashMap<u32, Vec<u32>>,
+    include_cpt_frd_rows: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct PileCostRequest {
+    pile_size_mm: u32,
+    pile_tip_level_m: f64,
+    pile_head_level_m: f64,
+    settings: PileCostSettings,
+}
+
+#[derive(Debug, Deserialize)]
+struct DefaultPileOptionsRequest {
+    options_by_load_point: HashMap<u32, Vec<PileConfigurationOption>>,
+    groups: Vec<LoadPointGroup>,
+    pile_head_level_m: f64,
+    cost_settings: PileCostSettings,
+}
+
+#[derive(Debug, Deserialize)]
+struct AggregatePileOptionsRequest {
+    options_by_load_point: HashMap<u32, Vec<PileConfigurationOption>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TechnicalAssignmentRequest {
+    groups: Vec<LoadPointGroup>,
+    options_by_load_point: HashMap<u32, Vec<PileConfigurationOption>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ImportProjectRequest {
+    project_name: String,
+    pile_head_level_m: Option<f64>,
+    currency_code: String,
+    sources: Vec<ImportSource>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RefreshProjectRequest {
+    current_project: PilePlanProject,
+    sources: Vec<ImportSource>,
+}
+
+#[derive(Debug, Deserialize)]
+struct PreviewImportRequest {
+    source: ImportSource,
+}
+
+#[derive(Debug, Deserialize)]
+struct LoadPointTopologyRequest {
+    load_points: Vec<ProjectLoadPoint>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ReadProjectDocumentRequest {
+    contents: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct WriteProjectDocumentRequest {
+    draft: ProjectDocumentDraft,
+}
+
+#[derive(Debug, Deserialize)]
+struct DeriveLoadPointGroupsRequest {
+    load_points: Vec<ProjectLoadPoint>,
+    settings: LoadPointGroupingSettings,
+}
+
+#[derive(Debug, Deserialize)]
+struct AssessLoadPointGroupAssignmentsRequest {
+    groups: Vec<LoadPointGroup>,
+    assignments: HashMap<u32, PileConfigurationKey>,
+    locked_load_point_ids: Vec<u32>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TipLevelRegionTopologyRequest {
+    load_point_topology: LoadPointTopology,
+    selected_assignments: HashMap<u32, TipLevelRegionAssignment>,
+    options_by_load_point: HashMap<u32, Vec<PileConfigurationOption>>,
+}
+
+#[derive(Debug, Serialize)]
+struct PileCostResponse {
+    cost: Option<u32>,
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn calculate_pile_option_analysis(
+    request: PileOptionAnalysisRequest,
+) -> Result<PileOptionAnalysisResult, InvalidPileTipLevels> {
+    build_pile_option_analysis(
+        &request.load_points,
+        &request.cpts,
+        &request.bearing_capacities,
+        |load_point| {
+            request
+                .settings_by_load_point
+                .get(&load_point.id)
+                .cloned()
+                .unwrap_or_else(|| request.global_settings.clone())
+        },
+        &request.manual_cpt_ids_by_load_point,
+        request.include_cpt_frd_rows,
+    )
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn calculate_pile_option_cost(request: PileCostRequest) -> PileCostResponse {
+    PileCostResponse {
+        cost: calculate_pile_cost(
+            request.pile_size_mm,
+            request.pile_tip_level_m,
+            request.pile_head_level_m,
+            &request.settings,
+        ),
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn choose_default_options(
+    request: DefaultPileOptionsRequest,
+) -> HashMap<u32, PileConfigurationKey> {
+    choose_default_pile_options(
+        &request.options_by_load_point,
+        &request.groups,
+        request.pile_head_level_m,
+        &request.cost_settings,
+    )
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn aggregate_pile_options(
+    request: AggregatePileOptionsRequest,
+) -> Vec<AggregatedPileConfiguration> {
+    aggregate_pile_options_for_load_points(&request.options_by_load_point)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn assess_technical_assignment(
+    request: TechnicalAssignmentRequest,
+) -> Result<TechnicalAssignmentAssessment, TechnicalAssignmentAssessmentError> {
+    assess_technical_assignment_core(&request.groups, &request.options_by_load_point)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn import_project_from_files(
+    request: ImportProjectRequest,
+) -> Result<ValidatedPilePlanProject, String> {
+    let project = import_project_from_sources(
+        &request.project_name,
+        &request.sources,
+        request.pile_head_level_m,
+        &request.currency_code,
+    )
+    .map_err(|error| error.to_string())?;
+    let tip_level_keys =
+        validate_project_tip_levels(&project).map_err(|error| error.to_string())?;
+    Ok(ValidatedPilePlanProject {
+        project,
+        tip_level_keys,
+    })
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn refresh_project_from_files(
+    request: RefreshProjectRequest,
+) -> Result<ValidatedPilePlanProject, String> {
+    let project = refresh_project_from_profiled_sources(&request.current_project, &request.sources)
+        .map_err(|error| error.to_string())?;
+    let tip_level_keys =
+        validate_project_tip_levels(&project).map_err(|error| error.to_string())?;
+    Ok(ValidatedPilePlanProject {
+        project,
+        tip_level_keys,
+    })
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn preview_import_file(request: PreviewImportRequest) -> ImportSourcePreview {
+    preview_import_source(&request.source)
+}
+
+#[tauri::command]
+fn get_standard_csv_requirements() -> serde_json::Value {
+    pile_plan_core::standard_csv_requirements()
+}
+
+#[tauri::command]
+fn get_pile_plan_import_requirements() -> serde_json::Value {
+    pile_plan_core::pile_plan_import_requirements()
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn preview_pile_plan_import_file(request: PilePlanImportRequest) -> PilePlanImportPreview {
+    preview_pile_plan_import(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn export_pile_plan_csv(request: PilePlanExportRequest) -> Result<Vec<u8>, String> {
+    write_pile_plan_csv_bytes(&request).map_err(|error| error.to_string())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn export_pile_plan_xlsx(request: PilePlanExportRequest) -> Result<Vec<u8>, String> {
+    write_pile_plan_xlsx_bytes(&request).map_err(|error| error.to_string())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn read_project_file(path: String) -> Result<String, String> {
+    std::fs::read_to_string(path).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn take_pending_project_paths(state: State<'_, PendingProjectPaths>) -> Vec<String> {
+    state.take()
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn write_project_file(path: String, contents: String) -> Result<(), String> {
+    std::fs::write(path, contents).map_err(|error| error.to_string())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn write_binary_file(path: String, contents: Vec<u8>) -> Result<(), String> {
+    std::fs::write(path, contents).map_err(|error| error.to_string())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn build_load_point_topology(request: LoadPointTopologyRequest) -> LoadPointTopology {
+    build_load_point_topology_core(&request.load_points)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn read_project_document(
+    request: ReadProjectDocumentRequest,
+) -> Result<ValidatedPilePlanProject, ProjectDocumentError> {
+    read_project_document_core(&request.contents)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn write_project_document(
+    request: WriteProjectDocumentRequest,
+) -> Result<String, ProjectDocumentError> {
+    write_project_document_core(request.draft)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn build_tip_level_region_topology(
+    request: TipLevelRegionTopologyRequest,
+) -> TipLevelRegionTopology {
+    build_tip_level_region_topology_core(
+        &request.load_point_topology,
+        &request.selected_assignments,
+        &request.options_by_load_point,
+    )
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn derive_load_point_groups(request: DeriveLoadPointGroupsRequest) -> DerivedLoadPointGroups {
+    derive_load_point_groups_core(&request.load_points, &request.settings)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn preview_load_point_group_edit(request: LoadPointGroupEditInput) -> LoadPointGroupEditPreview {
+    preview_load_point_group_edit_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn apply_load_point_group_edit(request: LoadPointGroupEditInput) -> LoadPointGroupEditResult {
+    apply_load_point_group_edit_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn assess_load_point_group_assignments(
+    request: AssessLoadPointGroupAssignmentsRequest,
+) -> Vec<GroupAssignmentConflict> {
+    assess_load_point_group_assignments_core(
+        &request.groups,
+        &request.assignments,
+        &request.locked_load_point_ids,
+    )
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn apply_load_point_group_assignment(
+    request: ApplyLoadPointGroupAssignmentInput,
+) -> ApplyLoadPointGroupAssignmentResult {
+    apply_load_point_group_assignment_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn apply_load_point_group_assignment_batch(
+    request: ApplyLoadPointGroupAssignmentBatchInput,
+) -> ApplyLoadPointGroupAssignmentBatchResult {
+    apply_load_point_group_assignment_batch_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn apply_load_point_group_ungroup_batch(
+    request: LoadPointGroupUngroupBatchInput,
+) -> LoadPointGroupEditResult {
+    apply_load_point_group_ungroup_batch_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn validate_manual_cpt_selection_batch(
+    request: ManualCptSelectionBatchInput,
+) -> ManualCptSelectionBatchResult {
+    validate_manual_cpt_selection_batch_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn evaluate_cpt_settings_edit(request: CptSettingsEditInput) -> CptSettingsEditResult {
+    evaluate_cpt_settings_edit_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn evaluate_load_point_grouping_settings(
+    request: LoadPointGroupingSettingsEditInput,
+) -> LoadPointGroupingSettingsEditResult {
+    evaluate_load_point_grouping_settings_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn evaluate_pile_cost_catalog_edit(request: PileCostCatalogEditInput) -> PileCostCatalogEditResult {
+    evaluate_pile_cost_catalog_edit_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn evaluate_mcp_project_edit(request: McpProjectEditInput) -> McpProjectEditResult {
+    evaluate_mcp_project_edit_core(&request)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn validate_load_point_lock_batch(request: LoadPointLockBatchInput) -> LoadPointLockBatchResult {
+    validate_load_point_lock_batch_core(&request)
+}
+
+fn main() {
+    let launch_cwd = std::env::current_dir().unwrap_or_default();
+    let launch_paths = project_paths_from_args(std::env::args_os(), &launch_cwd);
+    tauri::Builder::default()
+        .manage(PendingProjectPaths::new(launch_paths))
+        .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+            let paths = project_paths_from_args(args, Path::new(&cwd));
+            if !paths.is_empty() {
+                app.state::<PendingProjectPaths>().extend(paths);
+                let _ = app.emit(PROJECT_OPEN_REQUESTED_EVENT, ());
+            }
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
+        .plugin(tauri_plugin_dialog::init())
+        .manage(IlpJobs::default())
+        .manage(McpBridgeState::default())
+        .setup(|app| {
+            if let Ok(current) = app.path().app_data_dir() {
+                if let Some(parent) = current.parent() {
+                    if let Err(error) = profile_migration::migrate_preferences(&current, &parent.join("com.openaec.pile-plan-studio")) {
+                        eprintln!("Could not migrate legacy preferences: {error}");
+                    }
+                }
+            }
+            app.state::<McpBridgeState>()
+                .install_response_listener(&app.handle());
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                window.state::<IlpJobs>().cancel();
+                window.state::<McpBridgeState>().stop();
+            }
+        })
+        .plugin(tauri_plugin_store::Builder::default().build())
+        .invoke_handler(tauri::generate_handler![
+            aggregate_pile_options,
+            assess_technical_assignment,
+            apply_load_point_group_assignment,
+            apply_load_point_group_assignment_batch,
+            apply_load_point_group_edit,
+            apply_load_point_group_ungroup_batch,
+            validate_manual_cpt_selection_batch,
+            evaluate_cpt_settings_edit,
+            evaluate_load_point_grouping_settings,
+            evaluate_pile_cost_catalog_edit,
+            evaluate_mcp_project_edit,
+            validate_load_point_lock_batch,
+            assess_load_point_group_assignments,
+            build_load_point_topology,
+            build_tip_level_region_topology,
+            calculate_pile_option_analysis,
+            calculate_pile_option_cost,
+            choose_default_options,
+            derive_load_point_groups,
+            preview_load_point_group_edit,
+            ilp_optimize,
+            cancel_ilp_optimization,
+            read_project_document,
+            write_project_document,
+            import_project_from_files,
+            refresh_project_from_files,
+            preview_import_file,
+            get_standard_csv_requirements,
+            get_pile_plan_import_requirements,
+            preview_pile_plan_import_file,
+            export_pile_plan_csv,
+            export_pile_plan_xlsx,
+            read_project_file,
+            write_project_file,
+            write_binary_file,
+            take_pending_project_paths,
+            mcp_bridge_start,
+            mcp_bridge_stop,
+        ])
+        .run(tauri::generate_context!())
+        .expect("failed to run Pile Plane Workspace");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mcp_import_requirements_command_uses_core_contract() {
+        let requirements = get_standard_csv_requirements();
+        assert_eq!(requirements["version"], 1);
+        assert_eq!(requirements["roles"][0]["role"], "load-points");
+        assert_eq!(requirements["roles"][2]["columns"][1]["unit"], "m");
+    }
+
+    #[test]
+    fn launch_arguments_select_only_ifcpp_projects_and_resolve_relative_paths() {
+        let paths = project_paths_from_args(
+            ["pile-plan-studio.exe", "project.IFCPP", "notes.txt"],
+            std::path::Path::new("C:/projects"),
+        );
+
+        assert_eq!(
+            paths,
+            vec![std::path::Path::new("C:/projects")
+                .join("project.IFCPP")
+                .to_string_lossy()
+                .into_owned()]
+        );
+    }
+
+    #[test]
+    fn pending_project_paths_are_drained_exactly_once() {
+        let pending = PendingProjectPaths::new(vec!["C:/projects/first.ifcpp".to_string()]);
+
+        assert_eq!(pending.take(), vec!["C:/projects/first.ifcpp"]);
+        assert!(pending.take().is_empty());
+    }
+
+    #[test]
+    fn tip_level_region_commands_return_core_results() {
+        let load_point_topology = build_load_point_topology(LoadPointTopologyRequest {
+            load_points: vec![],
+        });
+        let topology = build_tip_level_region_topology(TipLevelRegionTopologyRequest {
+            load_point_topology,
+            selected_assignments: HashMap::new(),
+            options_by_load_point: HashMap::new(),
+        });
+
+        assert!(topology.groups.is_empty());
+    }
+
+    #[test]
+    fn project_document_commands_delegate_read_write_and_structured_errors() {
+        let validated = read_project_document(ReadProjectDocumentRequest {
+            contents: include_str!("../../../../sample_project/sample_project.ifcpp").to_string(),
+        })
+        .expect("sample project reads");
+        let written = write_project_document(WriteProjectDocumentRequest {
+            draft: ProjectDocumentDraft::from_project(&validated.project),
+        })
+        .expect("sample project writes");
+
+        assert_eq!(
+            read_project_document(ReadProjectDocumentRequest { contents: written })
+                .expect("written project reads")
+                .project
+                .schema_version,
+            5
+        );
+        assert!(matches!(
+            read_project_document(ReadProjectDocumentRequest {
+                contents: "{".to_string(),
+            })
+            .unwrap_err(),
+            ProjectDocumentError::InvalidJson { .. }
+        ));
+    }
+
+    #[test]
+    fn aggregate_command_returns_authoritative_core_facts() {
+        let option = PileConfigurationOption {
+            configuration: PileConfigurationKey {
+                pile_size_mm: 320,
+                pile_tip_level_mm: -18_500,
+            },
+            pile_size_mm: 320,
+            pile_tip_level_m: -18.5,
+            is_option: true,
+            governing_cpt_id: Some(61),
+            governing_frd_kn: Some(700.0),
+            utilization: Some(0.82),
+            missing_cpt_ids: vec![],
+            technical_status: pile_plan_core::PileOptionTechnicalStatus::Valid,
+        };
+        let result = aggregate_pile_options(AggregatePileOptionsRequest {
+            options_by_load_point: HashMap::from([(7, vec![option])]),
+        });
+
+        assert_eq!(result[0].configuration.pile_tip_level_mm, -18_500);
+        assert_eq!(result[0].maximum_utilization, Some(0.82));
+        assert_eq!(result[0].critical_load_point_id, Some(7));
+    }
+
+    #[test]
+    fn technical_assignment_command_returns_grouped_missing_result() {
+        let mut valid = PileConfigurationOption {
+            configuration: PileConfigurationKey {
+                pile_size_mm: 320,
+                pile_tip_level_mm: -18_500,
+            },
+            pile_size_mm: 320,
+            pile_tip_level_m: -18.5,
+            is_option: true,
+            governing_cpt_id: Some(61),
+            governing_frd_kn: Some(700.0),
+            utilization: Some(0.82),
+            missing_cpt_ids: vec![],
+            technical_status: pile_plan_core::PileOptionTechnicalStatus::Valid,
+        };
+        let mut missing = valid.clone();
+        missing.is_option = false;
+        missing.missing_cpt_ids = vec![62];
+        missing.technical_status = pile_plan_core::PileOptionTechnicalStatus::MissingCapacityData;
+        valid.governing_cpt_id = Some(61);
+
+        let result = assess_technical_assignment(TechnicalAssignmentRequest {
+            groups: vec![LoadPointGroup {
+                load_point_ids: vec![1, 2],
+                origin: pile_plan_core::LoadPointGroupOrigin::Automatic,
+            }],
+            options_by_load_point: HashMap::from([(1, vec![valid]), (2, vec![missing])]),
+        })
+        .unwrap();
+
+        assert_eq!(result.issues[0].group_load_point_ids, vec![1, 2]);
+        assert_eq!(
+            result.issues[0].status,
+            pile_plan_core::TechnicalAssignmentIssueStatus::MissingCapacityData
+        );
+    }
+
+    #[test]
+    fn load_point_group_commands_return_core_results() {
+        let groups = derive_load_point_groups(DeriveLoadPointGroupsRequest {
+            load_points: vec![],
+            settings: LoadPointGroupingSettings::default(),
+        });
+        let requested_configuration = PileConfigurationKey {
+            pile_size_mm: 320,
+            pile_tip_level_mm: -18_000,
+        };
+        let result =
+            apply_load_point_group_assignment(pile_plan_core::ApplyLoadPointGroupAssignmentInput {
+                selected_load_point_ids: vec![2],
+                groups: vec![pile_plan_core::LoadPointGroup {
+                    load_point_ids: vec![1, 2],
+                    origin: pile_plan_core::LoadPointGroupOrigin::Automatic,
+                }],
+                requested_configuration: Some(requested_configuration),
+                current_assignments: HashMap::new(),
+                locked_load_point_ids: vec![],
+            });
+
+        assert!(groups.groups.is_empty());
+        assert!(matches!(
+            result,
+            pile_plan_core::ApplyLoadPointGroupAssignmentResult::Applied { changes }
+                if changes.len() == 2
+        ));
+    }
+}

@@ -1,0 +1,65 @@
+{
+  "results": [
+    {
+      "name": "Drawing/hit-target alignment after resizing",
+      "status": "passed",
+      "evidence": [
+        {
+          "width": 1440,
+          "compared": 405,
+          "maxError": 0.021791699526695435
+        },
+        {
+          "width": 820,
+          "compared": 405,
+          "maxError": 0.021791699526695435
+        },
+        {
+          "width": 390,
+          "compared": 405,
+          "maxError": 0.019107146354493915
+        },
+        {
+          "width": 320,
+          "compared": 405,
+          "maxError": 0.019107146354493915
+        },
+        {
+          "width": 1440,
+          "compared": 405,
+          "maxError": 0.021791699526695435
+        }
+      ]
+    },
+    {
+      "name": "Accessible upstream, GNU, font and dependency notices",
+      "status": "passed"
+    },
+    {
+      "name": "PPW hub launcher and natural-color business photography",
+      "status": "passed",
+      "evidence": {
+        "filter": "none",
+        "loaded": true
+      }
+    },
+    {
+      "name": "Stamped preview health",
+      "status": "passed",
+      "evidence": {
+        "id": "pile",
+        "label": "Pile Plane Workspace",
+        "productName": "Pile Plane Workspace",
+        "mark": "PPW",
+        "directory": "spanvision-pile-plane-workspace",
+        "frontendDirectory": "apps/pile-plan-studio",
+        "dist": "apps/pile-plan-studio/dist",
+        "port": 4255,
+        "path": "/",
+        "description": "Explore pile options, compare foundation plans and optimize assignments using the shared Rust engineering core.",
+        "available": true,
+        "message": "Ready to open"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "width": 390,
+    "siteBranding": "passed",
+    "legalLinks": "passed",
+    "overflow": false,
+    "editor": "website only",
+    "externalRequests": [],
+    "errors": []
+  },
+  {
+    "width": 820,
+    "siteBranding": "passed",
+    "legalLinks": "passed",
+    "overflow": false,
+    "editor": "canvas loaded",
+    "externalRequests": [],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "siteBranding": "passed",
+    "legalLinks": "passed",
+    "overflow": false,
+    "editor": "canvas loaded",
+    "externalRequests": [],
+    "errors": []
+  }
+]

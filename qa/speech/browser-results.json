@@ -1,0 +1,504 @@
+{
+  "results": [
+    {
+      "scenario": "responsive-screen",
+      "route": "landing",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "workspace",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "transcribe",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "suggestions",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "login",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "signup",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "account",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "settings",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "dictionary",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "models",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "meeting",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "mic-test",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "tts",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "about",
+      "width": 320
+    },
+    {
+      "scenario": "import-cancel-complete-focus",
+      "width": 320
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 320
+    },
+    {
+      "scenario": "mobile-navigation-keyboard-touch",
+      "width": 320
+    },
+    {
+      "scenario": "theme-persistence",
+      "width": 320
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "landing",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "workspace",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "transcribe",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "suggestions",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "login",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "signup",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "account",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "settings",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "dictionary",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "models",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "meeting",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "mic-test",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "tts",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "about",
+      "width": 390
+    },
+    {
+      "scenario": "import-cancel-complete-focus",
+      "width": 390
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 390
+    },
+    {
+      "scenario": "mobile-navigation-keyboard-touch",
+      "width": 390
+    },
+    {
+      "scenario": "theme-persistence",
+      "width": 390
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "landing",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "workspace",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "transcribe",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "suggestions",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "login",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "signup",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "account",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "settings",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "dictionary",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "models",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "meeting",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "mic-test",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "tts",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "about",
+      "width": 820
+    },
+    {
+      "scenario": "import-cancel-complete-focus",
+      "width": 820
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 820
+    },
+    {
+      "scenario": "theme-persistence",
+      "width": 820
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "landing",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "workspace",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "transcribe",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "suggestions",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "login",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "signup",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "account",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "settings",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "dictionary",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "models",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "meeting",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "mic-test",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "tts",
+      "width": 1440
+    },
+    {
+      "scenario": "responsive-screen",
+      "route": "about",
+      "width": 1440
+    },
+    {
+      "scenario": "import-cancel-complete-focus",
+      "width": 1440
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 1440
+    },
+    {
+      "scenario": "theme-persistence",
+      "width": 1440
+    },
+    {
+      "scenario": "legacy-browser-migration"
+    },
+    {
+      "scenario": "new-settings-win"
+    },
+    {
+      "scenario": "malformed-legacy-settings"
+    },
+    {
+      "scenario": "import-invalid-long-filename-escape"
+    },
+    {
+      "scenario": "login-validation-focus-touch"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "en"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "nl"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "de"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "fr"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "es"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "pt"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "zh"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "ja"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "pl"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "tr"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "ko"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "it"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "ru"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "uk"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "cs"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "ro"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "hu"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "sv"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "da"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "no"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "fi"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "el"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "bg"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "hr"
+    },
+    {
+      "scenario": "localized-brand",
+      "locale": "sk"
+    },
+    {
+      "scenario": "natural-color-photography"
+    },
+    {
+      "scenario": "transparent-overlay-window",
+      "query": "overlay"
+    },
+    {
+      "scenario": "transparent-overlay-window",
+      "query": "meeting-indicator"
+    },
+    {
+      "scenario": "palette-state-contrast",
+      "theme": "spanvision-mono",
+      "ratios": [
+        18.099852162484677,
+        6.0457055411670755,
+        18.099852162484677,
+        18.099852162484677,
+        18.099852162484677
+      ]
+    },
+    {
+      "scenario": "palette-state-contrast",
+      "theme": "dark",
+      "ratios": [
+        18.099852162484677,
+        6.0457055411670755,
+        18.099852162484677,
+        18.099852162484677,
+        18.099852162484677
+      ]
+    },
+    {
+      "scenario": "palette-state-contrast",
+      "theme": "light",
+      "ratios": [
+        18.733663902900595,
+        7.455177810447525,
+        18.733663902900595,
+        18.733663902900595,
+        18.733663902900595
+      ]
+    },
+    {
+      "scenario": "suite-speech-launcher"
+    }
+  ],
+  "errors": [],
+  "requests": []
+}

@@ -1,0 +1,107 @@
+/* Backstage → Bibliotheek (B1) — volgt de Backstage-stijl (--theme-* tokens, zie ExtensionManagerPanel.css) */
+.library-section .library-intro { color: var(--theme-text-dim); margin-bottom: 16px; }
+.library-section .library-layout { display: flex; gap: 16px; }
+
+.library-companies { width: 220px; flex-shrink: 0; border-right: 1px solid var(--theme-border); padding-right: 12px; }
+.library-companies-head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; margin-bottom: 8px; color: var(--theme-text); }
+.library-companies-head button {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; background: var(--theme-surface); border: 1px solid var(--theme-control-border);
+  border-radius: var(--radius-sm); color: var(--theme-text); cursor: pointer;
+}
+.library-companies-head button:hover { background: var(--theme-hover); border-color: var(--theme-accent); }
+.library-companies ul { list-style: none; padding: 0; margin: 0; }
+.library-companies li { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; color: var(--theme-text); }
+.library-companies li:hover { background: var(--theme-hover); }
+.library-companies li.active { background: var(--theme-surface); border: 1px solid var(--theme-control-border); }
+.library-companies li .default-star { margin-left: auto; color: var(--theme-accent); }
+/* Fix B6: een bedrijfsnaam zonder spaties (bijv. 500 tekens aan elkaar) mag het Backstage-paneel
+   niet breder maken dan de sidebar — laten breken i.p.v. de li horizontaal te laten uitdijen. */
+.library-companies li span { min-width: 0; overflow-wrap: anywhere; }
+
+.library-detail { flex: 1; min-width: 0; }
+.library-detail-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+.library-name-input {
+  font-size: var(--text-heading); font-weight: 600; background: transparent; border: none;
+  border-bottom: 1px solid var(--theme-border); color: var(--theme-text); padding: 2px 0; min-width: 160px;
+  /* Fix B6: idem voor het bewerkbare naamveld — begrensd op de beschikbare breedte + ellipsis i.p.v.
+     de header (en daarmee het hele detailpaneel) te laten uitdijen op een spatieloze mega-naam. */
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+.library-name-input:focus { outline: none; border-bottom-color: var(--theme-accent); }
+
+.library-detail-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.library-detail-actions button {
+  display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px;
+  background: var(--theme-surface); border: 1px solid var(--theme-control-border);
+  border-radius: var(--radius-md); color: var(--theme-text); font-size: var(--text-large); cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.library-detail-actions button:hover:not(:disabled) { background: var(--theme-hover); border-color: var(--theme-accent); }
+.library-detail-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+.library-detail-actions .danger { color: var(--error); }
+.library-detail-actions .danger:hover:not(:disabled) { border-color: var(--error); }
+
+.library-backup-hint, .library-promote-hint {
+  font-size: var(--text-body); color: var(--theme-text-dim); display: flex; align-items: center; gap: 6px; margin: 6px 0;
+}
+
+.library-pool h3 { display: flex; align-items: center; gap: 8px; margin: 14px 0 6px; color: var(--theme-text); font-family: var(--font-heading); font-size: var(--text-large); }
+.library-pool .pool-version { font-size: var(--text-caption); color: var(--theme-text-muted); font-weight: 400; }
+.library-pool ul { list-style: none; padding: 0; margin: 0; }
+.library-pool li {
+  display: flex; justify-content: space-between; align-items: center; padding: 4px 8px;
+  border-radius: var(--radius-sm); color: var(--theme-text);
+}
+.library-pool li:hover { background: var(--theme-hover); }
+.library-pool .empty { color: var(--theme-text-muted); font-style: italic; margin: 4px 8px; }
+
+.danger-icon, .edit-icon, .confirm-icon, .cancel-icon {
+  background: transparent; border: none; cursor: pointer; padding: 2px; border-radius: var(--radius-sm);
+}
+.danger-icon { color: var(--error); }
+.danger-icon:hover { background: var(--theme-hover); }
+.edit-icon { color: var(--theme-text-dim); }
+.edit-icon:hover { background: var(--theme-hover); color: var(--theme-text); }
+.confirm-icon { color: var(--success); }
+.confirm-icon:hover { background: var(--theme-hover); }
+.cancel-icon { color: var(--theme-text-dim); }
+.cancel-icon:hover { background: var(--theme-hover); color: var(--error); }
+
+.library-pool-item-actions, .library-pool-item-edit-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+.library-pool-item-edit {
+  display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: var(--radius-sm);
+  background: var(--theme-surface);
+}
+.library-item-name-input {
+  flex: 1; min-width: 0; background: var(--theme-bg); border: 1px solid var(--theme-control-border);
+  border-radius: var(--radius-sm); color: var(--theme-text); padding: 3px 6px; font-size: var(--text-body);
+}
+.library-item-name-input:focus { outline: none; border-color: var(--theme-accent); }
+
+/* "+ Uit project" (promoveren, eindreview-fix): kleine toggle-knop naast elke pool-kop + het
+   uitklapbare keuzelijstje met de kalenders/resources van het actieve project. */
+.library-promote-toggle {
+  display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 3px 8px;
+  background: var(--theme-surface); border: 1px solid var(--theme-control-border);
+  border-radius: var(--radius-md); color: var(--theme-text); font-size: var(--text-small); font-weight: 400;
+  font-family: var(--font-body); cursor: pointer;
+}
+.library-promote-toggle:hover { background: var(--theme-hover); border-color: var(--theme-accent); }
+
+.library-promote-panel {
+  border: 1px solid var(--theme-control-border); border-radius: var(--radius-md);
+  background: var(--theme-surface); padding: 4px; margin: 0 0 8px;
+}
+.library-promote-panel ul { list-style: none; padding: 0; margin: 0; }
+.library-promote-panel li {
+  display: flex; justify-content: space-between; align-items: center; padding: 4px 8px;
+  border-radius: var(--radius-sm); color: var(--theme-text); font-size: var(--text-body);
+}
+.library-promote-panel li:hover { background: var(--theme-hover); }
+.library-promote-linked { color: var(--theme-text-muted); font-style: italic; font-size: var(--text-caption); }
+.library-promote-item { color: var(--theme-accent); background: transparent; border: none; cursor: pointer; padding: 2px; border-radius: var(--radius-sm); }
+.library-promote-item:hover { background: var(--theme-hover); }
+
+.library-notice { font-size: var(--text-body); color: var(--success); display: flex; align-items: center; gap: 6px; margin: 6px 0; }

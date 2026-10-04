@@ -1,0 +1,92 @@
+--- archive/src-tauri/src/lib.rs
++++ edition/src-tauri/src/lib.rs
+@@ -1,3 +1,4 @@
++pub mod brand;
+ pub mod accounts;
+ pub mod api;
+ pub mod reports;
+@@ -87,7 +88,7 @@
+     let url: tauri::Url = url_str.parse::<tauri::Url>().map_err(|e| e.to_string())?;
+ 
+     tauri::WebviewWindowBuilder::new(&app, &label, tauri::WebviewUrl::External(url))
+-        .title(format!("Open Calc Studio - {}", file_path.split(['/', '\\']).last().unwrap_or(&file_path)))
++        .title(format!("{} - {}", brand::PRODUCT, file_path.split(['/', '\\']).last().unwrap_or(&file_path)))
+         .inner_size(1400.0, 900.0)
+         .decorations(false)
+         .shadow(true)
+@@ -164,6 +165,9 @@
+         accounts::accounts_download_file
+     ])
+     .setup(|app| {
++      if let Ok(profile) = app.path().app_data_dir() {
++        if let Err(error) = brand::migrate_settings(&profile) { log::warn!("Settings migration: {error}"); }
++      }
+       if cfg!(debug_assertions) {
+         app.handle().plugin(
+           tauri_plugin_log::Builder::default()
+--- archive/src-tauri/src/api.rs
++++ edition/src-tauri/src/api.rs
+@@ -277,7 +277,7 @@
+     Json(json!({
+         "openapi": "3.0.3",
+         "info": {
+-            "title": "Open Calc Studio Local API",
++            "title": format!("{} Local API", crate::brand::PRODUCT),
+             "version": env!("CARGO_PKG_VERSION"),
+             "description": "Loopback REST API. Companion to the MCP server (port 9741)."
+         },
+--- archive/src-tauri/src/accounts.rs
++++ edition/src-tauri/src/accounts.rs
+@@ -33,11 +33,11 @@
+         // Dev-waarden uit het integratiecontract; productie krijgt later een
+         // eigen issuer/API-domein (override via OPENAEC_ACCOUNTS_CONFIG).
+         Self {
+-            issuer: "http://kubernetes.docker.internal:8088".into(),
+-            client_id: "376959313182261253".into(),
++            issuer: "".into(),
++            client_id: "".into(),
+             redirect_uri: "http://localhost:53683/callback".into(),
+             scopes: "openid profile email offline_access".into(),
+-            accounts_api_url: "http://localhost:4000".into(),
++            accounts_api_url: "".into(),
+         }
+     }
+ }
+@@ -203,7 +203,7 @@
+         }
+         let body = if code.is_some() {
+             "<html><body style=\"font-family:sans-serif;text-align:center;padding-top:80px\">\
+-             <h2>Ingelogd bij OpenAEC</h2><p>Je kunt dit venster sluiten en teruggaan naar Open Calc Studio.</p></body></html>"
++             <h2>Signed in</h2><p>Je kunt dit venster sluiten en teruggaan naar Calc workspace.</p></body></html>"
+         } else {
+             "<html><body style=\"font-family:sans-serif;text-align:center;padding-top:80px\">\
+              <h2>Inloggen geannuleerd</h2><p>Je kunt dit venster sluiten.</p></body></html>"
+@@ -413,7 +413,7 @@
+ 
+ fn parse_api_result(status: u16, text: String) -> Result<serde_json::Value, String> {
+     if status == 413 {
+-        return Err("cloud-opslag vol (quota bereikt) — beheer je opslag in de OpenAEC-portal".into());
++        return Err("cloud-opslag vol (quota bereikt) — beheer je opslag in de account portal".into());
+     }
+     if !(200..300).contains(&status) {
+         return Err(format!("Accounts API gaf {status}: {text}"));
+--- archive/src-tauri/src/reports/generator.rs
++++ edition/src-tauri/src/reports/generator.rs
+@@ -464,7 +464,7 @@
+         .report_header_line_color
+         .as_deref()
+         .and_then(parse_hex_color)
+-        .unwrap_or(Color::rgb(217, 119, 6)); // Amber
++        .unwrap_or(Color::rgb(0, 0, 0)); // Edition default; document override above is preserved.
+ 
+     // Margins — de topmarge groeit mee met een hogere koptekst
+     let margin_left: Pt = Mm(12.0).into();
+@@ -712,7 +712,7 @@
+         }
+     } else {
+         TableStyleConfig {
+-            header_background: Some(Color::rgb(254, 243, 199)), // Amber light #FEF3C7
++            header_background: Some(Color::rgb(238, 238, 238)), // Edition grayscale heading
+             header_text_color: Color::rgb(54, 54, 62),
+             grid_color: Color::rgb(231, 229, 228),
+             grid_width: Pt(0.5),

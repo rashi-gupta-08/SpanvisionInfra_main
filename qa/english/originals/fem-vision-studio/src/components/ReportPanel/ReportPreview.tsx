@@ -1,0 +1,170 @@
+/**
+ * ReportPreview — Renders all enabled report sections as one continuous document
+ */
+
+import React from 'react';
+import { Mesh } from '../../core/fem/Mesh';
+import { ISolverResult } from '../../core/fem/types';
+import { IProjectInfo } from '../../context/FEMContext';
+import { ILoadCase, ILoadCombination } from '../../core/fem/LoadCase';
+import { IReportConfig, getEnabledSections, ReportSectionType } from '../../core/report/ReportConfig';
+import { generateHeaderHTML } from '../../core/report/ReportHeader';
+import { generateFooterHTML } from '../../core/report/ReportFooter';
+
+// Import section components
+import { CoverSection } from './sections/CoverSection';
+import { TocSection } from './sections/TocSection';
+import { SummarySection } from './sections/SummarySection';
+import { InputGeometrySection } from './sections/InputGeometrySection';
+import { InputNodesSection } from './sections/InputNodesSection';
+import { InputMembersSection } from './sections/InputMembersSection';
+import { InputProfilesSection } from './sections/InputProfilesSection';
+import { InputLoadCasesSection } from './sections/InputLoadCasesSection';
+import { ResultCombinationsSection } from './sections/ResultCombinationsSection';
+import { ResultReactionsSection } from './sections/ResultReactionsSection';
+import { ResultDisplacementsSection } from './sections/ResultDisplacementsSection';
+import { ResultForcesSection } from './sections/ResultForcesSection';
+import { EN1993SummarySection } from './sections/EN1993SummarySection';
+import { EN1993CalculationsSection } from './sections/EN1993CalculationsSection';
+export interface ReportSectionProps {
+  config: IReportConfig;
+  mesh: Mesh;
+  result: ISolverResult | null;
+  projectInfo: IProjectInfo;
+  loadCases: ILoadCase[];
+  loadCombinations: ILoadCombination[];
+  sectionNumber?: number;
+}
+
+interface ReportPreviewProps {
+  config: IReportConfig;
+  mesh: Mesh;
+  result: ISolverResult | null;
+  projectInfo: IProjectInfo;
+  loadCases: ILoadCase[];
+  loadCombinations: ILoadCombination[];
+}
+
+// Map section IDs to their React components
+const SECTION_COMPONENTS: Partial<Record<ReportSectionType, React.FC<ReportSectionProps>>> = {
+  'cover': CoverSection,
+  'toc': TocSection,
+  'summary': SummarySection,
+  'input_geometry': InputGeometrySection,
+  'input_nodes': InputNodesSection,
+  'input_members': InputMembersSection,
+  'input_profiles': InputProfilesSection,
+  'input_loadcases': InputLoadCasesSection,
+  'result_combinations': ResultCombinationsSection,
+  'result_reactions': ResultReactionsSection,
+  'result_displacements': ResultDisplacementsSection,
+  'result_forces_M': (props) => <ResultForcesSection {...props} forceType="M" />,
+  'result_forces_V': (props) => <ResultForcesSection {...props} forceType="V" />,
+  'result_forces_N': (props) => <ResultForcesSection {...props} forceType="N" />,
+  'en1993_summary': EN1993SummarySection,
+  'en1993_calculations': EN1993CalculationsSection,
+};
+
+export const ReportPreview: React.FC<ReportPreviewProps> = ({
+  config,
+  mesh,
+  result,
+  projectInfo,
+  loadCases,
+  loadCombinations,
+}) => {
+  const enabledSections = getEnabledSections(config);
+
+  // Track section numbers (skip cover, TOC, and summary)
+  let sectionNumber = 0;
+
+  // Separate header pages from numbered content sections
+  const coverSection = enabledSections.find(s => s.id === 'cover');
+  const tocSection = enabledSections.find(s => s.id === 'toc');
+  const summarySection = enabledSections.find(s => s.id === 'summary');
+  const contentSections = enabledSections.filter(s => s.id !== 'cover' && s.id !== 'toc' && s.id !== 'summary');
+
+  const sharedProps = {
+    config,
+    mesh,
+    result,
+    projectInfo,
+    loadCases,
+    loadCombinations,
+  };
+
+  return (
+    <div className="report-document">
+      {/* OpenAEC §4.3 header banner - inline (static) for live preview */}
+      {config.showHeader && (
+        <div
+          className="report-document-header openaec-header-banner"
+          dangerouslySetInnerHTML={{
+            __html: generateHeaderHTML(config, projectInfo, 'static'),
+          }}
+        />
+      )}
+
+      {/* Cover Section */}
+      {coverSection && (
+        <div className="report-content-section" id="section-cover">
+          <CoverSection {...sharedProps} />
+        </div>
+      )}
+
+      {/* Table of Contents */}
+      {tocSection && (
+        <div className="report-content-section" id="section-toc">
+          <TocSection {...sharedProps} />
+        </div>
+      )}
+
+      {/* Executive Summary */}
+      {summarySection && (
+        <div className="report-content-section" id="section-summary">
+          <SummarySection {...sharedProps} sectionNumber={0} />
+        </div>
+      )}
+
+      {/* Content sections - continuous flow */}
+      {contentSections.map((section) => {
+        const Component = SECTION_COMPONENTS[section.id];
+        sectionNumber++;
+
+        return (
+          <div
+            key={section.id}
+            className="report-content-section"
+            id={`section-${section.id}`}
+          >
+            {!Component ? (
+              <div className="report-section">
+                <h2 className="report-section-title" style={{ color: config.primaryColor }}>
+                  {sectionNumber}. {section.name}
+                </h2>
+                <p style={{ color: '#666', fontStyle: 'italic' }}>
+                  This section is not yet implemented.
+                </p>
+              </div>
+            ) : (
+              <Component
+                {...sharedProps}
+                sectionNumber={sectionNumber}
+              />
+            )}
+          </div>
+        );
+      })}
+
+      {/* OpenAEC §4.3 footer - inline (static) for live preview */}
+      {config.showFooter && (
+        <div
+          className="report-document-footer openaec-footer-banner"
+          dangerouslySetInnerHTML={{
+            __html: generateFooterHTML(config, 'static'),
+          }}
+        />
+      )}
+    </div>
+  );
+};

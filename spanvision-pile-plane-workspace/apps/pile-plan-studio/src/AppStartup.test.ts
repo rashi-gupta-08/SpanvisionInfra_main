@@ -1,0 +1,271 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+describe("React app startup", () => {
+  it("keeps App focused on bootstrap and delegates the working session", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "App.tsx"), "utf8");
+
+    assert.match(source, /import AppSession/);
+    assert.doesNotMatch(source, /function AppSession/);
+  });
+
+  it("drains desktop IFCPP launch requests after registering the warm-open listener", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const effectStart = source.indexOf('void listenDesktop("project-open-requested"');
+    const effect = source.slice(effectStart, source.indexOf("return () =>", effectStart));
+    const listener = effect.indexOf('listenDesktop("project-open-requested"');
+    const initialDrain = effect.indexOf("await drainPendingProjectPaths()", listener);
+
+    assert.ok(listener >= 0, "desktop project-open listener is missing");
+    assert.ok(initialDrain > listener, "listener must be registered before pending launch paths are drained");
+    assert.match(source, /openDesktopProjectPathRef\.current/);
+  });
+
+  it("receives the validated recovered project atomically from recovery startup", () => {
+    const source = readFileSync(new URL("./App.tsx", import.meta.url), "utf8");
+
+    assert.match(source, /initialProject:\s*result\.project/);
+    assert.doesNotMatch(source, /let recoveredProject:/);
+    assert.doesNotMatch(source, /Restored project was not validated/);
+  });
+
+  it("does not run the expensive WASM initialization twice in development", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "main.tsx"), "utf8");
+
+    assert.doesNotMatch(source, /React\.StrictMode/);
+  });
+
+  it("runs one batched analysis whenever the analysis request object changes", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.match(source, /analysisPipeline\.run/);
+    assert.match(source, /\[analysisPipeline, projectState\.analysisRequest\]/);
+    assert.doesNotMatch(source, /Promise\.all\(analysisLoadPoints\.map/);
+    assert.doesNotMatch(source, /Promise\.all\(projectState\.cpts\.map/);
+  });
+
+  it("runs transient CPT draft previews through the shared pile-option analysis core", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.match(source, /getCptSelectionPreviewInput/);
+    assert.match(source, /projectState\.cptSelectionEditDraft/);
+    assert.match(source, /applyCptSelectionPreviewResult/);
+    assert.match(source, /calculatePileOptionAnalysisCore\(\{/);
+  });
+
+  it("stores analysis failures instead of leaving a permanent loading state", () => {
+    const appSource = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const panelSource = readFileSync(
+      resolve(import.meta.dirname, "components/domain/right-panel/LoadPointPanel.tsx"),
+      "utf8",
+    );
+
+    assert.match(appSource, /analysisError/);
+    assert.match(panelSource, /state\.analysisError/);
+  });
+
+  it("initializes default piles for the sample, new imports, and refreshed unmatched points", () => {
+    const source = ["App.tsx", "app/session/AppSession.tsx"]
+      .map((fileName) => readFileSync(resolve(import.meta.dirname, fileName), "utf8"))
+      .join("\n");
+
+    assert.match(source, /createInitialProjectState\(\s*project\.project,\s*\{[\s\S]*?initializeDefaultPiles,[\s\S]*?defaultPilePlanName: i18n\.language\.startsWith\("nl"\) \? "Basisplan" : "Base plan",[\s\S]*?\},\s*project\.keys,?\s*\)/);
+    assert.match(source, /initialProject: result\.project,[\s\S]*?initializeDefaultPiles: false/);
+    assert.match(source, /createInitialProjectState\(sample\.project, \{[\s\S]*?initializeDefaultPiles: true[\s\S]*?\}, sample\.keys\)/);
+    assert.match(source, /createInitialProjectState\(withCosts, \{[\s\S]*?initializeDefaultPiles: true[\s\S]*?\}, imported\.keys\)/);
+    assert.match(source, /createInitialProjectState\(refreshedProject, \{[\s\S]*?initializeDefaultPiles: true[\s\S]*?\}, refreshed\.keys\)/);
+    assert.match(source, /prepareOpenedProject\(\s*await file\.text\(\),\s*\{ initializeDefaultPiles: false \},\s*\{/);
+    assert.match(source, /readProjectDocument:\s*readProjectDocumentCore/);
+    assert.doesNotMatch(source, /validatePositions:\s*validateLoadPointPositionsCore/);
+  });
+
+  it("runs one guarded batched default selection after complete analysis", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.match(source, /chooseDefaultPileOptionsCore/);
+    assert.match(source, /defaultPileSelectionPending/);
+    assert.match(source, /pileOptionsByLoadPointId\.size !== projectState\.loadPoints\.length/);
+  });
+
+  it("keeps the initialized sample project clean after choosing default piles", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const guardedRequestIndex = source.indexOf("defaultSelectionRequestRef.current = analysisRequest;");
+    const chooserIndex = source.indexOf("chooseDefaultPileOptionsCore({", guardedRequestIndex);
+    const defaultSelectionEffect = source.slice(chooserIndex, source.indexOf("  }, [", chooserIndex));
+
+    assert.doesNotMatch(defaultSelectionEffect, /setIsDirty\(true\)/);
+    assert.match(defaultSelectionEffect, /savedProjectSignatureRef\.current !== ""/);
+    assert.match(defaultSelectionEffect, /updateSavedProjectSignature\(projectStateSignature\(next\)\)/);
+  });
+
+  it("keeps default selection pending until the guarded request finishes", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const guardedRequestIndex = source.indexOf("defaultSelectionRequestRef.current = analysisRequest;");
+    const chooserIndex = source.indexOf("chooseDefaultPileOptionsCore({", guardedRequestIndex);
+    const effectStart = source.lastIndexOf("useEffect(() =>", chooserIndex);
+    const beforeChooser = source.slice(effectStart, chooserIndex);
+
+    assert.match(source, /defaultSelectionRequestRef/);
+    assert.doesNotMatch(beforeChooser, /defaultPileSelectionPending:\s*false/);
+    assert.match(
+      source.slice(chooserIndex),
+      /selectedPileConfigurationsByLoadPoint:\s*mergeDefaultPileChoices\([\s\S]*?defaultPileSelectionPending:\s*false/,
+    );
+  });
+
+  it("refreshes selected sources through Rust while retaining the open project path", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const handler = source.slice(
+      source.indexOf("onImportProject={async"),
+      source.indexOf("onOpenProjectFile=", source.indexOf("onImportProject={async")),
+    );
+
+    assert.match(source, /refreshProjectFromFilesCore/);
+    assert.match(source, /mode === "refresh"/);
+    assert.match(source, /currentProject:\s*requireValidProjectDocument\([\s\S]*?writeProjectDocumentCore\(projectDraftFromState\(projectState\)\)/);
+    assert.match(source, /createInitialProjectState\(refreshedProject, \{[\s\S]*?initializeDefaultPiles: true,[\s\S]*?\}\)/);
+    assert.match(source, /defaultSelectionKeepsDirtyRef\.current = true/);
+    assert.ok(
+      handler.indexOf('mode === "refresh"') < handler.indexOf("confirmProjectReplacement()"),
+      "refresh should run before the replacement confirmation used by new-project imports",
+    );
+  });
+
+  it("waits for complete analysis before creating a fresh pile plan", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const createStart = source.indexOf("const createFreshPilePlan");
+    const createEnd = source.indexOf("useEffect(() =>", createStart);
+    const createHandler = source.slice(createStart, createEnd);
+
+    assert.match(createHandler, /technicalPileOptionsByLoadPointId\.size !== snapshot\.loadPoints\.length/);
+  });
+
+  it("chooses defaults from the full technical option set, independent of optimizer filters", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const createStart = source.indexOf("const createFreshPilePlan");
+    const createEnd = source.indexOf("useEffect(() =>", createStart);
+    const createHandler = source.slice(createStart, createEnd);
+
+    assert.match(createHandler, /capturedTechnicalOptions = technicalPileOptionsByLoadPointId/);
+    assert.match(createHandler, /optionsByLoadPointId:\s*capturedTechnicalOptions/);
+    assert.doesNotMatch(createHandler, /activePileSizes|activePileTipLevelMms|isPileConfigurationActive/);
+  });
+
+  it("discards a fresh-plan default choice when its technical input changes", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const createStart = source.indexOf("const createFreshPilePlan");
+    const createEnd = source.indexOf("useEffect(() =>", createStart);
+    const createHandler = source.slice(createStart, createEnd);
+
+    assert.match(createHandler, /capturedTechnicalOptions = technicalPileOptionsByLoadPointId/);
+    assert.match(createHandler, /capturedGroups = loadPointGroups\.groups/);
+    assert.match(createHandler, /current\.cptSelectionPreview !== snapshot\.cptSelectionPreview/);
+    assert.match(createHandler, /loadPointGroupsRef\.current !== capturedGroups/);
+    assert.match(createHandler, /current\.pileCostSettings !== snapshot\.pileCostSettings/);
+    assert.match(createHandler, /current\.pileHeadLevelM !== snapshot\.pileHeadLevelM/);
+  });
+
+  it("uses the working pile plan explorer instead of passive source rows", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.match(source, /<PilePlanExplorer/);
+    assert.match(source, /summarizePilePlanCosts/);
+    assert.doesNotMatch(source, /projectState\.inputSources\.map/);
+  });
+
+  it("keeps viewer preferences inside project persistence", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.doesNotMatch(source, /viewerPreferencesLoaded|loadViewerPreferences|saveViewerPreferences/);
+    assert.match(source, /onSymbolScaleChange=.*handleProjectStateChange/s);
+    assert.match(source, /onForegroundLayerChange=.*handleProjectStateChange/s);
+    assert.match(source, /onGridVisibilityChange=.*handleProjectStateChange/s);
+  });
+
+  it("loads and persists one unified user settings record", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.match(source, /createPlatformUserSettingsStore/);
+    assert.match(source, /loadUserSettings/);
+    assert.match(source, /saveUserSettings/);
+    assert.doesNotMatch(source, /loadInterfaceScale|saveInterfaceScale/);
+  });
+
+  it("applies loaded desktop scale before rendering the normal workspace", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    assert.match(source, /const \[userSettingsReady, setUserSettingsReady\] = useState\(false\)/);
+    assert.match(
+      source,
+      /if \(isDesktop\) \{[\s\S]*?await applyDesktopInterfaceScale\(settings\.preferences\.interfaceScalePercent\)[\s\S]*?setUserSettingsReady\(true\)/,
+    );
+    assert.match(source, /if \(!userSettingsReady\) \{[\s\S]*?app-startup-surface/);
+    assert.ok(
+      source.indexOf("if (!userSettingsReady)") < source.indexOf('<div className="app-shell"'),
+      "the startup gate must precede the normal workspace",
+    );
+  });
+
+  it("does not leave the application behind the startup surface when settings fail", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.match(source, /catch \(error\) \{[\s\S]*?Failed to initialize user settings/);
+    assert.match(source, /finally \{[\s\S]*?setUserSettingsReady\(true\)/);
+  });
+
+  it("uses the sample project costs as the immutable built-in fallback", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.match(source, /BUILT_IN_PILE_COST_DEFAULTS\s*=\s*\([\s\S]*?JSON\.parse\(sampleProjectText\)[\s\S]*?\)\.settings\.pile_costs/);
+    assert.match(source, /mergePileCostCatalog\([\s\S]*?BUILT_IN_PILE_COST_DEFAULTS/);
+    assert.match(source, /applyPileCostCatalogDefault\([\s\S]*?BUILT_IN_PILE_COST_DEFAULTS/);
+    assert.doesNotMatch(source, /PILE_COST_DEFAULTS_KEY/);
+    assert.doesNotMatch(source, /getSetting<PileCostSettings/);
+    assert.doesNotMatch(
+      source,
+      /setProjectState\(\(current\)\s*=>\s*\(\{\s*\.\.\.current,\s*pileCostSettings:\s*saved\s*\}\)\)/,
+    );
+  });
+
+  it("loads the indexed CROW material and variable installation rates as built-in defaults", () => {
+    const sampleProject = JSON.parse(
+      readFileSync(resolve(import.meta.dirname, "../../../sample_project/sample_project.ifcpp"), "utf8"),
+    ) as {
+      settings: {
+        pile_costs: {
+          items: Array<{ pile_size_mm: number; shape: string; cost_per_m3: number }>;
+        };
+      };
+    };
+
+    assert.deepEqual(sampleProject.settings.pile_costs.items, [
+      { pile_size_mm: 273, shape: "round", cost_per_m3: 535 },
+      { pile_size_mm: 356, shape: "round", cost_per_m3: 505 },
+      { pile_size_mm: 380, shape: "round", cost_per_m3: 490 },
+      { pile_size_mm: 250, shape: "square", cost_per_m3: 590 },
+      { pile_size_mm: 290, shape: "square", cost_per_m3: 545 },
+      { pile_size_mm: 320, shape: "square", cost_per_m3: 515 },
+      { pile_size_mm: 350, shape: "square", cost_per_m3: 485 },
+      { pile_size_mm: 400, shape: "square", cost_per_m3: 450 },
+      { pile_size_mm: 420, shape: "square", cost_per_m3: 440 },
+      { pile_size_mm: 450, shape: "square", cost_per_m3: 425 },
+    ]);
+  });
+
+  it("keeps task panels open while viewer selections change", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+
+    assert.doesNotMatch(source, /<PilePlanWorkspace[\s\S]*?onMapMarkerSelect=/);
+  });
+
+  it("reports restored legend mappings when an opened project contains invalid values", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "app/session/AppSession.tsx"), "utf8");
+    const installStart = source.indexOf("const installOpenedProject");
+    const installEnd = source.indexOf("const openSampleProject", installStart);
+    const installHandler = source.slice(installStart, installEnd);
+
+    assert.match(installHandler, /project\.legendImportWarnings\.length > 0/);
+    assert.match(installHandler, /showStatusMessage\(t\("legend\.importWarnings"/);
+  });
+});

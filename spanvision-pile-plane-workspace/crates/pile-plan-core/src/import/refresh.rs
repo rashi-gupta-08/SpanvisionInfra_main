@@ -1,0 +1,947 @@
+use std::collections::{BTreeSet, HashMap, HashSet};
+
+use crate::{
+    build_load_point_topology, pile_tip_level_m, try_pile_tip_level_mm, LoadPointGroupOverride,
+    LoadPointGroupingSettings, LoadPointTopology, PilePlanProject, ProjectBearingCapacity,
+    ProjectCpt, ProjectLoadPoint,
+};
+
+use super::{
+    capacity_columns, cpt_columns, import_warnings, parse_bearing_capacities_with_diagnostics,
+    parse_cpts, pipeline::parse_load_source, provenance_entry, read_source_table,
+    reconcile_imported_inputs, ImportError, ImportProfile, ImportRole, ImportSource,
+    InvalidSourcePileTipLevel, SourceLocation,
+};
+
+const MATCH_TOLERANCE_MM: f64 = 1.0;
+
+trait PositionedObject {
+    fn id(&self) -> u32;
+    fn x_mm(&self) -> f64;
+    fn y_mm(&self) -> f64;
+}
+
+impl PositionedObject for ProjectLoadPoint {
+    fn id(&self) -> u32 {
+        self.id
+    }
+    fn x_mm(&self) -> f64 {
+        self.x_mm
+    }
+    fn y_mm(&self) -> f64 {
+        self.y_mm
+    }
+}
+
+impl PositionedObject for ProjectCpt {
+    fn id(&self) -> u32 {
+        self.id
+    }
+    fn x_mm(&self) -> f64 {
+        self.x_mm
+    }
+    fn y_mm(&self) -> f64 {
+        self.y_mm
+    }
+}
+
+fn match_load_points(old: &[ProjectLoadPoint], new: &[ProjectLoadPoint]) -> HashMap<u32, u32> {
+    match_positioned_objects(old, new, true)
+}
+
+fn match_cpts(old: &[ProjectCpt], new: &[ProjectCpt]) -> HashMap<u32, u32> {
+    match_positioned_objects(old, new, false)
+}
+
+fn match_positioned_objects<T: PositionedObject>(
+    old: &[T],
+    new: &[T],
+    same_id_requires_same_position: bool,
+) -> HashMap<u32, u32> {
+    let new_by_id: HashMap<u32, usize> = new
+        .iter()
+        .enumerate()
+        .map(|(index, item)| (item.id(), index))
+        .collect();
+    let mut mapping = HashMap::new();
+    let mut used_new = HashSet::new();
+    let mut unmatched_old = Vec::new();
+
+    for (old_index, old_item) in old.iter().enumerate() {
+        let same_id_match = new_by_id.get(&old_item.id()).copied().filter(|new_index| {
+            !same_id_requires_same_position || within_tolerance(old_item, &new[*new_index])
+        });
+        if let Some(new_index) = same_id_match {
+            mapping.insert(old_item.id(), new[new_index].id());
+            used_new.insert(new_index);
+        } else {
+            unmatched_old.push(old_index);
+        }
+    }
+
+    let candidates_by_old: HashMap<usize, Vec<usize>> = unmatched_old
+        .iter()
+        .map(|old_index| {
+            let candidates = new
+                .iter()
+                .enumerate()
+                .filter(|(new_index, new_item)| {
+                    !used_new.contains(new_index) && within_tolerance(&old[*old_index], *new_item)
+                })
+                .map(|(new_index, _)| new_index)
+                .collect();
+            (*old_index, candidates)
+        })
+        .collect();
+    let mut old_candidate_count_by_new: HashMap<usize, usize> = HashMap::new();
+    for candidates in candidates_by_old.values() {
+        for new_index in candidates {
+            *old_candidate_count_by_new.entry(*new_index).or_default() += 1;
+        }
+    }
+
+    for (old_index, candidates) in candidates_by_old {
+        if candidates.len() != 1 {
+            continue;
+        }
+        let new_index = candidates[0];
+        if old_candidate_count_by_new.get(&new_index) == Some(&1) {
+            mapping.insert(old[old_index].id(), new[new_index].id());
+        }
+    }
+
+    mapping
+}
+
+fn within_tolerance<T: PositionedObject>(old: &T, new: &T) -> bool {
+    (old.x_mm() - new.x_mm()).hypot(old.y_mm() - new.y_mm()) <= MATCH_TOLERANCE_MM
+}
+
+pub fn refresh_project_from_profiled_sources(
+    current: &PilePlanProject,
+    sources: &[ImportSource],
+) -> Result<PilePlanProject, ImportError> {
+    if sources.is_empty() {
+        return Err(ImportError::Validation(
+            "Select at least one import source to refresh.".to_string(),
+        ));
+    }
+
+    let load_source = optional_source_for_role(sources, ImportRole::LoadPoints)?;
+    let cpt_source = optional_source_for_role(sources, ImportRole::Cpts)?;
+    let capacity_source = optional_source_for_role(sources, ImportRole::BearingCapacities)?;
+    let mut replacement_logs = Vec::new();
+
+    let new_load_points = if let Some(source) = load_source {
+        let (load_points, log) = parse_load_source(source)?;
+        replacement_logs.push(log);
+        load_points
+    } else {
+        current.inputs.load_points.clone()
+    };
+    let load_point_mapping = if load_source.is_some() {
+        match_load_points(&current.inputs.load_points, &new_load_points)
+    } else {
+        identity_mapping(current.inputs.load_points.iter().map(|item| item.id))
+    };
+
+    let new_cpts = if let Some(source) = cpt_source {
+        let table = read_source_table(&source.file_name, source.format, &source.bytes)?;
+        let cpts = parse_cpts(&table)?;
+        let mut log = provenance_entry(source, table.sheet_name, cpt_columns());
+        log.source_profile = Some(ImportProfile::StandardTable);
+        replacement_logs.push(log);
+        cpts
+    } else {
+        current.inputs.cpts.clone()
+    };
+    let cpt_mapping = if cpt_source.is_some() {
+        match_cpts(&current.inputs.cpts, &new_cpts)
+    } else {
+        identity_mapping(current.inputs.cpts.iter().map(|item| item.id))
+    };
+
+    let new_bearing_capacities = if let Some(source) = capacity_source {
+        let table = read_source_table(&source.file_name, source.format, &source.bytes)?;
+        let parsed = parse_bearing_capacities_with_diagnostics(&table)?;
+        let reconciliation =
+            reconcile_imported_inputs(&new_load_points, &new_cpts, parsed.bearing_capacities)?;
+        let mut log = provenance_entry(source, table.sheet_name.clone(), capacity_columns());
+        log.source_profile = Some(ImportProfile::StandardTable);
+        log.warnings = import_warnings(&table, &parsed.empty_frd_rows, &reconciliation);
+        replacement_logs.push(log);
+        reconciliation.bearing_capacities
+    } else if cpt_source.is_some() {
+        remap_bearing_capacities(&current.inputs.bearing_capacities, &cpt_mapping)
+    } else {
+        current.inputs.bearing_capacities.clone()
+    };
+
+    let mut refreshed = current.clone();
+    refreshed.inputs.load_points = new_load_points;
+    refreshed.inputs.cpts = new_cpts;
+    refreshed.inputs.bearing_capacities = new_bearing_capacities;
+    refreshed.settings.cpt_selection_by_load_point = current
+        .settings
+        .cpt_selection_by_load_point
+        .iter()
+        .filter_map(|(old_id, settings)| {
+            load_point_mapping
+                .get(old_id)
+                .map(|new_id| (*new_id, settings.clone()))
+        })
+        .collect();
+    for plan in &mut refreshed.user_state.pile_plans {
+        plan.selected_piles = std::mem::take(&mut plan.selected_piles)
+            .into_iter()
+            .filter_map(|(old_id, choice)| {
+                load_point_mapping
+                    .get(&old_id)
+                    .map(|new_id| (*new_id, choice))
+            })
+            .collect();
+        plan.locked_load_point_ids = std::mem::take(&mut plan.locked_load_point_ids)
+            .into_iter()
+            .filter_map(|old_id| load_point_mapping.get(&old_id).copied())
+            .collect();
+    }
+    refreshed.user_state.manual_cpt_selections =
+        remap_manual_cpt_selections(current, &load_point_mapping, &cpt_mapping);
+    if load_source.is_some() {
+        let (grouping, warnings) = reconcile_grouping_overrides(
+            &current.settings.load_point_grouping,
+            &load_point_mapping,
+            &refreshed.inputs.load_points,
+        );
+        refreshed.settings.load_point_grouping = grouping;
+        if let Some(log) = replacement_logs
+            .iter_mut()
+            .find(|entry| entry.source_role == Some(ImportRole::LoadPoints))
+        {
+            log.warnings.extend(warnings);
+        }
+    }
+
+    if capacity_source.is_some() {
+        for plan in &mut refreshed.user_state.pile_plans {
+            let Some(current_plan) = current
+                .user_state
+                .pile_plans
+                .iter()
+                .find(|current_plan| current_plan.id == plan.id)
+            else {
+                continue;
+            };
+            plan.active_pile_sizes = reconcile_active_sizes(
+                &current.inputs.bearing_capacities,
+                &current_plan.active_pile_sizes,
+                &refreshed.inputs.bearing_capacities,
+            );
+            plan.active_pile_tip_levels = reconcile_active_tip_levels(
+                &current.inputs.bearing_capacities,
+                &current_plan.active_pile_tip_levels,
+                &refreshed.inputs.bearing_capacities,
+            )?;
+        }
+    }
+
+    let supplied_roles: HashSet<ImportRole> = sources.iter().map(|source| source.role).collect();
+    refreshed.import_log.retain(|entry| {
+        entry
+            .source_role
+            .is_none_or(|role| !supplied_roles.contains(&role))
+    });
+    refreshed.import_log.extend(replacement_logs);
+
+    Ok(refreshed)
+}
+
+fn optional_source_for_role(
+    sources: &[ImportSource],
+    role: ImportRole,
+) -> Result<Option<&ImportSource>, ImportError> {
+    let mut matches = sources.iter().filter(|source| source.role == role);
+    let first = matches.next();
+    if let (Some(first), Some(second)) = (first, matches.next()) {
+        return Err(ImportError::Validation(format!(
+            "Multiple import sources assigned to {}: {}, {}.",
+            role.label(),
+            first.file_name,
+            second.file_name,
+        )));
+    }
+    Ok(first)
+}
+
+fn identity_mapping(ids: impl Iterator<Item = u32>) -> HashMap<u32, u32> {
+    ids.map(|id| (id, id)).collect()
+}
+
+fn remap_bearing_capacities(
+    capacities: &[ProjectBearingCapacity],
+    cpt_mapping: &HashMap<u32, u32>,
+) -> Vec<ProjectBearingCapacity> {
+    capacities
+        .iter()
+        .filter_map(|capacity| {
+            cpt_mapping.get(&capacity.cpt_id).map(|new_cpt_id| {
+                let mut remapped = capacity.clone();
+                remapped.cpt_id = *new_cpt_id;
+                remapped
+            })
+        })
+        .collect()
+}
+
+fn remap_manual_cpt_selections(
+    current: &PilePlanProject,
+    load_point_mapping: &HashMap<u32, u32>,
+    cpt_mapping: &HashMap<u32, u32>,
+) -> HashMap<u32, Vec<u32>> {
+    current
+        .user_state
+        .manual_cpt_selections
+        .iter()
+        .filter_map(|(old_load_point_id, old_cpt_ids)| {
+            let new_load_point_id = load_point_mapping.get(old_load_point_id)?;
+            let mut seen = HashSet::new();
+            let new_cpt_ids: Vec<u32> = old_cpt_ids
+                .iter()
+                .filter_map(|old_cpt_id| cpt_mapping.get(old_cpt_id).copied())
+                .filter(|new_cpt_id| seen.insert(*new_cpt_id))
+                .collect();
+            (!new_cpt_ids.is_empty()).then_some((*new_load_point_id, new_cpt_ids))
+        })
+        .collect()
+}
+
+fn reconcile_grouping_overrides(
+    current: &LoadPointGroupingSettings,
+    load_point_mapping: &HashMap<u32, u32>,
+    new_load_points: &[ProjectLoadPoint],
+) -> (LoadPointGroupingSettings, Vec<String>) {
+    let topology = build_load_point_topology(new_load_points);
+    let mut reconciled = current.clone();
+    reconciled.manual_groups.clear();
+    reconciled.ungrouped_groups.clear();
+    let mut warnings = Vec::new();
+
+    for record in &current.manual_groups {
+        let mapped = remapped_group_members(record, load_point_mapping);
+        let replacement = induced_components(&mapped, &topology)
+            .into_iter()
+            .filter(|component| component.len() >= 2)
+            .map(|load_point_ids| LoadPointGroupOverride { load_point_ids })
+            .collect::<Vec<_>>();
+        if replacement.len() != 1 || replacement[0].load_point_ids != record.load_point_ids {
+            warnings.push(group_override_refresh_warning("manual", record));
+        }
+        reconciled.manual_groups.extend(replacement);
+    }
+
+    for record in &current.ungrouped_groups {
+        let mapped = remapped_group_members(record, load_point_mapping);
+        let replacement = (!mapped.is_empty()).then_some(LoadPointGroupOverride {
+            load_point_ids: mapped.into_iter().collect(),
+        });
+        if replacement
+            .as_ref()
+            .is_none_or(|replacement| replacement.load_point_ids != record.load_point_ids)
+        {
+            warnings.push(group_override_refresh_warning("separation", record));
+        }
+        reconciled.ungrouped_groups.extend(replacement);
+    }
+
+    crate::load_point_groups::canonicalize_load_point_grouping_settings(&mut reconciled);
+    (reconciled, warnings)
+}
+
+fn remapped_group_members(
+    record: &LoadPointGroupOverride,
+    load_point_mapping: &HashMap<u32, u32>,
+) -> BTreeSet<u32> {
+    record
+        .load_point_ids
+        .iter()
+        .filter_map(|load_point_id| load_point_mapping.get(load_point_id).copied())
+        .collect()
+}
+
+fn induced_components(selected: &BTreeSet<u32>, topology: &LoadPointTopology) -> Vec<Vec<u32>> {
+    let mut remaining = selected.clone();
+    let mut components = Vec::new();
+    while let Some(start) = remaining.iter().next().copied() {
+        remaining.remove(&start);
+        let mut component = BTreeSet::from([start]);
+        let mut pending = vec![start];
+        while let Some(current) = pending.pop() {
+            for edge in &topology.edges {
+                let neighbor = if edge.from_load_point_id == current {
+                    Some(edge.to_load_point_id)
+                } else if edge.to_load_point_id == current {
+                    Some(edge.from_load_point_id)
+                } else {
+                    None
+                };
+                if let Some(neighbor) = neighbor.filter(|id| remaining.remove(id)) {
+                    component.insert(neighbor);
+                    pending.push(neighbor);
+                }
+            }
+        }
+        components.push(component.into_iter().collect());
+    }
+    components
+}
+
+fn group_override_refresh_warning(override_kind: &str, record: &LoadPointGroupOverride) -> String {
+    let affected_ids = record
+        .load_point_ids
+        .iter()
+        .map(u32::to_string)
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!(
+        "A {override_kind} load-point group override was adjusted during source refresh; affected IDs: {affected_ids}."
+    )
+}
+
+fn reconcile_active_sizes(
+    old_capacities: &[ProjectBearingCapacity],
+    old_active: &[u32],
+    new_capacities: &[ProjectBearingCapacity],
+) -> Vec<u32> {
+    let old_available: HashSet<u32> = old_capacities
+        .iter()
+        .map(|capacity| capacity.pile_size_mm)
+        .collect();
+    let old_active: HashSet<u32> = old_active.iter().copied().collect();
+    let mut new_available: Vec<u32> = new_capacities
+        .iter()
+        .map(|capacity| capacity.pile_size_mm)
+        .collect();
+    new_available.sort_unstable();
+    new_available.dedup();
+    new_available.retain(|value| !old_available.contains(value) || old_active.contains(value));
+    new_available
+}
+
+fn reconcile_active_tip_levels(
+    old_capacities: &[ProjectBearingCapacity],
+    old_active: &[f64],
+    new_capacities: &[ProjectBearingCapacity],
+) -> Result<Vec<f64>, ImportError> {
+    let old_available: HashSet<i64> = checked_tip_keys(
+        old_capacities
+            .iter()
+            .map(|capacity| capacity.pile_tip_level_m),
+        "existing bearing capacities",
+    )?
+    .into_iter()
+    .collect();
+    let old_active: HashSet<i64> =
+        checked_tip_keys(old_active.iter().copied(), "existing pile-plan activation")?
+            .into_iter()
+            .collect();
+    let mut new_available = checked_tip_keys(
+        new_capacities
+            .iter()
+            .map(|capacity| capacity.pile_tip_level_m),
+        "refreshed bearing capacities",
+    )?;
+    new_available.sort_unstable_by(|left, right| right.cmp(left));
+    new_available.dedup();
+    new_available.retain(|value| !old_available.contains(value) || old_active.contains(value));
+    Ok(new_available.into_iter().map(pile_tip_level_m).collect())
+}
+
+fn checked_tip_keys(
+    values: impl Iterator<Item = f64>,
+    context: &str,
+) -> Result<Vec<i64>, ImportError> {
+    let mut keys = Vec::new();
+    let mut invalid = Vec::new();
+    for (index, value) in values.enumerate() {
+        match try_pile_tip_level_mm(value) {
+            Ok(key) => keys.push(key),
+            Err(error) => invalid.push(InvalidSourcePileTipLevel {
+                location: SourceLocation {
+                    file_name: context.to_string(),
+                    sheet_name: None,
+                    row: Some(index + 1),
+                    column: None,
+                    column_name: Some("Tip"),
+                },
+                value: error.value,
+                reason: error.reason,
+            }),
+        }
+    }
+    if invalid.is_empty() {
+        Ok(keys)
+    } else {
+        Err(ImportError::InvalidPileTipLevels(invalid))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        import_project_from_sources, CptSelectionAlgorithm, CptSelectionSettings, ImportProfile,
+        ImportProfileOptions, ImportRole, ImportSource, LoadPointGroupOverride,
+        PileConfigurationKey, ProjectCpt, ProjectLoadPoint, SelectedPileChoice, SourceFormat,
+    };
+
+    use super::{match_cpts, match_load_points, refresh_project_from_profiled_sources};
+
+    #[test]
+    fn matches_load_point_with_validated_same_id() {
+        let mapping = match_load_points(
+            &[load_point(1, 1000.0, 2000.0)],
+            &[load_point(1, 1000.5, 1999.5)],
+        );
+
+        assert_eq!(mapping.get(&1), Some(&1));
+    }
+
+    #[test]
+    fn matches_changed_load_point_id_by_unique_coordinates() {
+        let mapping = match_load_points(
+            &[load_point(1, 1000.0, 2000.0)],
+            &[load_point(9, 1000.5, 1999.5)],
+        );
+
+        assert_eq!(mapping.get(&1), Some(&9));
+    }
+
+    #[test]
+    fn rejects_reused_load_point_id_at_another_position() {
+        let mapping = match_load_points(
+            &[load_point(1, 1000.0, 2000.0)],
+            &[load_point(1, 5000.0, 6000.0)],
+        );
+
+        assert!(mapping.is_empty());
+    }
+
+    #[test]
+    fn rejects_ambiguous_load_point_coordinate_fallback() {
+        let mapping = match_load_points(
+            &[load_point(1, 1000.0, 2000.0)],
+            &[load_point(8, 999.5, 2000.0), load_point(9, 1000.5, 2000.0)],
+        );
+
+        assert!(mapping.is_empty());
+    }
+
+    #[test]
+    fn rejects_coordinate_fallback_shared_by_multiple_old_load_points() {
+        let mapping = match_load_points(
+            &[load_point(1, 1000.0, 2000.0), load_point(2, 1000.5, 2000.0)],
+            &[load_point(9, 1000.25, 2000.0)],
+        );
+
+        assert!(mapping.is_empty());
+    }
+
+    #[test]
+    fn cpts_match_stable_ids_before_unique_coordinate_fallback() {
+        let mapping = match_cpts(
+            &[cpt(61, 1000.0, 2000.0), cpt(62, 5000.0, 6000.0)],
+            &[cpt(71, 1000.5, 1999.5), cpt(62, 9000.0, 9000.0)],
+        );
+
+        assert_eq!(mapping.get(&61), Some(&71));
+        assert_eq!(mapping.get(&62), Some(&62));
+    }
+
+    #[test]
+    fn refreshing_load_points_preserves_matched_engineering_choices() {
+        let mut current = project();
+        current
+            .user_state
+            .active_pile_plan_mut()
+            .expect("active plan")
+            .selected_piles
+            .insert(1, selected_pile());
+        current.user_state.manual_cpt_selections.insert(1, vec![61]);
+        current
+            .settings
+            .cpt_selection_by_load_point
+            .insert(1, local_settings());
+        let original_cpts = current.inputs.cpts.clone();
+        let original_capacities = current.inputs.bearing_capacities.clone();
+
+        let refreshed = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(
+                ImportRole::LoadPoints,
+                "loads.csv",
+                "9,0.5,0,900\n",
+            )],
+        )
+        .unwrap();
+
+        assert_eq!(refreshed.inputs.load_points[0].id, 9);
+        assert_eq!(refreshed.inputs.load_points[0].design_load_kn, 900.0);
+        assert_eq!(refreshed.inputs.cpts, original_cpts);
+        assert_eq!(refreshed.inputs.bearing_capacities, original_capacities);
+        assert_eq!(
+            refreshed
+                .user_state
+                .active_pile_plan()
+                .expect("active plan")
+                .selected_piles
+                .get(&9),
+            Some(&selected_pile())
+        );
+        assert_eq!(
+            refreshed.user_state.manual_cpt_selections.get(&9),
+            Some(&vec![61])
+        );
+        assert_eq!(
+            refreshed.settings.cpt_selection_by_load_point.get(&9),
+            Some(&local_settings())
+        );
+        assert!(!refreshed
+            .user_state
+            .active_pile_plan()
+            .expect("active plan")
+            .selected_piles
+            .contains_key(&1));
+    }
+
+    #[test]
+    fn refreshing_load_points_prunes_and_remaps_group_overrides_with_warnings() {
+        let mut current = project_with_load_points("1,0,0,100\n2,1000,0,200\n3,2000,0,300\n");
+        current.settings.load_point_grouping.manual_groups = vec![group(&[1, 2])];
+        current.settings.load_point_grouping.ungrouped_groups = vec![group(&[2, 3])];
+        let plan = current
+            .user_state
+            .active_pile_plan_mut()
+            .expect("active plan");
+        plan.selected_piles.insert(1, selected_pile());
+        plan.locked_load_point_ids.push(1);
+
+        let refreshed = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(
+                ImportRole::LoadPoints,
+                "loads.csv",
+                "9,0.5,0,100\n3,2000,0,300\n",
+            )],
+        )
+        .unwrap();
+
+        assert!(refreshed
+            .settings
+            .load_point_grouping
+            .manual_groups
+            .is_empty());
+        assert_eq!(
+            refreshed.settings.load_point_grouping.ungrouped_groups,
+            vec![group(&[3])]
+        );
+        let warnings = &refreshed
+            .import_log
+            .iter()
+            .find(|entry| entry.source_role == Some(ImportRole::LoadPoints))
+            .expect("load-point import log")
+            .warnings;
+        assert_eq!(
+            warnings
+                .iter()
+                .filter(|warning| warning.contains("group override"))
+                .count(),
+            2
+        );
+        assert!(warnings.iter().any(|warning| warning.contains("1, 2")));
+        assert!(warnings.iter().any(|warning| warning.contains("2, 3")));
+
+        let plan = refreshed
+            .user_state
+            .active_pile_plan()
+            .expect("active plan");
+        assert!(plan.selected_piles.contains_key(&9));
+        assert_eq!(plan.locked_load_point_ids, vec![9]);
+    }
+
+    #[test]
+    fn refreshing_load_points_splits_manual_group_by_new_gabriel_components() {
+        let mut current = project_with_load_points(
+            "1,-2000,0,100\n2,-1000,0,100\n3,0,0,100\n4,1000,0,100\n5,2000,0,100\n6,0,1000,100\n",
+        );
+        current.settings.load_point_grouping.manual_groups = vec![group(&[1, 2, 3, 4, 5])];
+
+        let refreshed = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(
+                ImportRole::LoadPoints,
+                "loads.csv",
+                "1,-2000,0,100\n2,-1000,0,100\n4,1000,0,100\n5,2000,0,100\n6,0,1000,100\n",
+            )],
+        )
+        .unwrap();
+
+        assert_eq!(
+            refreshed.settings.load_point_grouping.manual_groups,
+            vec![group(&[1, 2]), group(&[4, 5])]
+        );
+        let warnings = &refreshed
+            .import_log
+            .iter()
+            .find(|entry| entry.source_role == Some(ImportRole::LoadPoints))
+            .expect("load-point import log")
+            .warnings;
+        assert_eq!(
+            warnings
+                .iter()
+                .filter(|warning| warning.contains("group override"))
+                .count(),
+            1
+        );
+        assert!(warnings
+            .iter()
+            .any(|warning| warning.contains("1, 2, 3, 4, 5")));
+    }
+
+    #[test]
+    fn refreshing_cpts_remaps_manual_selections_and_retained_capacities() {
+        let mut current = project();
+        current.user_state.manual_cpt_selections.insert(1, vec![61]);
+
+        let refreshed = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(ImportRole::Cpts, "cpts.csv", "71,0.5,0\n")],
+        )
+        .unwrap();
+
+        assert_eq!(refreshed.inputs.cpts[0].id, 71);
+        assert_eq!(refreshed.inputs.bearing_capacities[0].cpt_id, 71);
+        assert_eq!(
+            refreshed.user_state.manual_cpt_selections.get(&1),
+            Some(&vec![71])
+        );
+    }
+
+    #[test]
+    fn refreshing_cpt_positions_with_stable_ids_keeps_foundation_advice() {
+        let mut current = project();
+        current.user_state.manual_cpt_selections.insert(1, vec![61]);
+        let original_capacities = current.inputs.bearing_capacities.clone();
+
+        let refreshed = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(ImportRole::Cpts, "cpts.csv", "61,5000,5000\n")],
+        )
+        .unwrap();
+
+        assert_eq!(refreshed.inputs.cpts[0].x_mm, 5000.0);
+        assert_eq!(refreshed.inputs.cpts[0].y_mm, 5000.0);
+        assert_eq!(refreshed.inputs.bearing_capacities, original_capacities);
+        assert_eq!(
+            refreshed.user_state.manual_cpt_selections.get(&1),
+            Some(&vec![61])
+        );
+    }
+
+    #[test]
+    fn refreshing_cpts_removes_manual_override_when_no_selected_cpt_maps() {
+        let mut current = project();
+        current.user_state.manual_cpt_selections.insert(1, vec![61]);
+
+        let refreshed = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(ImportRole::Cpts, "cpts.csv", "71,5000,5000\n")],
+        )
+        .unwrap();
+
+        assert!(!refreshed.user_state.manual_cpt_selections.contains_key(&1));
+        assert!(refreshed.inputs.bearing_capacities.is_empty());
+    }
+
+    #[test]
+    fn refreshing_foundation_advice_preserves_choices_and_reconciles_active_values() {
+        let mut current = project();
+        current
+            .user_state
+            .active_pile_plan_mut()
+            .expect("active plan")
+            .selected_piles
+            .insert(1, selected_pile());
+        let current_plan = current
+            .user_state
+            .active_pile_plan_mut()
+            .expect("active plan");
+        current_plan.active_pile_sizes.clear();
+        current_plan.active_pile_tip_levels = vec![-17.5];
+
+        let refreshed = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(
+                ImportRole::BearingCapacities,
+                "capacities.csv",
+                "61,-17.5,290,250\n61,-20,320,500\n",
+            )],
+        )
+        .unwrap();
+
+        assert_eq!(refreshed.inputs.bearing_capacities.len(), 2);
+        assert_eq!(
+            refreshed
+                .user_state
+                .active_pile_plan()
+                .expect("active plan")
+                .selected_piles
+                .get(&1),
+            Some(&selected_pile())
+        );
+        let refreshed_plan = refreshed
+            .user_state
+            .active_pile_plan()
+            .expect("active plan");
+        assert_eq!(refreshed_plan.active_pile_sizes, vec![320]);
+        assert_eq!(refreshed_plan.active_pile_tip_levels, vec![-17.5, -20.0]);
+    }
+
+    #[test]
+    fn rejects_duplicate_refresh_roles_atomically() {
+        let current = project();
+        let result = refresh_project_from_profiled_sources(
+            &current,
+            &[
+                csv_source(ImportRole::LoadPoints, "loads-a.csv", "1,0,0,100\n"),
+                csv_source(ImportRole::LoadPoints, "loads-b.csv", "1,0,0,200\n"),
+            ],
+        );
+
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Multiple import sources"));
+    }
+
+    #[test]
+    fn rejects_imprecise_existing_activation_before_refresh_mutation() {
+        let mut current = project();
+        current
+            .user_state
+            .active_pile_plan_mut()
+            .expect("active plan")
+            .active_pile_tip_levels = vec![-18.5004];
+        let before = current.clone();
+
+        let error = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(
+                ImportRole::BearingCapacities,
+                "capacities.csv",
+                "61,-18.25,290,700\n",
+            )],
+        )
+        .unwrap_err();
+
+        assert!(matches!(error, crate::ImportError::InvalidPileTipLevels(_)));
+        assert_eq!(current, before);
+    }
+
+    #[test]
+    fn rejects_duplicate_load_point_positions_without_mutating_current_project() {
+        let current = project();
+        let before = current.clone();
+
+        let error = refresh_project_from_profiled_sources(
+            &current,
+            &[csv_source(
+                ImportRole::LoadPoints,
+                "loads.csv",
+                "8,1000,2000,100\n2,1000,2000,200\n",
+            )],
+        )
+        .unwrap_err();
+
+        assert!(matches!(
+            error,
+            crate::ImportError::DuplicateLoadPointPositions(_)
+        ));
+        assert_eq!(current, before);
+    }
+
+    fn project() -> crate::PilePlanProject {
+        project_with_load_points("1,0,0,100\n")
+    }
+
+    fn project_with_load_points(load_points: &str) -> crate::PilePlanProject {
+        import_project_from_sources(
+            "Refresh project",
+            &[
+                csv_source(ImportRole::LoadPoints, "loads.csv", load_points),
+                csv_source(ImportRole::Cpts, "cpts.csv", "61,0,0\n"),
+                csv_source(
+                    ImportRole::BearingCapacities,
+                    "capacities.csv",
+                    "61,-17.5,290,700\n",
+                ),
+            ],
+            None,
+            "EUR",
+        )
+        .unwrap()
+    }
+
+    fn group(load_point_ids: &[u32]) -> LoadPointGroupOverride {
+        LoadPointGroupOverride {
+            load_point_ids: load_point_ids.to_vec(),
+        }
+    }
+
+    fn selected_pile() -> SelectedPileChoice {
+        SelectedPileChoice {
+            pile: Some(PileConfigurationKey {
+                pile_size_mm: 290,
+                pile_tip_level_mm: -17500,
+            }),
+            external_references: vec![],
+        }
+    }
+
+    fn local_settings() -> CptSelectionSettings {
+        CptSelectionSettings {
+            algorithm: CptSelectionAlgorithm::MaximumAngle,
+            max_distance_m: 18.0,
+            monopoly_distance_m: 1.0,
+            max_angle_degrees: 100.0,
+        }
+    }
+
+    fn csv_source(role: ImportRole, file_name: &str, contents: &str) -> ImportSource {
+        ImportSource {
+            role,
+            profile: ImportProfile::Auto,
+            profile_options: ImportProfileOptions::default(),
+            file_name: file_name.to_string(),
+            format: SourceFormat::Csv,
+            bytes: contents.as_bytes().to_vec(),
+        }
+    }
+
+    fn load_point(id: u32, x_mm: f64, y_mm: f64) -> ProjectLoadPoint {
+        ProjectLoadPoint {
+            id,
+            name: format!("Load point {id}"),
+            x_mm,
+            y_mm,
+            design_load_kn: 100.0,
+        }
+    }
+
+    fn cpt(id: u32, x_mm: f64, y_mm: f64) -> ProjectCpt {
+        ProjectCpt {
+            id,
+            name: format!("CPT {id}"),
+            x_mm,
+            y_mm,
+        }
+    }
+}

@@ -1,0 +1,37 @@
+{
+  "job_id": "57062c80-c36f-4e8c-93e0-a1c694a99bdb",
+  "status": "completed",
+  "created_at": "2026-10-03T08:39:54.356490+00:00",
+  "started_at": "2026-10-03T08:39:54.501685+00:00",
+  "completed_at": "2026-10-03T08:39:56.094753+00:00",
+  "progress": "Validating IFC against IDS specification...",
+  "result": {
+    "success": true,
+    "ifc_file_name": "sample.ifc",
+    "ids_file_name": "sample.ids",
+    "total_specifications": 1,
+    "failed_specifications": 0,
+    "total_elements_validated": 1,
+    "validation_timestamp": "2026-10-03T14:09:56.093752",
+    "specifications": [
+      {
+        "specification_name": "Wall Naming Convention",
+        "status": "pass",
+        "severity": "error",
+        "total_requirements": 1,
+        "failed_requirements": 0,
+        "requirements": [
+          {
+            "requirement_description": "Walls must have names starting with W-",
+            "status": "pass",
+            "total_elements": 1,
+            "failed_elements": 0,
+            "elements": []
+          }
+        ]
+      }
+    ]
+  },
+  "error": null,
+  "duration_seconds": 1.59
+}

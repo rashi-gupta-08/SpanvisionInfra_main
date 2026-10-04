@@ -1,0 +1,8 @@
+import path from 'node:path';import {pathToFileURL} from 'node:url';
+process.env.TEMP='D:/SpanvisionToolchain/pile-temp';process.env.TMP=process.env.TEMP;
+const root=process.cwd();const {chromium}=await import(pathToFileURL(path.join(root,'node_modules/playwright/index.mjs')));
+const browser=await chromium.launch({channel:'msedge',headless:true});
+try{const page=await browser.newPage({viewport:{width:1440,height:900},locale:'en-US'});await page.goto('http://127.0.0.1:4255/');await page.locator('.viewer-canvas').waitFor();
+await page.getByRole('button',{name:'Preferences',exact:true}).click();console.log('SETTINGS: '+(await page.locator('.modal-dialog').innerText()).slice(0,1500));await page.getByRole('button',{name:'Appearance',exact:true}).click();console.log('APPEARANCE: '+(await page.locator('.modal-dialog').innerText()).slice(0,1200));await page.getByRole('button',{name:'Cancel',exact:true}).click();
+await page.getByRole('button',{name:'File',exact:true}).click();console.log('FILE: '+(await page.locator('.backstage-overlay').innerText()).slice(0,1800));await page.getByRole('button',{name:'Import sources',exact:true}).click();console.log('IMPORT: '+(await page.locator('.project-import-panel').innerText()).slice(0,1800));await page.locator('.project-import-panel input[type=file]').first().setInputFiles(['Belastinglocaties.csv','Sonderingen.xlsx','Draagvermogens.xlsx'].map(name=>path.join(root,'spanvision-pile-plane-workspace/sample_project',name)));await page.waitForTimeout(1500);console.log('STAGED: '+(await page.locator('.project-import-panel').innerText()).slice(0,2600));await page.screenshot({path:path.join(root,'qa/pile/import-staged.png')});
+}finally{await browser.close();}

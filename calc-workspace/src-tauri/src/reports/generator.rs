@@ -1,0 +1,1052 @@
+//! PDF report generator using openaec-layout.
+//!
+//! Generates professional cost estimation reports with:
+//! - Optional cover page
+//! - Table with repeated headers across pages
+//! - Automatic pagination via openaec-layout flowable engine
+//! - Footer with company info + page numbers
+
+use openaec_layout::*;
+use std::path::Path;
+
+use super::{CostItem, NumberFormat, ReportRequest};
+
+// ── Formatting helpers ──────────────────────────────────────────────────────
+//
+// Getallen, bedragen en datums lopen via `request.number_format` (numfmt.rs).
+
+#[allow(dead_code)]
+fn today_str() -> String {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let days = now / 86400;
+    let y = 1970 + (days * 400 / 146097);
+    // Simplified date formatting
+    format!("{:04}", y)
+}
+
+/// Titel van de rapportview in de rapporttaal (Nederlands zonder labels).
+fn view_title(request: &ReportRequest) -> &str {
+    match request.report_view.as_str() {
+        "werkbeschrijving" => request.lbl("views.werkbeschrijving", "Werkbeschrijving"),
+        "hoofdaanneming" => request.lbl("views.hoofdaanneming", "Hoofdaanneming"),
+        "onderaanneming" => request.lbl("views.onderaanneming", "Onderaanneming"),
+        "inschrijfstaat" => request.lbl("views.inschrijfstaat", "Inschrijfstaat"),
+        "nacalculatie" => request.lbl("views.nacalculatie", "Nacalculatie"),
+        // bouw1/ibis lopen via de Typst-sjablonen (zie generate_bytes) en
+        // komen hier in de praktijk niet langs.
+        "bouw1" => request.lbl("views.bouw1", "Bouw 1 begroting"),
+        "ibis" => request.lbl("views.bouw2", "IBIS-stijl begroting"),
+        _ => request.lbl("views.report", "Rapport"),
+    }
+}
+
+// ── Column definitions ──────────────────────────────────────────────────────
+
+struct Col {
+    key: &'static str,
+    /// Key in de `report`-namespace voor de kolomkop.
+    label_key: &'static str,
+    /// Nederlandse kolomkop (standaard zonder labels).
+    label: &'static str,
+    width_mm: f64,
+}
+
+fn get_columns(view: &str, show_hoeveelheid: bool) -> Vec<Col> {
+    let qty_keys: &[&str] = &["quantity", "unit", "unitPrice", "normUnitPrice"];
+    let cols: Vec<Col> = match view {
+        // Besteksopmaak: smalle codekolom, brede omschrijving (ook op staand A4)
+        "werkbeschrijving" => vec![
+            Col { key: "code", label_key: "columns.code", label: "Code", width_mm: 18.0 },
+            Col { key: "description", label_key: "columns.description", label: "Omschrijving", width_mm: 0.0 },
+            Col { key: "quantity", label_key: "columns.quantity", label: "Hoeveelheid", width_mm: 22.0 },
+            Col { key: "unit", label_key: "columns.unitShort", label: "Eh.", width_mm: 12.0 },
+            Col { key: "verrekenbaar", label_key: "columns.verrekenbaarS", label: "S", width_mm: 8.0 },
+        ],
+        "hoofdaanneming" => vec![
+            Col { key: "code", label_key: "columns.code", label: "Code", width_mm: 18.0 },
+            Col { key: "description", label_key: "columns.description", label: "Omschrijving", width_mm: 0.0 },
+            Col { key: "quantity", label_key: "columns.quantity", label: "Hoeveelheid", width_mm: 20.0 },
+            Col { key: "unit", label_key: "columns.unitShort", label: "Eh.", width_mm: 12.0 },
+            Col { key: "verrekenbaar", label_key: "columns.verrekenbaarS", label: "S", width_mm: 8.0 },
+            Col { key: "unitPrice", label_key: "columns.unitPriceShort", label: "Eh. Prijs", width_mm: 24.0 },
+            Col { key: "total", label_key: "columns.amount", label: "Bedrag", width_mm: 26.0 },
+        ],
+        "onderaanneming" => vec![
+            Col { key: "nr", label_key: "columns.nr", label: "Nr", width_mm: 30.0 },
+            Col { key: "code", label_key: "columns.code", label: "Code", width_mm: 45.0 },
+            Col { key: "description", label_key: "columns.description", label: "Omschrijving", width_mm: 0.0 },
+            Col { key: "total", label_key: "columns.amount", label: "Bedrag", width_mm: 35.0 },
+        ],
+        // Inschrijfstaat: de klassieke besteksvolgorde — bestekspostnummer,
+        // omschrijving, eenheid, hoeveelheid, verrekenbaarheid, prijs, bedrag.
+        //
+        // De vaste kolommen tellen op tot 110 mm, zodat de omschrijving op een
+        // staand A4 (~180 mm bruikbaar) ruim 70 mm overhoudt. Eerder stond hier
+        // 190 mm aan vaste breedtes; de flexibele omschrijving hield dan niets
+        // over en de tekst werd dwars over de hoeveelheid- en eenheidkolom
+        // getekend.
+        "inschrijfstaat" => vec![
+            Col { key: "code", label_key: "columns.specItem", label: "Bestekspost", width_mm: 20.0 },
+            Col { key: "description", label_key: "columns.description", label: "Omschrijving", width_mm: 0.0 },
+            Col { key: "unit", label_key: "columns.unitShort", label: "Eh.", width_mm: 12.0 },
+            Col { key: "quantity", label_key: "columns.quantity", label: "Hoeveelheid", width_mm: 20.0 },
+            Col { key: "verrekenbaar", label_key: "columns.verrekenbaarS", label: "S", width_mm: 8.0 },
+            Col { key: "unitPrice", label_key: "columns.pricePerUnit", label: "Prijs per eh.", width_mm: 24.0 },
+            Col { key: "total", label_key: "columns.totalAmount", label: "Totaal bedrag", width_mm: 26.0 },
+        ],
+        "nacalculatie" => vec![
+            Col { key: "nr", label_key: "columns.nr", label: "Nr", width_mm: 25.0 },
+            Col { key: "code", label_key: "columns.code", label: "Code", width_mm: 40.0 },
+            Col { key: "description", label_key: "columns.description", label: "Omschrijving", width_mm: 0.0 },
+            Col { key: "quantity", label_key: "columns.quantity", label: "Hoeveelheid", width_mm: 25.0 },
+            Col { key: "unit", label_key: "columns.unit", label: "Eenheid", width_mm: 20.0 },
+            Col { key: "normUnitPrice", label_key: "columns.pricePerResource", label: "Prijs/middel", width_mm: 28.0 },
+            Col { key: "unitPrice", label_key: "columns.unitPrice", label: "Eenheidsprijs", width_mm: 30.0 },
+            Col { key: "total", label_key: "columns.amount", label: "Bedrag", width_mm: 35.0 },
+        ],
+        _ => vec![
+            Col { key: "description", label_key: "columns.description", label: "Omschrijving", width_mm: 0.0 },
+            Col { key: "total", label_key: "columns.total", label: "Totaal", width_mm: 35.0 },
+        ],
+    };
+    if !show_hoeveelheid {
+        cols.into_iter()
+            .filter(|c| !qty_keys.contains(&c.key))
+            .collect()
+    } else {
+        cols
+    }
+}
+
+// ── Item filtering ──────────────────────────────────────────────────────────
+
+fn filter_items<'a>(items: &'a [CostItem], view: &str) -> Vec<&'a CostItem> {
+    items
+        .iter()
+        .filter(|i| !i.row_type.starts_with("staart_") && i.row_type != "witregel")
+        .filter(|i| match view {
+            // Werkbeschrijving: ook tekstregels (opmerkingen bij de posten)
+            "werkbeschrijving" => {
+                i.row_type == "chapter"
+                    || i.row_type == "begrotingspost"
+                    || i.row_type == "tekstregel"
+            }
+            "hoofdaanneming" => {
+                i.row_type == "chapter"
+                    || i.row_type == "begrotingspost"
+                    || i.row_type == "tekstregel"
+            }
+            "onderaanneming" => i.row_type == "chapter" || i.row_type == "begrotingspost",
+            // Inschrijfstaat gaat naar de opdrachtgever: alleen hoofdstukken
+            // en bestekposten. Zonder deze regel viel hij door naar `true` en
+            // stonden de onderliggende rekenregels er ook in — inclusief
+            // uurtarieven en de opbouw van de kostprijs.
+            "inschrijfstaat" => {
+                i.row_type == "chapter"
+                    || i.row_type == "begrotingspost"
+                    || i.row_type == "tekstregel"
+            }
+            _ => true,
+        })
+        .collect()
+}
+
+/// Lettertype-afwijking per rij voor de "clean" rapportstijl
+/// (werkbeschrijving/hoofdaanneming): hoofdstukken vet mét lijnen erboven en
+/// eronder, diepere paragrafen vet-cursief, opmerkingen (tekstregels)
+/// vet-cursief — naar de klassieke besteksopmaak.
+fn row_font_for(item: &CostItem) -> Option<RowOverride> {
+    match item.row_type.as_str() {
+        "chapter" if item.depth >= 2 => Some(RowOverride {
+            font_name: Some("LiberationSans-BoldItalic".to_string()),
+            ..Default::default()
+        }),
+        "chapter" => Some(RowOverride {
+            font_name: Some("LiberationSans-Bold".to_string()),
+            top_rule: true,
+            bottom_rule: true,
+            ..Default::default()
+        }),
+        "tekstregel" => Some(RowOverride {
+            font_name: Some("LiberationSans-BoldItalic".to_string()),
+            ..Default::default()
+        }),
+        _ => None,
+    }
+}
+
+/// Bedrag-notatie in de besteksopmaak: kaal getal zonder valutateken
+/// (zoals de referentie-opmaak), lege string bij 0.
+fn fmt_bedrag(nf: &NumberFormat, value: f64) -> String {
+    nf.opt_number(Some(value))
+}
+
+/// Inspring in de omschrijving-kolom per hiërarchie-diepte.
+fn indent_for(depth: u32) -> String {
+    "  ".repeat(depth as usize)
+}
+
+fn get_cell_value(request: &ReportRequest, item: &CostItem, key: &str) -> String {
+    let nf = &request.number_format;
+    match key {
+        "nr" => item.nr.clone().unwrap_or_default(),
+        "code" => item.code.clone(),
+        "description" => item.description.clone(),
+        "quantity" => nf.opt_number(item.quantity),
+        "unit" => request.unit(item.unit.as_deref().unwrap_or("")),
+        // V/N/… per regel — ook op posten (S-kolom in de besteksopmaak)
+        "verrekenbaar" => item.verrekenbaar.clone().unwrap_or_default(),
+        "normUnitPrice" => nf.opt_number(item.norm_unit_price),
+        "unitPrice" => {
+            if item.unit_price != 0.0 {
+                nf.currency(item.unit_price)
+            } else {
+                String::new()
+            }
+        }
+        "total" => {
+            if item.total != 0.0 {
+                nf.currency(item.total)
+            } else {
+                String::new()
+            }
+        }
+        _ => String::new(),
+    }
+}
+
+// ── Page configuration ──────────────────────────────────────────────────────
+
+fn page_size_for(size: &str, orientation: &str) -> Size {
+    let (w, h) = match size {
+        "A3" => (Mm(297.0).into(), Mm(420.0).into()),
+        _ => (Mm(210.0).into(), Mm(297.0).into()),
+    };
+    match orientation {
+        "landscape" => Size { width: h, height: w },
+        _ => Size { width: w, height: h },
+    }
+}
+
+// ── Header/Footer callback ──────────────────────────────────────────────────
+
+#[derive(Debug, Clone)]
+struct ReportPageCallback {
+    project_name: String,
+    report_title: String,
+    company_name: String,
+    /// Bedrijfslogo rechtsboven: (bytes, hoogte/breedte-verhouding)
+    logo_right: Option<(Vec<u8>, f32)>,
+    /// Hoogte van de koptekst in mm (positie van de accentlijn).
+    header_height_mm: f32,
+    /// Kleur van de accentlijn.
+    header_line_color: Color,
+    /// Paginanummer-sjabloon in de rapporttaal ("Pagina {{page}} / {{total}}").
+    page_template: String,
+}
+
+impl PageCallback for ReportPageCallback {
+    fn on_page(
+        &self,
+        draw_list: &mut DrawList,
+        page_num: usize,
+        total_pages: usize,
+        page_size: Size,
+    ) {
+        let margin: Pt = Mm(12.0).into();
+        let right_edge = Pt(page_size.width.0 - margin.0);
+        let hh = self.header_height_mm;
+        let header_y: Pt = Mm(hh).into();
+
+        if let Some((bytes, aspect)) = &self.logo_right {
+            // Koptekst mét logo: alleen het logo rechtsboven; projectnaam en
+            // rapporttitel samen links. Het logo schaalt mee met de
+            // koptekst-hoogte (1 mm marge boven en onder de lijn).
+            let mut h: Pt = Mm(hh - 2.0).into();
+            let mut w = Pt(if *aspect > 0.0 { h.0 / aspect } else { h.0 });
+            let max_w: Pt = Mm(70.0).into();
+            if w.0 > max_w.0 {
+                w = max_w;
+                h = Pt(w.0 * aspect);
+            }
+            // Witte fill vóór het tekenen: de compositing-fallback (voor
+            // viewers zonder SMask-ondersteuning) hoort tegen wit.
+            draw_list.set_fill_color(Color::rgb(255, 255, 255));
+            draw_list.draw_image(bytes.clone(), Pt(right_edge.0 - w.0), Mm(1.0).into(), w, h);
+
+            draw_list.set_stroke_color(self.header_line_color);
+            draw_list.set_line_width(Pt(1.5));
+            draw_list.draw_line(margin, header_y, right_edge, header_y);
+
+            draw_list.set_font("LiberationSans-Bold", Pt(9.0));
+            draw_list.set_fill_color(Color::rgb(54, 54, 62));
+            draw_list.draw_text(margin, Mm((hh - 5.5).max(3.5)).into(), &self.project_name);
+
+            draw_list.set_font("LiberationSans", Pt(8.0));
+            draw_list.set_fill_color(Color::rgb(161, 161, 170));
+            draw_list.draw_text(margin, Mm(hh - 1.8).into(), &self.report_title);
+        } else {
+            // Accentlijn bovenaan; tekst er vlak boven
+            draw_list.set_stroke_color(self.header_line_color);
+            draw_list.set_line_width(Pt(1.5));
+            draw_list.draw_line(margin, header_y, right_edge, header_y);
+
+            // Project name (top left, above the line)
+            draw_list.set_font("LiberationSans-Bold", Pt(9.0));
+            draw_list.set_fill_color(Color::rgb(54, 54, 62));
+            draw_list.draw_text(margin, Mm((hh - 3.0).max(3.0)).into(), &self.project_name);
+
+            // Report title (top right)
+            draw_list.set_font("LiberationSans", Pt(8.0));
+            draw_list.set_fill_color(Color::rgb(161, 161, 170));
+            draw_list.draw_text_right(right_edge, Mm((hh - 3.0).max(3.0)).into(), &self.report_title);
+        }
+
+        // Footer: thin line near bottom
+        let footer_line_y = Pt(page_size.height.0 - Mm(12.0).0);
+        draw_list.set_stroke_color(Color::rgb(231, 229, 228));
+        draw_list.set_line_width(Pt(0.5));
+        draw_list.draw_line(margin, footer_line_y, right_edge, footer_line_y);
+
+        // Company name (bottom left)
+        let footer_text_y = Pt(page_size.height.0 - Mm(10.0).0);
+        draw_list.set_font("LiberationSans", Pt(7.0));
+        draw_list.set_fill_color(Color::rgb(161, 161, 170));
+        draw_list.draw_text(margin, footer_text_y, &self.company_name);
+
+        // Page number (bottom right)
+        let page_text = self
+            .page_template
+            .replace("{{page}}", &page_num.to_string())
+            .replace("{{total}}", &total_pages.to_string());
+        draw_list.draw_text_right(right_edge, footer_text_y, &page_text);
+    }
+}
+
+/// Parse een "#RRGGBB"-hexkleur; None bij ongeldige invoer.
+fn parse_hex_color(s: &str) -> Option<Color> {
+    let h = s.trim().trim_start_matches('#');
+    if h.len() != 6 {
+        return None;
+    }
+    let r = u8::from_str_radix(&h[0..2], 16).ok()?;
+    let g = u8::from_str_radix(&h[2..4], 16).ok()?;
+    let b = u8::from_str_radix(&h[4..6], 16).ok()?;
+    Some(Color::rgb(r, g, b))
+}
+
+/// Decodeer een aangeleverd logo en lever het als **PNG**-bytes op.
+///
+/// De Typst-sjablonen registreren het logo onder de naam `logo-right.png`, en
+/// Typst leidt het formaat uit die naam af. Een gebruiker levert echter net zo
+/// vaak een JPEG aan (het dialoogvenster accepteert dat), en dan strandde het
+/// hele rapport op "failed to decode image (Invalid PNG signature)". Daarom
+/// hercoderen we alles wat geen PNG is naar PNG.
+///
+/// Geeft None terug bij lege of onleesbare invoer; de aanroeper valt dan terug
+/// op een doorzichtige stip in plaats van het rapport te laten mislukken.
+pub(crate) fn logo_as_png(data_url: &str) -> Option<Vec<u8>> {
+    let trimmed = data_url.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    let b64 = trimmed.split(',').next_back().unwrap_or(trimmed);
+    use base64::Engine as _;
+    let bytes = base64::engine::general_purpose::STANDARD.decode(b64).ok()?;
+
+    // Al een PNG? Dan niets aanraken — hercoderen kost alleen kwaliteit en tijd.
+    if bytes.starts_with(&[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) {
+        return Some(bytes);
+    }
+
+    let img = image::ImageReader::new(std::io::Cursor::new(&bytes))
+        .with_guessed_format()
+        .ok()?
+        .decode()
+        .ok()?;
+    let mut out = Vec::new();
+    img.write_to(&mut std::io::Cursor::new(&mut out), image::ImageFormat::Png)
+        .ok()?;
+    Some(out)
+}
+
+/// Decodeer een logo uit een data-URL ("data:image/png;base64,....") naar
+/// (bytes, hoogte/breedte-verhouding). None bij lege of onleesbare input.
+fn decode_logo(data_url: &str) -> Option<(Vec<u8>, f32)> {
+    let trimmed = data_url.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    let b64 = trimmed.split(',').next_back().unwrap_or(trimmed);
+    use base64::Engine as _;
+    let bytes = base64::engine::general_purpose::STANDARD.decode(b64).ok()?;
+    let dims = image::ImageReader::new(std::io::Cursor::new(&bytes))
+        .with_guessed_format()
+        .ok()?
+        .into_dimensions()
+        .ok()?;
+    if dims.0 == 0 || dims.1 == 0 {
+        return None;
+    }
+    Some((bytes, dims.1 as f32 / dims.0 as f32))
+}
+
+// ── PDF Generation ──────────────────────────────────────────────────────────
+
+/// Load system fonts into the registry.
+pub(crate) fn load_system_fonts(fonts: &SharedFontRegistry) {
+    let mut reg = fonts.lock().unwrap();
+
+    // Try common font paths on Windows
+    let font_dir = std::path::Path::new("C:/Windows/Fonts");
+    let font_candidates = [
+        ("Inter", "segoeui.ttf"),                // Regular
+        ("Inter-Bold", "segoeuib.ttf"),          // Bold
+        ("Inter-Italic", "segoeuii.ttf"),        // Italic
+        ("Inter-BoldItalic", "segoeuiz.ttf"),    // Bold Italic (paragraaf-koppen)
+    ];
+
+    for (name, file) in &font_candidates {
+        let path = font_dir.join(file);
+        if path.exists() {
+            match reg.register_ttf(name, &path) {
+                Ok(_) => {}
+                Err(e) => eprintln!("Failed to load font {}: {}", name, e),
+            }
+        }
+    }
+
+    // Register aliases
+    reg.register_alias("LiberationSans", "Inter");
+    reg.register_alias("LiberationSans-Bold", "Inter-Bold");
+    reg.register_alias("LiberationSans-Italic", "Inter-Italic");
+    reg.register_alias("LiberationSans-BoldItalic", "Inter-BoldItalic");
+    reg.register_alias("LiberationSans-Regular", "Inter");
+}
+
+// Bouw 1 report generation is in bouw1.rs
+
+/// Generate PDF bytes from a report request.
+pub fn generate_bytes(request: &ReportRequest) -> Result<Vec<u8>, String> {
+    let nf = &request.number_format;
+    // Route Bouw 1 view through Typst engine
+    if request.report_view == "bouw1" {
+        return super::bouw1::generate_bouw1_typst(request);
+    }
+    // Route IBIS-stijl view through its own Typst template
+    if request.report_view == "ibis" {
+        return super::ibis::generate_ibis_typst(request);
+    }
+
+    let fonts = shared_font_registry();
+    load_system_fonts(&fonts);
+    let page = page_size_for(&request.page_size, &request.page_orientation);
+
+    // Bedrijfslogo rechtsboven in de koptekst (indien ingesteld)
+    let logo_right = request
+        .company_info
+        .as_ref()
+        .and_then(|c| c.logo_right.as_deref())
+        .and_then(decode_logo);
+
+    // Koptekst-instellingen (rapporteigenschappen): hoogte en lijnkleur
+    let header_height_mm = request
+        .schedule
+        .report_header_height_mm
+        .map(|v| v as f32)
+        .unwrap_or(if logo_right.is_some() { 10.0 } else { 8.0 })
+        .clamp(6.0, 30.0);
+    let header_line_color = request
+        .schedule
+        .report_header_line_color
+        .as_deref()
+        .and_then(parse_hex_color)
+        .unwrap_or(Color::rgb(0, 0, 0)); // Edition default; document override above is preserved.
+
+    // Margins — de topmarge groeit mee met een hogere koptekst
+    let margin_left: Pt = Mm(12.0).into();
+    let margin_right: Pt = Mm(12.0).into();
+    let margin_top: Pt = Mm((header_height_mm + 8.0).max(18.0)).into();
+    let margin_bottom: Pt = Mm(15.0).into();
+
+    // Content frame — rect.y is de TOP van het contentgebied (top-left
+    // coördinaten): de content begint dus op margin_top, onder de koptekst.
+    let frame = Frame::new(Rect::new(
+        margin_left,
+        margin_top,
+        Pt(page.width.0 - margin_left.0 - margin_right.0),
+        Pt(page.height.0 - margin_top.0 - margin_bottom.0),
+    ));
+
+    // Page template with header/footer callback
+    let company_name = request
+        .company_info
+        .as_ref()
+        .map(|c| c.name.clone())
+        .unwrap_or_default();
+
+    let callback = ReportPageCallback {
+        project_name: request.schedule.project_name.clone(),
+        report_title: view_title(request).to_string(),
+        company_name,
+        logo_right,
+        header_height_mm,
+        header_line_color,
+        page_template: request.lbl("footer.page", "Pagina {{page}} / {{total}}").to_string(),
+    };
+
+    let template = PageTemplate::new("content", page, frame)
+        .with_callback(Box::new(callback));
+
+    let mut doc = DocTemplate::new(
+        format!("{} - {}", request.schedule.project_name, view_title(request)),
+        fonts.clone(),
+    );
+    doc.add_page_template(template);
+
+    // Build flowables
+    let mut flowables: Vec<Box<dyn Flowable>> = Vec::new();
+
+    // Cover page title (as a large paragraph)
+    if request.include_cover.unwrap_or(false) {
+        let title_style = ParagraphStyle {
+            font_size: Pt(24.0),
+            leading: Pt(30.0),
+            bold: true,
+            space_after: Pt(12.0),
+            ..Default::default()
+        };
+        flowables.push(Box::new(Paragraph::new(
+            &request.schedule.project_name,
+            title_style,
+        )));
+
+        let subtitle_style = ParagraphStyle {
+            font_size: Pt(14.0),
+            leading: Pt(18.0),
+            text_color: Color::rgb(161, 161, 170),
+            space_after: Pt(8.0),
+            ..Default::default()
+        };
+        flowables.push(Box::new(Paragraph::new(
+            view_title(request),
+            subtitle_style.clone(),
+        )));
+        flowables.push(Box::new(Paragraph::new(
+            &request.schedule.name,
+            subtitle_style,
+        )));
+
+        flowables.push(Box::new(PageBreak));
+    }
+
+    // Main table
+    let mut columns = get_columns(&request.report_view, request.show_hoeveelheid);
+    // Verrekenbaar-kolom is optioneel (rapport-eigenschap); default aan.
+    if !request.schedule.report_show_verrekenbaar.unwrap_or(true) {
+        columns.retain(|c| c.key != "verrekenbaar");
+    }
+    let filtered = filter_items(&request.items, &request.report_view);
+
+    // Verrekenbaar erft van het dichtstbijzijnde hoofdstuk erboven: in de
+    // begroting staat de 'V' meestal op hoofdstukniveau, terwijl het rapport
+    // hem per postregel toont.
+    let verr_of: std::collections::HashMap<&str, String> = {
+        let by_id: std::collections::HashMap<&str, &CostItem> =
+            request.items.iter().map(|i| (i.id.as_str(), i)).collect();
+        request
+            .items
+            .iter()
+            .map(|i| {
+                let mut v = i.verrekenbaar.clone().unwrap_or_default();
+                let mut cur = i.parent_id.as_deref();
+                while v.is_empty() {
+                    match cur.and_then(|id| by_id.get(id)) {
+                        Some(p) => {
+                            v = p.verrekenbaar.clone().unwrap_or_default();
+                            cur = p.parent_id.as_deref();
+                        }
+                        None => break,
+                    }
+                }
+                (i.id.as_str(), v)
+            })
+            .collect()
+    };
+
+    // Build headers
+    let headers: Vec<String> = columns.iter().map(|c| request.lbl(c.label_key, c.label).to_string()).collect();
+
+    // Calculate column widths in mm
+    let content_width_mm: f64 = match request.page_orientation.as_str() {
+        "landscape" => match request.page_size.as_str() {
+            "A3" => 420.0 - 24.0,
+            _ => 297.0 - 24.0,
+        },
+        _ => match request.page_size.as_str() {
+            "A3" => 297.0 - 24.0,
+            _ => 210.0 - 24.0,
+        },
+    };
+
+    // Resolve auto-width columns (width_mm == 0.0)
+    let fixed_total: f64 = columns.iter().filter(|c| c.width_mm > 0.0).map(|c| c.width_mm).sum();
+    let auto_count = columns.iter().filter(|c| c.width_mm == 0.0).count();
+    let auto_width = if auto_count > 0 {
+        (content_width_mm - fixed_total) / auto_count as f64
+    } else {
+        0.0
+    };
+
+    let col_widths: Vec<f64> = columns
+        .iter()
+        .map(|c| if c.width_mm == 0.0 { auto_width } else { c.width_mm })
+        .collect();
+
+    // Getalkolommen rechts uitlijnen (zoals in de besteksopmaak).
+    let col_alignments: Vec<Alignment> = columns
+        .iter()
+        .map(|c| match c.key {
+            "quantity" | "unitPrice" | "normUnitPrice" | "total" => Alignment::Right,
+            _ => Alignment::Left,
+        })
+        .collect();
+
+    // Build rows
+    let rows: Vec<Vec<String>> = filtered
+        .iter()
+        .map(|item| {
+            columns
+                .iter()
+                .map(|col| match col.key {
+                    "verrekenbaar" if item.row_type != "tekstregel" && item.row_type != "witregel" => {
+                        verr_of.get(item.id.as_str()).cloned().unwrap_or_default()
+                    }
+                    "verrekenbaar" => String::new(),
+                    key => get_cell_value(request, item, key),
+                })
+                .collect()
+        })
+        .collect();
+
+    // Report title
+    let title_text = format!(
+        "{} — {}",
+        request.schedule.project_name,
+        view_title(request),
+    );
+    flowables.push(Box::new(Paragraph::new(&title_text, ParagraphStyle {
+        font_size: Pt(12.0),
+        leading: Pt(16.0),
+        bold: true,
+        space_after: Pt(4.0),
+        ..Default::default()
+    })));
+
+    // Metadata line
+    let meta_parts: Vec<String> = [
+        (!request.schedule.project_number.is_empty()).then(|| format!("{}: {}", request.lbl("meta.projectNumber", "Projectnummer"), request.schedule.project_number)),
+        (!request.schedule.client.is_empty()).then(|| format!("{}: {}", request.lbl("meta.client", "Opdrachtgever"), request.schedule.client)),
+        (!request.schedule.author.is_empty()).then(|| format!("{}: {}", request.lbl("meta.author", "Auteur"), request.schedule.author)),
+    ].into_iter().flatten().collect();
+
+    if !meta_parts.is_empty() {
+        flowables.push(Box::new(Paragraph::new(&meta_parts.join("  |  "), ParagraphStyle {
+            font_size: Pt(8.0),
+            leading: Pt(11.0),
+            text_color: Color::rgb(161, 161, 170),
+            space_after: Pt(8.0),
+            ..Default::default()
+        })));
+    }
+
+    if rows.is_empty() {
+        flowables.push(Box::new(Paragraph::plain(request.lbl("headings.noItems", "Geen items gevonden voor deze rapportage view."))));
+    }
+
+    // ── Build table(s) with view-specific logic ──
+
+    // Werkbeschrijving, hoofdaanneming en inschrijfstaat renderen in de
+    // "clean" stijl: geen cellijnen, inspringende paragrafen, typografische
+    // hiërarchie en (hoofdaanneming) een subtotaal per paragraaf — naar de
+    // klassieke besteksopmaak. Alle drie zijn documenten die de deur uit gaan;
+    // de gekleurde koprij en zebrastrepen horen bij de interne overzichten.
+    let clean_view = request.report_view == "werkbeschrijving"
+        || request.report_view == "hoofdaanneming"
+        || request.report_view == "inschrijfstaat";
+    let use_chapter_subtotals = request.report_view == "hoofdaanneming";
+    // Rapportoptie: alleen subtotaal-bedragen tonen (hoeveelheden blijven)
+    let hide_line_amounts = use_chapter_subtotals
+        && request.schedule.report_amounts_subtotals_only.unwrap_or(false);
+    let has_total_col = columns.iter().any(|c| c.key == "total");
+
+    // Detect staartkosten
+    let staart_items: Vec<&CostItem> = request.items.iter()
+        .filter(|i| i.row_type.starts_with("staart_"))
+        .collect();
+    let has_staart = !staart_items.is_empty();
+    let show_staart = has_staart && has_total_col
+        && (request.report_view == "hoofdaanneming"
+            || request.report_view == "inschrijfstaat"
+            || request.report_view == "nacalculatie");
+
+    // Create table with OpenAEC styling
+    let table_style = if clean_view {
+        // Clean besteksopmaak: geen cellijnen/zebra/vulling, alleen een
+        // dunne lijn onder de koprij.
+        TableStyleConfig {
+            header_background: None,
+            header_text_color: Color::rgb(54, 54, 62),
+            grid_color: Color::rgb(168, 162, 158),
+            grid_width: Pt(0.0),
+            row_backgrounds: vec![None],
+            cell_padding: Padding::new(Pt(2.0), Pt(3.0), Pt(2.0), Pt(3.0)),
+            font_name: "LiberationSans".to_string(),
+            header_font_name: "LiberationSans-Bold".to_string(),
+            font_size: Pt(7.5),
+            header_font_size: Pt(7.0),
+            header_rule: true,
+        }
+    } else {
+        TableStyleConfig {
+            header_background: Some(Color::rgb(238, 238, 238)), // Edition grayscale heading
+            header_text_color: Color::rgb(54, 54, 62),
+            grid_color: Color::rgb(231, 229, 228),
+            grid_width: Pt(0.5),
+            row_backgrounds: vec![None, Some(Color::rgb(250, 250, 249))], // Zebra
+            cell_padding: Padding::new(Pt(2.0), Pt(3.0), Pt(2.0), Pt(3.0)),
+            font_name: "LiberationSans".to_string(),
+            header_font_name: "LiberationSans-Bold".to_string(),
+            font_size: Pt(7.5),
+            header_font_size: Pt(7.0),
+            header_rule: false,
+        }
+    };
+
+    if clean_view && !filtered.is_empty() {
+        // Eén doorlopende tabel in besteksopmaak: inspringende omschrijvingen,
+        // hoofdstukken vet / paragrafen vet-cursief / opmerkingen cursief, en
+        // bij hoofdaanneming een vetgedrukte subtotaalregel per paragraaf
+        // (het hoofdstuk dat de posten direct bevat), gevolgd door een
+        // witregel.
+        let desc_idx = columns.iter().position(|c| c.key == "description").unwrap_or(1);
+        let total_idx = columns.iter().position(|c| c.key == "total");
+        let n_cols = columns.len();
+        let subtotal_label = request.lbl("totals.subtotal", "Subtotaal");
+
+        let mut body_rows: Vec<Vec<String>> = Vec::new();
+        let mut overrides: Vec<Option<RowOverride>> = Vec::new();
+        // Paragraaf waarvan nog een subtotaal openstaat: (chapter_id, total)
+        let mut pending_subtotal: Option<(String, f64)> = None;
+
+        let push_subtotal = |body: &mut Vec<Vec<String>>,
+                             ovs: &mut Vec<Option<RowOverride>>,
+                             sum: f64| {
+            if sum == 0.0 {
+                return;
+            }
+            let mut r = vec![String::new(); n_cols];
+            r[desc_idx] = format!("{}{}", indent_for(1), subtotal_label);
+            if let Some(t) = total_idx {
+                r[t] = fmt_bedrag(nf, sum);
+            }
+            body.push(r);
+            ovs.push(Some(RowOverride {
+                font_name: Some("LiberationSans-Bold".to_string()),
+                // Som-lijn tussen de laatste post en het subtotaal
+                top_rule_sum: true,
+                ..Default::default()
+            }));
+            // Witregel na het subtotaal
+            body.push(vec![String::new(); n_cols]);
+            ovs.push(None);
+        };
+
+        for item in &filtered {
+            if item.row_type == "chapter" {
+                if use_chapter_subtotals {
+                    if let Some((_, sum)) = pending_subtotal.take() {
+                        push_subtotal(&mut body_rows, &mut overrides, sum);
+                    }
+                }
+                let row: Vec<String> = columns
+                    .iter()
+                    .map(|col| match col.key {
+                        "description" => {
+                            format!("{}{}", indent_for(item.depth), item.description)
+                        }
+                        // Hoofdaanneming: geen bedragen naast hoofdstukregels —
+                        // die staan in de subtotalen per paragraaf.
+                        "total" | "unitPrice" if use_chapter_subtotals => String::new(),
+                        "total" => fmt_bedrag(nf, item.total),
+                        // S-kolom (V/N) alleen op posten, niet op hoofdstukken
+                        "verrekenbaar" => String::new(),
+                        key => get_cell_value(request, item, key),
+                    })
+                    .collect();
+                body_rows.push(row);
+                overrides.push(row_font_for(item));
+            } else {
+                let row: Vec<String> = columns
+                    .iter()
+                    .map(|col| match col.key {
+                        "description" => {
+                            format!("{}{}", indent_for(item.depth), item.description)
+                        }
+                        // Rapportoptie: alleen subtotaal-bedragen — individuele
+                        // regelbedragen leeg, hoeveelheden blijven staan.
+                        "unitPrice" | "total" if hide_line_amounts => String::new(),
+                        // Besteksopmaak: kale bedragen zonder valutateken
+                        "unitPrice" => fmt_bedrag(nf, item.unit_price),
+                        "total" => fmt_bedrag(nf, item.total),
+                        // V/N: eigen waarde of geërfd van het hoofdstuk —
+                        // alleen op rekenende regels, niet op opmerkingen
+                        "verrekenbaar" if item.row_type != "tekstregel" && item.row_type != "witregel" => {
+                            verr_of.get(item.id.as_str()).cloned().unwrap_or_default()
+                        }
+                        "verrekenbaar" => String::new(),
+                        key => get_cell_value(request, item, key),
+                    })
+                    .collect();
+                body_rows.push(row);
+                overrides.push(row_font_for(item));
+
+                // Posten bepalen de paragraaf waarvoor een subtotaal volgt.
+                if item.row_type == "begrotingspost" {
+                    if let Some(pid) = &item.parent_id {
+                        let sum = request
+                            .items
+                            .iter()
+                            .find(|i| &i.id == pid)
+                            .map(|p| p.total)
+                            .unwrap_or(0.0);
+                        pending_subtotal = Some((pid.clone(), sum));
+                    }
+                }
+            }
+        }
+        if use_chapter_subtotals {
+            if let Some((_, sum)) = pending_subtotal.take() {
+                push_subtotal(&mut body_rows, &mut overrides, sum);
+            }
+        }
+
+        let table = Table::new(headers.clone(), body_rows)
+            .with_col_widths_mm(col_widths.clone())
+            .with_style(table_style.clone())
+            .with_row_overrides(overrides)
+            .with_col_alignments(col_alignments.clone())
+            .with_repeat_header(true);
+        flowables.push(Box::new(table));
+    } else {
+        // Standard table for other views
+        let table = Table::new(headers.clone(), rows)
+            .with_col_widths_mm(col_widths.clone())
+            .with_style(table_style.clone())
+            .with_col_alignments(col_alignments.clone())
+            .with_repeat_header(true);
+        flowables.push(Box::new(table));
+    }
+
+    // ── Staartkosten / totaalregel ──
+    if show_staart {
+        flowables.push(Box::new(Spacer::from_mm(4.0)));
+
+        // Kostprijs subtotal
+        let kostprijs: f64 = filtered.iter()
+            .filter(|i| i.row_type == "chapter" && i.depth == 0)
+            .map(|i| i.total)
+            .sum();
+
+        flowables.push(Box::new(Paragraph::new(
+            &format!("{}: {}", request.lbl("totals.directCosts", "Subtotaal directe kosten (Kostprijs)"), nf.currency(kostprijs)),
+            ParagraphStyle {
+                font_size: Pt(8.0),
+                leading: Pt(11.0),
+                bold: true,
+                space_after: Pt(2.0),
+                ..Default::default()
+            },
+        )));
+
+        // Individual staart items (exclude BTW and afronding — shown separately below)
+        for si in &staart_items {
+            if si.row_type.starts_with("staart_btw") || si.row_type == "staart_afronding" {
+                continue;
+            }
+            let pct_str = si.staart_percentage.map(|p| format!(" ({})", nf.percent(p, 2))).unwrap_or_default();
+            flowables.push(Box::new(Paragraph::new(
+                &format!("{}{}:  {}", si.description, pct_str, nf.currency(si.total)),
+                ParagraphStyle {
+                    font_size: Pt(7.5),
+                    leading: Pt(10.0),
+                    space_after: Pt(1.0),
+                    ..Default::default()
+                },
+            )));
+        }
+
+        // Aanneemsom excl. BTW (exclude staart_btw* and staart_afronding from sum;
+        // de afronding hoort wél bij het excl-bedrag)
+        let afronding: f64 = staart_items.iter()
+            .filter(|i| i.row_type == "staart_afronding")
+            .map(|i| i.total).sum::<f64>();
+        let aanneemsom_excl: f64 = kostprijs + afronding + staart_items.iter()
+            .filter(|i| !i.row_type.starts_with("staart_btw") && i.row_type != "staart_afronding")
+            .map(|i| i.total).sum::<f64>();
+        let btw_hoog: f64 = staart_items.iter()
+            .filter(|i| i.row_type == "staart_btw")
+            .map(|i| i.total).sum();
+        let btw_laag: f64 = staart_items.iter()
+            .filter(|i| i.row_type == "staart_btw_laag")
+            .map(|i| i.total).sum();
+        let btw_amount = btw_hoog + btw_laag;
+        let aanneemsom_incl = aanneemsom_excl + btw_amount;
+        flowables.push(Box::new(Spacer::from_mm(2.0)));
+        flowables.push(Box::new(Paragraph::new(
+            &format!("{}: {}", request.lbl("totals.contractSumExclVat", "Aanneemsom excl. BTW"), nf.currency(aanneemsom_excl)),
+            ParagraphStyle {
+                font_size: Pt(9.0),
+                leading: Pt(12.0),
+                bold: true,
+                space_after: Pt(1.0),
+                ..Default::default()
+            },
+        )));
+        if btw_amount > 0.0 {
+            if btw_laag > 0.0 {
+                let laag_pct = staart_items.iter()
+                    .find(|i| i.row_type == "staart_btw_laag")
+                    .and_then(|i| i.staart_percentage)
+                    .unwrap_or(9.0);
+                flowables.push(Box::new(Paragraph::new(
+                    &format!(
+                        "{}: {}",
+                        request.lbl_fmt("totals.vatLowPct", "BTW laag {{pct}}%", &[("pct", &nf.pct_value(laag_pct))]),
+                        nf.currency(btw_laag)
+                    ),
+                    ParagraphStyle {
+                        font_size: Pt(8.0),
+                        leading: Pt(11.0),
+                        space_after: Pt(1.0),
+                        ..Default::default()
+                    },
+                )));
+            }
+            let hoog_pct = staart_items.iter()
+                .find(|i| i.row_type == "staart_btw")
+                .and_then(|i| i.staart_percentage)
+                .unwrap_or(21.0);
+            flowables.push(Box::new(Paragraph::new(
+                &format!(
+                    "{}: {}",
+                    request.lbl_fmt("totals.vatPct", "BTW {{pct}}%", &[("pct", &nf.pct_value(hoog_pct))]),
+                    nf.currency(btw_hoog)
+                ),
+                ParagraphStyle {
+                    font_size: Pt(8.0),
+                    leading: Pt(11.0),
+                    space_after: Pt(1.0),
+                    ..Default::default()
+                },
+            )));
+            flowables.push(Box::new(Paragraph::new(
+                &format!("{}: {}", request.lbl("totals.totalInclVat", "Totaal incl. BTW"), nf.currency(aanneemsom_incl)),
+                ParagraphStyle {
+                    font_size: Pt(9.0),
+                    leading: Pt(12.0),
+                    bold: true,
+                    space_after: Pt(4.0),
+                    ..Default::default()
+                },
+            )));
+        }
+    } else if has_total_col {
+        // Simple total row for views without staart
+        let grand_total: f64 = filtered.iter()
+            .filter(|i| i.row_type == "chapter" && i.depth == 0)
+            .map(|i| i.total)
+            .sum();
+
+        if grand_total != 0.0 {
+            flowables.push(Box::new(Spacer::from_mm(4.0)));
+            flowables.push(Box::new(Paragraph::new(
+                &format!("{}: {}", request.lbl("totals.totalExclVat", "Totaal excl. BTW"), nf.currency(grand_total)),
+                ParagraphStyle {
+                    font_size: Pt(9.0),
+                    leading: Pt(12.0),
+                    bold: true,
+                    ..Default::default()
+                },
+            )));
+        }
+    }
+
+    // Build PDF
+    doc.build_to_bytes(flowables).map_err(|e| e.to_string())
+}
+
+pub fn generate(request: &ReportRequest, output_path: &str) -> Result<(), String> {
+    let pdf_bytes = generate_bytes(request)?;
+    std::fs::write(Path::new(output_path), pdf_bytes).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn request(view: &str, labels: serde_json::Value) -> ReportRequest {
+        serde_json::from_value(serde_json::json!({
+            "schedule": { "name": "Test", "projectName": "Testproject", "client": "Gemeente" },
+            "items": [
+                { "id": "ch1", "code": "1", "description": "GRONDWERK", "rowType": "chapter",
+                  "depth": 0, "parentId": null, "total": 800.0 },
+                { "id": "p1", "code": "100010", "description": "graven", "rowType": "begrotingspost",
+                  "depth": 1, "parentId": "ch1", "quantity": 10.0, "unit": "uur",
+                  "unitPrice": 80.0, "total": 800.0 }
+            ],
+            "reportView": view,
+            "labels": labels,
+        }))
+        .expect("ReportRequest parsen")
+    }
+
+    #[test]
+    fn kolomkoppen_titels_en_eenheden_volgen_labels() {
+        let nl = request("inschrijfstaat", serde_json::json!({}));
+        assert_eq!(view_title(&nl), "Inschrijfstaat");
+        let cols = get_columns("inschrijfstaat", true);
+        let heads: Vec<&str> = cols.iter().map(|c| nl.lbl(c.label_key, c.label)).collect();
+        assert!(heads.contains(&"Omschrijving") && heads.contains(&"Bestekspost"));
+        assert_eq!(get_cell_value(&nl, &nl.items[1], "unit"), "uur");
+
+        let en = request("inschrijfstaat", serde_json::json!({
+            "views.inschrijfstaat": "Tender schedule",
+            "columns.description": "Description",
+            "columns.specItem": "Spec. item",
+            "units.uur": "h"
+        }));
+        assert_eq!(view_title(&en), "Tender schedule");
+        let heads: Vec<&str> = cols.iter().map(|c| en.lbl(c.label_key, c.label)).collect();
+        assert!(heads.contains(&"Description") && heads.contains(&"Spec. item"));
+        // Niet-vertaalde keys vallen terug op Nederlands
+        assert!(heads.contains(&"Hoeveelheid"));
+        assert_eq!(get_cell_value(&en, &en.items[1], "unit"), "h");
+    }
+
+    #[test]
+    fn pdf_met_labels_wordt_gegenereerd() {
+        let labels = serde_json::json!({
+            "footer.page": "Page {{page}} of {{total}}",
+            "totals.totalExclVat": "Total excl. VAT",
+            "totals.subtotal": "Subtotal"
+        });
+        for view in ["hoofdaanneming", "werkbeschrijving", "nacalculatie"] {
+            let pdf = generate_bytes(&request(view, labels.clone())).expect("PDF");
+            assert_eq!(&pdf[0..4], b"%PDF");
+        }
+    }
+}

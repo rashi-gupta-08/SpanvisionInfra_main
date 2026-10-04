@@ -1,0 +1,44 @@
+{
+  "results": [
+    {
+      "scenario": "hub-layout",
+      "route": "landing",
+      "width": 320
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "modules",
+      "width": 320
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "suggestions",
+      "width": 320
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "login",
+      "width": 320
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "signup",
+      "width": 320
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "account",
+      "width": 320
+    },
+    {
+      "scenario": "scan-focus-cancel-complete",
+      "width": 320
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 320
+    }
+  ],
+  "errors": [],
+  "requests": []
+}

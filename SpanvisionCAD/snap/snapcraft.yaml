@@ -1,0 +1,96 @@
+name: spanvision-cad
+base: core22
+# Overwritten in CI with the release version number (see .github/workflows/release.yml).
+version: '0.0.0'
+title: CAD — Spanvision Infra — Spanvision Infra
+summary: 2D drafting and 3D modeling with native DWG/DXF support
+description: |
+  CAD — Spanvision Infra — Spanvision Infra is a CAD — Spanvision Infra application for 2D drafting and 3D
+  modeling, built in Rust. Reads and writes DWG and DXF files natively
+  (R13 through R2018).
+
+  File formats:
+  - DWG and DXF read/write (R13-R2018)
+  - STL export, STEP AP203 export, OBJ import
+  - PDF export (plot layouts)
+  - WBLOCK, and XREF (attach/reload/auto-resolve external references)
+
+  2D drafting:
+  - Lines, polylines, rectangles, polygons, circles, arcs, ellipses,
+    splines
+  - Hatch fills with pattern, scale, and angle editing
+  - Offset, trim, extend, fillet, break, stretch, lengthen
+  - Array, mirror, move, copy, rotate, scale, explode
+  - Double-click text editing, and area/perimeter/centroid measurement
+
+  3D modeling:
+  - Solid primitives (box, sphere, cylinder), extrude, revolve, loft,
+    sweep, and 3D array
+  - ACIS tessellation for rendering 3DSOLID/REGION/BODY entities
+
+  CAD — Spanvision Infra is open source and rendered with wgpu for GPU-accelerated 2D/3D drawing.
+
+grade: stable
+confinement: strict
+
+plugs:
+  graphics-core22:
+    interface: content
+    target: $SNAP/graphics
+    default-provider: mesa-core22
+
+layout:
+  /usr/share/libdrm:
+    bind: $SNAP/graphics/libdrm
+  /usr/share/drirc.d:
+    symlink: $SNAP/graphics/drirc.d
+  /usr/share/X11/XErrorDB:
+    symlink: $SNAP/graphics/X11/XErrorDB
+  /usr/share/X11/locale:
+    symlink: $SNAP/graphics/X11/locale
+
+apps:
+  spanvision-cad:
+    command-chain:
+      - bin/spanvision-cad-wrapper
+      - bin/graphics-core22-wrapper
+    command: usr/bin/SpanvisionCAD — Spanvision Infra
+    desktop: usr/share/applications/com.spanvisioninfra.cad.desktop
+    plugs:
+      - home            # open/save/export drawings in the home directory
+      - removable-media # same, on external drives / USB
+      - network         # optional update and font sources
+      - opengl
+      - graphics-core22
+      - wayland
+      - x11
+      - desktop
+      - desktop-legacy
+
+parts:
+  spanvision-cad:
+    plugin: nil
+    override-build: |
+      mkdir -p "${CRAFT_PART_INSTALL}"
+      tar -xzf "${CRAFT_PROJECT_DIR}/linux-payload.tar.gz" -C "${CRAFT_PART_INSTALL}"
+      install -Dm755 "${CRAFT_PROJECT_DIR}/snap/local/spanvision-cad-wrapper" \
+        "${CRAFT_PART_INSTALL}/bin/spanvision-cad-wrapper"
+    stage-packages:
+      - libxcursor1
+      - libxi6
+      - libxrandr2
+      - libxinerama1
+      - libxkbcommon0
+      - libxkbcommon-x11-0
+      - libfontconfig1
+      - libfreetype6
+
+  graphics-core22:
+    after: [spanvision-cad]
+    source: https://github.com/canonical/gpu-snap.git
+    plugin: dump
+    override-prime: |
+      craftctl default
+      ${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22 nvidia-core22
+    prime:
+      - bin/graphics-core22-wrapper

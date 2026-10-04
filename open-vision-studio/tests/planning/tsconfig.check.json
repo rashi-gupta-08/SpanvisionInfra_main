@@ -1,0 +1,23 @@
+{
+  // Typecheck-config voor ÁLLE check-batterijen in deze suite (model: tests/library/
+  // tsconfig.check.json). Voorheen bestond hier alleen tsconfig.roundtrip.json, dat uitsluitend
+  // check-ifc-roundtrip.ts dekte — de overige batterijen werden door esbuild gestript en dus
+  // nooit door tsc gezien. De glob pakt nieuwe check-*.ts automatisch mee; harness/shims en
+  // src-modules liften mee via de imports. Draait mee in tests/planning/run.sh; npm run
+  // typecheck (tsconfig.tests.json) dekt dezelfde bestanden op repo-niveau.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // Deze code draait op Node (net als tsconfig.tests.json): node:*-imports en process.
+    "types": ["node"]
+  },
+  // Ambient globals moeten expliciet mee: `include` volgt imports wél, maar pikt losse .d.ts-
+  // declaratiebestanden niet automatisch op. `src/vite-env.d.ts` levert `__APP_VERSION__` en
+  // `import.meta.env`; `file-system-access.d.ts` de FSA-typen achter fileAccess/webBackend.
+  "include": [
+    "check-*.ts",
+    "harness.ts",
+    "../../src/vite-env.d.ts",
+    "../../src/types/file-system-access.d.ts"
+  ]
+}

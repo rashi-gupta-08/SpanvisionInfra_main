@@ -1,0 +1,153 @@
+import { useTextEntryAutoCalcHold } from '@/hooks/useTextEntryAutoCalcHold';
+import { useAppStore } from '@/state/appStore';
+import { useTranslation } from 'react-i18next';
+import { Task } from '@/types/task';
+import { localTodayIso } from '@/utils/dateUtils';
+import { Trash2 } from 'lucide-react';
+import { TaskBasicFields } from '@/components/task-sections/TaskBasicFields';
+import { TaskNotesFields } from '@/components/task-sections/TaskNotesFields';
+import { TaskMilestoneFields } from '@/components/task-sections/TaskMilestoneFields';
+import { TaskTimeFields } from '@/components/task-sections/TaskTimeFields';
+import { TaskWorkRuleField } from '@/components/task-sections/TaskWorkRuleField';
+import { TaskFreePeriodWarning } from '@/components/task-sections/TaskFreePeriodWarning';
+import { TaskTimephasedNotice } from '@/components/task-sections/TaskTimephasedNotice';
+import { TaskRecordedDatesNotice } from '@/components/task-sections/TaskRecordedDatesNotice';
+import { TaskHammockFields } from '@/components/task-sections/TaskHammockFields';
+import { TaskConstraintFields } from '@/components/task-sections/TaskConstraintFields';
+import { TaskDeadlineField } from '@/components/task-sections/TaskDeadlineField';
+import { TaskProgressFields } from '@/components/task-sections/TaskProgressFields';
+import { TaskCpmResultSection } from '@/components/task-sections/TaskCpmResultSection';
+import { TaskDependenciesSection } from '@/components/task-sections/TaskDependenciesSection';
+import { TaskSplitsSection } from '@/components/task-sections/TaskSplitsSection';
+import { TaskAssignmentsSection } from '@/components/task-sections/TaskAssignmentsSection';
+import { TaskCodesFieldsSection } from '@/components/task-sections/TaskCodesFieldsSection';
+
+// RESOURCE_CURVES/CURVE_KEY wonen in `@/components/task-sections/shared` — importeer ze vanaf daar.
+// Re-export hier zou een cirkelvormige afhankelijkheid met task-sections/shared kunnen introduceren.
+
+/**
+ * Eigenschappenpaneel voor de geselecteerde taak, opgebouwd uit de gedeelde
+ * `task-sections/*`-componenten (ook gebruikt door `TaskDialog`). Dit paneel is INSTANT-APPLY
+ * (`update(patch) => updateTask(task.id, patch)`).
+ */
+export function TaskPropertiesPanel() {
+  const { t } = useTranslation('task');
+
+  const activeTaskId = useAppStore(s => s.activeTaskId);
+  const tasks = useAppStore(s => s.tasks);
+  const updateTask = useAppStore(s => s.updateTask);
+  const setTaskWorkRule = useAppStore(s => s.setTaskWorkRule);
+  const deleteTask = useAppStore(s => s.deleteTask);
+  const runCPM = useAppStore(s => s.runCPM);
+  const setTaskCalendar = useAppStore(s => s.setTaskCalendar);
+  // Voortgang: de actie dwingt de voortgangsinvarianten af — zie TaskProgressFields-docstring
+  // voor waarom dit dedicated setters zijn (i.p.v. de generieke patch). `enterTaskProgress` is de
+  // UI-variant: dezelfde bewerking plus de invoerregels van `engine/progressEntry.ts` (statusdatum
+  // op vandaag, met een melding, als er nog geen is).
+  const enterTaskProgress = useAppStore(s => s.enterTaskProgress);
+  // Automatisch berekenen pas als een veld af is, niet halverwege het typen.
+  const textEntryHold = useTextEntryAutoCalcHold();
+
+  if (!activeTaskId) {
+    return (
+      <div className="p-3 text-small leading-4 text-text-secondary">
+        {t('properties.selectPrompt')}
+      </div>
+    );
+  }
+
+  const task = tasks.find(t => t.id === activeTaskId);
+  if (!task) return null;
+
+  const update = (updates: Partial<Task>) => {
+    // Coalesceer opeenvolgende bewerkingen van HETZELFDE veld tot één undo-stap: de instant-apply-
+    // velden (naam/omschrijving/duur/datum/…) committeren per toetsaanslag, wat anders per aanslag
+    // een undo-stap zou opleveren. De key onderscheidt de afzonderlijke `time`-subvelden (start vs
+    // duur vs finish blijven dus aparte undo-stappen), en een bewerking van een ánder veld breekt de
+    // reeks vanzelf af (andere key). Zelfde coalesce-mechanisme als de balk-sleep/voortgangs-schuif.
+    const parts: string[] = [];
+    for (const k of Object.keys(updates) as (keyof Task)[]) {
+      if (k === 'time' && updates.time) {
+        const nt = updates.time as unknown as Record<string, unknown>;
+        const ct = task.time as unknown as Record<string, unknown>;
+        for (const tk of Object.keys(nt)) if (nt[tk] !== ct[tk]) parts.push(`time.${tk}`);
+      } else {
+        parts.push(k);
+      }
+    }
+    const coalesceKey = parts.length ? `taskfield:${task.id}:${parts.sort().join(',')}` : undefined;
+    updateTask(task.id, updates, coalesceKey ? { coalesceKey } : undefined);
+  };
+
+  return (
+    <div className="flex flex-col gap-3 p-3 text-small leading-4 overflow-y-auto" {...textEntryHold}>
+      <div className="flex items-center justify-between">
+        <span className="ui-card-header !text-small !leading-4">{t('properties.task')}</span>
+        <button
+          onClick={() => deleteTask(task.id)}
+          className="p-1 rounded"
+          style={{ color: 'var(--error)' }}
+          title={t('properties.deleteTask')}
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+
+      <TaskBasicFields
+        task={task}
+        onChange={update}
+        onCalendarChange={id => setTaskCalendar(task.id, id)}
+      />
+
+      <TaskNotesFields task={task} onChange={update} />
+
+      <TaskMilestoneFields task={task} onChange={update} />
+
+      <TaskTimeFields task={task} onChange={update} />
+
+      {/* Een werkregelwissel rekent niets en gaat daarom via `setTaskWorkRule`
+          (geen `scheduleStale`, "datums zoals opgeslagen" blijft staan), niet via de generieke update. */}
+      <TaskWorkRuleField task={task} onChange={patch => setTaskWorkRule(task.id, patch.workRule)} />
+
+      <TaskFreePeriodWarning taskId={task.id} />
+
+      <TaskTimephasedNotice taskId={task.id} />
+
+      <TaskRecordedDatesNotice taskId={task.id} />
+
+      <TaskHammockFields task={task} onChange={update} />
+
+      <TaskConstraintFields task={task} onChange={update} />
+
+      <TaskDeadlineField task={task} onChange={update} />
+
+      <TaskProgressFields
+        task={task}
+        onSetProgress={(v, opts) =>
+          enterTaskProgress(task.id, { field: 'completion', value: v }, { ...opts, today: localTodayIso() })}
+        onSetActualStart={(d, opts) =>
+          enterTaskProgress(task.id, { field: 'actualStart', value: d }, { ...opts, today: localTodayIso() })}
+        onSetActualFinish={(d, opts) =>
+          enterTaskProgress(task.id, { field: 'actualFinish', value: d }, { ...opts, today: localTodayIso() })}
+      />
+
+      <TaskCpmResultSection taskId={task.id} />
+
+      <TaskDependenciesSection taskId={task.id} />
+
+      <TaskSplitsSection taskId={task.id} />
+
+      <TaskAssignmentsSection taskId={task.id} />
+
+      <TaskCodesFieldsSection taskId={task.id} />
+
+      <button
+        onClick={runCPM}
+        className="btn btn--sm btn--primary mt-2"
+        style={{ boxShadow: 'var(--shadow-glow)' }}
+      >
+        {t('properties.recalculate')}
+      </button>
+    </div>
+  );
+}

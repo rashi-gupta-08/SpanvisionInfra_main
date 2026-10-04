@@ -1,0 +1,119 @@
+import { useEffect, useRef, useMemo } from "react";
+import { process, defaultStyles } from "@spanvision/calculations-core";
+import {
+  useActieveBron,
+  useActieveWaarden,
+  useProjectScope,
+  useZetActieveWaarde,
+} from "../../store/actiefBlad";
+import { useZoom } from "../../hooks/useZoom";
+import { calcpadIncludes, calcpadImageUrls } from "../../templates/calcpad-includes";
+import HelpPanel from "./HelpPanel";
+import "katex/dist/katex.min.css";
+import "./Preview.css";
+
+let stylesInjected = false;
+function ensureCoreStyles() {
+  if (stylesInjected || typeof document === "undefined") return;
+  const style = document.createElement("style");
+  style.textContent = defaultStyles;
+  style.dataset.ifcCalc = "core-styles";
+  document.head.appendChild(style);
+  stylesInjected = true;
+}
+
+export default function Preview() {
+  const source = useActieveBron();
+  // Invoerwaarden horen bij het blad dat openstaat, niet bij de app. Twee
+  // exemplaren van dezelfde module hebben dus elk hun eigen set.
+  const selectValues = useActieveWaarden();
+  const setSelectValue = useZetActieveWaarde();
+  // De projectgegevens (gevolgklasse, levensduur, ...) staan als variabelen
+  // klaar voordat de eerste regel van het blad draait.
+  const projectScope = useProjectScope();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    ensureCoreStyles();
+  }, []);
+
+  const html = useMemo(() => {
+    try {
+      return process(
+        source,
+        selectValues,
+        { includes: calcpadIncludes, imageUrls: calcpadImageUrls },
+        projectScope,
+      );
+    } catch (err) {
+      const msg = (err as Error).message;
+      return `<div class="ifc-calc"><p class="calc-text" style="color:#dc2626;">Render error: ${msg}</p></div>`;
+    }
+  }, [source, selectValues, projectScope]);
+
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+
+    const selects = root.querySelectorAll<HTMLSelectElement>(".calc-select-input");
+    const selectHandlers: Array<[HTMLSelectElement, () => void]> = [];
+
+    for (const sel of selects) {
+      const varName = sel.dataset.var;
+      if (!varName) continue;
+      const stored = selectValues[varName];
+      if (stored !== undefined) sel.value = String(stored);
+      const handler = () => {
+        if (varName) setSelectValue(varName, sel.value);
+      };
+      sel.addEventListener("change", handler);
+      selectHandlers.push([sel, handler]);
+    }
+
+    // CalcPAD `?` input prompts — same selectValues store, different DOM
+    const prompts = root.querySelectorAll<HTMLInputElement>(".calc-input-value");
+    const promptHandlers: Array<[HTMLInputElement, () => void]> = [];
+
+    for (const inp of prompts) {
+      const varName = inp.dataset.prompt;
+      if (!varName) continue;
+      const stored = selectValues[varName];
+      if (stored !== undefined) inp.value = String(stored);
+      const handler = () => {
+        if (varName) setSelectValue(varName, inp.value);
+      };
+      inp.addEventListener("input", handler);
+      promptHandlers.push([inp, handler]);
+    }
+
+    return () => {
+      for (const [sel, handler] of selectHandlers) {
+        sel.removeEventListener("change", handler);
+      }
+      for (const [inp, handler] of promptHandlers) {
+        inp.removeEventListener("input", handler);
+      }
+    };
+  }, [html, selectValues, setSelectValue]);
+
+  const { ref: zoomRef, zoom } = useZoom();
+  const isEmpty = source.trim().length === 0;
+
+  return (
+    <div
+      className="calc-preview"
+      ref={zoomRef}
+      style={{ fontSize: `${zoom * 100}%` }}
+    >
+      {isEmpty ? (
+        <HelpPanel />
+      ) : (
+        <div
+          ref={containerRef}
+          className="calc-preview-content"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      )}
+    </div>
+  );
+}

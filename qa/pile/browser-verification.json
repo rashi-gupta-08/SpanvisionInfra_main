@@ -1,0 +1,72 @@
+{
+  "results": [
+    {
+      "name": "Fresh defaults and sample startup",
+      "status": "passed",
+      "evidence": "Explorer\nPROJECT\nSample Project\nIFCPP\nINPUT SOURCES\nLoad points\n328 rows\nCPTs\n77 rows\nFoundation advice\n2340 rows\nPILE PLANS\nBase plan\n€207,111\nNew pile plan"
+    },
+    {
+      "name": "Canvas preview and Cancel",
+      "status": "passed"
+    },
+    {
+      "name": "Canvas Save and persistence without dirtying project",
+      "status": "passed"
+    },
+    {
+      "name": "Legacy theme retention and Dark visible label",
+      "status": "passed"
+    },
+    {
+      "name": "Reset preview and cancel restores original preferences",
+      "status": "passed"
+    },
+    {
+      "name": "CSV and XLSX import through Rust WASM",
+      "status": "passed",
+      "evidence": "Import completed\n328 load points · 77 CPTs · 2,208 foundation advice rows\nSelected the lowest FRD for 132 conflicting duplicate bearing-capacity key(s)"
+    },
+    {
+      "name": "IFCPP metadata, CSV/XLSX exports and reopen",
+      "status": "passed",
+      "evidence": {
+        "files": [
+          "Spanvision-QA-foundation.ifcpp",
+          "Base-plan.xlsx",
+          "Base-plan.csv"
+        ],
+        "application": {
+          "name": "Pile Plane Workspace",
+          "version": "0.4.2"
+        }
+      }
+    },
+    {
+      "name": "CPT selection and engineering options",
+      "status": "passed",
+      "evidence": "Load points\nCPTs\n2 load points\nSelection\nUngroup\n2 selected\nPile Options\n64 shown\nColumns\nClear assignment\nThis selection includes 1 group with 2 marked load points in total.\nSymbol\n\t\nSize\n▾\n\t\nTip\n▾\n\t\nStatus\n▾\n\t\nTotal cost\n▾\n\t\nMax use\n▾\n\t\nCritical load point\n▾\n\n\t290 mm\t-17.5 m\tOK\t€1,558\t11.4%\tLoad point 15\n\t290 mm\t-17.75 m\tOK\t€1,580\t9.8%\tLoad point 15\n\t290 mm\t-18 m\tOK\t€1,604\t8.7%\tLoad point 15\n\t290 mm\t-18.25 m\tOK\t€1,626\t8.4%\tLoad point 15\n\t290 mm\t-18.5 m\tOK\t€1,650\t8%\tLoad point 15\n\t290 mm\t-18.75 m\tOK\t€1,672\t7.8%\tLoad point 15\n\t290 mm\t-19 m\tOK\t€1,694\t7.4%\tLoad point 15\n\t290 mm\t-20 m\t\nMissing\n\t€1,786\t-\t-\n\t290 mm\t-20.25 m\t\nMissing\n\t€1,810\t-\t-\n\t290 mm\t-20.5 m\t\nMissing\n\t€1,832\t-\t-\n\t290 mm\t-20.75 m\t\nMissing\n\t€1,856\t-\t-\n\t290 mm\t-21 m\t\nMissing\n\t€1,878\t-\t-\n\t290 mm\t-21.25 m\t\nMissing\n\t€1,902\t-\t-\n\t290 mm\t-21.5 m\t\nMissing\n\t€1,924\t-\t-\n\t290 mm\t-21.75 m\t\nMissing\n\t€1,946\t-\t-\n\t290 mm\t-22 m\t\nMissing\n\t€1,970\t-\t-\n\t320 mm\t-17.5 m\tOK\t€1,792\t9.6%\tLoad point 15\n\t320 mm\t-17.75 m\tOK\t€1,818\t8.4%\tLoad point 15\n\t320 mm\t-18 m\tOK\t€1,844\t7.6%\tLoad point 15\n\t320 mm\t-18.25 m\tOK\t€1,872\t7.3%\tLoad point 15\n\t320 mm\t-18.5 m\tOK\t€1,898\t7%\tLoad point 15\n\t320 mm\t-18.75 m\tOK\t€1,924\t6.8%\tLoad point 15\n\t320 mm\t-19 m\tOK\t€1,950\t6.5%\tLoad point 15\n\t320 mm\t-20 m\t\nMissing\n\t€2,056\t-\t-\n\t320 mm\t-20.25 m\t\nMissing\n\t€2,082\t-\t-\n\t320 mm\t-20.5 m\t\nMissing\n\t€2,108\t-\t-\n\t320 mm\t-20.75 m\t\nMissing\n\t€2,134\t-\t-\n\t320 mm\t-21 m\t\nMissing\n\t€2,162\t-\t-\n\t320 mm\t-21.25 m\t\nMissing\n\t€2,188\t-\t-\n\t320 mm\t-21.5 m\t\nMissing\n\t€2,214\t-\t-\n\t320 mm\t-21.75 m\t\nMissin"
+    },
+    {
+      "name": "Optimization start and cancellation",
+      "status": "passed",
+      "evidence": "Optimization\nFewer neighbor differences within a cost budget\n×\nOptimize\nQuick improve\nRESULT · BASE PLAN\n\nAdjust the settings below and start the calculation.\n\n▾\nRun settings\n\nTarget locations\n\nAll load points\nSelected (2)\nSkip locations without a valid configuration\n\nRechecks on every run. Groups are assessed as a whole; skipped locations remain unchanged.\n\nTime limit (minutes)\nNo time limit\n▸\nCandidate configurations\nAll available configurations\n▾\nConfiguration limits\nMaximum different tip levels\nMaximum different sizes\nMaximum different configurations\n\nLeave a limit empty for unlimited.\n\nOptimize coherence\n▸\nUtilization and cost\nMax. utilization 100% · Extra cost 5%\n▸\nNeighbor difference weights\nWeights 1 / 1\n▸\nSave as\nOptimization 1"
+    },
+    {
+      "name": "Browser recovery database round trip",
+      "status": "passed",
+      "evidence": {
+        "recordKeys": [
+          "formatVersion",
+          "appVersion",
+          "projectName",
+          "updatedAt",
+          "ifcppText",
+          "savedProjectSignature",
+          "isDirty"
+        ],
+        "screen": "50 mm\t-20.25 m\t\nMissing\n\t€2,346\t-\t-\n\t350 mm\t-20.5 m\t\nMissing\n\t€2,376\t-\t-\n\t350 mm\t-20.75 m\t\nMissing\n\t€2,406\t-\t-\n\t350 mm\t-21 m\t\nMissing\n\t€2,434\t-\t-\n\t350 mm\t-21.25 m\t\nMissing\n\t€2,464\t-\t-\n\t350 mm\t-21.5 m\t\nMissing\n\t€2,494\t-\t-\n\t350 mm\t-21.75 m\t\nMissing\n\t€2,524\t-\t-\n\t350 mm\t-22 m\t\nMissing\n\t€2,554\t-\t-\n\t400 mm\t-17.5 m\tOK\t€2,448\t6.7%\tLoad point 15\n\t400 mm\t-17.75 m\tOK\t€2,484\t5.9%\tLoad point 15\n\t400 mm\t-18 m\tOK\t€2,520\t5.5%\tLoad point 15\n\t400 mm\t-18.25 m\tOK\t€2,556\t5.4%\tLoad point 15\n\t400 mm\t-18.5 m\tOK\t€2,592\t5.2%\tLoad point 15\n\t400 mm\t-18.75 m\tOK\t€2,628\t5%\tLoad point 15\n\t400 mm\t-19 m\tOK\t€2,664\t5.9%\tLoad point 15\n\t400 mm\t-20 m\t\nMissing\n\t€2,808\t-\t-\n\t400 mm\t-20.25 m\t\nMissing\n\t€2,844\t-\t-\n\t400 mm\t-20.5 m\t\nMissing\n\t€2,880\t-\t-\n\t400 mm\t-20.75 m\t\nMissing\n\t€2,916\t-\t-\n\t400 mm\t-21 m\t\nMissing\n\t€2,952\t-\t-\n\t400 mm\t-21.25 m\t\nMissing\n\t€2,988\t-\t-\n\t400 mm\t-21.5 m\t\nMissing\n\t€3,024\t-\t-\n\t400 mm\t-21.75 m\t\nMissing\n\t€3,060\t-\t-\n\t400 mm\t-22 m\t\nMissing\n\t€3,096\t-\t-\nPrevious session restored\nPile Plane Workspace alpha\nZoom:\n100%"
+      }
+    }
+  ],
+  "pageErrors": []
+}

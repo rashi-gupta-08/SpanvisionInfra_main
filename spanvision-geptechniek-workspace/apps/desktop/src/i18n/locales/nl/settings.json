@@ -1,0 +1,33 @@
+{
+  "title": "Instellingen",
+  "resetToDefaults": "Standaardwaarden herstellen",
+  "resetConfirm": "Weet je zeker dat je alle instellingen terug wilt zetten naar de standaardwaarden?",
+  "tabs": {
+    "general": "Algemeen",
+    "appearance": "Uiterlijk",
+    "extensions": "Extensies",
+    "about": "Over"
+  },
+  "general": {
+    "application": "Applicatie",
+    "language": "Taal"
+  },
+  "appearance": {
+    "theme": "Thema",
+    "light": "Licht",
+    "forge": "Forge (donker)",
+    "dark": "Nacht (donker)",
+    "blueprint": "Blueprint",
+    "contrast": "Hoog contrast",
+    "mono": "Spanvision Mono"
+  },
+  "about": {
+    "appName": "Spanvision Infra · Geotechnical",
+    "version": "Versie",
+    "license": "Licentie",
+    "description": "Geotechnische werkruimte voor sonderingen, boringen, tekeningen en rapporten.",
+    "openaecLink": "Spanvision Infra",
+    "builtOn": "Spanvision werkruimte",
+    "sourceLink": "Broncode"
+  }
+}

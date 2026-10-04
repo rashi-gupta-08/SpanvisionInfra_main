@@ -1,0 +1,212 @@
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  background-color: var(--theme-bg-lighter);
+  border-bottom: 1px solid var(--theme-bg-lighter);
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 8px;
+  gap: 4px;
+  z-index: 1;
+}
+
+.titlebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--theme-accent);
+}
+
+.titlebar-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.titlebar-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--theme-accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 32px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.titlebar-dirty {
+  color: var(--theme-danger-color);
+}
+
+.titlebar-controls {
+  display: flex;
+  height: 100%;
+  flex-shrink: 0;
+  z-index: 1;
+  padding-right: 8px;
+}
+
+.titlebar-quick-access {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  gap: 1px;
+  margin-left: 2px;
+  padding: 0 4px;
+  border-left: 1px solid var(--theme-accent);
+}
+
+.titlebar-quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--theme-accent);
+  cursor: default;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+}
+
+.titlebar-quick-btn:hover:not(:disabled) {
+  background: var(--theme-ribbon-btn-hover);
+  border-color: var(--theme-ribbon-btn-hover-border);
+  color: var(--theme-ribbon-text-hover);
+}
+
+.titlebar-quick-btn:active:not(:disabled) {
+  background: var(--theme-ribbon-btn-active-bg);
+  border-color: var(--theme-ribbon-btn-active-border);
+}
+
+.titlebar-quick-btn:disabled {
+  opacity: 0.35;
+}
+
+.titlebar-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding-left: 8px;
+  position: relative;
+}
+
+.titlebar-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--theme-accent);
+  color: var(--theme-accent-text);
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.titlebar-username {
+  font-size: 11px;
+  color: var(--theme-text-secondary);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titlebar-user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 2px 6px;
+  cursor: default;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+}
+
+.titlebar-user-trigger:hover {
+  background: var(--theme-ribbon-btn-hover);
+  border-color: var(--theme-ribbon-btn-hover-border);
+}
+
+.titlebar-chevron {
+  color: var(--theme-text-secondary);
+  flex-shrink: 0;
+}
+
+.titlebar-user-menu {
+  position: fixed;
+  top: 32px;
+  right: 8px;
+  min-width: 180px;
+  background: var(--theme-bg);
+  border: 1px solid var(--theme-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+  padding: 4px 0;
+}
+
+.titlebar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 14px;
+  background: transparent;
+  border: none;
+  color: var(--theme-text);
+  font-size: 12px;
+  cursor: default;
+  text-decoration: none;
+  transition: background 0.1s;
+}
+
+.titlebar-menu-item,
+.titlebar-menu-item:link,
+.titlebar-menu-item:visited {
+  color: var(--theme-text);
+  text-decoration: none;
+}
+
+.titlebar-menu-item svg {
+  stroke: var(--theme-text);
+  flex-shrink: 0;
+}
+
+.titlebar-menu-item:hover {
+  background: var(--theme-hover);
+  color: var(--theme-accent);
+}
+
+.titlebar-menu-item:hover svg {
+  stroke: var(--theme-accent);
+}
+
+.titlebar-menu-external {
+  margin-left: auto;
+  opacity: 0.5;
+}

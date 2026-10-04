@@ -1,0 +1,16 @@
+[package]
+name = "ofs-wasm"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ofs-core = { path = "../ofs-core", default-features = false }
+serde.workspace = true
+serde_json.workspace = true
+uuid = { version = "1", features = ["v4", "serde", "js"] }
+wasm-bindgen = "0.2"
+getrandom = { version = "0.2", features = ["js"] }

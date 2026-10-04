@@ -1,0 +1,97 @@
+{
+  "modules": [
+    {
+      "id": "cad",
+      "label": "CAD",
+      "directory": "SpanvisionCAD",
+      "dist": "dist",
+      "port": 4173,
+      "path": "/app/",
+      "description": "Draft in 2D. Model in 3D. Work with DWG and DXF.",
+      "available": true,
+      "message": "Ready to open"
+    },
+    {
+      "id": "cad2d",
+      "label": "2D CAD",
+      "directory": "spanvision-2d-cad-workspace",
+      "dist": "dist",
+      "port": 4220,
+      "path": "/",
+      "description": "Draw, measure and review. Recover your browser drafts.",
+      "available": true,
+      "message": "Ready to open"
+    },
+    {
+      "id": "pdf",
+      "label": "PDF",
+      "directory": "spanvision-pdf-workspace/open-pdf-studio",
+      "dist": "dist",
+      "port": 3084,
+      "path": "/",
+      "description": "Annotate documents, measure drawings and organize pages.",
+      "available": true,
+      "message": "Ready to open"
+    },
+    {
+      "id": "ifc",
+      "label": "IFC",
+      "directory": "ifc-view",
+      "dist": "apps/desktop/dist",
+      "port": 3005,
+      "path": "/",
+      "description": "Inspect building models and explore construction sequences.",
+      "available": true,
+      "message": "Ready to open"
+    },
+    {
+      "id": "calc",
+      "label": "Calc",
+      "directory": "calc-workspace",
+      "dist": "dist",
+      "port": 4225,
+      "path": "/",
+      "description": "Build estimates, calculate quantities and prepare reports.",
+      "available": true,
+      "message": "Ready to open"
+    },
+    {
+      "id": "geo",
+      "label": "Geotechniek",
+      "directory": "spanvision-geptechniek-workspace",
+      "frontendDirectory": "apps/desktop",
+      "dist": "apps/desktop/dist",
+      "port": 4235,
+      "path": "/",
+      "description": "Explore ground conditions, review CPT data and prepare site drawings and reports.",
+      "available": true,
+      "message": "Ready to open"
+    },
+    {
+      "id": "speech",
+      "label": "Speech",
+      "productName": "speech workspace",
+      "mark": "SW",
+      "directory": "spanvision-speech-workspace",
+      "dist": "dist",
+      "port": 4240,
+      "path": "/",
+      "description": "Dictate, transcribe recordings and capture meetings. Keep speech processing on your computer.",
+      "available": true,
+      "message": "Ready to open"
+    },
+    {
+      "id": "stl",
+      "label": "STL-3D Map",
+      "productName": "STL-3D map workspace",
+      "mark": "STL",
+      "directory": "spanvision-stl-3d-map-workspace",
+      "dist": "dist",
+      "port": 8765,
+      "path": "/",
+      "description": "Select a Netherlands map area, place your design and export printable STL and 3MF models.",
+      "available": false,
+      "message": "Build this module to make its preview available."
+    }
+  ]
+}

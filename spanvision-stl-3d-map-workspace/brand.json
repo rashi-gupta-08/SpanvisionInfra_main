@@ -1,0 +1,27 @@
+{
+  "organization": "Spanvision Infra",
+  "product": "STL-3D map workspace",
+  "mark": "STL",
+  "version": "1.1.1",
+  "theme": "spanvision-mono",
+  "palette": {
+    "page": "#000000",
+    "surface": "#121212",
+    "canvas": "#1B1B1B",
+    "raised": "#202020",
+    "text": "#FFFFFF",
+    "textSoft": "#EEEEEE",
+    "muted": "#999999",
+    "border": "rgba(255,255,255,.16)",
+    "focus": "rgba(255,255,255,.58)"
+  },
+  "services": {
+    "accountsEnabled": false,
+    "updaterEnabled": false,
+    "websiteUrl": null,
+    "supportUrl": null
+  },
+  "instanceMarker": "spanvision-stl-3d-map-workspace",
+  "brandDigest": "7de7c3190333489b9adade32717559308c55fc12c185f28f0936203416ef97ff",
+  "hubPort": 4230
+}

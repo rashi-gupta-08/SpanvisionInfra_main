@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawn} from 'node:child_process';
+import {root} from './common.mjs';
+import {buildEnvironment} from '../spanvision-pile-plane-workspace/tools/toolchain.mjs';
+const source=path.join(root,'spanvision-pile-plane-workspace');
+const out=path.join(root,'qa/pile');fs.mkdirSync(out,{recursive:true});
+const env=buildEnvironment();
+const manifest=process.argv.includes('--native')?['--manifest-path','apps/pile-plan-studio/src-tauri/Cargo.toml']:['--workspace'];
+const name=process.argv.includes('--native')?'native-tests':'rust-tests';
+const log=fs.createWriteStream(path.join(out,name+'.log'));
+const child=spawn('cargo',['test','--locked',...manifest],{cwd:source,env,windowsHide:true});
+child.stdout.pipe(log,{end:false});child.stderr.pipe(log,{end:false});
+child.on('error',error=>{log.end();console.error(error);process.exitCode=1;});
+child.on('close',code=>{log.end();console.log(`${name}: ${code===0?'passed':'failed'}. See qa/pile/${name}.log`);process.exitCode=code??1;});

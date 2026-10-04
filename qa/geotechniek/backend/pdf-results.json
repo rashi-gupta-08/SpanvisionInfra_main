@@ -1,0 +1,35 @@
+[
+  {
+    "report": "single-cpt",
+    "pages": 6,
+    "creator": "geptechniek workspace \u00b7 Geotechniek",
+    "producer": "Spanvision infra",
+    "allPagesRendered": true,
+    "textWithinPageWidth": true,
+    "rendererErrors": 0,
+    "rendererEnvironmentWarnings": [
+      "Syntax Error: No display font for 'Symbol'",
+      "Syntax Error: No display font for 'ArialUnicode'"
+    ]
+  },
+  {
+    "report": "multiple-cpt",
+    "pages": 7,
+    "creator": "geptechniek workspace \u00b7 Geotechniek",
+    "producer": "Spanvision infra",
+    "allPagesRendered": true,
+    "textWithinPageWidth": true,
+    "rendererErrors": 0,
+    "rendererEnvironmentWarnings": []
+  },
+  {
+    "report": "tenant-report",
+    "pages": 2,
+    "creator": "geptechniek workspace \u00b7 Geotechniek",
+    "producer": "Spanvision infra",
+    "allPagesRendered": true,
+    "textWithinPageWidth": true,
+    "rendererErrors": 0,
+    "rendererEnvironmentWarnings": []
+  }
+]

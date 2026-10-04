@@ -1,0 +1,16 @@
+[package]
+name = "my-plugin"
+version = "0.1.0"
+edition = "2021"
+description = "A CAD by Spanvision Infra add-on."
+license = "GPL-3.0-only"
+
+[workspace]
+
+# A plugin is a C-ABI dynamic library the host loads at runtime.
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# The stable contract, with the runtime `host` surface (HostApi / BuiltinPlugin).
+ocs_plugin_api = { path = "../../crates/ocs_plugin_api", features = ["host"] }

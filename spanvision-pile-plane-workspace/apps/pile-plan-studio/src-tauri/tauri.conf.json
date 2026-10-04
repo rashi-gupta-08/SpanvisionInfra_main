@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Pile Plane Workspace",
+  "version": "0.4.2",
+  "identifier": "com.spanvisioninfra.pileplaneworkspace",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "node ../../tools/build-browser.mjs",
+    "devUrl": "http://127.0.0.1:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Pile Plane Workspace — Spanvision Infra",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "ifcpp"
+        ],
+        "name": "Pile Plane Workspace project",
+        "description": "Pile Plane Workspace IFCPP project",
+        "role": "Editor"
+      }
+    ],
+    "icon": [
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico"
+      }
+    },
+    "publisher": "Spanvision Infra",
+    "shortDescription": "Pile Plane Workspace by Spanvision Infra",
+    "resources": [
+      "../../../legal/"
+    ]
+  },
+  "mainBinaryName": "spanvision-pile-plane-workspace"
+}

@@ -1,0 +1,11 @@
+:root {
+ --sv-page: #000000;
+ --sv-surface: #121212;
+ --sv-canvas: #1B1B1B;
+ --sv-raised: #202020;
+ --sv-text: #FFFFFF;
+ --sv-text-soft: #EEEEEE;
+ --sv-muted: #999999;
+ --sv-border: rgba(255,255,255,.16);
+ --sv-focus: rgba(255,255,255,.58);
+}

@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "checks": [
+    "Installer and portable SHA-256 match delivery manifest",
+    "Portable ZIP integrity",
+    "Standalone identity and source fingerprint",
+    "Bundled Leaflet and fonts",
+    "Preserved MIT and dependency notices"
+  ],
+  "artifacts": [
+    {
+      "file": "Spanvision-STL-3D-map-workspace-1.1.1-portable.zip",
+      "bytes": 75293692,
+      "sha256": "3b31c5b2543275a83854612f632011d4c74f77aa8efa3ada8b414e3c0fa42533"
+    },
+    {
+      "file": "Spanvision-STL-3D-map-workspace-1.1.1-Setup.exe",
+      "bytes": 66025511,
+      "sha256": "30568c8ad5d50ba4723604b35545b74b1859e903752196cb389f145f95e202df"
+    }
+  ]
+}

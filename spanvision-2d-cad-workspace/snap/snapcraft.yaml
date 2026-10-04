@@ -1,0 +1,71 @@
+name: spanvision-2d-cad-workspace
+base: core22
+version: '0.33.0'
+summary: Free, open-source 2D CAD application
+description: |
+  2D CAD is a free, open-source 2D CAD application built for architects,
+  engineers, and designers who need professional drafting tools without expensive
+  subscriptions.
+
+  Features:
+
+  - Drawing tools: Line, Rectangle, Circle, Arc, Polyline, Ellipse, Spline, Hatch
+  - Modify tools: Move, Copy, Rotate, Scale, Mirror, Offset, Trim, Extend, Fillet
+  - Structural tools: Beams, Piles, Walls, Slabs, Plate Systems, Gridlines, Levels
+  - Sheet management: Multiple drawings, sheets with title blocks, viewports
+  - Dimension tools: Linear, aligned, angular, radius, diameter, spot elevation
+  - Annotation tools: Text, leaders, section callouts
+  - Layer management with visibility, lock, and color control
+  - Snap and tracking: endpoint, midpoint, center, intersection, perpendicular, polar
+  - Grid and ortho mode
+  - Undo/redo with full history
+  - IFC export for BIM interoperability
+  - Print dialog with PDF export
+  - Customizable Quick Access Toolbar
+  - Multiple themes: Dark, Light, Blue, High Contrast
+  - No telemetry, no data collection, no subscriptions
+
+  Built with Tauri and web technologies for a fast, lightweight, native desktop experience.
+title: 2D CAD
+icon: snap/gui/spanvision-2d-cad-workspace.png
+license: LGPL-3.0-or-later
+grade: stable
+confinement: strict
+
+apps:
+  spanvision-2d-cad-workspace:
+    command: usr/bin/spanvision-2d-cad-workspace
+    desktop: usr/share/applications/spanvision-2d-cad-workspace.desktop
+    extensions: [gnome]
+    plugs:
+      - home
+      - removable-media
+      - network
+
+layout:
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
+
+parts:
+  spanvision-2d-cad-workspace:
+    plugin: dump
+    source: spanvision-2d-cad-workspace.deb
+    source-type: deb
+    stage-packages:
+      - libwebkit2gtk-4.1-0
+      - libjavascriptcoregtk-4.1-0
+    override-build: |
+      craftctl default
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
+      cat > $CRAFT_PART_INSTALL/usr/share/applications/spanvision-2d-cad-workspace.desktop << 'EOF'
+      [Desktop Entry]
+      Name=2D CAD
+      Comment=Free, open-source 2D CAD application
+      Exec=spanvision-2d-cad-workspace %F
+      Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/spanvision-2d-cad-workspace.png
+      Terminal=false
+      Type=Application
+      Categories=Graphics;Engineering;
+      MimeType=application/x-onds;
+      StartupWMClass=spanvision-2d-cad-workspace
+      EOF

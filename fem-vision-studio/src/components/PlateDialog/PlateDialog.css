@@ -1,0 +1,107 @@
+﻿.plate-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.plate-dialog {
+  background: var(--theme-bg);
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  width: 320px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.plate-dialog-header {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--theme-fg);
+  border-bottom: 1px solid var(--theme-border);
+  background: var(--theme-bg-elevated);
+  border-radius: 8px 8px 0 0;
+}
+
+.plate-dialog-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plate-dialog-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--theme-fg-muted);
+}
+
+.plate-dialog-row {
+  display: flex;
+  gap: 12px;
+}
+
+.plate-dialog-row label {
+  flex: 1;
+}
+
+.plate-dialog-hint {
+  font-size: 10px;
+  color: var(--theme-fg-subtle);
+  margin: 0;
+}
+
+.plate-dialog-polygon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: var(--theme-bg-elevated);
+  border-radius: 4px;
+  border: 1px solid var(--theme-border);
+}
+
+.plate-dialog-void-info {
+  color: #e94560;
+}
+
+.plate-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--theme-border);
+}
+
+.plate-dialog-btn {
+  padding: 6px 20px;
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.plate-dialog-btn.cancel {
+  background: var(--theme-bg-subtle);
+  color: var(--theme-fg-muted);
+}
+
+.plate-dialog-btn.cancel:hover {
+  background: var(--theme-bg-elevated);
+}
+
+.plate-dialog-btn.confirm {
+  background: var(--theme-accent);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent-text);
+}
+
+.plate-dialog-btn.confirm:hover {
+  background: var(--theme-accent-hover);
+}

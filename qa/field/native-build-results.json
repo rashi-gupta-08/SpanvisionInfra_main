@@ -1,0 +1,10 @@
+{
+  "build": "passed",
+  "migrationTests": "passed",
+  "releaseDirectory": "D:\\SpanvisionToolchain\\field-target\\release",
+  "deliveryDirectory": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\field\\windows",
+  "installers": [
+    "Field Workspace_0.3.6_x64-setup.exe"
+  ],
+  "signed": false
+}

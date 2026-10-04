@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "stats": {
+    "area_km2": 0.005,
+    "width_m": 68.8,
+    "height_m": 67.0,
+    "plate_mm": [
+      150.0,
+      146.1
+    ],
+    "scale_ratio": "1 : 459",
+    "mm_per_m": 2.1808,
+    "buildings": 35,
+    "buildings_hidden": 0,
+    "roads": 0,
+    "trees": 0,
+    "has_water": false,
+    "has_shrubs": false,
+    "has_woods": false,
+    "warn_large": false,
+    "surfaces_error": "Public OpenStreetMap servers (Overpass) are unavailable. Water, roads and vegetation could not be retrieved."
+  },
+  "files": [
+    {
+      "name": "live-utrecht.3mf",
+      "size_kb": 10.2
+    },
+    {
+      "name": "live-utrecht_1_base.stl",
+      "size_kb": 0.7
+    },
+    {
+      "name": "live-utrecht_2_land.stl",
+      "size_kb": 0.7
+    },
+    {
+      "name": "live-utrecht_4_buildings.stl",
+      "size_kb": 40.9
+    },
+    {
+      "name": "live-utrecht_README.txt",
+      "size_kb": 0.9
+    }
+  ],
+  "surfaces_error": "Public OpenStreetMap servers (Overpass) are unavailable. Water, roads and vegetation could not be retrieved."
+}

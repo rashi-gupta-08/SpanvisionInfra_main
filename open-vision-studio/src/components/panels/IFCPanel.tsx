@@ -1,0 +1,132 @@
+import { useState, useCallback, useMemo } from 'react';
+import { useAppStore } from '@/state/appStore';
+import { useTranslation } from 'react-i18next';
+import { writeIFC } from '@/services/ifc/ifcWriter';
+import { readIFCWithXerReconstruction } from '@/services/formatRegistry';
+import { withXerArchiveIssueNotice } from '@/state/xerArchiveIssueNotice';
+import { buildWriteIFCInput } from '@/state/ifcSaveInput';
+import { buildImportLabels } from '@/i18n/importLabels';
+
+export function IFCPanel() {
+  const { t } = useTranslation('menu');
+  const { t: tCommon } = useTranslation('common');
+  const project = useAppStore(s => s.project);
+  const calendar = useAppStore(s => s.calendar);
+  const tasks = useAppStore(s => s.tasks);
+  const sequences = useAppStore(s => s.sequences);
+  const resources = useAppStore(s => s.resources);
+  const assignments = useAppStore(s => s.assignments);
+  const activityCodeTypes = useAppStore(s => s.activityCodeTypes);
+  const customFieldDefs = useAppStore(s => s.customFieldDefs);
+  const customTaskTypes = useAppStore(s => s.customTaskTypes);
+  const resourceCalendars = useAppStore(s => s.calendars);
+  // Baselines/activeBaselineId meesturen — anders schrijft dit paneel stil ONVOLLEDIGE IFC
+  // (baselines verloren bij genereren/kopiëren vanuit de IFC-tab).
+  const baselines = useAppStore(s => s.baselines);
+  const activeBaselineId = useAppStore(s => s.activeBaselineId);
+  // In de modus "datums zoals opgeslagen" schrijft de writer `$` op
+  // de niet-vastgelegde assen — ook hier, anders toont/kopieert dit paneel de terugvallen als waarden.
+  const recordedDates = useAppStore(s => s.recordedDates);
+  const datesAsRecorded = useAppStore(s => s.datesAsRecorded);
+  // Bewaarde GlobalIds uit het ingelezen bestand; zonder deze kreeg Toepassen overal hash-GlobalIds.
+  const ifcGlobalIds = useAppStore(s => s.ifcGlobalIds);
+  const loadState = useAppStore(s => s.loadState);
+  const notify = useAppStore(s => s.notify);  // het ene meldingenkanaal, geen alert()
+
+  const generated = useMemo(() => {
+    return writeIFC(buildWriteIFCInput({
+      project, calendar, tasks, sequences, resources, assignments,
+      activityCodeTypes, customFieldDefs, customTaskTypes, calendars: resourceCalendars, baselines, activeBaselineId,
+      recordedDates, datesAsRecorded, ifcGlobalIds,
+    }));
+  }, [project, calendar, tasks, sequences, resources, assignments, activityCodeTypes, customFieldDefs, customTaskTypes, resourceCalendars, baselines, activeBaselineId, recordedDates, datesAsRecorded, ifcGlobalIds]);
+
+  const [content, setContent] = useState(generated);
+  const [dirty, setDirty] = useState(false);
+
+  const handleGenerate = useCallback(() => {
+    const ifc = writeIFC(buildWriteIFCInput({
+      project, calendar, tasks, sequences, resources, assignments,
+      activityCodeTypes, customFieldDefs, customTaskTypes, calendars: resourceCalendars, baselines, activeBaselineId,
+      recordedDates, datesAsRecorded, ifcGlobalIds,
+    }));
+    setContent(ifc);
+    setDirty(false);
+  }, [project, calendar, tasks, sequences, resources, assignments, activityCodeTypes, customFieldDefs, customTaskTypes, resourceCalendars, baselines, activeBaselineId, recordedDates, datesAsRecorded, ifcGlobalIds]);
+
+  const handleApply = useCallback(() => {
+    void (async () => {
+      try {
+        const data = await readIFCWithXerReconstruction(content, buildImportLabels(tCommon));
+        // `loadState` rekent zelf door en publiceert de viewstart in dezelfde ene publicatie.
+        loadState(data, { viewStartDate: data.project.startDate });
+        setDirty(false);
+        // Een onbruikbaar XER-bronarchief is weggelaten — nooit stil.
+        const archiveNotice = withXerArchiveIssueNotice(undefined, [data.xerArchiveIssue]);
+        if (archiveNotice) notify(archiveNotice);
+      } catch (err) {
+        // Via het gecentraliseerde meldingenkanaal, geen alert().
+        notify({
+          severity: 'error',
+          messageKey: 'notifications.ifcParseFailed',
+          detail: (err as Error).message,
+        });
+      }
+    })();
+  }, [content, loadState, notify, tCommon]);
+
+  const handleCopy = useCallback(() => {
+    void navigator.clipboard.writeText(content);
+  }, [content]);
+
+  const lineCount = content.split('\n').length;
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden bg-surface">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 px-3 py-2 bg-surface-alt" style={{ borderBottom: '1px solid var(--theme-border)' }}>
+        <span
+          className="text-small leading-4 font-bold uppercase"
+          style={{ fontFamily: 'var(--font-heading)', letterSpacing: '0.08em', color: 'var(--theme-text-muted)' }}
+        >
+          {t('ifc.title')}
+        </span>
+        <div className="flex-1" />
+        <button
+          onClick={handleGenerate}
+          className="px-3 py-1 text-small leading-4 bg-accent text-accent-on hover:bg-accent-hover"
+          style={{ borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-glow)' }}
+        >
+          {t('ifc.generate')}
+        </button>
+        <button
+          onClick={handleApply}
+          disabled={!dirty}
+          className="px-3 py-1 text-small leading-4 bg-green-600 text-white hover:bg-green-700 disabled:opacity-40"
+          style={{ borderRadius: 'var(--radius-md)' }}
+        >
+          {t('ifc.apply')}
+        </button>
+        <button
+          onClick={handleCopy}
+          className="px-3 py-1 text-small leading-4 hover:bg-surface-hover"
+          style={{ border: '1px solid var(--theme-control-border)', borderRadius: 'var(--radius-md)' }}
+        >
+          {t('ifc.copy')}
+        </button>
+        <span className="!text-small" style={{ color: 'var(--theme-text-muted)' }}>{lineCount} {t('ifc.lines')}</span>
+      </div>
+
+      {/* Editor */}
+      <div className="flex-1 overflow-hidden relative">
+        <textarea
+          value={content}
+          onChange={e => { setContent(e.target.value); setDirty(true); }}
+          spellCheck={false}
+          className="absolute inset-0 w-full h-full bg-surface text-text-primary font-mono !text-body leading-5 p-3 resize-none outline-none border-none"
+          style={{ tabSize: 2 }}
+        />
+      </div>
+    </div>
+  );
+}

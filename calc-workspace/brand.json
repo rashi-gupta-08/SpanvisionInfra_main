@@ -1,0 +1,14 @@
+{
+  "organization": "Spanvision Infra",
+  "product": "Spanvision Infra · Calc",
+  "initials": "GW",
+  "packageName": "@spanvision-infra/calc-workspace",
+  "appIdentifier": "com.spanvisioninfra.calcworkspace",
+  "legacyAppIdentifier": "com.opencalcstudio.app",
+  "theme": "spanvision-mono",
+  "websiteUrl": "",
+  "feedbackUrl": "",
+  "extensionCatalogUrl": "",
+  "accountsEnabled": false,
+  "mark": "GW"
+}

@@ -1,0 +1,12 @@
+{
+  "tenants": {
+    "spanvision": {
+      "name": "Spanvision Infra",
+      "nextcloud_url": "https://nextcloud.example",
+      "nextcloud_domain": "nextcloud.example",
+      "service_user": "spanvision-service",
+      "service_pass_env": "NC_SERVICE_PASS_SPANVISION",
+      "group_folder_id": 1
+    }
+  }
+}

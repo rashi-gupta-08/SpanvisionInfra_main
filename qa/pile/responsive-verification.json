@@ -1,0 +1,302 @@
+{
+  "results": [
+    {
+      "name": "Editor layout, dialogs and drawers at 1440",
+      "status": "passed",
+      "evidence": {
+        "width": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "Editor layout, dialogs and drawers at 820",
+      "status": "passed",
+      "evidence": {
+        "width": 820,
+        "scrollWidth": 820
+      }
+    },
+    {
+      "name": "Editor layout, dialogs and drawers at 390",
+      "status": "passed",
+      "evidence": {
+        "width": 390,
+        "scrollWidth": 390
+      }
+    },
+    {
+      "name": "Editor layout, dialogs and drawers at 320",
+      "status": "passed",
+      "evidence": {
+        "width": 320,
+        "scrollWidth": 320
+      }
+    },
+    {
+      "name": "Touch drag pan",
+      "status": "passed",
+      "evidence": {
+        "before": "width: 916.523px; height: 844.629px; transform: translate(0px, 0px) scale(1); --viewer-symbol-scale: 0.75;",
+        "after": "width: 916.523px; height: 844.629px; transform: translate(45px, 25px) scale(1); --viewer-symbol-scale: 0.75;"
+      }
+    },
+    {
+      "name": "Touch pinch zoom",
+      "status": "passed",
+      "evidence": {
+        "before": "width: 916.523px; height: 844.629px; transform: translate(45px, 25px) scale(1); --viewer-symbol-scale: 0.75;",
+        "after": "width: 916.523px; height: 844.629px; transform: translate(-368.262px, -372.314px) scale(2); --viewer-symbol-scale: 0.75;"
+      }
+    },
+    {
+      "name": "Touch tap marker selection",
+      "status": "passed",
+      "evidence": {
+        "target": {
+          "x": 54.921875,
+          "y": 624.734375,
+          "key": "load-point:15"
+        },
+        "panel": "Load points\nCPTs\n2 load points\nSelection\nUngroup\n2 selected\nPile Options\n64 shown\nColumns\nClear assignment\nThis selection includes 1 group with 2 marked load points in total.\nSymbol\n\t\nSize\n▾\n\t\nTip\n▾\n\t\nStatus\n▾\n\t\nTotal cost\n▾\n\t\nMax use\n▾\n\t\nCritical load point\n▾\n\n\t290 mm\t-17.5 m\tOK\t€1,282\t11.4%\tLoad point 15\n\t290 mm\t-17.75 m\tOK\t€1,306\t9.8%\tLoad point 15\n\t290 mm\t-18 m\tOK\t€1,328\t8.7%\tLoad point 15\n\t290 mm\t-18.25 m\tOK\t€1,352\t8.4%\tLoad point 15\n\t290 mm\t-18.5 m\tOK\t€1,374\t8%\tLoad point 15\n\t290 mm\t-18.75"
+      }
+    },
+    {
+      "name": "Touch explicit lasso selection",
+      "status": "passed",
+      "evidence": "Load points\nCPTs\n328 load points\nSelection\nGroup selection\n328 selected\n25 of the 328 selected locations have no pile assignment.\nBearing-capacity data is missing for 25 locations.\nPile Options\n64 shown\nColumns\nClear assignment\nThis selection includes 99 groups with 328 marked load points in total.\nSymbol\n\t\nSize\n▾\n\t\nTip\n▾\n\t\nStatus\n▾\n\t\nTotal cost\n▾\n\t\nMax use\n▾\n\t\nCritical load point\n▾\n\n\t290 mm\t-17.5 m\t\nMissing\n\t€210,248\t-\t-\n\t290 mm\t-17.75 m\t\nMissing\n\t€214,184\t-\t-\n\t290 mm\t-18 m\t\nMissing\n\t€217,792\t-\t-\n\t290 mm\t-18.25 m\t\nMissing\n\t€221,728\t-\t-\n\t290 mm\t-18.5 m\t\nMissing\n\t€225,336\t-\t-\n\t290 mm\t-18.75 m\t\n"
+    },
+    {
+      "name": "Hub landing at 320",
+      "status": "passed",
+      "evidence": {
+        "width": 320,
+        "scrollWidth": 320
+      }
+    },
+    {
+      "name": "Hub modules at 320",
+      "status": "passed",
+      "evidence": {
+        "width": 320,
+        "scrollWidth": 320
+      }
+    },
+    {
+      "name": "Hub suggestions at 320",
+      "status": "passed",
+      "evidence": {
+        "width": 320,
+        "scrollWidth": 320
+      }
+    },
+    {
+      "name": "Hub login at 320",
+      "status": "passed",
+      "evidence": {
+        "width": 320,
+        "scrollWidth": 320
+      }
+    },
+    {
+      "name": "Hub signup at 320",
+      "status": "passed",
+      "evidence": {
+        "width": 320,
+        "scrollWidth": 320
+      }
+    },
+    {
+      "name": "Hub account at 320",
+      "status": "passed",
+      "evidence": {
+        "width": 320,
+        "scrollWidth": 320
+      }
+    },
+    {
+      "name": "Hub landing at 390",
+      "status": "passed",
+      "evidence": {
+        "width": 390,
+        "scrollWidth": 390
+      }
+    },
+    {
+      "name": "Hub modules at 390",
+      "status": "passed",
+      "evidence": {
+        "width": 390,
+        "scrollWidth": 390
+      }
+    },
+    {
+      "name": "Hub suggestions at 390",
+      "status": "passed",
+      "evidence": {
+        "width": 390,
+        "scrollWidth": 390
+      }
+    },
+    {
+      "name": "Hub login at 390",
+      "status": "passed",
+      "evidence": {
+        "width": 390,
+        "scrollWidth": 390
+      }
+    },
+    {
+      "name": "Hub signup at 390",
+      "status": "passed",
+      "evidence": {
+        "width": 390,
+        "scrollWidth": 390
+      }
+    },
+    {
+      "name": "Hub account at 390",
+      "status": "passed",
+      "evidence": {
+        "width": 390,
+        "scrollWidth": 390
+      }
+    },
+    {
+      "name": "Hub landing at 820",
+      "status": "passed",
+      "evidence": {
+        "width": 820,
+        "scrollWidth": 820
+      }
+    },
+    {
+      "name": "Hub modules at 820",
+      "status": "passed",
+      "evidence": {
+        "width": 820,
+        "scrollWidth": 820
+      }
+    },
+    {
+      "name": "Hub suggestions at 820",
+      "status": "passed",
+      "evidence": {
+        "width": 820,
+        "scrollWidth": 820
+      }
+    },
+    {
+      "name": "Hub login at 820",
+      "status": "passed",
+      "evidence": {
+        "width": 820,
+        "scrollWidth": 820
+      }
+    },
+    {
+      "name": "Hub signup at 820",
+      "status": "passed",
+      "evidence": {
+        "width": 820,
+        "scrollWidth": 820
+      }
+    },
+    {
+      "name": "Hub account at 820",
+      "status": "passed",
+      "evidence": {
+        "width": 820,
+        "scrollWidth": 820
+      }
+    },
+    {
+      "name": "Hub landing at 1440",
+      "status": "passed",
+      "evidence": {
+        "width": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "Hub modules at 1440",
+      "status": "passed",
+      "evidence": {
+        "width": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "Hub suggestions at 1440",
+      "status": "passed",
+      "evidence": {
+        "width": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "Hub login at 1440",
+      "status": "passed",
+      "evidence": {
+        "width": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "Hub signup at 1440",
+      "status": "passed",
+      "evidence": {
+        "width": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "Hub account at 1440",
+      "status": "passed",
+      "evidence": {
+        "width": 1440,
+        "scrollWidth": 1440
+      }
+    },
+    {
+      "name": "Hub scan dialog at 320",
+      "status": "passed",
+      "evidence": {
+        "x": 17,
+        "y": 115.625,
+        "width": 286,
+        "height": 668.75
+      }
+    },
+    {
+      "name": "Hub scan dialog at 390",
+      "status": "passed",
+      "evidence": {
+        "x": 17,
+        "y": 134.921875,
+        "width": 356,
+        "height": 630.15625
+      }
+    },
+    {
+      "name": "Hub scan dialog at 820",
+      "status": "passed",
+      "evidence": {
+        "x": 130,
+        "y": 205.015625,
+        "width": 560,
+        "height": 489.96875
+      }
+    },
+    {
+      "name": "Hub scan dialog at 1440",
+      "status": "passed",
+      "evidence": {
+        "x": 440,
+        "y": 205.015625,
+        "width": 560,
+        "height": 489.96875
+      }
+    }
+  ],
+  "pageErrors": []
+}

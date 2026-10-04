@@ -1,0 +1,27 @@
+[
+  {
+    "name": "embed uses Spanvision Mono",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "embed accepts an alternate theme",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "embed preserves host styles and document theme",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "embedded dialogs inherit scoped theme",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "embed has no uncaught errors",
+    "pass": true,
+    "detail": ""
+  }
+]

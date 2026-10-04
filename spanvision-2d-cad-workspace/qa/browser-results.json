@@ -1,0 +1,106 @@
+{
+  "base": "http://127.0.0.1:4220/",
+  "checks": [
+    {
+      "name": "Desktop start has no page overflow",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "New opens full editor",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": ".o2d fallback download retains drawn geometry",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Desktop editor has no page overflow",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Open .o2d loads complete project",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "SVG download works",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "DXF download works",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "IFC4 download works",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "JSON download works",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Theme preference persists across reload",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Restore returns recovered geometry to editor",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Desktop-only menu actions are hidden",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "About exposes source license and notices",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Tablet editor has no page overflow",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Phone opens touch review flow",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Phone viewer has no page overflow",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Mobile markup recovers with browser draft",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Marked-up PNG download works",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "Small phone has no page overflow",
+      "detail": "",
+      "passed": true
+    },
+    {
+      "name": "No uncaught browser errors",
+      "detail": "",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

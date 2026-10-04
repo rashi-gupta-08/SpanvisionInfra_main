@@ -1,0 +1,362 @@
+[
+  {
+    "module": "cad",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "grid": {
+          "background": [
+            238,
+            241,
+            245
+          ],
+          "gridLines": 6
+        },
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "grid": {
+          "background": [
+            27,
+            27,
+            27
+          ],
+          "gridLines": 6
+        },
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "grid": {
+          "background": [
+            238,
+            241,
+            245
+          ],
+          "gridLines": 6
+        },
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "cad2d",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "grid": {
+          "background": [
+            238,
+            241,
+            245
+          ],
+          "gridLines": 22
+        },
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "grid": {
+          "background": [
+            27,
+            27,
+            27
+          ],
+          "gridLines": 22
+        },
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "grid": {
+          "background": [
+            238,
+            241,
+            245
+          ],
+          "gridLines": 22
+        },
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "bim",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "pdf",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "ifc",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "calc",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "planner",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "fem",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "grid": {
+          "background": [
+            238,
+            241,
+            245
+          ],
+          "gridLines": 10
+        },
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "grid": {
+          "background": [
+            27,
+            27,
+            27
+          ],
+          "gridLines": 10
+        },
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "grid": {
+          "background": [
+            238,
+            241,
+            245
+          ],
+          "gridLines": 10
+        },
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "frame",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "calculation",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "geo",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "speech",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "stl",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "field",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "pointcloud",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  },
+  {
+    "module": "pile",
+    "passed": true,
+    "modes": [
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      },
+      {
+        "mode": "dark",
+        "accent": "#ffffff"
+      },
+      {
+        "mode": "light",
+        "accent": "#17202b"
+      }
+    ]
+  }
+]

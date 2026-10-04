@@ -1,0 +1,25 @@
+{
+  "organization": "Spanvision Infra",
+  "product": "Spanvision Infra · PDF",
+  "mark": "GW",
+  "packageName": "spanvision-pdf-workspace",
+  "identifier": "com.spanvisioninfra.pdfworkspace",
+  "executable": "SpanvisionPDFWorkspace",
+  "dataDirectory": "SpanvisionPDFWorkspace",
+  "printer": "Spanvision PDF Printer",
+  "theme": "spanvision-mono",
+  "websiteUrl": null,
+  "supportUrl": null,
+  "feedbackUrl": null,
+  "releasesApiUrl": null,
+  "symbolRepository": null,
+  "updater": {
+    "enabled": false,
+    "endpoint": null,
+    "publicKey": null
+  },
+  "accounts": {
+    "enabled": false
+  },
+  "initials": "GW"
+}

@@ -1,0 +1,9 @@
+{
+  "build": "passed",
+  "migrationTests": "passed",
+  "releaseDirectory": "D:\\SpanvisionToolchain\\geo-target\\release",
+  "deliveryDirectory": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\geotechniek\\windows",
+  "installers": [
+    "geptechniek workspace · Geotechniek_0.4.1_x64-setup.exe"
+  ]
+}

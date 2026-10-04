@@ -1,0 +1,74 @@
+{
+  "results": [
+    {
+      "scenario": "hub-layout",
+      "route": "landing",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "modules",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "suggestions",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "login",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "signup",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "account",
+      "width": 1440
+    },
+    {
+      "scenario": "scan-focus-cancel-complete",
+      "width": 1440
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 1440
+    },
+    {
+      "scenario": "editor-layout",
+      "module": "cad",
+      "width": 1440
+    },
+    {
+      "scenario": "editor-layout",
+      "module": "cad2d",
+      "width": 1440
+    },
+    {
+      "scenario": "editor-layout",
+      "module": "pdf",
+      "width": 1440
+    },
+    {
+      "scenario": "editor-layout",
+      "module": "ifc",
+      "width": 1440
+    },
+    {
+      "scenario": "editor-layout",
+      "module": "calc",
+      "width": 1440
+    },
+    {
+      "scenario": "editor-layout",
+      "module": "geo",
+      "width": 1440
+    }
+  ],
+  "errors": [],
+  "requests": []
+}

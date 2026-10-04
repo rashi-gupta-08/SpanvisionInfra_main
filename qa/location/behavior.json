@@ -1,0 +1,22 @@
+[
+  {
+    "scenario": "late-response",
+    "passed": true
+  },
+  {
+    "scenario": "retry-denied",
+    "passed": true
+  },
+  {
+    "scenario": "retry-timeout",
+    "passed": true
+  },
+  {
+    "scenario": "unsupported",
+    "passed": true
+  },
+  {
+    "scenario": "saved-project",
+    "passed": true
+  }
+]

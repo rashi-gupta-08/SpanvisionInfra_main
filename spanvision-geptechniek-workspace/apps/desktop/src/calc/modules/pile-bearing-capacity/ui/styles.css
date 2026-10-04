@@ -1,0 +1,736 @@
+/* apps/desktop/src/calc/modules/pile-bearing-capacity/ui/styles.css */
+.pile-input fieldset {
+  border: 1px solid var(--theme-border, #e7e5e4);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.pile-input legend {
+  font: 600 0.78rem "Inter", sans-serif;
+  padding: 0 6px;
+  color: var(--theme-text, #36363e);
+}
+.pile-input label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font: 500 0.82rem "Inter", sans-serif;
+  margin-bottom: 4px;
+}
+.pile-input input,
+.pile-input select {
+  flex: 1;
+  max-width: 140px;
+  padding: 3px 6px;
+  border: 1px solid var(--theme-border, #cbd5e1);
+  border-radius: 3px;
+  font: 500 0.82rem var(--font-code, "JetBrains Mono"), monospace;
+}
+
+/* ============================================================
+   VisualPanel — CPT-chart met paaloverlays
+   ============================================================ */
+
+.pile-visual {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+}
+.pile-visual h3 {
+  margin: 0;
+  font: 700 0.95rem "Inter", sans-serif;
+  color: var(--theme-text, #36363e);
+}
+.pile-visual-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-text-secondary, #71717a);
+  font: 500 0.85rem "Inter", sans-serif;
+  font-style: italic;
+}
+.pile-visual-footnote {
+  margin: 0;
+  font: 500 0.78rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text-secondary, #71717a);
+  line-height: 1.5;
+}
+
+/* ─── Cross-section onderaan VisualPanel ───
+   Compacte 2-koloms-layout: schematische doorsnede links + technische
+   info rechts (diameter, wanddikte, wapeningskorf, materiaal). */
+.pile-cross-section-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: var(--theme-bg-lighter, #fff);
+  border: 1px solid var(--theme-border, #e7e5e4);
+  border-radius: 4px;
+}
+.pile-cross-section-svg {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+}
+.pile-cross-section-info {
+  flex: 1;
+  min-width: 0;
+}
+.pile-cross-section-title {
+  font: 700 0.78rem "Inter", sans-serif;
+  color: var(--theme-text, #36363e);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pile-cross-section-table {
+  border-collapse: collapse;
+  font: 500 0.78rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text, #36363e);
+}
+.pile-cross-section-table td {
+  padding: 1px 6px 1px 0;
+  vertical-align: top;
+}
+.pile-cross-section-table td:first-child {
+  color: var(--theme-text-secondary, #71717a);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ─── CPT-chart container + SVG ─── */
+.pile-cpt-chart {
+  flex: 1;
+  min-height: 0;
+  /* Horizontaal scroll bij chart-zoom — de SVG kan groter dan 100%
+     worden als de gebruiker verticaal inzoomt (zoom-factor maakt de
+     viewBox breder en de SVG-pixel-breedte mee). */
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  background: var(--theme-bg-lighter, #fff);
+  border: 1px solid var(--theme-border, #e7e5e4);
+  border-radius: 4px;
+  padding: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.pile-cpt-chart-svg {
+  width: 100%;
+  height: 100%;
+  font-family: "Inter", sans-serif;
+}
+
+/* ─── Zoom-controls (floating top-right inside chart) ─── */
+.pile-chart-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  padding: 3px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.pile-chart-ctrl-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: var(--theme-bg, #fff);
+  border: 1px solid var(--theme-border, #cbd5e1);
+  border-radius: 4px;
+  font: 700 0.95rem "Inter", sans-serif;
+  line-height: 1;
+  color: var(--theme-text, #36363e);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 80ms ease-out, border-color 80ms ease-out;
+}
+.pile-chart-ctrl-btn:hover {
+  background: var(--theme-bg-hover, #f4f4f5);
+  border-color: var(--theme-border-strong, #94a3b8);
+}
+.pile-chart-ctrl-btn:active {
+  background: var(--theme-bg-active, #e4e4e7);
+}
+.pile-chart-ctrl-btn--reset {
+  background: var(--amber, #d97706);
+  color: white;
+  border-color: var(--amber, #d97706);
+}
+.pile-chart-ctrl-btn--reset:hover {
+  background: #b45309;
+  border-color: #b45309;
+}
+
+/* ─── Pile graphic (rect + arrows in eigen kolom) ─── */
+.pile-gfx {
+  pointer-events: none;
+}
+.pile-gfx-arrow-label {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: var(--font-code, "JetBrains Mono"), monospace;
+  pointer-events: none;
+}
+.pile-gfx-arrow-label--strong {
+  font-weight: 700;
+  font-size: 10px;
+}
+
+/* ─── Wapeningskorf (rebar cage) — alleen voor betongevulde
+   stalen buispalen. Longitudinale staven = vol grijs;
+   transverse beugels = dashed grijs. */
+.pile-gfx-rebar-long {
+  stroke: #374151;
+  stroke-width: 0.7;
+  opacity: 0.75;
+}
+.pile-gfx-rebar-stir {
+  stroke: #374151;
+  stroke-width: 0.5;
+  stroke-dasharray: 1.5 1.5;
+  opacity: 0.6;
+}
+
+/* ─── Plot frame ─── */
+.pile-cpt-plot-bg {
+  fill: var(--theme-bg-lighter, #fff);
+}
+.pile-cpt-plot-border {
+  stroke: var(--theme-border, #e7e5e4);
+  stroke-width: 1;
+}
+
+/* ─── Grid + axis labels ─── */
+.pile-cpt-grid,
+.pile-cpt-grid-vert {
+  stroke: var(--theme-border, #e7e5e4);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 3;
+}
+.pile-cpt-axis-label {
+  fill: var(--theme-text-secondary, #71717a);
+  font-size: 10px;
+}
+.pile-cpt-axis-title {
+  fill: var(--theme-text, #36363e);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ─── qc curve ───
+   Multi-segment rendering conform externe referentie-norm-visualisatie:
+   de qc-curve is opgedeeld in een dunne grijze basis (overal) + gekleurde
+   bold segmenten voor de 8D-, dc- en 4D-max-zones rondom de paalpunt.
+*/
+.pile-cpt-qc-curve {
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  fill: none;
+}
+/* Basis: dunne grijze lijn over de hele sondering. */
+.pile-cpt-qc-curve--base {
+  stroke: #9ca3af;       /* slate-400 */
+  stroke-width: 1;
+}
+/* 8D-zone (qc;III invloed): bold blauw, boven paalpunt. */
+.pile-cpt-qc-curve--8d {
+  stroke: #2563eb;       /* info blue */
+  stroke-width: 2.5;
+}
+/* dc-zone (qc;I + qc;II invloed): bold donkerblauw, direct onder paalpunt.
+   Voorheen rood — nu donkerblauw per gebruikers-wens (consistentie met de
+   8D-blauw, en visueel onderscheidbaar van de rode paalpunt-lijn). */
+.pile-cpt-qc-curve--dc {
+  stroke: #1e3a8a;       /* indigo-900 */
+  stroke-width: 2.5;
+}
+/* 4D-max outer: dunne donkerblauwe dashed, tussen dc-bot en 4·Deq onder
+   paalpunt. Visualiseert de outer bound waar dc maximaal naar kan reiken. */
+.pile-cpt-qc-curve--4d-outer {
+  stroke: #1e3a8a;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.7;
+}
+/* Clipped (running-min) qc-curve — "effectieve" qc na afsnuiten conform
+   NEN 9997-1 NB:2019 §7.6.2.3. PROMINENT donkerblauwe vol-lijn over de
+   qc;II + qc;III invloed-zone zodat in één oogopslag zichtbaar is welke
+   qc-waarde werkelijk gebruikt is in de berekening (na clipping). */
+.pile-cpt-qc-curve--clipped {
+  stroke: #0f172a;       /* slate-900 — bijna zwart-blauw, MAX contrast */
+  stroke-width: 2.8;
+  opacity: 1;
+  /* halo voor leesbaarheid bovenop andere curves */
+  paint-order: stroke;
+}
+
+/* ─── Vertikale gemiddelde qc-lijnen ───
+   Voor elke invloed-zone een vertikale dashed lijn op x=xScale(gemiddelde)
+   over de zone-hoogte. Visualiseert de "rechtuit-gemiddelde-waarde"
+   tegenover de werkelijke curve, conform externe referentie-berekeningen.
+*/
+.pile-cpt-qc-gem {
+  stroke-width: 1.6;
+  fill: none;
+}
+.pile-cpt-qc-gem--8d {
+  stroke: #2563eb;
+  stroke-dasharray: 4 2;
+}
+.pile-cpt-qc-gem--dc {
+  stroke: #1e3a8a;       /* donkerblauw — was rood */
+  stroke-dasharray: 4 2;
+}
+.pile-cpt-qc-gem--dc2 {
+  stroke: #1e40af;       /* iets lichter blauw — verschil met qc;I */
+  stroke-dasharray: 2 2;
+}
+.pile-cpt-qc-gem--poskleef {
+  /* Gewogen-gemiddelde qc over de pos-kleef-zone — groene stippellijn
+     parallel aan de qc;III/I/II conventie, matcht de pos-kleef arcering. */
+  stroke: #15803d;
+  stroke-dasharray: 4 2;
+}
+
+/* ─── Zones (background bands) ───
+   Verlaagd tot zeer subtiele context-tint (opacity ~0.05–0.08) zodat de
+   gekleurde qc-curve-segmenten de hoofdvisualisatie blijven. De zones
+   geven nog wel een vage achtergrond-hint van waar 8D/dc/4D zich bevinden.
+*/
+.pile-cpt-zone-negkleef {
+  fill: rgba(245, 158, 11, 0.10);  /* warm gold, subtle */
+}
+.pile-cpt-zone-8d {
+  /* Polygon-fill voor de 8D zone — alleen tussen y-as en qc-curve, dus
+     compacter dan een full-width band. Iets meer opacity zodat de blauwe
+     arcering nog herkenbaar is in dit smallere gebied. */
+  fill: rgba(37, 99, 235, 0.18);
+}
+.pile-cpt-zone-4d-max {
+  /* Was rgba(220, 38, 38, 0.04) (rood) — nu donkerblauw per gebruikers-wens. */
+  fill: rgba(30, 58, 138, 0.04);
+}
+.pile-cpt-zone-dc {
+  /* Was rgba(220, 38, 38, 0.08) (rood) — nu donkerblauw. */
+  fill: rgba(30, 58, 138, 0.08);
+}
+/* Dashed boundary-lijn op top/bottom van zones. */
+.pile-cpt-zone-boundary {
+  stroke: #64748b; /* slate grey */
+  stroke-width: 0.8;
+  stroke-dasharray: 4 3;
+  opacity: 0.7;
+}
+/* 4D max gebruikt een lichter/dunnere grijze rand omdat het slechts een outer
+   bound is, en de werkelijke dc-grens is wat de gebruiker moet zien. */
+.pile-cpt-zone-boundary--4d-max {
+  stroke: #cbd5e1; /* lichter slate */
+  stroke-width: 0.6;
+  opacity: 0.6;
+}
+.pile-cpt-zone-boundary--dc {
+  stroke: #1e3a8a; /* donkerblauw — geeft duidelijker aan dat dít de actieve grens is */
+  stroke-width: 1;
+  opacity: 0.85;
+}
+.pile-cpt-zone-label {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-code, "JetBrains Mono"), monospace;
+}
+.pile-cpt-zone-label--8d {
+  fill: #2563EB;
+}
+.pile-cpt-zone-label--4d {
+  fill: #1e3a8a;  /* donkerblauw — was #DC2626 (rood) */
+}
+.pile-cpt-zone-label--dc {
+  fill: #1e3a8a;  /* donkerblauw — was #b91c1c (rood) */
+  font-weight: 800;
+}
+.pile-cpt-zone-label--poskleef {
+  fill: #15803d;  /* groen-700 — matcht pos-kleef-arcering border */
+  font-weight: 700;
+}
+
+/* ─── In-chart floating qc;I/II/III labels (per 984-rapport-stijl) ─── */
+/* paint-order: stroke + witte stroke geven een halo om de tekst zodat de
+   labels leesbaar zijn bovenop gekleurde zone-bands en de qc-segmenten.
+*/
+.pile-qc-label {
+  font: 700 11px var(--font-code, "JetBrains Mono"), monospace;
+  fill: #1f2937;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 3;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+}
+/* Per-zone-kleuren voor de labels — match met de vertikale gemiddelde-
+   lijnen zodat lijn + label visueel bij elkaar horen. */
+.pile-qc-label--8d  { fill: #1d4ed8; }   /* iets donkerder blauw dan lijn */
+.pile-qc-label--dc  { fill: #1e3a8a; }   /* donkerblauw — was rood */
+.pile-qc-label--dc2 { fill: #1e40af; }   /* iets lichter blauw voor qc;II */
+.pile-qc-label--poskleef { fill: #15803d; } /* donkergroen — matcht pos-kleef arcering */
+
+/* ─── Plot-background cursor states (zoom/pan UX) ─── */
+.pile-cpt-bg-zoom-ready {
+  cursor: zoom-in;
+}
+.pile-cpt-bg-pan-ready {
+  cursor: grab;
+}
+.pile-cpt-bg-pan-active {
+  cursor: grabbing;
+}
+
+/* ─── Overlay lines ─── */
+.pile-cpt-line-paalkop {
+  stroke: var(--theme-text, #36363e);
+  stroke-width: 1.2;
+}
+.pile-cpt-line-ontgraving {
+  stroke: var(--theme-text-secondary, #71717a);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+}
+.pile-cpt-line-water {
+  stroke: #2563EB; /* info blue */
+  stroke-width: 0.8;
+  stroke-dasharray: 1 3;
+}
+.pile-cpt-marker-water {
+  fill: #2563EB;
+  stroke: #2563EB;
+  stroke-width: 1;
+}
+.pile-cpt-line-negkleef {
+  stroke: #F59E0B; /* warm gold */
+  stroke-width: 1.2;
+}
+.pile-cpt-line-poskleef {
+  stroke: #16a34a; /* green-600 — positieve bijdrage aan capacity */
+  stroke-width: 1.2;
+  stroke-dasharray: 6 3;
+}
+.pile-cpt-line-paalpunt {
+  stroke: #1e3a8a; /* donkerblauw — was rood (gebruikers-wens, consistent met dc-zone) */
+  stroke-width: 2;
+}
+
+/* ─── Drag-to-edit ─── */
+/* De zichtbare line krijgt cursor + hover-emphase; de hitbox er bovenop
+   vergroot het klikgebied tot 12 px en is zelf onzichtbaar. */
+.pile-niveau-draggable {
+  cursor: ns-resize;
+  transition: stroke-width 80ms ease-out;
+}
+.pile-niveau-draggable:hover {
+  stroke-width: 4;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.pile-niveau-dragging {
+  stroke-width: 4;
+  filter: drop-shadow(0 0 4px currentColor);
+  opacity: 0.85;
+}
+.pile-niveau-hitbox {
+  stroke: transparent;
+  stroke-width: 12;
+  cursor: ns-resize;
+  fill: none;
+}
+
+/* ─── Overlay labels ─── */
+.pile-cpt-overlay-label {
+  fill: var(--theme-text, #36363e);
+  font-size: 10px;
+  font-weight: 500;
+  pointer-events: none;
+}
+.pile-cpt-overlay-label--strong {
+  fill: #1e3a8a;  /* donkerblauw — was rood, matcht paalpunt-lijn */
+  font-weight: 700;
+}
+.pile-cpt-overlay-label--poskleef {
+  fill: #15803d; /* green-700 — donkerder dan de lijn voor contrast */
+  font-weight: 600;
+}
+
+/* ─── Right-side numbered labels (qc;I / qc;II / qc;III / qb;max) ─── */
+.pile-cpt-side-label {
+  fill: var(--theme-text-secondary, #71717a);
+  font-size: 10px;
+  font-weight: 500;
+  font-family: var(--font-code, "JetBrains Mono"), monospace;
+}
+.pile-cpt-side-label--strong {
+  fill: var(--theme-text, #36363e);
+  font-weight: 700;
+}
+
+/* ============================================================
+   ResultPanel — Zakkingsdiagram
+   ============================================================ */
+
+.pile-zakking-chart {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  background: var(--theme-bg-lighter, #fff);
+  border: 1px solid var(--theme-border, #e7e5e4);
+  border-radius: 4px;
+  padding: 4px;
+}
+.pile-zakking-chart-svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  font-family: "Inter", sans-serif;
+}
+
+.pile-zakking-plot-bg {
+  fill: var(--theme-bg-lighter, #fff);
+}
+.pile-zakking-plot-border {
+  stroke: var(--theme-border, #e7e5e4);
+  stroke-width: 1;
+}
+.pile-zakking-grid {
+  stroke: var(--theme-border, #e7e5e4);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 3;
+}
+.pile-zakking-axis-label {
+  fill: var(--theme-text-secondary, #71717a);
+  font-size: 9px;
+  font-family: var(--font-code, "JetBrains Mono"), monospace;
+}
+.pile-zakking-axis-title {
+  fill: var(--theme-text, #36363e);
+  font-size: 10px;
+  font-weight: 600;
+}
+/* ─── Bidirectional lastzakkingsdiagram (984-rapport-stijl) ─── */
+.pile-zakking-grid--axis {
+  stroke: #525252;
+  stroke-width: 1;
+  stroke-dasharray: none;
+  opacity: 0.6;
+}
+.pile-zakking-axis-side-label {
+  font: 700 9px var(--font-code, "JetBrains Mono"), monospace;
+}
+/* Schacht-mobilisatie-curve (links, groen). */
+.pile-zakking-curve-rs {
+  stroke: #16a34a;
+  stroke-width: 1.6;
+  fill: none;
+}
+/* Punt-mobilisatie-curve (rechts, donkerblauw). */
+.pile-zakking-curve-rb {
+  stroke: #1e3a8a;
+  stroke-width: 1.6;
+  fill: none;
+}
+.pile-zakking-workpoint {
+  stroke: #d97706;
+  stroke-width: 1.4;
+  stroke-dasharray: 3 2;
+}
+.pile-zakking-workpoint--uls {
+  stroke: #1d4ed8;
+  opacity: 0.75;
+}
+.pile-zakking-marker-rs {
+  fill: #16a34a;
+}
+.pile-zakking-marker-rb {
+  fill: #1e3a8a;
+}
+.pile-zakking-maxcap {
+  stroke: #94a3b8;
+  stroke-width: 0.8;
+  stroke-dasharray: 5 3;
+}
+.pile-zakking-ref-label {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: var(--font-code, "JetBrains Mono"), monospace;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.pile-zakking-ref-label--rs    { fill: #15803d; }
+.pile-zakking-ref-label--rb    { fill: #1e3a8a; }
+.pile-zakking-ref-label--total { fill: #b45309; }
+.pile-zakking-ref-label--total-uls { fill: #1d4ed8; opacity: 0.85; }
+.pile-zakking-ref-label--max-rs { fill: #525252; }
+.pile-zakking-ref-label--max-rb { fill: #525252; }
+
+/* ============================================================
+   ResultPanel — shared semantics (errors, warnings, pass/fail)
+   ============================================================ */
+
+.pile-result {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* Toolbar bovenaan ResultPanel — bevat PDF-download knop. Komt uit
+   sticky-top zodat hij ook bij scrollen zichtbaar blijft. */
+.pile-result-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--theme-border, #e7e5e4);
+  margin-bottom: 4px;
+}
+.pile-result-download-btn {
+  padding: 6px 12px;
+  background: var(--theme-bg, #fff);
+  color: var(--theme-text, #36363e);
+  border: 1px solid var(--theme-border, #cbd5e1);
+  border-radius: 4px;
+  font: 600 0.8rem "Inter", sans-serif;
+  cursor: pointer;
+  transition: background 80ms ease-out, border-color 80ms ease-out;
+}
+.pile-result-download-btn:hover:not(:disabled) {
+  background: var(--theme-bg-hover, #f4f4f5);
+  border-color: var(--theme-border-strong, #94a3b8);
+}
+.pile-result-download-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.pile-result section h3 {
+  margin: 0 0 6px;
+  font: 700 0.82rem "Inter", sans-serif;
+  color: var(--theme-text, #36363e);
+}
+.pile-result section p {
+  margin: 4px 0;
+  font: 500 0.82rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text, #36363e);
+  line-height: 1.5;
+}
+.pile-result-error {
+  padding: 12px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #DC2626;
+  border-radius: 4px;
+  font: 500 0.85rem "Inter", sans-serif;
+}
+.pile-warnings {
+  padding: 8px 12px;
+  background: rgba(217, 119, 6, 0.08);
+  border-left: 3px solid var(--amber, #d97706);
+  border-radius: 0 4px 4px 0;
+  font: 500 0.82rem "Inter", sans-serif;
+  color: var(--theme-text, #36363e);
+}
+/* ─── Open Calculation Studio-stijl formule rendering ───
+   3 regels per formule: symbolisch / ingevuld / uitkomst,
+   uitgelijnd op het "=" via CSS-grid. */
+.pile-formula {
+  margin: 6px 0 10px;
+  font: 500 0.78rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text, #36363e);
+}
+.pile-formula-row {
+  display: grid;
+  grid-template-columns: minmax(72px, max-content) 14px 1fr;
+  align-items: baseline;
+  column-gap: 6px;
+  line-height: 1.55;
+}
+.pile-formula-lhs {
+  text-align: right;
+  color: var(--theme-text, #36363e);
+  font-weight: 600;
+}
+.pile-formula-eq {
+  text-align: center;
+  color: var(--theme-text-secondary, #71717a);
+}
+.pile-formula-rhs {
+  color: var(--theme-text, #36363e);
+}
+.pile-formula-row--cont .pile-formula-lhs {
+  /* continuatie-regel — geen LHS herhalen, alleen visueel gelijk uitlijnen */
+  visibility: hidden;
+}
+.pile-formula-row--result .pile-formula-rhs {
+  color: var(--theme-text, #36363e);
+}
+.pile-result-input {
+  margin: 4px 0;
+  font: 500 0.78rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text-secondary, #71717a);
+  line-height: 1.5;
+}
+
+.pile-formula-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 500 0.78rem var(--font-code, "JetBrains Mono"), monospace;
+  margin-bottom: 6px;
+}
+/* Brede tabel — voor neg-kleef-detail met 11 kolommen. Horizontaal
+   scrollbaar in een wrapper als de pane te smal is, anders shrink
+   tabel zelf via kleinere font-size + minder padding. */
+.pile-formula-table--wide {
+  font-size: 0.66rem;
+  table-layout: auto;
+}
+.pile-formula-table--wide th,
+.pile-formula-table--wide td {
+  padding: 2px 4px;
+  text-align: right;
+  white-space: nowrap;
+}
+.pile-formula-table--wide th:first-child,
+.pile-formula-table--wide td:first-child {
+  text-align: left;
+}
+.pile-formula-table-sum {
+  border-top: 1px solid var(--theme-border, #cbd5e1);
+  background: var(--theme-bg-lighter, #f5f5f4);
+}
+.pile-formula-table-sum td {
+  font-weight: 600;
+}
+.pile-result-footnote {
+  margin: 4px 0 8px;
+  font: 500 0.70rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text-secondary, #71717a);
+  line-height: 1.4;
+}
+.pile-formula-table th,
+.pile-formula-table td {
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--theme-border-subtle, rgba(0, 0, 0, 0.06));
+}
+.pile-formula-table th {
+  font-weight: 700;
+  color: var(--theme-text-secondary, #71717a);
+}
+.pile-pass { color: #16A34A; }
+.pile-fail { color: #DC2626; }

@@ -1,0 +1,47 @@
+[package]
+name = "open-vision-studio"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-store = "2"
+tauri-plugin-os = "2"
+tauri-plugin-updater = "2"
+# Directe dependency op de zip-crate om via feature-unification de deflate-
+# backend (pure-Rust flate2/miniz_oxide) te forceren. Zonder deze feature bouwt
+# tauri-plugin-updater's zip zonder deflate-decompressie en faalt de Windows-
+# NSIS-updater met "Compression method not supported" (method=8 / Deflate).
+# deflate-flate2 = flate2 met default backend miniz_oxide (geen C-toolchain).
+zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
+tauri-plugin-process = "2"
+tauri-plugin-clipboard-manager = "2"
+# MCP-bridge (fase 1, Tauri-only): een piepklein HTTP-doorgeefluik op 127.0.0.1.
+# Rust blijft bewust dom — geen MCP/JSON-RPC-kennis, alleen token-check,
+# localhost-bind, Origin-weigering (DNS-rebinding) en request↔response-serialisatie
+# naar de webview. tiny_http = pure-Rust, geen system-openssl (default-features
+# uit staat, ssl is toch al opt-in).
+tiny_http = "0.12"
+# Behouden voor de native command-escape-hatch (src/commands/mod.rs): payload-
+# (de)serialisatie zodra die commands gestructureerde data gaan dragen.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Eén draaiend venster per installatie (bevinding K5): twee instanties deelden dezelfde
+# appDataDir en wisten elkaars recovery-snapshots. Zie de registratie in main.rs — die moet
+# vóór alle andere plugins staan en wordt in dev-instanties bewust overgeslagen.
+tauri-plugin-single-instance = "2"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[profile.release]
+strip = true
+lto = true
+opt-level = "s"

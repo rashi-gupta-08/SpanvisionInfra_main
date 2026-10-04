@@ -1,0 +1,321 @@
+{
+  "checkedAt": "2026-10-03",
+  "breakpoints": [
+    {
+      "width": 390,
+      "height": 844
+    },
+    {
+      "width": 820,
+      "height": 1180
+    },
+    {
+      "width": 1440,
+      "height": 1000
+    }
+  ],
+  "checks": [
+    {
+      "path": "/home",
+      "width": 390,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Confidence inevery model.",
+      "overflowing": [],
+      "scrollWidth": 375,
+      "viewport": 375
+    },
+    {
+      "path": "/login",
+      "width": 390,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Welcome back.",
+      "overflowing": [],
+      "scrollWidth": 375,
+      "viewport": 375
+    },
+    {
+      "path": "/signup",
+      "width": 390,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Your next project starts here.",
+      "overflowing": [],
+      "scrollWidth": 375,
+      "viewport": 375
+    },
+    {
+      "path": "/account",
+      "width": 390,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Your workspace. Your settings.",
+      "overflowing": [],
+      "scrollWidth": 375,
+      "viewport": 375
+    },
+    {
+      "path": "/validate",
+      "width": 390,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Vision BIM Validator",
+      "overflowing": [],
+      "scrollWidth": 375,
+      "viewport": 375
+    },
+    {
+      "path": "/home",
+      "width": 820,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Confidence inevery model.",
+      "overflowing": [],
+      "scrollWidth": 805,
+      "viewport": 805
+    },
+    {
+      "path": "/login",
+      "width": 820,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Welcome back.",
+      "overflowing": [],
+      "scrollWidth": 820,
+      "viewport": 820
+    },
+    {
+      "path": "/signup",
+      "width": 820,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Your next project starts here.",
+      "overflowing": [],
+      "scrollWidth": 820,
+      "viewport": 820
+    },
+    {
+      "path": "/account",
+      "width": 820,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Your workspace. Your settings.",
+      "overflowing": [],
+      "scrollWidth": 820,
+      "viewport": 820
+    },
+    {
+      "path": "/validate",
+      "width": 820,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Vision BIM Validator",
+      "overflowing": [],
+      "scrollWidth": 820,
+      "viewport": 820
+    },
+    {
+      "path": "/home",
+      "width": 1440,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Confidence inevery model.",
+      "overflowing": [],
+      "scrollWidth": 1425,
+      "viewport": 1425
+    },
+    {
+      "path": "/login",
+      "width": 1440,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Welcome back.",
+      "overflowing": [],
+      "scrollWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "path": "/signup",
+      "width": 1440,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Your next project starts here.",
+      "overflowing": [],
+      "scrollWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "path": "/account",
+      "width": 1440,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Your workspace. Your settings.",
+      "overflowing": [],
+      "scrollWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "path": "/validate",
+      "width": 1440,
+      "background": "rgb(0, 0, 0)",
+      "brandLeak": false,
+      "heading": "Vision BIM Validator",
+      "overflowing": [],
+      "scrollWidth": 1440,
+      "viewport": 1440
+    },
+    {
+      "path": "/validate/results",
+      "width": 390,
+      "brandLeak": false,
+      "scrollWidth": 375,
+      "suggestions": "Suggested next steps1 failed specification needs a closer look.Wall Naming ConventionWalls must have names starting with W-Inspect affected elements, update their information in your authoring tool, and re-export the model. Run the same IDS checks again to confirm the changes.",
+      "viewport": 375
+    },
+    {
+      "path": "/validate/results",
+      "width": 820,
+      "brandLeak": false,
+      "scrollWidth": 805,
+      "suggestions": "Suggested next steps1 failed specification needs a closer look.Wall Naming ConventionWalls must have names starting with W-Inspect affected elements, update their information in your authoring tool, and re-export the model. Run the same IDS checks again to confirm the changes.",
+      "viewport": 805
+    },
+    {
+      "path": "/validate/results",
+      "width": 1440,
+      "brandLeak": false,
+      "scrollWidth": 1425,
+      "suggestions": "Suggested next steps1 failed specification needs a closer look.Wall Naming ConventionWalls must have names starting with W-Inspect affected elements, update their information in your authoring tool, and re-export the model. Run the same IDS checks again to confirm the changes.",
+      "viewport": 1425
+    },
+    {
+      "path": "/viewer/settings",
+      "width": 390,
+      "background": "rgb(32, 32, 32)",
+      "clientWidth": 365,
+      "height": 440,
+      "left": 12,
+      "right": 378.3999938964844,
+      "scrollWidth": 366,
+      "dialogWidth": 366.3999938964844
+    },
+    {
+      "path": "/viewer/settings",
+      "width": 820,
+      "background": "rgb(32, 32, 32)",
+      "clientWidth": 558,
+      "height": 440,
+      "left": 130,
+      "right": 690,
+      "scrollWidth": 559,
+      "dialogWidth": 560
+    },
+    {
+      "path": "/viewer/settings",
+      "width": 1440,
+      "background": "rgb(32, 32, 32)",
+      "clientWidth": 558,
+      "height": 440,
+      "left": 440,
+      "right": 1000,
+      "scrollWidth": 559,
+      "dialogWidth": 560
+    },
+    {
+      "path": "/viewer/canvas",
+      "width": 390,
+      "brandLeak": false,
+      "canvasWidth": 390.3999938964844,
+      "scrollWidth": 390,
+      "viewport": 390,
+      "visiblePanes": [
+        "workspace-pane workspace-pane--canvas"
+      ]
+    },
+    {
+      "path": "/viewer/canvas",
+      "width": 820,
+      "brandLeak": false,
+      "canvasWidth": 820,
+      "scrollWidth": 820,
+      "viewport": 820,
+      "visiblePanes": [
+        "workspace-pane workspace-pane--canvas"
+      ]
+    },
+    {
+      "path": "/viewer/canvas",
+      "width": 1440,
+      "brandLeak": false,
+      "canvasWidth": 716,
+      "scrollWidth": 1440,
+      "viewport": 1440,
+      "visiblePanes": [
+        "workspace-pane workspace-pane--models",
+        "workspace-pane workspace-pane--canvas",
+        "workspace-pane workspace-pane--checks"
+      ]
+    },
+    {
+      "path": "/viewer/open-dialog",
+      "width": 390,
+      "background": "rgb(32, 32, 32)",
+      "clientWidth": 365,
+      "dialogWidth": 366.3999938964844,
+      "left": 12,
+      "right": 378.3999938964844,
+      "scrollWidth": 366
+    },
+    {
+      "path": "/viewer/open-dialog",
+      "width": 820,
+      "background": "rgb(32, 32, 32)",
+      "clientWidth": 518,
+      "dialogWidth": 520,
+      "left": 150,
+      "right": 670,
+      "scrollWidth": 519
+    },
+    {
+      "path": "/viewer/open-dialog",
+      "width": 1440,
+      "background": "rgb(32, 32, 32)",
+      "clientWidth": 518,
+      "dialogWidth": 520,
+      "left": 460,
+      "right": 980,
+      "scrollWidth": 519
+    },
+    {
+      "path": "/viewer/save-dialog",
+      "width": 390,
+      "clientWidth": 365,
+      "dialogWidth": 366.3999938964844,
+      "left": 12,
+      "right": 378.3999938964844,
+      "scrollWidth": 366
+    },
+    {
+      "path": "/viewer/save-dialog",
+      "width": 820,
+      "clientWidth": 518,
+      "dialogWidth": 520,
+      "left": 150,
+      "right": 670,
+      "scrollWidth": 519
+    },
+    {
+      "path": "/viewer/save-dialog",
+      "width": 1440,
+      "clientWidth": 518,
+      "dialogWidth": 520,
+      "left": 460,
+      "right": 980,
+      "scrollWidth": 519
+    }
+  ],
+  "canvasPreference": "Changed to #303030, observed renderer update, reopened settings and confirmed persistence; restored #1B1B1B.",
+  "keyboard": "Primary action focus outline rgba(255,255,255,0.65); dialogs trap Tab and restore focus.",
+  "export": "Confirmed downloaded project ZIP contains project.json and models/2786_CLT_model.ifc."
+}

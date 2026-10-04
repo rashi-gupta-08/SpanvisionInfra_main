@@ -1,0 +1,206 @@
+import type { Baseline } from '@/types/baseline';
+import type { Resource, ResourceAssignment, ResourceCurve } from '@/types/resource';
+import type { Task } from '@/types/task';
+import type { DurationDisplay } from '@/types/view';
+import type { TaskRelationIndex } from '@/engine/taskGrid/relationIndex';
+
+export type TaskGridSurfaceId = 'gantt-task-grid' | 'full-task-grid';
+export type TaskColumnId = string & { readonly __taskColumnId: unique symbol };
+
+/**
+ * "Datums zoals opgeslagen". Gedragslogica en de exacte
+ * regels staan in `src/state/recordedDatesSelectors.ts` — deze twee unietypes wonen hier (leaf-
+ * laag) omdat `TaskColumnContext` hieronder ze nodig heeft en niets in `src/types/*.ts` van
+ * `@/state/*` afhangt; `recordedDatesSelectors.ts` importeert ze hier weer type-only vandaan.
+ */
+export type RecordedTaskAxis = 'ls' | 'lf' | 'tf' | 'ff';
+export type RecordedTaskMark = 'deviates' | 'partly-unrecorded' | undefined;
+
+export type GridResult<T, E> =
+  | { ok: true; value: T }
+  | { ok: false; errors: E };
+
+export interface TaskGridColumnPreference {
+  id: TaskColumnId;
+  width: number;
+  pinned: boolean;
+}
+
+export interface TaskGridSurfacePreferences {
+  columns: TaskGridColumnPreference[];
+  scrollX: number;
+}
+
+export interface PersistedTaskGridPreferencesV1 {
+  version: 1;
+  surfaces: Record<TaskGridSurfaceId, TaskGridSurfacePreferences>;
+  recent: TaskColumnId[];
+}
+
+export type TaskColumnCategory =
+  | 'task'
+  | 'planning'
+  | 'constraints'
+  | 'relations'
+  | 'resources'
+  | 'progress'
+  | 'computed'
+  | 'baseline'
+  | 'custom'
+  | 'technical';
+
+export interface CellValidationError {
+  code: string;
+  messageKey: string;
+  taskId?: string;
+  rowKey?: string;
+  columnId?: TaskColumnId;
+  tokenIndex?: number;
+  start?: number;
+  end?: number;
+  cycle?: readonly string[];
+  value?: unknown;
+}
+
+export interface CellEditIntent {
+  kind: 'cell-edit';
+  taskId: string;
+  columnId: TaskColumnId;
+  route: CellEditRoute;
+  value: unknown;
+}
+
+export type CellEditRoute =
+  | 'task-field'
+  | 'task-schedule'
+  | 'task-progress'
+  | 'task-milestone'
+  | 'task-constraint'
+  | 'task-hammock'
+  | 'activity-code'
+  | 'custom-field';
+
+export interface RelationSetIntent {
+  kind: 'relation-set';
+  taskId: string;
+  direction: 'predecessor' | 'successor';
+  value: unknown;
+}
+
+export interface AssignmentSetIntent {
+  kind: 'assignment-set';
+  taskId: string;
+  /** De assignmentkolom die deze set heeft gepland. Membership mag alleen via resources wijzigen. */
+  columnId: TaskColumnId;
+  tokens: readonly TaskAssignmentToken[];
+}
+
+export interface TaskAssignmentToken {
+  resourceId: string;
+  assignmentId?: string;
+  unitsPerDay: number;
+  curve?: ResourceCurve;
+  /** Resterend werk in werkminuten — alleen de kolom
+   *  `assignment.remainingWork` zet 'm; `gridTransaction.ts` voert hem via de werkdriehoek uit. */
+  remainingWorkMinutes?: number;
+}
+
+/** Eén al geparseerde domeinwrite. Paste groepeert deze writes, maar mag zichzelf niet nesten. */
+export type GridWriteIntent = CellEditIntent | RelationSetIntent | AssignmentSetIntent;
+
+export interface PasteIntent {
+  kind: 'paste';
+  writes: readonly GridWriteIntent[];
+  /** Gezet naar `TaskGridPasteOptions.skipReadOnlyCells` (clipboard.ts). Alleen een
+   *  echte Ctrl+V-paste zet dit aan; `planTaskGridClear` (Delete/Backspace) laat het weg en behoudt
+   *  zijn bestaande "één niet-leegbare cel ⇒ volledige rollback"-semantiek. gridTransaction.ts leest
+   *  dit om te bepalen of conditioneel read-only cellen tijdens de transactie mogen worden
+   *  overgeslagen in plaats van de hele taak te blokkeren. */
+  allowSkippingReadOnlyCells?: boolean;
+  /** Aantal statisch berekende doelcellen die deze paste al bij het plannen oversloeg (alleen
+   *  gezet wanneer `allowSkippingReadOnlyCells` aanstond). gridTransaction.ts telt hier zijn eigen,
+   *  tijdens de transactie ontdekte overgeslagen cellen (conditioneel read-only) bovenop voor de
+   *  ÉÉN geaggregeerde melding. */
+  skippedReadOnlyCount?: number;
+}
+
+export type GridIntent = GridWriteIntent | PasteIntent;
+
+export interface TaskColumnContext {
+  projectId: string;
+  tasksById: ReadonlyMap<string, Task>;
+  relationIndex: TaskRelationIndex;
+  assignmentsByTaskId: ReadonlyMap<string, readonly ResourceAssignment[]>;
+  resourcesById: ReadonlyMap<string, Resource>;
+  baselinesById: ReadonlyMap<string, Baseline>;
+  scheduleStale: boolean;
+  /** UI-tekst voor descriptorwaarden en tooltips, inclusief interpolatie. */
+  labelForText?: (key: string, values?: Readonly<Record<string, string | number>>) => string;
+  /** Schrijfrichting voor betekenisdragende pijlen; pinning blijft bewust fysiek links. */
+  textDirection?: 'ltr' | 'rtl';
+  /** Projectinstellingen die alleen de descriptorbewerkbaarheid/-parser sturen. */
+  wbsAutoNumber?: boolean;
+  effectiveHoursPerDay?: (task: Task) => number;
+  /** Instelling Duurweergave voor de weergavetekst van de Duur-kolom (edit- en kopieertekst blijven
+   *  de eigen, parsebare eenheid); ontbreekt ⇒ `'auto'`. */
+  durationDisplay?: DurationDisplay;
+  /** App-taal voor het decimaalteken van duren en speling; ontbreekt ⇒ punt. */
+  numberLocale?: string;
+  /** De echte projectkalenderberekening voor baselineafwijkingen (`variance.signedWorkDaysBetween`).
+   *  Ontbreekt hij, dan blijft de afwijking leeg — er is bewust geen kalenderloze terugval. */
+  signedWorkDaysBetween?: (fromIso: string, toIso: string) => number;
+  /** "Datums zoals opgeslagen" — badge voor de kolom `recorded.source`.
+   *  `undefined` op documenten zonder vastlegging (`recordedDates === null`), dus de kolom bestaat
+   *  dan niet: `available(ctx) => ctx.recordedMark !== undefined`. */
+  recordedMark?: (task: Task) => RecordedTaskMark;
+  /** Welke late-/floatassen het BESTAND niet vastlegde voor deze taak — de bestaande late-/float-
+   *  kolommen gebruiken dit om "niet vastgelegd" te tonen in plaats van de bestaande `?? 0`-
+   *  terugval (die als VELDWAARDE blijft staan, zie `recordedDates.ts`) als een echt getal te
+   *  presenteren. Zelfde aanwezigheid als `recordedMark` (beide `undefined` zonder vastlegging). */
+  recordedUnrecordedAxes?: (task: Task) => readonly RecordedTaskAxis[];
+  /** De werkregelkolommen bestaan alleen wanneer de weergave
+   *  ontsloten is (instelling of documentontsluiting, `taskTypesUnlocked`). */
+  taskTypesUnlocked?: boolean;
+}
+
+/**
+ * Waar de kop van een kolom vandaan komt. `labelKey` is een vertaalsleutel (task-namespace).
+ * `labelText` is een naam die de gebruiker zelf gaf (activity code, eigen veld, baseline): gewone
+ * tekst, GEEN vertaalsleutel, en hij gaat dus nooit door `t()`: die leest een punt als
+ * sleutelscheiding ("Fase 1.2" wordt "2", "Blok v.o." leeg). Met beide wordt de kop "<labelText> — <vertaalde
+ * labelKey>" (baselinekolommen). Lees een kop via `taskColumnLabel` (taskColumnRegistry).
+ */
+export type TaskColumnLabelSource =
+  | { labelKey: string; labelText?: undefined }
+  | { labelText: string; labelKey?: string };
+
+export type TaskColumnDescriptor = TaskColumnDescriptorFields & TaskColumnLabelSource;
+
+interface TaskColumnDescriptorFields {
+  id: TaskColumnId;
+  category: TaskColumnCategory;
+  valueKind: 'text' | 'number' | 'boolean' | 'date' | 'datetime' | 'duration' | 'enum' | 'tokens' | 'technical';
+  editorKind: 'text' | 'number' | 'percentage' | 'date' | 'datetime' | 'duration' | 'boolean' | 'enum' | 'color' | 'autocomplete' | 'relations' | 'custom' | 'none';
+  editorOptions?: readonly { value: string; labelKey?: string; label?: string }[];
+  defaultWidth: number;
+  /** Afgeleide plannerwaarde buiten de algemene categorie `computed`; volgt scheduleStale. */
+  scheduleDerived?: boolean;
+  available(ctx: TaskColumnContext): boolean;
+  readOnly: boolean | ((task: Task, ctx: TaskColumnContext) => boolean);
+  /** Waarom deze cel alleen-lezen is, als validatiecode (`taskGrid.validation.<code>`). Ontbreekt hij
+   *  of geeft hij `undefined`, dan geldt de algemene code `readOnly` ("berekende kolom"). */
+  readOnlyReason?: (task: Task, ctx: TaskColumnContext) => string | undefined;
+  read(task: Task, ctx: TaskColumnContext): unknown;
+  format(value: unknown, task: Task, ctx: TaskColumnContext): string;
+  copy(task: Task, ctx: TaskColumnContext): string;
+  /** Starttekst voor de editor wanneer de canonieke kopieervorm rijkere markers bevat. */
+  editText?: (task: Task, ctx: TaskColumnContext) => string;
+  tooltip?: (value: unknown, task: Task, ctx: TaskColumnContext) => string | null;
+  parse?: (text: string, task: Task, ctx: TaskColumnContext) => GridResult<unknown, readonly CellValidationError[]>;
+  validate?: (value: unknown, task: Task, ctx: TaskColumnContext) => GridResult<unknown, readonly CellValidationError[]>;
+  planWrite?: (value: unknown, task: Task, ctx: TaskColumnContext) => GridResult<readonly GridWriteIntent[], readonly CellValidationError[]>;
+  /** Zelfde writer zonder conditionele read-onlyvoorpoort. Alleen de meercellige pasteplanner
+   * gebruikt dit; de atomaire transactielaag beoordeelt schrijfbaarheid tegen de geordende draft. */
+  planWriteUnchecked?: (value: unknown, task: Task, ctx: TaskColumnContext) => GridResult<readonly GridWriteIntent[], readonly CellValidationError[]>;
+  autoFitText(task: Task, ctx: TaskColumnContext): string;
+}

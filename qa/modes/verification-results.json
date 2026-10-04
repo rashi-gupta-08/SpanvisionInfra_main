@@ -1,0 +1,308 @@
+[
+  {
+    "module": "hub",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 237.64866666668945,
+      "dark": 15.926229166666666
+    }
+  },
+  {
+    "module": "hub",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 234.86437500003726,
+      "dark": 15.106854166666661
+    }
+  },
+  {
+    "module": "cad",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 239.0863333333778,
+      "dark": 8.8675625
+    }
+  },
+  {
+    "module": "cad",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 238.46358333337164,
+      "dark": 10.34175
+    }
+  },
+  {
+    "module": "cad2d",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 232.899604166694,
+      "dark": 16.696375
+    }
+  },
+  {
+    "module": "cad2d",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 244.136770833399,
+      "dark": 5.867166666666646
+    }
+  },
+  {
+    "module": "bim",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 237.22745833337268,
+      "dark": 15.661083333333357
+    }
+  },
+  {
+    "module": "bim",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 224.65820833335388,
+      "dark": 32.34618750000001
+    }
+  },
+  {
+    "module": "pdf",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 238.26191666666907,
+      "dark": 25.868979166666662
+    }
+  },
+  {
+    "module": "pdf",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 227.5435416666705,
+      "dark": 31.286437499999973
+    }
+  },
+  {
+    "module": "ifc",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 242.79827083336014,
+      "dark": 25.654687500000012
+    }
+  },
+  {
+    "module": "ifc",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 240.6612916666881,
+      "dark": 27.789854166666657
+    }
+  },
+  {
+    "module": "calc",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 236.172687499998,
+      "dark": 28.09095833333329
+    }
+  },
+  {
+    "module": "calc",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 242.67212499999823,
+      "dark": 26.608791666666594
+    }
+  },
+  {
+    "module": "planner",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 119.79879166666126,
+      "dark": 14.15064583333334
+    }
+  },
+  {
+    "module": "planner",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 159.63839583333143,
+      "dark": 23.569145833333334
+    }
+  },
+  {
+    "module": "fem",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 238.1005000000283,
+      "dark": 29.179124999999928
+    }
+  },
+  {
+    "module": "fem",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 233.12764583335857,
+      "dark": 32.8846666666664
+    }
+  },
+  {
+    "module": "frame",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 244.6582708333343,
+      "dark": 27.000395833333222
+    }
+  },
+  {
+    "module": "frame",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 242.54618749999509,
+      "dark": 31.104770833333113
+    }
+  },
+  {
+    "module": "calculation",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 242.9185416666271,
+      "dark": 23.046666666666695
+    }
+  },
+  {
+    "module": "calculation",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 238.9555833333093,
+      "dark": 29.68231250000006
+    }
+  },
+  {
+    "module": "geo",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 243.92052083331888,
+      "dark": 35.25979166666668
+    }
+  },
+  {
+    "module": "geo",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 246.1317916666627,
+      "dark": 27.89649999999996
+    }
+  },
+  {
+    "module": "speech",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 229.48900000001905,
+      "dark": 18.62952083333336
+    }
+  },
+  {
+    "module": "speech",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 226.06964583334494,
+      "dark": 24.60639583333333
+    }
+  },
+  {
+    "module": "stl",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 221.85222916668,
+      "dark": 144.71395833332045
+    }
+  },
+  {
+    "module": "stl",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 220.02964583335145,
+      "dark": 139.72733333332252
+    }
+  },
+  {
+    "module": "field",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 229.594270833336,
+      "dark": 21.3601458333333
+    }
+  },
+  {
+    "module": "field",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 220.4972708333344,
+      "dark": 25.554458333333336
+    }
+  },
+  {
+    "module": "pointcloud",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 243.51889583337055,
+      "dark": 25.07300000000001
+    }
+  },
+  {
+    "module": "pointcloud",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 239.7121041667009,
+      "dark": 27.187125000000016
+    }
+  },
+  {
+    "module": "pile",
+    "width": 1440,
+    "passed": true,
+    "luminance": {
+      "light": 241.59064583331897,
+      "dark": 27.145687500000026
+    }
+  },
+  {
+    "module": "pile",
+    "width": 390,
+    "passed": true,
+    "luminance": {
+      "light": 235.17493749997234,
+      "dark": 28.956145833333373
+    }
+  }
+]

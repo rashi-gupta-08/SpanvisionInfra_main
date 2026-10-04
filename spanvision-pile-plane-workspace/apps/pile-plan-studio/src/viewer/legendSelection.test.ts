@@ -1,0 +1,124 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  getHighlightedGoverningCptId,
+  getLoadPointIdsForLegendSelection,
+  replaceLegendSelectionFilter,
+  toggleLegendSelectionFilter,
+  shouldHighlightGoverningCpt,
+} from "./legendSelection.ts";
+import type { PileConfigurationOption } from "../core/projectTypes.ts";
+
+function option(size: number, tip: number): PileConfigurationOption {
+  return {
+    configuration: { pile_size_mm: size, pile_tip_level_mm: tip * 1000 },
+    pile_size_mm: size,
+    pile_tip_level_m: tip,
+    isOption: true,
+    governing_cpt_id: 61,
+    governing_frd_kn: 700,
+    utilization: 0.7,
+    missing_cpt_ids: [],
+  };
+}
+
+describe("legend selection", () => {
+  it("combines size filters as a union and intersects them with tip filters", () => {
+    const chosenOptions = new Map<number, PileConfigurationOption | null>([
+      [1, option(290, -18)],
+      [2, option(320, -18)],
+      [3, option(350, -18)],
+      [4, option(290, -19)],
+    ]);
+    const filters = {
+      pileSizes: [290, 320],
+      pileTipLevels: [-18_000],
+    };
+
+    assert.deepEqual(getLoadPointIdsForLegendSelection(chosenOptions, filters), [1, 2]);
+  });
+
+  it("toggles selected legend values and clears the selection when both groups are empty", () => {
+    const withSize = toggleLegendSelectionFilter({ pileSizes: [], pileTipLevels: [] }, "size", 290);
+    const withTip = toggleLegendSelectionFilter(withSize, "tip", -18_000);
+    const withoutSize = toggleLegendSelectionFilter(withTip, "size", 290);
+    const withoutTip = toggleLegendSelectionFilter(withoutSize, "tip", -18_000);
+
+    assert.deepEqual(withSize, { pileSizes: [290], pileTipLevels: [] });
+    assert.deepEqual(withTip, { pileSizes: [290], pileTipLevels: [-18_000] });
+    assert.deepEqual(withoutSize, { pileSizes: [], pileTipLevels: [-18_000] });
+    assert.deepEqual(withoutTip, { pileSizes: [], pileTipLevels: [] });
+    assert.deepEqual(
+      getLoadPointIdsForLegendSelection(new Map([[1, option(290, -18)]]), withoutTip),
+      [],
+    );
+  });
+
+  it("replaces both previous filter groups for a plain legend selection", () => {
+    assert.deepEqual(replaceLegendSelectionFilter("size", 320), {
+      pileSizes: [320],
+      pileTipLevels: [],
+    });
+    assert.deepEqual(replaceLegendSelectionFilter("tip", -19_000), {
+      pileSizes: [],
+      pileTipLevels: [-19_000],
+    });
+  });
+
+  it("keeps union within categories and intersection between categories after Shift toggles", () => {
+    const withTwoSizes = toggleLegendSelectionFilter(
+      replaceLegendSelectionFilter("size", 290),
+      "size",
+      320,
+    );
+    const withTip = toggleLegendSelectionFilter(withTwoSizes, "tip", -18_000);
+    const choices = new Map<number, PileConfigurationOption | null>([
+      [1, option(290, -18)],
+      [2, option(320, -18)],
+      [3, option(290, -19)],
+    ]);
+
+    assert.deepEqual(withTip, {
+      pileSizes: [290, 320],
+      pileTipLevels: [-18_000],
+    });
+    assert.deepEqual(getLoadPointIdsForLegendSelection(choices, withTip), [1, 2]);
+  });
+
+  it("does not highlight a governing CPT that is not in the active CPT selection while editing", () => {
+    assert.equal(shouldHighlightGoverningCpt(61, [61, 62]), true);
+    assert.equal(shouldHighlightGoverningCpt(61, [62]), false);
+  });
+
+  it("finds the governing CPT for the shared selected pile configuration", () => {
+    const highlighted = getHighlightedGoverningCptId({
+      activeSelectedCptIds: [61, 62],
+      pileOptionsByLoadPointId: new Map([[1, [option(290, -18)]]]),
+      selectedLoadPointIds: [1],
+      selectedPileConfigurationsByLoadPoint: new Map([[
+        1,
+        { pile_size_mm: 290, pile_tip_level_mm: -18_000 },
+      ]]),
+    });
+
+    assert.equal(highlighted, 61);
+  });
+
+  it("does not mark a governing CPT when selected load points use different configurations", () => {
+    const highlighted = getHighlightedGoverningCptId({
+      activeSelectedCptIds: [61],
+      pileOptionsByLoadPointId: new Map([
+        [1, [option(290, -18)]],
+        [2, [option(320, -18)]],
+      ]),
+      selectedLoadPointIds: [1, 2],
+      selectedPileConfigurationsByLoadPoint: new Map([
+        [1, { pile_size_mm: 290, pile_tip_level_mm: -18_000 }],
+        [2, { pile_size_mm: 320, pile_tip_level_mm: -18_000 }],
+      ]),
+    });
+
+    assert.equal(highlighted, null);
+  });
+});

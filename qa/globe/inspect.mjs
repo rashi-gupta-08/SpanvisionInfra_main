@@ -1,0 +1,18 @@
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const page=await browser.newPage({viewport:{width:1440,height:1050}});
+const errors=[];page.on('pageerror',error=>errors.push(error.message));
+await page.goto('http://127.0.0.1:4230/?appearance=dark#modules');
+await page.locator('[data-globe-state="ready"]').waitFor();
+await page.waitForTimeout(700);
+await page.screenshot({path:'qa/globe/desktop-dark.png'});
+await page.locator('select[aria-label="Color mode"]').selectOption('light');
+await page.waitForTimeout(400);
+await page.screenshot({path:'qa/globe/desktop-light.png'});
+await page.setViewportSize({width:390,height:844});
+await page.waitForTimeout(300);
+await page.screenshot({path:'qa/globe/mobile-light.png'});
+console.log(JSON.stringify({errors,title:await page.title(),heading:await page.locator('h1').first().textContent(),state:await page.locator('.globe-viewport').getAttribute('data-globe-state'),width:await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,viewport:innerWidth}))}));
+fs.writeFileSync('qa/globe/inspect.json',JSON.stringify({errors},null,2));
+await browser.close();

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 940" role="img" aria-label="Monochrome three-dimensional CAD model illustration">
+  <rect width="1920" height="940" fill="#121212"/>
+  <defs><pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" fill="none" stroke="#ffffff" stroke-opacity=".04"/></pattern></defs>
+  <rect width="1920" height="940" fill="url(#grid)"/>
+  <g fill="#1b1b1b" stroke="#eeeeee" stroke-width="4" stroke-linejoin="round">
+    <path d="M270 545L950 190L1650 540L970 890Z"/>
+    <path d="M270 545V650L970 990V890M1650 540V650L970 990"/>
+    <path d="M600 380L950 200L1290 375L940 560Z" fill="#202020"/>
+    <path d="M600 380V650L940 825V560M1290 375V645L940 825"/>
+    <path d="M735 310V625L940 730L1150 625V305" fill="none" stroke="#999999"/>
+  </g>
+  <g fill="none" stroke="#999999" stroke-width="2" stroke-dasharray="10 9"><path d="M950 80V900M90 740L950 300L1810 740"/></g>
+  <g fill="#eeeeee" font-family="Arial,sans-serif" font-size="25" letter-spacing="4"><text x="70" y="90">MODEL SPACE</text><text x="1515" y="90">3D / SOLID</text></g>
+</svg>

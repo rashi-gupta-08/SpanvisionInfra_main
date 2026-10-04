@@ -1,0 +1,1781 @@
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useAppStore } from '@/state/appStore';
+import { useTranslation } from 'react-i18next';
+import { buildPrintRows, curveCellFont, measureCurveColumnWidth, measurePrintReport, measureTableColumnWidths, measureTaskNameColumnWidth, nameCellFont, NAME_COLUMN_WIDTH_DEFAULT, NAME_COLUMN_WIDTH_MAX, NAME_COLUMN_WIDTH_MIN, renderPrintCanvas, renderPrintPreviewPage, renderReport, REPORT_FONT_SCALES, REPORT_MAX_ZOOM, REPORT_MIN_ZOOM, PrintOptions, TableColumnWidths, TableHeaderLabels } from '@/services/print/printPreview';
+import { computePreviewRasterLimits } from '@/services/print/previewSafety';
+import { getLocalizedMonths, getLocalizedMonthsShort } from '@/i18n/dateFormat';
+import { projectFileBase } from '@/utils/documents';
+import { computeHighResScale } from '@/utils/miniPdf';
+import { paginateCanvasToPdfBytes, type PaginateOptions } from '@/services/print/paginate';
+import { computeTileLayout, footerLayoutWidthFor } from '@/services/print/tileLayout';
+import { ensureInterLoaded, getInterFontBytes, getArabicFontBytes } from '@/services/pdf/fontLoader';
+import { RTL_LOCALES, type Locale } from '@/i18n/config';
+import { Select } from '@/components/common/Select';
+import { useFieldCatalogCtx } from '@/components/viewControls/useFieldCatalogCtx';
+import {
+  barColorFieldOptions,
+  effectiveBarColorControl,
+} from '@/components/viewControls/barColorFieldOptions';
+import { encodeFieldRef, decodeFieldRef } from '@/components/viewControls/fieldRefCodec';
+import { inlineDirectionOf, panelWidthAtPointer, useSplitter } from '@/hooks/useSplitter';
+import { saveBytesDialog } from '@/services/fileAccess';
+import {
+  DEFAULT_REPORT_SETTINGS, isGanttReportType, loadReportSettings, reportTypeDrawsRelations, reportTypeShowsCriticalToggle, saveReportSettings,
+  TABLE_REPORT_TYPES,
+  type ReportType, type ResourceGanttReportOptions, type TableReportOptions,
+} from '@/utils/reportSettings';
+import { computeResourceGanttRows } from '@/engine/reports';
+import { countCriticalActivities } from '@/engine/scheduler/scheduleAnalysis';
+import { durationSuffixesFrom } from '@/utils/taskDuration';
+import type { ViewRow } from '@/engine/view/visibleRows';
+import { TableReportView } from './reports/TableReportView';
+import { ReportingPeriodField, useResolvedPeriod } from './reports/ReportingPeriodField';
+import { TableReportOptionsBlock } from './reports/TableReportOptionsBlock';
+import { OrientationSelect, PaperSizeSelect, ReportCheckRow, ReportFieldRow, ReportOptionsCard } from './reports/reportFormPrimitives';
+import { useTableReportSpec } from './reports/useTableReportSpec';
+import { toPdfSpec } from './reports/tableReportSpec';
+import { useDisplayDate } from '@/hooks/displayDate';
+import { MilestoneReport, useMilestoneRows, STATUS_COLOR as MILESTONE_STATUS_COLOR, type MilestoneRow } from './MilestoneReport';
+import { VarianceReport, useVarianceResult, STATUS_COLOR as VARIANCE_STATUS_COLOR, fmtDelta } from './VarianceReport';
+import type { VarianceRow } from '@/engine/variance';
+import type { PdfTableColumn } from '@/services/pdf/pdfTable';
+import type { TFunction } from 'i18next';
+import { isLeafTask } from '@/utils/taskHierarchy';
+import { buildBaselineOverlay } from '@/types/baseline';
+import type { CPMResult } from '@/engine/scheduler/CPMSolver';
+import { scheduleErrorText } from '@/i18n/scheduleErrors';
+
+/** Reactieve datum-formatters — zelfde vorm als `useDisplayDate()` (Hooks mogen hier niet in, dit
+ * bouwt de kolomspec buiten React-render-tijd op in `handleExportPDF`). */
+type DisplayDate = ReturnType<typeof useDisplayDate>;
+
+/**
+ * Beschrijf waarom de vector-export terugvalt op raster. Herkent de `VectorUnsupportedError`
+ * aan z'n `name` — géén eager import van `paginateVector`, zodat pdf-lib/fontkit uit de hoofdbundle
+ * blijft — en logt de ongedekte codepoints (bv. een CJK/Arabische taaknaam) i.p.v. tofu te tekenen.
+ */
+function describeVectorFallback(err: unknown): string {
+  if (err && typeof err === 'object' && (err as { name?: string }).name === 'VectorUnsupportedError') {
+    const cps = (err as { codepoints?: number[] }).codepoints ?? [];
+    const rtl = (err as { hasRtl?: boolean }).hasRtl ? ' (bevat RTL)' : '';
+    const list = cps.map(cp => 'U+' + cp.toString(16).toUpperCase().padStart(4, '0')).join(' ');
+    return `ongedekte glyphs${rtl}: ${list}`;
+  }
+  return String(err);
+}
+
+/**
+ * Kolomspec voor de vector-PDF-export van het mijlpalenrapport — spiegelt EXACT
+ * `MilestoneReport.tsx`: zelfde kolomvolgorde/headers (`t('milestoneReport.*')`), de `◆`-prefix bij
+ * `mandatory`, float `< 0` rood+bold, en de `STATUS_COLOR`-badge (altijd bold, zoals de DOM-span).
+ */
+function buildMilestoneColumns(t: TFunction<'report'>, dd: DisplayDate): PdfTableColumn<MilestoneRow>[] {
+  return [
+    { header: t('milestoneReport.wbs'), width: 70, align: 'left', text: r => r.wbs },
+    { header: t('milestoneReport.name'), width: 260, align: 'left', text: r => `${r.mandatory ? '◆ ' : ''}${r.name}` },
+    { header: t('milestoneReport.kind'), width: 90, align: 'left', text: r => t(`milestoneReport.kind_${r.kind}`) },
+    { header: t('milestoneReport.date'), width: 100, align: 'left', text: r => dd.date(r.date) },
+    { header: t('milestoneReport.guardDate'), width: 130, align: 'left', text: r => dd.date(r.guardDate) || '—' },
+    {
+      header: t('milestoneReport.float'), width: 70, align: 'right',
+      text: r => (r.float === undefined ? '—' : String(r.float)),
+      color: r => (r.float !== undefined && r.float < 0 ? '#DC2626' : undefined),
+      bold: r => r.float !== undefined && r.float < 0,
+    },
+    { header: t('milestoneReport.mandatory'), width: 90, align: 'left', text: r => (r.mandatory ? t('milestoneReport.yes') : '') },
+    {
+      header: t('milestoneReport.status'), width: 110, align: 'left',
+      text: r => t(`milestoneReport.status_${r.status}`),
+      color: r => MILESTONE_STATUS_COLOR[r.status],
+      bold: () => true,
+    },
+  ];
+}
+
+/**
+ * Kolomspec voor de vector-PDF-export van het afwijkingenrapport — spiegelt EXACT
+ * `VarianceReport.tsx`: zelfde `COLUMNS`-volgorde/headers, `fmtDelta`, deltaStart/deltaFinish `> 0`
+ * rood+bold, en de `STATUS_COLOR`-badge (altijd bold).
+ */
+function buildVarianceColumns(t: TFunction<'report'>, dd: DisplayDate, locale: string): PdfTableColumn<VarianceRow>[] {
+  return [
+    { header: t('milestoneReport.wbs'), width: 70, align: 'left', text: r => r.wbs },
+    { header: t('milestoneReport.name'), width: 220, align: 'left', text: r => r.name },
+    { header: t('variance.baselineStart'), width: 110, align: 'left', text: r => dd.date(r.baselineStart) || '—' },
+    { header: t('variance.baselineFinish'), width: 110, align: 'left', text: r => dd.date(r.baselineFinish) || '—' },
+    { header: t('variance.currentStart'), width: 110, align: 'left', text: r => dd.date(r.currentStart) || '—' },
+    { header: t('variance.currentFinish'), width: 110, align: 'left', text: r => dd.date(r.currentFinish) || '—' },
+    {
+      header: t('variance.deltaStart'), width: 90, align: 'right',
+      text: r => fmtDelta(r.deltaStart, locale),
+      color: r => (r.deltaStart !== undefined && r.deltaStart > 0 ? '#DC2626' : undefined),
+      bold: r => r.deltaStart !== undefined && r.deltaStart > 0,
+    },
+    {
+      header: t('variance.deltaFinish'), width: 90, align: 'right',
+      text: r => fmtDelta(r.deltaFinish, locale),
+      color: r => (r.deltaFinish !== undefined && r.deltaFinish > 0 ? '#DC2626' : undefined),
+      bold: r => r.deltaFinish !== undefined && r.deltaFinish > 0,
+    },
+    {
+      header: t('variance.status'), width: 110, align: 'left',
+      text: r => t(`variance.status_${r.status}`),
+      color: r => VARIANCE_STATUS_COLOR[r.status],
+      bold: () => true,
+    },
+  ];
+}
+
+/** Instellingenkolom: startbreedte + sleepgrenzen. Geen
+ *  eigen max-constante — de bovengrens is 50% van de kaartbreedte, dus dynamisch (zie `useSplitter`
+ *  hieronder), net als de rechterpaneel-breedte in App.tsx. */
+const SETTINGS_PANEL_DEFAULT_WIDTH = 256;
+const SETTINGS_PANEL_MIN_WIDTH = 200;
+const PREVIEW_FIT_WIDTH_PX = 900;
+const PREVIEW_QUALITY_FACTORS: Record<'100' | '200' | '300', 1 | 2 | 3> = { '100': 1, '200': 2, '300': 3 };
+
+type PreviewQualityName = 'standard' | 'high' | 'maximum';
+const PREVIEW_QUALITY_NAMES: Record<'100' | '200' | '300', PreviewQualityName> = {
+  '100': 'standard',
+  '200': 'high',
+  '300': 'maximum',
+};
+
+/** Eén gedecodeerd papiervel in de preview; de gedeelde layout bezit de vaste papierverhouding. */
+interface PreviewPage {
+  objectUrl: string;
+  generation: number;
+  quality: PreviewQualityName;
+}
+
+interface PreviewJob {
+  renderPage: (index: number, priority?: boolean) => void;
+  release: () => void;
+}
+
+interface PreviewLayoutState {
+  totalPages: number;
+  wPt: number;
+  hPt: number;
+}
+
+interface PreviewScrollAnchor {
+  index: number;
+  offset: number;
+  /** scrollTop op het moment van vastleggen; het herstel slaat over als die intussen veranderde. */
+  scrollTop: number;
+}
+
+function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(new Error('Rapportpreview kon niet naar PNG worden omgezet'));
+    }, 'image/png');
+  });
+}
+
+function capturePreviewScrollAnchor(root: HTMLElement): PreviewScrollAnchor {
+  const pages = [...root.querySelectorAll<HTMLElement>('[data-preview-page]')];
+  if (pages.length === 0) return { index: 0, offset: 0, scrollTop: root.scrollTop };
+  const rootTop = root.getBoundingClientRect().top;
+  const visible = pages
+    .map(page => ({ page, rect: page.getBoundingClientRect() }))
+    .filter(({ rect }) => rect.bottom > rootTop)
+    .sort((a, b) => Math.abs(a.rect.top - rootTop) - Math.abs(b.rect.top - rootTop))[0];
+  const page = visible?.page ?? pages[0];
+  return {
+    index: Number(page.dataset.previewPage) || 0,
+    offset: page.getBoundingClientRect().top - rootTop,
+    scrollTop: root.scrollTop,
+  };
+}
+
+/** Herstelt het leesanker ná een layoutwissel — maar alleen als de gebruiker intussen niet zelf
+ * heeft gescrold. Het anker wordt vastgelegd in `renderPreview` (na de 100ms-debounce) en pas in
+ * de eerstvolgende animatieframe teruggezet; op een trage machine ligt daar een venster waarin een
+ * echte wielscroll landt, die het herstel anders ongedaan zou maken (browsertest "stabiel
+ * scrollanker"). Een gewijzigde scrollTop betekent dat de gebruiker al ergens anders leest; die
+ * positie wint. */
+function restorePreviewScrollAnchor(root: HTMLElement, anchor: PreviewScrollAnchor, totalPages: number): void {
+  if (root.scrollTop !== anchor.scrollTop) return;
+  const index = Math.min(Math.max(0, anchor.index), Math.max(0, totalPages - 1));
+  const page = root.querySelector<HTMLElement>(`[data-preview-page="${index}"]`);
+  if (!page) return;
+  const rootTop = root.getBoundingClientRect().top;
+  root.scrollTop += page.getBoundingClientRect().top - rootTop - anchor.offset;
+}
+
+/** De vier aan/uit-opties van het resourcediagram, in schermvolgorde (label = `resourceGantt.<sleutel>`). */
+const RESOURCE_GANTT_TOGGLES = ['pageBreakPerResource', 'includeUnassigned', 'groupByType', 'showAssignmentColumns'] as const;
+
+export function ReportPanel() {
+  const { t } = useTranslation('report');
+  const { t: tCommon, i18n } = useTranslation('common');
+  const { t: tTask } = useTranslation('task');
+  const dd = useDisplayDate();
+  const tasks = useAppStore(s => s.tasks);
+  const sequences = useAppStore(s => s.sequences);
+  const calendar = useAppStore(s => s.calendar);
+  const project = useAppStore(s => s.project);
+  // Naamloos project ⇒ de vertaalde weergavenaam. De printlaag is een Canvas-renderer zonder
+  // `t(...)`: die krijgt de al-vertaalde tekst dóórgegeven (zelfde patroon als `options.labels`).
+  // Let op: dit is UITSLUITEND de tekst ÍN het rapport. Voor de BESTANDSNAAM van de export geldt de
+  // neutrale, taalonafhankelijke terugval (`fileBase` hieronder), net als bij Bestand → Opslaan
+  // (`project.ifc` in elke taal).
+  const projectName = project.name || tCommon('project.untitled');
+  const fileBase = projectFileBase(project.name);
+  const dateNotation = useAppStore(s => s.ui.dateNotation);
+  const weekStartDay = useAppStore(s => s.ui.weekStartDay);
+  // Duur-kolom van de Gantt-afdruk: dezelfde tekst als taakraster en tooltip — Duurweergave, de
+  // eigen taakeenheid en de uren per dag van de effectieve taakkalender.
+  const durationDisplay = useAppStore(s => s.ui.durationDisplay);
+  const calendars = useAppStore(s => s.calendars);
+  const durationSuffixes = useMemo(() => durationSuffixesFrom(tCommon), [tCommon]);
+  // De lijnstijl van de relaties in het rapport volgt de P6-conventie van het scherm
+  // (doorgetrokken = bepalend, gestreept = niet-bepalend). Die informatie zit alleen in `cpmResult`,
+  // dus een echte subscription — anders ververst de preview niet na een F5/Bereken.
+  const cpmResult = useAppStore(s => s.cpmResult);
+  const scheduleStale = useAppStore(s => s.scheduleStale);
+  // Bronnen voor de exportopties: resources/toewijzingen (kleurmodi), de
+  // schermweergave-rijen (volg weergave) en de statusdatum (statuslijn). Echte subscriptions
+  // (geen getState): de live preview moet op al deze wijzigingen her-renderen.
+  const viewRows = useAppStore(s => s.viewRows);
+  const resources = useAppStore(s => s.resources);
+  const assignments = useAppStore(s => s.assignments);
+  const baselines = useAppStore(s => s.baselines);
+  const activeBaselineId = useAppStore(s => s.activeBaselineId);
+  const barColorSelection = useAppStore(s => s.ui.barColorSelection);
+  // "Datums zoals opgeslagen": de tabelrapporten dragen
+  // de melding in hun spec (`useTableReportSpec`); Gantt, mijlpalen en afwijkingen krijgen 'm hier,
+  // boven het voorbeeld — dezelfde tekst, zodat geen enkel rapport nullen toont zonder te zeggen dat
+  // het bestand die assen niet vastlegde.
+  const datesAsRecorded = useAppStore(s => s.datesAsRecorded);
+  const recordedDatesNote = datesAsRecorded ? (
+    <div
+      className="mb-2 shrink-0 rounded-[6px] border border-border bg-surface px-3 py-2 text-small leading-4 text-text-secondary"
+      data-report-recorded-dates-note
+    >
+      {t('tableReports.recordedDatesNote')}
+    </div>
+  ) : null;
+  const setOverlays = useAppStore(s => s.setOverlays);
+  const fieldCtx = useFieldCatalogCtx();
+  const barColorFields = barColorFieldOptions(fieldCtx);
+  const barColorControl = effectiveBarColorControl(barColorSelection, fieldCtx);
+  // `useTaskTypeLabels` bouwt per render een nieuw object. De inhoudssignatuur maakt voor het
+  // rapport een stabiele kopie: een preview-state-update mag `options` niet opnieuw maken, maar
+  // een echte taalwissel moet de labels wel vervangen.
+  const taskTypeLabelsSignature = JSON.stringify(fieldCtx.taskTypeLabels);
+  const reportTaskTypeLabels = useMemo<Record<string, string>>(
+    () => JSON.parse(taskTypeLabelsSignature) as Record<string, string>,
+    [taskTypeLabelsSignature],
+  );
+  const statusDate = project.statusDate;
+  const baselineOverlay = useMemo(
+    () => buildBaselineOverlay(baselines, activeBaselineId),
+    [baselines, activeBaselineId],
+  );
+
+  // De rapportopties starten op de gedeelde defaults uit `reportSettings.ts` en worden vlak na de
+  // eerste render overschreven door de opgeslagen voorkeuren (zie het hydratatie-effect verderop).
+  const [reportType, setReportType] = useState<ReportType>(DEFAULT_REPORT_SETTINGS.reportType);
+  // Opties van de zeven tabelrapporten — één object, samen bewaard met de rest.
+  const [tableOptions, setTableOptions] = useState<TableReportOptions>(DEFAULT_REPORT_SETTINGS.tableReports);
+  const patchTableOptions = useCallback((patch: Partial<TableReportOptions>) => {
+    setTableOptions(prev => ({ ...prev, ...patch }));
+  }, []);
+  // Resourcediagram: blad per resource + taken zonder resource — samen bewaard met de rest.
+  const [resourceGanttOptions, setResourceGanttOptions] = useState<ResourceGanttReportOptions>(DEFAULT_REPORT_SETTINGS.resourceGantt);
+  // Gezet door de preview-meting: de render liet de toewijzingskolommen vallen omdat de tabel
+  // anders geen tijdlijn overliet (zie `minChartWidthPx` in printPreview).
+  const [assignmentColumnsDropped, setAssignmentColumnsDropped] = useState(false);
+  const patchResourceGanttOptions = useCallback((patch: Partial<ResourceGanttReportOptions>) => {
+    setResourceGanttOptions(prev => ({ ...prev, ...patch }));
+  }, []);
+  const [showCritical, setShowCritical] = useState(DEFAULT_REPORT_SETTINGS.showCritical);
+  const [showFloat, setShowFloat] = useState(DEFAULT_REPORT_SETTINGS.showFloat);
+  const [showDeps, setShowDeps] = useState(DEFAULT_REPORT_SETTINGS.showDeps);
+  const [showWeekends, setShowWeekends] = useState(DEFAULT_REPORT_SETTINGS.showWeekends);
+  const [reportCompressNonWorkdays, setReportCompressNonWorkdays] = useState(DEFAULT_REPORT_SETTINGS.compressNonWorkdays);
+  const [showLegend, setShowLegend] = useState(DEFAULT_REPORT_SETTINGS.showLegend);
+  const [showTaskNames, setShowTaskNames] = useState(DEFAULT_REPORT_SETTINGS.showTaskNames);
+  const [showCompletion, setShowCompletion] = useState(DEFAULT_REPORT_SETTINGS.showCompletion);
+  // Naamkolom in de taaktabel: afkappen op een instelbare breedte (slider), of de kolom aan de
+  // langste naam laten aanpassen. In dat laatste geval meet het paneel zelf (zie het effect
+  // verderop) en krijgt de printlaag alleen het resulterende getal — één getal voor preview,
+  // raster- en vector-export, zodat die drie nooit een verschillende tabel tekenen.
+  const [truncateTaskNames, setTruncateTaskNames] = useState(DEFAULT_REPORT_SETTINGS.truncateTaskNames);
+  const [taskNameColumnWidth, setTaskNameColumnWidth] = useState(DEFAULT_REPORT_SETTINGS.taskNameColumnWidth);
+  const [autoNameColumnWidth, setAutoNameColumnWidth] = useState<number | undefined>(undefined);
+  const [showBaselineOverlay, setShowBaselineOverlay] = useState(DEFAULT_REPORT_SETTINGS.showBaselineOverlay);
+  const [autoFit, setAutoFit] = useState(DEFAULT_REPORT_SETTINGS.autoFit);
+  const [customZoom, setCustomZoom] = useState(DEFAULT_REPORT_SETTINGS.customZoom);
+  const [paperSize, setPaperSize] = useState<'A4' | 'A3' | 'A2' | 'A1'>(DEFAULT_REPORT_SETTINGS.paperSize);
+  // Reden waarom de laatste export-poging is afgebroken (alleen een CPM-cyclus).
+  // Het CPM-resultaat met de fout, niet de tekst: vertaald bij het tonen, dus ook na een taalwissel.
+  const [exportError, setExportError] = useState<Pick<CPMResult, 'error' | 'errorInfo'> | null>(null);
+  const [orientation, setOrientation] = useState<'landscape' | 'portrait'>(DEFAULT_REPORT_SETTINGS.orientation);
+  // Bewust NIET persistent: de bedrijfsnaam komt uit het PROJECT (`project.company`). Zie de
+  // toelichting bovenin `src/utils/reportSettings.ts` — globaal bewaren zou het bedrijf van het ene
+  // project in het rapport van het andere laten opduiken.
+  const [companyName, setCompanyName] = useState(project.company || '');
+  // Herhaal de datum-/projectkop bovenaan ELKE geëxporteerde pagina. Standaard AAN: een losse
+  // pagina uit de map is anders niet te plaatsen (kost per pagina wat body-hoogte). De
+  // ENGINE-defaults (`paginate.ts`/`tileLayout.ts`/`paginateVector.ts`) staan bewust op "niet
+  // herhalen"; alleen deze UI kiest anders.
+  //
+  // Bewust géén veld in `PrintOptions`: de kopherhaling is puur een pagineerder-zaak (raster:
+  // hoogte in px; vector: boolean), niet iets dat de render-zoom raakt.
+  const [repeatHeader, setRepeatHeader] = useState(DEFAULT_REPORT_SETTINGS.repeatHeader);
+  // Voet (projectnaam, afdrukdatum, legenda) op elke pagina: een blad per persoon
+  // zonder legenda is onleesbaar. Zelfde pagineerder-zaak als de kop, dus óók geen PrintOptions-veld.
+  const [repeatFooter, setRepeatFooter] = useState(DEFAULT_REPORT_SETTINGS.repeatFooter);
+  // Smeert de tijdlijn uit over N paginabreedtes (1 = één breedte). Alleen zinvol in
+  // fit-width-modus; daarom `disabled`
+  // wanneer `autoFit` uit staat (dan tegelt de export in 'actual'-modus toch al horizontaal).
+  const [timelineColumns, setTimelineColumns] = useState(DEFAULT_REPORT_SETTINGS.timelineColumns);
+  // Lettergrootte van het GEGENEREERDE rapport, in procenten (100 = basisgrootte).
+  // Los van de interface-tekstgrootte in Instellingen:
+  // die stuurt de app-chrome aan, deze alleen het papier. Werkt relatief (tekst/tabel groeien, de
+  // tijdlijn-zoom niet) — zie de afleiding bij `ReportMetrics` in printPreview.ts.
+  const [reportFontScale, setReportFontScale] = useState(DEFAULT_REPORT_SETTINGS.reportFontScale);
+  // Statuslijn in de export: letterlijk drie opties (geen / statusdatumlijn / voortgangslijn).
+  const [statusLine, setStatusLine] = useState(DEFAULT_REPORT_SETTINGS.statusLine);
+  // Volg weergave: export tekent exact de viewRows van het scherm (WYSIWYG).
+  const [followView, setFollowView] = useState(DEFAULT_REPORT_SETTINGS.followView);
+  // Alleen de rasterkwaliteit. Deze waarde gaat bewust NIET in PrintOptions: PDF en paginering
+  // mogen nooit veranderen door hoe scherp iemand de preview op zijn scherm leest.
+  const [previewQuality, setPreviewQuality] = useState(DEFAULT_REPORT_SETTINGS.previewQuality);
+
+  // Instellingenkolom horizontaal sleepbaar. Zelfde generieke
+  // sleeppatroon als de rechterpaneel-splitter in App.tsx en de tabel/chart-splitter in
+  // GanttCanvas (`useSplitter`): losse React-state (bewust NIET gepersisteerd — dit is een
+  // layout-voorkeur van dit ene paneel, geen rapportinstelling die mee-exporteert, dus hoort niet
+  // in `reportSettings.ts` of de 3-plekken-instellingenregel thuis). `containerRef` wijst naar de
+  // buitenste flex-rij (instellingen + preview) zodat de sleeppositie relatief aan DIE rand wordt
+  // berekend, niet aan het venster — de kolom staat immers niet tegen de vensterrand.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [settingsWidth, setSettingsWidth] = useState(SETTINGS_PANEL_DEFAULT_WIDTH);
+  const settingsSplitter = useSplitter({
+    min: SETTINGS_PANEL_MIN_WIDTH,
+    max: () => Math.round((containerRef.current?.getBoundingClientRect().width ?? 800) * 0.5),
+    // De instellingenkolom is het eerste flexkind: links in ltr, rechts in ar/fa. Een vaste
+    // `clientX − rect.left` laat de kolom in ar/fa bij de eerste beweging naar de bovengrens springen.
+    computeSize: e => {
+      const container = containerRef.current;
+      if (!container) return NaN;
+      return Math.round(panelWidthAtPointer(
+        e.clientX,
+        container.getBoundingClientRect(),
+        'inline-start',
+        inlineDirectionOf(container),
+      ));
+    },
+    onResize: w => { if (!Number.isNaN(w)) setSettingsWidth(w); },
+  });
+
+  // --- Persistentie van de rapportopties (localStorage, sleutel `ops-reportSettings`) -----------
+  //
+  // DE VALKUIL, en waarom deze vlag bestaat: hydrateren is asynchroon (`loadReportSettings()` geeft
+  // een Promise), maar het opslaan hangt aan een effect dat bij ELKE waardewijziging vuurt — inclusief
+  // de allereerste render. Zonder guard schrijft die eerste render de DEFAULTS over de opgeslagen
+  // voorkeuren heen vóórdat het laden klaar is. Dan lijkt persistentie te werken (binnen één sessie
+  // onthoudt hij alles), maar wist elke herstart stilletjes alles wat de gebruiker had ingesteld.
+  // Daarom slaat het save-effect álles over zolang `hydratedRef` false is; hij gaat pas op true
+  // nádat de opgeslagen waarden zijn toegepast.
+  //
+  // Een ref (geen state) volstaat: de vlag hoeft geen re-render te veroorzaken, en het save-effect
+  // wordt toch al opnieuw uitgevoerd door de state-updates van de hydratatie zelf.
+  const hydratedRef = useRef(false);
+  // De preview is veel duurder dan het kleine settings-object. Wacht daarom met de
+  // eerste rastertaak tot alle opgeslagen opties in één React-batch zijn toegepast.
+  // Anders kan een opgeslagen instelling een korte reeks tussenstaten produceren
+  // die elk al pagina 0 (en soms 1) renderen voordat de laatste toestand wint.
+  const [reportSettingsHydrated, setReportSettingsHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadReportSettings().then(s => {
+      // Unmount vóór het laden klaar was ⇒ niets toepassen (en `hydratedRef` blijft false, zodat een
+      // eventueel na-ijlend save-effect ook niets schrijft).
+      if (cancelled) return;
+      // Eén batch state-updates ⇒ de preview-useEffect hieronder rendert precies één keer opnieuw
+      // met de herstelde waarden (geen lus: de setters staan hier, niet in de preview-deps-keten).
+      setReportType(s.reportType);
+      setShowCritical(s.showCritical);
+      setShowFloat(s.showFloat);
+      setShowDeps(s.showDeps);
+      setShowWeekends(s.showWeekends);
+      setReportCompressNonWorkdays(s.compressNonWorkdays);
+      setShowLegend(s.showLegend);
+      setShowTaskNames(s.showTaskNames);
+      setShowCompletion(s.showCompletion);
+      setTruncateTaskNames(s.truncateTaskNames);
+      setTaskNameColumnWidth(s.taskNameColumnWidth);
+      setShowBaselineOverlay(s.showBaselineOverlay);
+      setAutoFit(s.autoFit);
+      setCustomZoom(s.customZoom);
+      setPaperSize(s.paperSize);
+      setOrientation(s.orientation);
+      setRepeatHeader(s.repeatHeader);
+      setRepeatFooter(s.repeatFooter);
+      setTimelineColumns(s.timelineColumns);
+      setReportFontScale(s.reportFontScale);
+      setStatusLine(s.statusLine);
+      setFollowView(s.followView);
+      setPreviewQuality(s.previewQuality);
+      setTableOptions(s.tableReports);
+      setResourceGanttOptions(s.resourceGantt);
+      hydratedRef.current = true;
+      setReportSettingsHydrated(true);
+    }, () => {
+      // Lezen kan falen (localStorage geblokkeerd of gepartitioneerd, quota-gedoe). Zonder deze
+      // handler blijft `hydratedRef` dan voor ALTIJD false en slaat het save-effect de rest van de
+      // sessie alles over: de gebruiker verstelt vijftien opties en er wordt nooit iets bewaard,
+      // zonder enig signaal. We houden dan de defaults, maar zetten de vlag wél op true zodat
+      // opslaan blijft werken — een volgende poging kan best wél slagen.
+      //
+      // BEWUST de tweede parameter van `.then` en GEEN `.catch` erachter: een `.catch` zou óók een
+      // fout uit de hydratatie-body hierboven vangen. Dan zouden de eerste velden gehydrateerd zijn,
+      // de rest op default staan, en zou de vlag alsnog op true gaan — waarna de eerstvolgende
+      // wijziging die half gevulde mengeling als complete set terugschrijft over de opgeslagen
+      // voorkeuren. Precies het dataverlies dat deze guard moet voorkomen.
+      if (cancelled) return;
+      hydratedRef.current = true;
+      setReportSettingsHydrated(true);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Opslaan bij elke wijziging. Geen debounce: `setSetting` is een enkele synchrone
+  // localStorage-schrijf van een klein object — goedkoper dan de preview-render die bij dezelfde
+  // wijziging toch al draait. De eerste keer dat dit effect ná de hydratatie loopt schrijft het de
+  // zojuist geladen waarden ongewijzigd terug; dat is bewust onschadelijk.
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    // `.catch` omdat `setSetting` op een geblokkeerde/gepartitioneerde localStorage gooit:
+    // zonder vangnet levert elke verstelde optie een onafgevangen rejection op. Opslaan is
+    // best-effort — mislukt het, dan blijft de instelling gewoon binnen deze sessie werken.
+    void saveReportSettings({
+      reportType, showCritical, showFloat, showDeps, showWeekends, compressNonWorkdays: reportCompressNonWorkdays, showLegend,
+      showTaskNames, showCompletion, truncateTaskNames, taskNameColumnWidth, showBaselineOverlay, autoFit, customZoom,
+      paperSize, orientation, repeatHeader, repeatFooter, timelineColumns, reportFontScale, statusLine, followView, previewQuality,
+      tableReports: tableOptions,
+      resourceGantt: resourceGanttOptions,
+    }).catch(() => {});
+  }, [reportType, showCritical, showFloat, showDeps, showWeekends, reportCompressNonWorkdays, showLegend, showTaskNames,
+      showCompletion, truncateTaskNames, taskNameColumnWidth, showBaselineOverlay, autoFit, customZoom, paperSize,
+      orientation, repeatHeader, repeatFooter, timelineColumns, reportFontScale, statusLine, followView, previewQuality,
+      tableOptions, resourceGanttOptions]);
+
+  // Resourcediagram: dezelfde Gantt-render, maar de rijen komen uit de pure rekenmodule
+  // (per resource-identiteit een band, daaronder zijn taken) en niet van het scherm.
+  // `tTask('structure.none')` is hetzelfde "(geen)"-label dat de schermgroepering gebruikt.
+  const isGanttLike = isGanttReportType(reportType);
+  const noneLabel = tTask('structure.none');
+  // De bandvolgorde volgt de app-taal (nooit de OS-taal van de afdrukker: zelfde vel, zelfde nummering).
+  // Typelabels voor de optionele typelaag: dezelfde sleutels als het resourcepaneel.
+  const resourceTypeLabels = useMemo(() => ({
+    LABOR: tCommon('resource.type.labor'), CREW: tCommon('resource.type.crew'),
+    SUBCONTRACTOR: tCommon('resource.type.subcontractor'), EQUIPMENT: tCommon('resource.type.equipment'),
+    MATERIAL: tCommon('resource.type.material'),
+  }), [tCommon]);
+  // Vertaalde curvenamen voor de toewijzingskolommen: dezelfde sleutels als het taakraster.
+  const curveLabels = useMemo(() => ({
+    UNIFORM: tCommon('resource.curve.uniform'), FRONT_LOADED: tCommon('resource.curve.frontLoaded'),
+    BACK_LOADED: tCommon('resource.curve.backLoaded'), BELL: tCommon('resource.curve.bell'),
+    EARLY_PEAK: tCommon('resource.curve.earlyPeak'), LATE_PEAK: tCommon('resource.curve.latePeak'),
+    DOUBLE_PEAK: tCommon('resource.curve.doublePeak'), TURTLE: tCommon('resource.curve.turtle'),
+    // Dezelfde twee toestanden als het eigenschappenpaneel: contour op de taak, geïmporteerde curve.
+    contoured: tTask('properties.assignments.contoured'), imported: tTask('properties.assignments.importedCurve'),
+  }), [tCommon, tTask]);
+  // Rapportageperiode als tijdvenster: dezelfde oplossing als het control toont; bij
+  // *Hele project* geen venster.
+  const resourceGanttPeriod = useResolvedPeriod(resourceGanttOptions.period);
+  const resourceGanttWindow = reportType === 'resourceGantt' && resourceGanttOptions.period.preset !== 'project'
+    ? resourceGanttPeriod
+    : undefined;
+  const resourceGantt = useMemo(() => (reportType === 'resourceGantt'
+    ? computeResourceGanttRows({ tasks, resources, assignments }, {
+      includeUnassigned: resourceGanttOptions.includeUnassigned, noneLabel, locale: i18n.language,
+      groupByType: resourceGanttOptions.groupByType, typeLabels: resourceTypeLabels,
+      window: resourceGanttWindow,
+    })
+    : null),
+  [reportType, tasks, resources, assignments, noneLabel, resourceGanttOptions.includeUnassigned,
+    resourceGanttOptions.groupByType, resourceTypeLabels, resourceGanttWindow, i18n.language]);
+  // Rijenbron van de Gantt-render: resourcediagram ⇒ de resourcebanden; Gantt-afdruk ⇒ de schermrijen
+  // bij Volg weergave, anders `undefined` = de volledige takenboom.
+  const reportRows = resourceGantt ? resourceGantt.rows : followView ? viewRows : undefined;
+
+  // Afkappen uit ⇒ meet de langste naam op dezelfde rijen die het rapport tekent, op het geladen
+  // Inter-font (anders meet de eerste keer een fallback-font en kapt de echte render alsnog af).
+  // De meting gebeurt hier en niet in de printlaag: `measurePrintReport` (paginering) heeft geen
+  // canvas en zou anders een ándere tabelbreedte uitrekenen dan de raster-/vector-render.
+  useEffect(() => {
+    if (truncateTaskNames) return;
+    let cancelled = false;
+    void ensureInterLoaded().then(() => {
+      if (cancelled) return;
+      const ctx = document.createElement('canvas').getContext('2d');
+      if (!ctx) { setAutoNameColumnWidth(NAME_COLUMN_WIDTH_DEFAULT); return; }
+      const rows = buildPrintRows(tasks, reportRows);
+      setAutoNameColumnWidth(measureTaskNameColumnWidth(rows, (text, bold) => {
+        ctx.font = nameCellFont(bold);
+        return ctx.measureText(text).width;
+      }));
+    });
+    return () => { cancelled = true; };
+  }, [truncateTaskNames, tasks, reportRows]);
+
+  // Curvekolom van het resourcediagram: zo breed als de langste curvenaam die dít rapport toont,
+  // gemeten op het geladen Inter-font — om dezelfde reden hier en niet in de
+  // printlaag als de naamkolom hierboven.
+  const [curveColumnWidth, setCurveColumnWidth] = useState<number | undefined>(undefined);
+  const curveHeaderLabel = t('tableHeaders.curve');
+  useEffect(() => {
+    if (reportType !== 'resourceGantt' || !resourceGantt || !resourceGanttOptions.showAssignmentColumns) {
+      setCurveColumnWidth(undefined);
+      return;
+    }
+    let cancelled = false;
+    void ensureInterLoaded().then(() => {
+      if (cancelled) return;
+      const ctx = document.createElement('canvas').getContext('2d');
+      if (!ctx) { setCurveColumnWidth(undefined); return; }
+      const cellLabels = new Set<string>();
+      for (const a of resourceGantt.assignmentByRowKey.values()) {
+        cellLabels.add(a.curve === null ? '—' : (curveLabels[a.curve] ?? a.curve));
+      }
+      const measure = (font: string) => (text: string) => { ctx.font = font; return ctx.measureText(text).width; };
+      setCurveColumnWidth(Math.max(
+        measureCurveColumnWidth([curveHeaderLabel], measure(curveCellFont(true))),
+        measureCurveColumnWidth(cellLabels, measure(curveCellFont(false))),
+      ));
+    });
+    return () => { cancelled = true; };
+  }, [reportType, resourceGantt, resourceGanttOptions.showAssignmentColumns, curveLabels, curveHeaderLabel]);
+
+  // De vertaalde kolomkoppen: ÉÉN object voor de meting hieronder en voor de render, zodat een
+  // kolom gemeten wordt op exact de kop die getekend wordt.
+  const tableHeaders = useMemo<TableHeaderLabels>(() => ({
+    wbs: t('tableHeaders.wbs'),
+    taskName: t('tableHeaders.taskName'),
+    unitsPerDay: t('tableHeaders.unitsPerDay'),
+    curve: t('tableHeaders.curve'),
+    start: t('tableHeaders.start'),
+    end: t('tableHeaders.end'),
+    duration: t('tableHeaders.duration'),
+    completion: t('tableHeaders.completion', { defaultValue: "Compl." }),
+  }), [t]);
+
+  const assignmentColumns = reportType === 'resourceGantt' && resourceGanttOptions.showAssignmentColumns;
+  // Dag-afkorting achter de duur (projectkop én Duur-cel), dezelfde als in de taakgrid. Eén waarde
+  // voor meting en render, zodat de gemeten Duur-kolom past op wat er getekend wordt.
+  const daySuffix = tCommon('duration.suffixDay');
+
+  // De zes overgebleven datakolommen (WBS, Duur, Start, Einde, Volt., Eenh./d) schalen mee met wat
+  // dít rapport toont, net als de naam- en curvekolom hierboven: een lange kop (Pools "Czas trwania")
+  // of diepe WBS-code loopt anders over de buurkolom, korte inhoud verspilt tijdlijnruimte.
+  // Meten gebeurt hier en niet in de printlaag — zelfde reden als bij de naamkolom:
+  // `measurePrintReport` (paginering) heeft geen canvas en zou anders een ándere tabelbreedte
+  // uitrekenen dan de raster- en vector-render.
+  const [columnWidths, setColumnWidths] = useState<TableColumnWidths | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    void ensureInterLoaded().then(() => {
+      if (cancelled) return;
+      const ctx = document.createElement('canvas').getContext('2d');
+      if (!ctx) { setColumnWidths(undefined); return; }
+      const rows = buildPrintRows(tasks, reportRows, assignmentColumns ? resourceGantt?.assignmentByRowKey : undefined);
+      setColumnWidths(measureTableColumnWidths(
+        rows,
+        {
+          showCompletion, assignmentColumns, dateNotation, numberLocale: i18n.language, tableHeaders,
+          labels: { daySuffix },
+          // Precies wat de render in de Duur-cel tekent (zelfde velden als `options` hieronder).
+          durationDisplay, durationSuffixes, calendar, calendars,
+        },
+        (text, font) => { ctx.font = font; return ctx.measureText(text).width; },
+      ));
+    });
+    return () => { cancelled = true; };
+  }, [tasks, reportRows, resourceGantt, assignmentColumns, showCompletion, dateNotation, i18n.language, tableHeaders,
+    daySuffix, durationDisplay, durationSuffixes, calendar, calendars]);
+
+  const milestoneRef = useRef<HTMLDivElement>(null);
+  const varianceRef = useRef<HTMLDivElement>(null);
+  const tableReportRef = useRef<HTMLDivElement>(null);
+  // null voor gantt/milestones/variance; anders de complete spec (titel, samenvatting, secties).
+  const tableSpec = useTableReportSpec(reportType, tableOptions);
+
+  // Gepagineerde Gantt-preview: dezelfde tegels als de PDF-export (gedeelde pagineer-engine).
+  const [previewPages, setPreviewPages] = useState<Map<number, PreviewPage>>(() => new Map());
+  const previewPagesRef = useRef<Map<number, PreviewPage>>(new Map());
+  const [previewLayout, setPreviewLayout] = useState<PreviewLayoutState>({ totalPages: 0, wPt: 1, hPt: 1.414 });
+  const previewViewportRef = useRef<HTMLDivElement>(null);
+  const previewJobRef = useRef<PreviewJob | null>(null);
+  const previewGenerationRef = useRef(0);
+  const [previewWidth, setPreviewWidth] = useState(0);
+  const previewCssWidth = Math.min(PREVIEW_FIT_WIDTH_PX, Math.max(1, previewWidth || PREVIEW_FIT_WIDTH_PX));
+
+  const replacePreviewPages = useCallback((next: Map<number, PreviewPage>) => {
+    previewPagesRef.current = next;
+    setPreviewPages(next);
+  }, []);
+
+  useEffect(() => () => {
+    previewJobRef.current?.release();
+    for (const page of previewPagesRef.current.values()) URL.revokeObjectURL(page.objectUrl);
+    previewPagesRef.current.clear();
+  }, []);
+
+  useEffect(() => {
+    const node = previewViewportRef.current;
+    if (!node) return;
+    let last = 0;
+    const observer = new ResizeObserver(entries => {
+      const width = Math.round(entries[0]?.contentRect.width ?? 0);
+      if (width > 0 && width !== last) { last = width; setPreviewWidth(width); }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const locale = i18n.language;
+  // Eén waardeobject is de contractgrens tussen UI, preview en export. Daardoor kan geen van beide
+  // renderpaden per ongeluk een losse oude optie of vertaalde kop uit een eerdere render vasthouden.
+  // Tot de meting klaar is (afkappen net uitgezet) houdt de preview de sliderbreedte; de meting
+  // vervangt die één render later. Bewust geen "leeg" tussenframe.
+  const effectiveNameColumnWidth = truncateTaskNames ? taskNameColumnWidth : (autoNameColumnWidth ?? taskNameColumnWidth);
+  const options = useMemo<PrintOptions>(() => ({
+    // Resourcediagram: het vinkje *Kritiek pad* stuurt alleen relatielijnen en legendaregel, en dit
+    // type tekent geen lijnen — vinkje verborgen, waarde geforceerd zodat de legenda de rode balken
+    // blijft verklaren (zie `reportTypeShowsCriticalToggle`).
+    showCritical: reportTypeShowsCriticalToggle(reportType) ? showCritical : true,
+    showFloat, showWeekends, showLegend,
+    // Resourcediagram: geen relatiepijlen (zie `reportTypeDrawsRelations`).
+    showDeps: reportTypeDrawsRelations(reportType) && showDeps,
+    showTaskNames, showCompletion, showBaselineOverlay, autoFit, customZoom,
+    paperSize, orientation, companyName,
+    taskNameColumnWidth: effectiveNameColumnWidth,
+    labels: {
+      // Resourcediagram zonder één toewijzing: zeg wat er ontbreekt, niet "geen taken" — tenzij er
+      // écht geen taken zijn, dan is "wijs resources toe" het verkeerde advies.
+      // Leeg door het venster (géén bladtaak meer in de periode) ⇒ wijs naar de periode; leeg terwijl
+      // er wél taken in de periode staan ⇒ die zijn niet toegewezen, en een andere periode helpt niet.
+      noTasks: reportType === 'resourceGantt' && tasks.length > 0
+        ? (resourceGantt && resourceGantt.counts.inPeriod === 0 && resourceGantt.counts.outsidePeriod > 0
+          ? t('resourceGantt.emptyPeriod')
+          : t('resourceGantt.empty'))
+        : t('noTasks'),
+      printed: t('printed'),
+      legend: {
+        criticalPath: t('legend.criticalPath'),
+        normal: t('legend.normal'),
+        nearCritical: tTask('table.isNearCritical'),
+        baseline: t('legend.baseline'),
+        milestone: t('legend.milestone'),
+        summary: t('legend.summary'),
+        float: t('showFloat'),
+        completion: t('showCompletion', { defaultValue: 'Completion' }),
+        relationStyle: t('legend.relationStyle'),
+      },
+      tableHeaders,
+      today: t('today', { defaultValue: "Today" }),
+      statusDate: t('statusDateLabel', { defaultValue: "Status date" }),
+      progressDate: t('progressDateLabel', { defaultValue: "Progress date" }),
+      projectStart: t('projectStart'),
+      projectEnd: t('projectEnd'),
+      projectDuration: t('projectDuration'),
+      daySuffix,
+    },
+    localizedMonths: getLocalizedMonths(locale),
+    localizedMonthsShort: getLocalizedMonthsShort(locale),
+    locale,
+    projectStartDate: project.startDate,
+    projectEndDate: project.endDate,
+    projectAuthor: project.author,
+    dateNotation,
+    // Dezelfde weekdefinitie als de Gantt op het scherm. Zonder dit veld drukt het rapport
+    // ISO-weeknummers op maandag af, ook als de gebruiker "week begint op zondag" heeft staan.
+    weekStartDay,
+    compressNonWorkdays: reportCompressNonWorkdays,
+    timelineColumns,
+    reportFontScale,
+    // Welke relaties BEPALEND (driving) zijn is een `CPMResult`-veld dat bewust niet
+    // gepersisteerd wordt; de printlaag kan het dus niet zelf afleiden en krijgt het hier door.
+    // Bij een cyclus (`cpmResult.error`) of vóór de eerste berekening blijft het `undefined`, en
+    // tekent het rapport alles neutraal doorgetrokken — dezelfde eerlijke terugval als het scherm.
+    drivingSequenceIds: cpmResult && !cpmResult.error ? cpmResult.drivingSequenceIds : undefined,
+    // Gedeelde balkkleurkeuze, statuslijn en de rijenbron (`reportRows`, zie hierboven).
+    barColorSelection,
+    activityCodeTypes: fieldCtx.activityCodeTypes,
+    customFieldDefs: fieldCtx.customFieldDefs,
+    taskTypeLabels: reportTaskTypeLabels,
+    barColorNoneLabel: tTask('structure.none'),
+    statusLine,
+    statusDate,
+    resources,
+    assignments,
+    baselineOverlay,
+    rows: reportRows,
+    // "Een blad per persoon": gedwongen paginaovergang vóór elke resourceband.
+    pageBreakBeforeGroups: reportType === 'resourceGantt' && resourceGanttOptions.pageBreakPerResource,
+    // De tijdas op de rapportageperiode (alleen resourcediagram, alleen buiten *Hele project*).
+    timeWindow: resourceGanttWindow,
+    // Eenheden/dag en curve van de band op de taak als tabelkolommen (alleen resourcediagram).
+    assignmentColumns,
+    rowAssignments: resourceGantt?.assignmentByRowKey,
+    curveLabels,
+    curveColumnWidth,
+    columnWidths,
+    numberLocale: i18n.language,
+    durationDisplay,
+    durationSuffixes,
+    calendars,
+    barColorsLegendLabels: {
+      criticalOutline: t('legend.criticalOutline', { defaultValue: 'Kritiek pad (rand)' }),
+      categoriesMore: (n: number) => t('legend.categoriesMore', { count: n }),
+    },
+  }), [showCritical, showFloat, showDeps, showWeekends, showLegend, showTaskNames, showCompletion, showBaselineOverlay,
+    autoFit, customZoom, paperSize, orientation, companyName, effectiveNameColumnWidth, t, locale, project.startDate,
+    project.endDate, project.author, dateNotation, weekStartDay, reportCompressNonWorkdays, timelineColumns, reportFontScale,
+    cpmResult, barColorSelection, fieldCtx.activityCodeTypes, fieldCtx.customFieldDefs,
+    reportTaskTypeLabels, tTask, daySuffix, statusLine, statusDate, resources,
+    assignments, baselineOverlay, reportRows, reportType, resourceGanttOptions.pageBreakPerResource, tasks.length,
+    resourceGantt, resourceGanttWindow, assignmentColumns, curveLabels, curveColumnWidth, columnWidths, tableHeaders, i18n.language,
+    durationDisplay, durationSuffixes, calendars]);
+  // `options` bevat afgeleide catalogus-/vertaalobjecten die bij een lokale preview-state-update
+  // opnieuw kunnen worden aangemaakt zonder dat hun inhoud wijzigde. De rastertaak gebruikt deze
+  // inhoudssignatuur als effectgrens: anders start `setPreviewPages` zelf opnieuw pagina 0 en 1.
+  // `rows` bevat volledige Task-objecten (één per toewijzing bij het resourcediagram): die worden
+  // hier tot hun structuur (sleutel, label, diepte) teruggebracht — de taakinhoud zelf zit al in de
+  // `tasks`-dependency van het preview-effect, dus dubbel serialiseren is puur verspilling.
+  const previewOptionsSignature = useMemo(() => JSON.stringify(options, (key, value) => (
+    key === 'rows' && Array.isArray(value)
+      ? (value as ViewRow[]).map(r => (r.kind === 'group'
+        ? `g:${r.key}:${r.label}:${r.count}:${r.depth}`
+        : `t:${r.rowKey}:${r.depth}:${r.dimmed ? 1 : 0}`))
+      // Een Map serialiseert als `{}`; de toewijzingskolommen moeten wél een herrender geven.
+      : key === 'rowAssignments' && value instanceof Map
+        ? [...(value as Map<string, unknown>).entries()]
+        : value
+  )), [options]);
+
+  // Eén generatie beheert één layout + één begrensde renderqueue. Een optiewijziging annuleert het
+  // nog niet begonnen werk van de vorige generatie, maar laat de bestaande pagina-afbeeldingen
+  // staan tot hun vervanger gereed is. Daardoor is er geen wit tussenframe.
+  useEffect(() => {
+    if (!reportSettingsHydrated) return;
+    const generation = ++previewGenerationRef.current;
+    const qualityName = PREVIEW_QUALITY_NAMES[previewQuality];
+    let debounceTimer: number | undefined;
+    let queueTimer: number | undefined;
+    let cancelled = false;
+    let processing = false;
+    const queue: number[] = [];
+    const queued = new Set<number>();
+    const rendered = new Set<number>();
+
+    const release = () => {
+      cancelled = true;
+      if (debounceTimer !== undefined) window.clearTimeout(debounceTimer);
+      if (queueTimer !== undefined) window.clearTimeout(queueTimer);
+      debounceTimer = undefined;
+      queueTimer = undefined;
+      queue.length = 0;
+      queued.clear();
+      if (previewJobRef.current?.release === release) previewJobRef.current = null;
+    };
+
+    if (!isGanttLike) {
+      for (const page of previewPagesRef.current.values()) URL.revokeObjectURL(page.objectUrl);
+      replacePreviewPages(new Map());
+      setPreviewLayout(previous => ({ ...previous, totalPages: 0 }));
+      // Geen Gantt-render ⇒ geen meting die de vlag zet; wis hem, anders blijft een oude "weggelaten"
+      // hangen tot de volgende Gantt-preview.
+      setAssignmentColumnsDropped(false);
+      return release;
+    }
+
+    const renderPreview = () => {
+      if (cancelled) return;
+      const {
+        width: logicalWidth, height: logicalHeight, tableWidth, headerHeight, footerHeight, breakOffsets, forcedBreakOffsets,
+        assignmentColumnsDropped: columnsDropped,
+      } = measurePrintReport(tasks, sequences, calendar, projectName, options);
+      setAssignmentColumnsDropped(!!columnsDropped);
+      const lowerPaper = options.paperSize.toLowerCase() as 'a4' | 'a3' | 'a2' | 'a1';
+      const cssPageWidth = previewCssWidth;
+      const previewLimits = computePreviewRasterLimits(
+        logicalWidth, logicalHeight, lowerPaper, options.orientation, cssPageWidth, window.devicePixelRatio,
+        PREVIEW_QUALITY_FACTORS[previewQuality],
+      );
+      const tileOptions = {
+        paperSize: lowerPaper,
+        orientation: options.orientation,
+        mode: options.autoFit ? 'fit-width' as const : 'actual' as const,
+        logicalWidth,
+        logicalHeight,
+        frozenColumnWidthPx: tableWidth,
+        // Kop herhalen per pagina: de hoogte komt uit de render zelf; 0 = niet
+        // herhalen. De raster-tak wil px, de vector-tak een boolean.
+        repeatHeaderHeightPx: repeatHeader ? headerHeight : 0,
+        repeatFooterHeightPx: repeatFooter ? footerHeight : 0,
+        timelineColumns: options.timelineColumns,
+        // Rij-bewuste paginering: preview en export delen dezelfde breekposities;
+        // het resourcediagram ook zijn gedwongen overgangen per resource.
+        breakOffsetsPx: breakOffsets,
+        forcedBreakOffsetsPx: forcedBreakOffsets,
+        supersample: previewLimits.pageSupersample,
+      };
+      const layout = computeTileLayout(tileOptions);
+      // De herhaalde voet wordt binnen één paginabreedte gelegd (meerdere kolommen ⇒ compleet op elk
+      // vel); zonder herhaling ligt de voet over de volle canvasbreedte.
+      const pageOptions: PrintOptions = { ...options, footerLayoutWidth: footerLayoutWidthFor(layout) };
+      const total = layout.rows * layout.cols;
+      const root = previewViewportRef.current;
+      const anchor = root ? capturePreviewScrollAnchor(root) : { index: 0, offset: 0, scrollTop: 0 };
+      const visibleIndices = root
+        ? [...root.querySelectorAll<HTMLElement>('[data-preview-page]')]
+          .filter(page => {
+            const pageRect = page.getBoundingClientRect();
+            const rootRect = root.getBoundingClientRect();
+            return pageRect.bottom > rootRect.top && pageRect.top < rootRect.bottom;
+          })
+          .map(page => Number(page.dataset.previewPage))
+          .filter(Number.isInteger)
+        : [anchor.index];
+
+      // De geometrie komt uit TileLayout en is dus bekend vóór er ook maar één PNG bestaat. Alle
+      // placeholders reserveren vanaf de eerste paint exact dezelfde liggende/staande papiermaat.
+      setPreviewLayout({ totalPages: total, wPt: layout.pageWidthPt, hPt: layout.pageHeightPt });
+      if (root) {
+        window.requestAnimationFrame(() => {
+          if (!cancelled) restorePreviewScrollAnchor(root, anchor, total);
+        });
+      }
+
+      const scheduleNext = () => {
+        if (cancelled || processing || queue.length === 0 || queueTimer !== undefined) return;
+        queueTimer = window.setTimeout(() => {
+          queueTimer = undefined;
+          void processNext();
+        }, 0);
+      };
+
+      const pruneCache = (pages: Map<number, PreviewPage>, focus: number): Map<number, PreviewPage> => {
+        const next = new Map(pages);
+        for (const [index, page] of next) {
+          if (index < total) continue;
+          URL.revokeObjectURL(page.objectUrl);
+          next.delete(index);
+        }
+        while (next.size > previewLimits.maxPages) {
+          const activeRoot = previewViewportRef.current;
+          const activeRootRect = activeRoot?.getBoundingClientRect();
+          const visible = new Set(activeRoot && activeRootRect
+            ? [...activeRoot.querySelectorAll<HTMLElement>('[data-preview-page]')]
+              .filter(page => {
+                const rect = page.getBoundingClientRect();
+                return rect.bottom > activeRootRect.top && rect.top < activeRootRect.bottom;
+              })
+              .map(page => Number(page.dataset.previewPage))
+              .filter(Number.isInteger)
+            : []);
+          // Prefetches buiten beeld mogen nooit een pagina wegdrukken die de gebruiker nu leest.
+          // Als de viewport zelf meer pagina's snijdt dan het budget aankan, blijft de net gevulde
+          // focuspagina staan en valt de verst verwijderde buur terug op zijn vaste placeholder.
+          const offscreen = [...next.keys()].filter(index => !visible.has(index));
+          const candidates = offscreen.length > 0
+            ? offscreen
+            : [...next.keys()].filter(index => index !== focus);
+          const anchorIndex = activeRoot ? capturePreviewScrollAnchor(activeRoot).index : focus;
+          const victim = candidates
+            .sort((a, b) => Math.abs(b - anchorIndex) - Math.abs(a - anchorIndex))[0];
+          if (victim === undefined) break;
+          const page = next.get(victim);
+          if (page) URL.revokeObjectURL(page.objectUrl);
+          next.delete(victim);
+          rendered.delete(victim);
+        }
+        return next;
+      };
+
+      const processNext = async () => {
+        if (cancelled || generation !== previewGenerationRef.current || processing) return;
+        const index = queue.shift();
+        if (index === undefined) return;
+        queued.delete(index);
+        if (rendered.has(index)) { scheduleNext(); return; }
+        processing = true;
+        const canvas = document.createElement('canvas');
+        let pendingObjectUrl: string | undefined;
+        try {
+          renderPrintPreviewPage(canvas, tasks, sequences, calendar, projectName, pageOptions, {
+            layout,
+            pageIndex: index,
+            rasterWidth: previewLimits.pageRasterWidth,
+            rasterHeight: previewLimits.pageRasterHeight,
+            supersample: previewLimits.pageSupersample,
+          });
+          const blob = await canvasToPngBlob(canvas);
+          if (cancelled || generation !== previewGenerationRef.current) return;
+          const objectUrl = URL.createObjectURL(blob);
+          pendingObjectUrl = objectUrl;
+          if (cancelled || generation !== previewGenerationRef.current) {
+            return;
+          }
+          // Decodeer vóór de React-swap. Alleen `naturalWidth > 0` zegt nog niet dat de browser het
+          // beeld al kan painten; zonder deze stap is bij kwaliteitswissels kort een zwart/wit frame
+          // zichtbaar terwijl dezelfde Blob alsnog wordt gedecodeerd.
+          const decoded = new Image();
+          decoded.src = objectUrl;
+          await decoded.decode();
+          if (cancelled || generation !== previewGenerationRef.current) return;
+          rendered.add(index);
+          const next = new Map(previewPagesRef.current);
+          const previous = next.get(index);
+          next.set(index, {
+            objectUrl,
+            generation,
+            quality: qualityName,
+          });
+          replacePreviewPages(pruneCache(next, index));
+          if (previous) {
+            // Laat React eerst het reeds gedecodeerde nieuwe beeld plaatsen; daarna kan de oude URL
+            // weg zonder dat een paint tussen beide bronnen een lege pagina ziet.
+            window.requestAnimationFrame(() => URL.revokeObjectURL(previous.objectUrl));
+          }
+          pendingObjectUrl = undefined;
+        } catch (error) {
+          if (!cancelled) console.warn('Rapportpreviewpagina kon niet worden gerasterd', error);
+        } finally {
+          if (pendingObjectUrl) URL.revokeObjectURL(pendingObjectUrl);
+          canvas.width = 0;
+          canvas.height = 0;
+          processing = false;
+          scheduleNext();
+        }
+      };
+
+      const renderPage = (index: number, priority = false) => {
+        if (cancelled || generation !== previewGenerationRef.current
+          || !Number.isInteger(index) || index < 0 || index >= total
+          || rendered.has(index) || queued.has(index)) return;
+        queued.add(index);
+        if (priority) queue.unshift(index);
+        else queue.push(index);
+        scheduleNext();
+      };
+
+      previewJobRef.current = { renderPage, release };
+      // De pagina die de gebruiker al las wint altijd. Een nabijpagina volgt pas in een volgende
+      // eventlooptik, zodat openen of een optieserie nooit meerdere zware renders synchroon stapelt.
+      for (const index of visibleIndices) renderPage(index, true);
+      renderPage(anchor.index, true);
+      if (anchor.index + 1 < total) renderPage(anchor.index + 1);
+    };
+    // Wacht op het gevendorde Inter-font (family 'InterPDF') vóór de eerste render, zodat
+    // measureText/afkapping deterministisch is. ensureInterLoaded is idempotent; de
+    // cancelled-guard voorkomt dat een verouderde async-render na deps-wijziging/unmount nog toepast.
+    void ensureInterLoaded().then(() => {
+      if (!cancelled) debounceTimer = window.setTimeout(renderPreview, 100);
+    });
+    return release;
+    // `options` bevat onder meer catalogusobjecten die ondanks gelijke inhoud per render een nieuwe
+    // identiteit kunnen krijgen. De inhoudssignatuur hierboven is bewust de effectgrens; `options`
+    // toevoegen zou iedere preview-state-update opnieuw laten rasteren.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportSettingsHydrated, isGanttLike, tasks, sequences, calendar, projectName, previewOptionsSignature,
+    repeatHeader, repeatFooter, previewCssWidth, previewQuality, replacePreviewPages]);
+
+  // Eén stabiele observer per layout. Een nieuwe afbeelding verandert zijn dependencies niet en kan
+  // dus geen observer-rebuild/ping-pong veroorzaken. De queue dedupliceert callbacks.
+  useEffect(() => {
+    const root = previewViewportRef.current;
+    if (!root || !isGanttLike || previewLayout.totalPages === 0) return;
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const index = Number((entry.target as HTMLElement).dataset.previewPage);
+        if (Number.isInteger(index)) previewJobRef.current?.renderPage(index, true);
+      }
+    }, { root, rootMargin: '700px 0px' });
+    root.querySelectorAll<HTMLElement>('[data-preview-page]').forEach(node => observer.observe(node));
+    return () => observer.disconnect();
+  }, [isGanttLike, previewLayout.totalPages, previewLayout.wPt, previewLayout.hPt]);
+
+  const milestoneRows = useMilestoneRows();
+  const varianceResult = useVarianceResult();
+
+  /**
+   * Gedeelde PDF-schrijver via `saveBytesDialog`, het enige byte-schrijfpad van de app — Tauri:
+   * save-dialoog + `writeFile`; web: FSA-picker met download-terugval. Bewust GEEN
+   * `viaDownload`-melding.
+   *
+   * De try/catch is niet optioneel. `saveBytesDialog` geeft
+   * een geannuleerde dialoog terug als `null`, maar een ECHTE fout (schijf vol, bestand
+   * vergrendeld, geweigerd bestandstype) gooit hij bewust door — zie `saveDataDialogWeb`. Deze
+   * aanroeper hangt aan een `void runExport()`, dus zonder vangnet wordt dat een unhandled
+   * rejection: de gebruiker drukt op Exporteren en er gebeurt zichtbaar niets. Melden gaat via het
+   * ene meldingskanaal met dezelfde sleutel die `fileSlice` voor een mislukte schrijfactie
+   * gebruikt.
+   */
+  const writePdf = useCallback(async (pdfBytes: Uint8Array, defaultName: string) => {
+    try {
+      await saveBytesDialog(
+        defaultName, pdfBytes,
+        [{ name: 'PDF Document', extensions: ['pdf'] }],
+        { mime: 'application/pdf' },
+      );
+    } catch (err) {
+      useAppStore.getState().notify({
+        severity: 'error',
+        messageKey: 'notifications.saveFailed',
+        detail: (err as Error).message,
+      });
+    }
+  }, []);
+
+  /**
+   * De eigenlijke export — draait ALTIJD op de closure-waarden van de huidige render (`tasks`,
+   * `options`, `tableSpec`). Daarom mag hij pas ná een herberekening worden aangeroepen wanneer die
+   * een re-render heeft opgeleverd; zie `handleExportPDF` en het effect eronder.
+   */
+  const runExport = useCallback(async () => {
+    // Bij een cyclus afbreken zónder te exporteren. De cpmResult.error-check staat hier los van
+    // de stale-vlag omdat runCPM `scheduleStale` vóór de solve al op false zet; een guard op alleen
+    // die vlag zou stil met oude task.time-waarden exporteren.
+    const cpm = useAppStore.getState().cpmResult;
+    if (cpm?.error) {
+      // Zichtbaar maken is hier NIET optioneel: op het Rapport-tabblad is `GanttCanvas` niet
+      // gemonteerd, dus de bestaande cyclus-toast vuurt hier niet en de knop zou anders gewoon
+      // stil niets doen. De reden komt als code +
+      // parameters uit de solver en wordt bij het tonen vertaald (`scheduleErrorText`).
+      setExportError({ error: cpm.error, errorInfo: cpm.errorInfo });
+      return;
+    }
+    setExportError(null);
+
+    const lowerPaper = paperSize.toLowerCase() as 'a4' | 'a3' | 'a2' | 'a1';
+    // Basisrichting van de export-taal: stuurt de bidi in het complexe RTL-tekst-pad van de vector-export.
+    const exportBaseDir: 'ltr' | 'rtl' =
+      RTL_LOCALES.includes((options.locale ?? '') as Locale) ? 'rtl' : 'ltr';
+
+    // Zorg dat het gevendorde Inter-font geladen is vóór de offscreen render, zodat ook de
+    // raster-export het deterministische Inter gebruikt (measureText-pariteit met de preview).
+    await ensureInterLoaded();
+
+    if (isGanttLike) {
+      const mode = autoFit ? 'fit-width' : 'actual';
+
+      // De raster-tak (JPEG-tegels) als betrouwbare terugval: de vector-tak valt erop terug bij een
+      // fout (bv. een glyph buiten Inter). Render offscreen op een vaste hoge schaal, onafhankelijk van het
+      // scherm van de exporterende gebruiker (window.devicePixelRatio, vaak 1x). Eerste render (schaal
+      // 1) levert de LOGISCHE maten + naam-kolombreedte; de tweede render het high-res raster.
+      const exportRaster = (): Uint8Array => {
+        const exportCanvas = document.createElement('canvas');
+        const {
+          width: logicalWidth, height: logicalHeight, tableWidth, headerHeight, footerHeight, breakOffsets, forcedBreakOffsets,
+        } = renderPrintCanvas(exportCanvas, tasks, sequences, calendar, projectName, options, 1);
+        const rasterTile: PaginateOptions = {
+          paperSize: lowerPaper, orientation, mode,
+          logicalWidth, logicalHeight, frozenColumnWidthPx: tableWidth,
+          // Zelfde kop-/voetherhaling (px) en tijdlijn-spreiding als de preview en de vector-tak,
+          // zodat de raster-terugval WYSIWYG gelijk is aan beide.
+          repeatHeaderHeightPx: repeatHeader ? headerHeight : 0,
+          repeatFooterHeightPx: repeatFooter ? footerHeight : 0,
+          timelineColumns,
+          breakOffsetsPx: breakOffsets,
+          forcedBreakOffsetsPx: forcedBreakOffsets,
+        };
+        // De high-res render legt de voet binnen één paginabreedte (zie `footerLayoutWidth`) — alleen
+        // wanneer hij herhaald wordt.
+        const exportScale = computeHighResScale(logicalWidth, logicalHeight);
+        renderPrintCanvas(exportCanvas, tasks, sequences, calendar, projectName,
+          { ...options, footerLayoutWidth: footerLayoutWidthFor(computeTileLayout(rasterTile)) }, exportScale);
+        return paginateCanvasToPdfBytes(exportCanvas, rasterTile);
+      };
+
+      // Vector-tak: échte vector-PDF met selecteerbare tekst + ingebedde Inter. Bij een fout
+      // valt de export terug op raster zodat hij nooit stukloopt. Lazy import houdt pdf-lib/fontkit
+      // uit de hoofdbundle.
+      let pdfBytes: Uint8Array;
+      try {
+        const [{ paginateVectorToPdfBytes }, regular, bold, arabicRegular, arabicBold] = await Promise.all([
+          import('@/services/print/paginateVector'),
+          getInterFontBytes(400),
+          getInterFontBytes(700),
+          getArabicFontBytes(400),
+          getArabicFontBytes(700),
+        ]);
+        pdfBytes = await paginateVectorToPdfBytes(
+          (make, footerLayoutWidth) => renderReport(make, tasks, sequences, calendar, projectName, { ...options, footerLayoutWidth }),
+          {
+            paperSize: lowerPaper,
+            orientation,
+            mode,
+            baseDir: exportBaseDir,
+            // Kop per pagina herhalen + tijdlijn over N pagina's; voet per pagina.
+            repeatHeader,
+            repeatFooter,
+            timelineColumns,
+          },
+          { regular, bold },
+          { regular: arabicRegular, bold: arabicBold },
+        );
+      } catch (err) {
+        console.warn('[ReportPanel] Vector-PDF-export mislukt, terugval op raster:', describeVectorFallback(err));
+        pdfBytes = exportRaster();
+      }
+      await writePdf(pdfBytes, `${fileBase}-${reportType === 'resourceGantt' ? 'resourcediagram' : 'planning'}.pdf`);
+      return;
+    }
+
+    // Mijlpalen / afwijkingen: vector-tabel-export — dezelfde kolomspec als de levende
+    // DOM-tabel (MilestoneReport/VarianceReport), getekend via het renderReport-patroon en
+    // gepagineerd door dezelfde paginateVectorToPdfBytes als de Gantt-tak hierboven. Bij een fout
+    // valt de export terug op het BESTAANDE DOM-screenshot-pad (modern-screenshot), zodat de export
+    // nooit stukloopt.
+    const suffix = tableSpec ? tableSpec.fileSuffix : reportType === 'milestones' ? 'mijlpalen' : 'afwijkingen';
+
+    const exportTableRaster = async (): Promise<Uint8Array> => {
+      const node = tableSpec ? tableReportRef.current : reportType === 'milestones' ? milestoneRef.current : varianceRef.current;
+      if (!node) throw new Error('exportTableRaster: DOM-node niet beschikbaar');
+
+      // domToCanvas met scale=s levert een canvas van node.offsetWidth*s × node.offsetHeight*s
+      // device-px; de LOGISCHE maat blijft node.offsetWidth/offsetHeight, dus srcScale =
+      // canvas.width/logicalWidth = s.
+      const pixelRatio = 2;
+      const { domToCanvas } = await import('modern-screenshot');
+      // Een PDF is een wit-papier-artefact. De rapporttabellen kleuren hun tekst via de thema-
+      // CSS-variabelen; in een donker thema is dat lichte tekst, die op de geforceerde witte
+      // achtergrond onleesbaar wordt. Forceer daarom kort het lichte thema tijdens de capture
+      // (zodat tekst donker-op-wit uitvalt) en herstel daarna het thema van de gebruiker.
+      const rootEl = document.documentElement;
+      const prevTheme = rootEl.getAttribute('data-theme');
+      rootEl.setAttribute('data-theme', 'light');
+      const shot = await domToCanvas(node, { scale: pixelRatio, backgroundColor: '#ffffff' })
+        .finally(() => {
+          if (prevTheme !== null) rootEl.setAttribute('data-theme', prevTheme);
+          else rootEl.removeAttribute('data-theme');
+        });
+
+      return paginateCanvasToPdfBytes(shot, {
+        paperSize: lowerPaper,
+        orientation,
+        mode: 'fit-width',
+        logicalWidth: node.offsetWidth,
+        logicalHeight: node.offsetHeight,
+        frozenColumnWidthPx: 0,
+      });
+    };
+
+    let tablePdfBytes: Uint8Array;
+    try {
+      const [{ paginateVectorToPdfBytes }, { makeTableRenderReport, makeSectionedRenderReport }, regular, bold, arabicRegular, arabicBold] = await Promise.all([
+        import('@/services/print/paginateVector'),
+        import('@/services/pdf/pdfTable'),
+        getInterFontBytes(400),
+        getInterFontBytes(700),
+        getArabicFontBytes(400),
+        getArabicFontBytes(700),
+      ]);
+
+      // Kolomkoppen worden gemeten zoals de DOM-tabel zichzelf opmeet ("Duration (wd)" past in geen
+      // enkele taal in een vaste 70 px). De meting loopt
+      // op het geladen Inter — hetzelfde font dat de PDF inbedt — zodat wat hier past ook daar past.
+      await ensureInterLoaded();
+      const headerCtx = document.createElement('canvas').getContext('2d');
+      const measureHeader = headerCtx
+        ? (text: string, font: string) => { headerCtx.font = font; return headerCtx.measureText(text).width; }
+        : undefined;
+
+      // Twee losse takken i.p.v. één ternaire spec: `makeTableRenderReport<Row>` is generiek over de
+      // rijtype, en een samengevoegde union-spec zou TS niet meer aan één Row-type kunnen binden.
+      if (tableSpec) {
+        // Tabelrapporten: dezelfde kolomspec als de DOM-weergave, gesectioneerd.
+        tablePdfBytes = await paginateVectorToPdfBytes(
+          makeSectionedRenderReport(toPdfSpec(tableSpec), measureHeader),
+          { paperSize: lowerPaper, orientation, mode: 'fit-width', baseDir: exportBaseDir },
+          { regular, bold },
+          { regular: arabicRegular, bold: arabicBold },
+        );
+      } else if (reportType === 'milestones') {
+        tablePdfBytes = await paginateVectorToPdfBytes(
+          makeTableRenderReport({
+            title: t('milestoneReport.title'),
+            columns: buildMilestoneColumns(t, dd),
+            rows: milestoneRows,
+            emptyText: t('milestoneReport.empty'),
+          }, measureHeader),
+          { paperSize: lowerPaper, orientation, mode: 'fit-width', baseDir: exportBaseDir },
+          { regular, bold },
+          { regular: arabicRegular, bold: arabicBold },
+        );
+      } else {
+        tablePdfBytes = await paginateVectorToPdfBytes(
+          makeTableRenderReport({
+            title: t('variance.title'),
+            columns: buildVarianceColumns(t, dd, locale),
+            rows: varianceResult.rows,
+            emptyText: t('variance.noBaseline'),
+          }, measureHeader),
+          { paperSize: lowerPaper, orientation, mode: 'fit-width', baseDir: exportBaseDir },
+          { regular, bold },
+          { regular: arabicRegular, bold: arabicBold },
+        );
+      }
+    } catch (err) {
+      console.warn('[ReportPanel] Vector-tabel-PDF-export mislukt, terugval op DOM-screenshot:', describeVectorFallback(err));
+      tablePdfBytes = await exportTableRaster();
+    }
+
+    await writePdf(tablePdfBytes, `${fileBase}-${suffix}.pdf`);
+  }, [reportType, isGanttLike, projectName, fileBase, tasks, sequences, calendar, options, paperSize, orientation,
+    autoFit, repeatHeader, repeatFooter, timelineColumns, writePdf, t, dd, locale, milestoneRows, varianceResult, tableSpec]);
+
+  // Guard: een stale planning eerst doorrekenen. NIET meteen daarna exporteren — `runExport`
+  // leest `tasks`/`options`/`tableSpec` uit de closure van de HUIDIGE render, en die kent de
+  // herberekening nog niet (de PDF zou achterlopen op het scherm en de "planning
+  // gewijzigd"-melding dragen). De export wordt daarom uitgesteld tot het effect hieronder
+  // ná de re-render met de verse waarden vuurt.
+  const exportPendingRef = useRef(false);
+  /**
+   * `runExport` wordt vanaf twee plekken los gestart (`void`), dus een afwijzing die het `writePdf`
+   * -vangnet niet dekt — het opbouwen van de PDF zelf, een glyph die `pdf-lib` weigert — zou een
+   * unhandled rejection zijn. Zelfde kanaal, zelfde reden als in `writePdf`.
+   */
+  const startExport = useCallback(() => {
+    runExport().catch((err: unknown) => {
+      useAppStore.getState().notify({
+        severity: 'error',
+        messageKey: 'notifications.saveFailed',
+        detail: (err as Error).message,
+      });
+    });
+  }, [runExport]);
+  const handleExportPDF = useCallback(() => {
+    const st = useAppStore.getState();
+    if (st.scheduleStale) {
+      exportPendingRef.current = true;
+      st.runCPM();
+      return;
+    }
+    startExport();
+  }, [startExport]);
+  useEffect(() => {
+    if (!exportPendingRef.current || scheduleStale) return;
+    exportPendingRef.current = false;
+    startExport();
+  }, [scheduleStale, startExport]);
+
+  // Kritieke activiteiten (bladtaken): dezelfde teller als MCP get_project_info en de statusbalk.
+  const criticalCount = countCriticalActivities(tasks);
+  const leafCount = tasks.filter(isLeafTask).length;
+
+  return (
+    <div ref={containerRef} className="flex-1 flex overflow-hidden bg-surface" style={{ position: 'relative' }}>
+      {/* Sleepgrijpzone — zelfde patroon als de rechterpaneel-splitter in App.tsx en de tabel/
+          chart-splitter in GanttCanvas: onzichtbare grijpzone over de rand (geen aparte balk,
+          geen kleur, geen ruimtebeslag). Bewust een kind van de BUITENSTE container en niet van de
+          instellingenkolom: die kolom scrollt (`overflow-y-auto`), en een zone die 4px buiten haar
+          rand steekt telt daar mee als scrollbreedte (horizontale scrollbar).
+          `insetInlineStart` (i.p.v. `left`) houdt 'm in RTL (ar/fa) aan dezelfde
+          logische rand, want de instellingenkolom is in beide richtingen het eerste flex-kind. */}
+      <div
+        onMouseDown={e => { e.preventDefault(); settingsSplitter.start(); }}
+        style={{
+          position: 'absolute',
+          insetInlineStart: settingsWidth - 4,
+          top: 0,
+          bottom: 0,
+          width: 8,
+          cursor: 'col-resize',
+          zIndex: 10,
+        }}
+        data-ops-report-settings-resize
+      />
+      {/* Left: Settings panel — breedte sleepbaar. `min-w-0` op de kolom zelf
+          voorkomt dat ZIJN eigen rijen de kolom breder duwen dan `settingsWidth`. De scheidingslijn
+          is `borderInlineEnd`, zodat hij ook in ar/fa (kolom rechts) op de grens met de preview
+          staat en niet aan de buitenkant. */}
+      <div
+        className="flex-shrink-0 min-w-0 overflow-y-auto p-3 flex flex-col gap-3"
+        style={{ width: settingsWidth, borderInlineEnd: '1px solid var(--theme-border)' }}
+      >
+        <span
+          className="text-small leading-4 font-bold uppercase"
+          style={{ fontFamily: 'var(--font-heading)', letterSpacing: '0.08em', color: 'var(--theme-text-muted)' }}
+        >
+          {t('title')}
+        </span>
+
+        {/* Rapporttype */}
+        <Select
+          className="w-full min-w-0"
+          aria-label={t('reportType.label')}
+          value={reportType}
+          onChange={v => setReportType(v as ReportType)}
+          options={[
+            { value: 'gantt', label: t('reportType.gantt') },
+            { value: 'resourceGantt', label: t('reportType.resourceGantt') },
+            { value: 'milestones', label: t('reportType.milestones') },
+            { value: 'variance', label: t('reportType.variance') },
+            ...TABLE_REPORT_TYPES.map(type => ({ value: type, label: t(`reportType.${type}`) })),
+          ]}
+        />
+
+        {/* Project summary */}
+        <ReportOptionsCard title={t('summary')}>
+          <div className="grid grid-cols-2 gap-1 text-small leading-4" data-ops-report-summary-block>
+            {tableSpec ? (
+              tableSpec.summary.map((item, i) => (
+                <span key={i} className="contents">
+                  <span className="text-text-secondary">{item.label}</span>
+                  <span style={{ color: item.color, fontWeight: item.color ? 700 : undefined }}>{item.value}</span>
+                </span>
+              ))
+            ) : resourceGantt ? (
+              <>
+                <span className="text-text-secondary">{t('resourceGantt.resources')}</span>
+                <span data-ops-resource-gantt-count="resources">{resourceGantt.counts.resources}</span>
+                <span className="text-text-secondary">{t('resourceGantt.assignments')}</span>
+                <span data-ops-resource-gantt-count="assignments">{resourceGantt.counts.assignments}</span>
+                <span className="text-text-secondary">{t('resourceGantt.unassigned')}</span>
+                <span data-ops-resource-gantt-count="unassigned">{resourceGantt.counts.unassignedTasks}</span>
+                {resourceGanttWindow && (
+                  <>
+                    <span className="text-text-secondary">{t('resourceGantt.outsidePeriod')}</span>
+                    <span data-ops-resource-gantt-count="outsidePeriod">{resourceGantt.counts.outsidePeriod}</span>
+                  </>
+                )}
+                {assignmentColumnsDropped && resourceGanttOptions.showAssignmentColumns && (
+                  <span className="col-span-2 text-text-secondary" data-ops-resource-gantt-note="columnsDropped">
+                    {t('resourceGantt.columnsDropped')}
+                  </span>
+                )}
+              </>
+            ) : reportType === 'gantt' ? (
+              <>
+                <span className="text-text-secondary">{t('tasks')}</span>
+                <span>{tasks.length}</span>
+                <span className="text-text-secondary">{t('leafTasks')}</span>
+                <span>{leafCount}</span>
+                <span className="text-text-secondary">{t('critical')}</span>
+                <span className="text-red-400 font-bold">{criticalCount}</span>
+                <span className="text-text-secondary">{t('relations')}</span>
+                <span>{sequences.length}</span>
+              </>
+            ) : reportType === 'milestones' ? (
+              <>
+                <span className="text-text-secondary">{t('milestoneReport.total')}</span>
+                <span>{milestoneRows.length}</span>
+                <span className="text-text-secondary">{t('milestoneReport.mandatoryCount')}</span>
+                <span>{milestoneRows.filter(r => r.mandatory).length}</span>
+                <span className="text-text-secondary">{t('milestoneReport.lateCount')}</span>
+                <span className="text-red-400 font-bold">{milestoneRows.filter(r => r.status === 'late').length}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-text-secondary">{t('variance.total')}</span>
+                <span>{varianceResult.rows.length}</span>
+                <span className="text-text-secondary">{t('variance.lateCount')}</span>
+                <span className="text-red-400 font-bold">{varianceResult.rows.filter(r => r.status === 'late').length}</span>
+                <span className="text-text-secondary">{t('variance.earlyCount')}</span>
+                <span>{varianceResult.rows.filter(r => r.status === 'early').length}</span>
+                {varianceResult.projectEndDelta !== undefined && (
+                  <>
+                    <span className="text-text-secondary col-span-2 mt-1" style={{ color: varianceResult.projectEndDelta > 0 ? '#DC2626' : 'var(--theme-text-dim)' }}>
+                      {t('variance.projectEndDelta', { delta: varianceResult.projectEndDelta > 0 ? `+${varianceResult.projectEndDelta}` : `${varianceResult.projectEndDelta}` })}
+                    </span>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </ReportOptionsCard>
+
+        {/* Report options — gedeeld door de Gantt-afdruk en het resourcediagram. */}
+        {isGanttLike && (
+        <ReportOptionsCard title={t('settings')}>
+          <div className="flex flex-col gap-2 text-small leading-4">
+            {/* Company name */}
+            <ReportFieldRow label={t('company', { defaultValue: "Company:" })}>
+              <input
+                type="text"
+                value={companyName}
+                onChange={e => setCompanyName(e.target.value)}
+                placeholder={t('companyPlaceholder', { defaultValue: "Company name" })}
+                className="input flex-1 min-w-0 !text-small !leading-4 !px-2 !py-1"
+              />
+            </ReportFieldRow>
+
+            {/* Author (read-only from project) */}
+            <ReportFieldRow label={t('author', { defaultValue: "Author:" })}>
+              <span className="flex-1 min-w-0 truncate px-2 py-1 text-small leading-4 text-text-secondary">{project.author || '-'}</span>
+            </ReportFieldRow>
+
+            <ReportFieldRow label={t('paper')}>
+              <PaperSizeSelect className="flex-1 min-w-0" value={paperSize} onChange={setPaperSize} />
+            </ReportFieldRow>
+            <ReportFieldRow label={t('orientation')}>
+              <OrientationSelect className="flex-1 min-w-0" value={orientation} onChange={setOrientation} />
+            </ReportFieldRow>
+
+            {/* Lettergrootte van het rapport. Relatief bedoeld: bij een grotere
+                letter groeien tekst, rijen en tabel op het vel en levert de tijdlijn breedte in. */}
+            <ReportFieldRow label={t('reportFontScaleLabel')}>
+              <Select
+                className="flex-1 min-w-0"
+                aria-label={t('reportFontScaleLabel')}
+                value={String(reportFontScale)}
+                onChange={v => setReportFontScale(Number(v))}
+                options={REPORT_FONT_SCALES.map(n => ({ value: String(n), label: `${n}%` }))}
+              />
+            </ReportFieldRow>
+
+            {/* Eén app-globale balkkleurkeuze voor View en Report. De veldlijst is exact Group. */}
+            <ReportFieldRow label={t('barColorModeLabel')}>
+              <Select
+                className="flex-1 min-w-0"
+                aria-label={t('barColorModeLabel')}
+                value={barColorSelection.mode}
+                onChange={value => {
+                  if (value === 'critical' || value === 'auto') {
+                    const next = { mode: value } as const;
+                    setOverlays({ barColors: next });
+                    return;
+                  }
+                  const field = barColorControl.effective.mode === 'category'
+                    ? barColorControl.effective.field
+                    : barColorFields[0]?.field;
+                  if (!field) return;
+                  const next = { mode: 'category', field } as const;
+                  setOverlays({ barColors: next });
+                }}
+                options={[
+                  { value: 'critical', label: t('barColorMode_critical') },
+                  { value: 'auto', label: t('barColorMode_auto') },
+                  { value: 'category', label: t('barColorMode_category') },
+                ]}
+              />
+            </ReportFieldRow>
+            {barColorSelection.mode === 'category' && barColorControl.effective.mode === 'category' && (
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-20 flex-shrink-0" aria-hidden="true" />
+                <Select
+                  className="flex-1 min-w-0"
+                  aria-label={t('barColorFieldLabel')}
+                  value={encodeFieldRef(barColorControl.effective.field)}
+                  onChange={value => {
+                    const next = { mode: 'category', field: decodeFieldRef(value) } as const;
+                    setOverlays({ barColors: next });
+                  }}
+                  options={barColorFields.map(option => ({
+                    value: encodeFieldRef(option.field),
+                    label: option.label,
+                  }))}
+                />
+              </div>
+            )}
+            {barColorControl.missingField && (
+              <p className="!text-small text-text-muted pl-[88px]" role="status">
+                {t('barColorMissingField')}
+              </p>
+            )}
+
+            {/* Statuslijn: letterlijk drie opties. Zonder statusdatum in het
+                project tekent geen van beide iets — de hint maakt dat zichtbaar i.p.v. stil. */}
+            <ReportFieldRow label={t('statusLineLabel')}>
+              <Select
+                className="flex-1 min-w-0"
+                aria-label={t('statusLineLabel')}
+                value={statusLine}
+                onChange={v => setStatusLine(v as typeof statusLine)}
+                options={[
+                  { value: 'none', label: t('statusLine_none') },
+                  { value: 'statusDate', label: t('statusLine_statusDate') },
+                  { value: 'progress', label: t('statusLine_progress') },
+                ]}
+              />
+            </ReportFieldRow>
+            {statusLine !== 'none' && !statusDate && (
+              <p className="!text-body text-amber-600 mt-0.5">{t('statusLineHint')}</p>
+            )}
+
+            {/* Volg weergave: export = wat het scherm toont (filter, groepering,
+                sortering, inklapstatus). Uit (default) = de volledige takenboom. Niet bij
+                het resourcediagram: daar komen de rijen per definitie niet van het scherm. */}
+            {reportType === 'gantt' && (
+              <ReportCheckRow spaced checked={followView} onChange={setFollowView} label={t('followView')} />
+            )}
+
+            {/* Resourcediagram: een blad per resource, en de taken zonder resource erbij. */}
+            {reportType === 'resourceGantt' && (
+              <>
+                {RESOURCE_GANTT_TOGGLES.map((key, i) => (
+                  <ReportCheckRow
+                    key={key}
+                    spaced={i === 0}
+                    checked={resourceGanttOptions[key]}
+                    onChange={checked => patchResourceGanttOptions({ [key]: checked })}
+                    label={t(`resourceGantt.${key}`)}
+                    inputProps={{ 'data-ops-report-option': key }}
+                  />
+                ))}
+                {/* De gedeelde rapportageperiode als tijdvenster van dit rapport. */}
+                <ReportingPeriodField
+                  id="report-opt-resourceGanttPeriod"
+                  value={resourceGanttOptions.period}
+                  onChange={next => patchResourceGanttOptions({ period: next })}
+                  dataKey="resourceGanttPeriod"
+                />
+              </>
+            )}
+
+            {/* Auto-fit checkbox */}
+            <ReportCheckRow
+              spaced
+              checked={autoFit}
+              onChange={setAutoFit}
+              label={t('autoFit', { defaultValue: "Auto-fit to paper" })}
+            />
+
+            {/* Custom zoom slider (only when auto-fit is off) */}
+            {!autoFit && (
+              <ReportFieldRow label={t('zoom', { defaultValue: 'Zoom:' })}>
+                <input
+                  type="range"
+                  min={REPORT_MIN_ZOOM}
+                  max={REPORT_MAX_ZOOM}
+                  value={customZoom}
+                  onChange={e => setCustomZoom(Number(e.target.value))}
+                  className="flex-1 min-w-0"
+                />
+                <span className="w-8 flex-shrink-0 text-right">{customZoom}</span>
+              </ReportFieldRow>
+            )}
+
+            {/* Tijdlijn over N paginabreedtes. Alleen zinvol in fit-width-modus;
+                in 'actual'-modus (autoFit uit) tegelt de export sowieso al horizontaal, daarom
+                `disabled` — met een hint die dat uitlegt, zichtbaar zodra de keuze uitgeschakeld is. */}
+            <ReportFieldRow label={t('timelineColumnsLabel')}>
+              <Select
+                className="flex-1 min-w-0"
+                aria-label={t('timelineColumnsLabel')}
+                value={String(timelineColumns)}
+                onChange={v => setTimelineColumns(Number(v))}
+                disabled={!autoFit}
+                options={[1, 2, 3, 4, 5, 6, 7, 8].map(n => ({
+                  value: String(n),
+                  label: t('timelineColumns', { count: n }),
+                }))}
+              />
+            </ReportFieldRow>
+            {!autoFit && (
+              <span className="text-text-secondary">{t('timelineColumnsHint')}</span>
+            )}
+
+            {/* Kop op elke pagina herhalen */}
+            <ReportCheckRow spaced checked={repeatHeader} onChange={setRepeatHeader} label={t('repeatHeader')} />
+            <ReportCheckRow
+              checked={repeatFooter}
+              onChange={setRepeatFooter}
+              label={t('repeatFooter')}
+              inputProps={{ 'data-ops-report-repeat-footer': true }}
+            />
+
+            <ReportCheckRow
+              spaced
+              checked={showTaskNames}
+              onChange={setShowTaskNames}
+              label={t('showTaskNames', { defaultValue: "Task names on bars" })}
+            />
+            <ReportCheckRow
+              checked={showCompletion}
+              onChange={setShowCompletion}
+              label={t('showCompletion', { defaultValue: "Show completion" })}
+            />
+            {/* Naamkolom: afkappen op een instelbare breedte, of meegroeien met de langste naam. */}
+            <ReportCheckRow
+              checked={truncateTaskNames}
+              onChange={setTruncateTaskNames}
+              label={t('truncateTaskNames')}
+              inputProps={{ 'data-ops-report-truncate-names': true }}
+            />
+            {truncateTaskNames ? (
+              <ReportFieldRow label={t('taskNameColumnWidthLabel')}>
+                <input
+                  data-ops-report-name-column-width
+                  type="range"
+                  min={NAME_COLUMN_WIDTH_MIN}
+                  max={NAME_COLUMN_WIDTH_MAX}
+                  value={taskNameColumnWidth}
+                  onChange={e => setTaskNameColumnWidth(Number(e.target.value))}
+                  aria-label={t('taskNameColumnWidthLabel')}
+                  className="flex-1 min-w-0"
+                />
+                <span className="w-8 flex-shrink-0 text-right">{taskNameColumnWidth}</span>
+              </ReportFieldRow>
+            ) : (
+              <span className="text-text-secondary">{t('taskNameColumnWidthHint')}</span>
+            )}
+            <ReportCheckRow
+              checked={showBaselineOverlay}
+              onChange={setShowBaselineOverlay}
+              label={t('showBaselineOverlay')}
+              inputProps={{ 'data-ops-report-baseline-overlay': true }}
+            />
+            {/* Kritiek pad niet bij het resourcediagram — hetzelfde predicaat als de forcering in `options`. */}
+            {reportTypeShowsCriticalToggle(reportType) && (
+              <ReportCheckRow checked={showCritical} onChange={setShowCritical} label={t('showCriticalPath')} />
+            )}
+            <ReportCheckRow checked={showFloat} onChange={setShowFloat} label={t('showFloat')} />
+            {/* Relaties niet bij het resourcediagram — hetzelfde predicaat als de forcering in `options`. */}
+            {reportTypeDrawsRelations(reportType) && (
+              <ReportCheckRow checked={showDeps} onChange={setShowDeps} label={t('showDependencies')} />
+            )}
+            <ReportCheckRow
+              checked={reportCompressNonWorkdays}
+              onChange={setReportCompressNonWorkdays}
+              label={tCommon('settings.compressNonWorkdays')}
+              inputProps={{ 'data-ops-report-compress-workdays': true }}
+            />
+            <ReportCheckRow checked={showWeekends} onChange={setShowWeekends} label={t('showWeekends')} />
+            <ReportCheckRow checked={showLegend} onChange={setShowLegend} label={t('showLegend')} />
+          </div>
+        </ReportOptionsCard>
+        )}
+
+        {tableSpec && (
+          <TableReportOptionsBlock
+            reportType={reportType}
+            options={tableOptions}
+            onChange={patchTableOptions}
+            paperSize={paperSize}
+            orientation={orientation}
+            onPaperSize={setPaperSize}
+            onOrientation={setOrientation}
+          />
+        )}
+
+        {/* Action buttons — alle rapporttypes exporteren naar PDF. */}
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={handleExportPDF}
+            className="px-4 py-2 bg-accent text-accent-on rounded-lg hover:bg-accent-hover text-small leading-4 font-medium"
+            style={{ boxShadow: 'var(--shadow-glow)' }}
+          >
+            {t('exportPDF', { defaultValue: "Export PDF" })}
+          </button>
+          {exportError && (
+            <div className="text-small leading-4" style={{ color: 'var(--error)' }} role="alert">
+              {scheduleErrorText(exportError, tCommon)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right: Live preview */}
+      <div data-tour-anchor="report-panel" className="flex-1 min-w-0 min-h-0" style={{ background: 'var(--theme-bg)' }}>
+        {isGanttLike ? (
+          <div className="flex h-full min-h-0 flex-col">
+            {recordedDatesNote}
+            <div
+              className="z-10 flex shrink-0 items-center gap-2 px-4 py-2 text-small leading-4"
+              style={{ background: 'var(--theme-bg)' }}
+              data-preview-zoom-control
+            >
+              <label htmlFor="report-preview-quality" className="text-text-secondary">{t('previewQuality.label')}</label>
+              <Select
+                id="report-preview-quality"
+                className="min-w-40"
+                aria-label={t('previewQuality.label')}
+                value={previewQuality}
+                onChange={value => setPreviewQuality(value as '100' | '200' | '300')}
+                options={[
+                  { value: '100', label: t('previewQuality.standard') },
+                  { value: '200', label: t('previewQuality.high') },
+                  { value: '300', label: t('previewQuality.maximum') },
+                ]}
+              />
+            </div>
+            <div ref={previewViewportRef} data-report-preview-viewport className="flex-1 min-h-0 overflow-auto p-4">
+              <div className="flex flex-col items-center gap-4">
+                {Array.from({ length: previewLayout.totalPages }, (_, i) => {
+                  const page = previewPages.get(i);
+                  return (
+                  <div
+                    key={i}
+                    data-preview-page={i}
+                    className="bg-white"
+                    style={{
+                      width: `min(100%, ${PREVIEW_FIT_WIDTH_PX}px)`,
+                      aspectRatio: `${previewLayout.wPt} / ${previewLayout.hPt}`,
+                      borderRadius: 'var(--radius-md)',
+                      boxShadow: 'var(--shadow-card)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {page && (
+                      <img
+                        src={page.objectUrl}
+                        alt=""
+                        data-preview-generation={page.generation}
+                        data-preview-quality={page.quality}
+                        decoding="async"
+                        style={{ display: 'block', width: '100%', height: '100%' }}
+                      />
+                    )}
+                  </div>
+                  );
+                })}
+                <div
+                  className="flex h-8 shrink-0 items-center justify-center text-center text-small leading-4 text-text-secondary"
+                  data-preview-cache-status
+                >
+                  {/* `count` (geen eigen `n`) zodat i18next echt pluraliseert (CLDR-categorieën). */}
+                  {previewLayout.totalPages > previewPages.size
+                    ? t('previewPageLimit', { count: previewLayout.totalPages - previewPages.size })
+                    : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : tableSpec ? (
+          <div className="h-full overflow-auto p-4">
+            <TableReportView ref={tableReportRef} spec={tableSpec} />
+          </div>
+        ) : reportType === 'milestones' ? (
+          <div className="h-full overflow-auto p-4">
+            {recordedDatesNote}
+            <div
+              ref={milestoneRef}
+              className="bg-surface p-4"
+              style={{ borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-card)', maxWidth: 960 }}
+            >
+              <h3 className="ui-card-header !text-small !leading-4 mb-3">{t('milestoneReport.title')}</h3>
+              <MilestoneReport />
+            </div>
+          </div>
+        ) : (
+          <div className="h-full overflow-auto p-4">
+            {recordedDatesNote}
+            <div
+              ref={varianceRef}
+              className="bg-surface p-4"
+              style={{ borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-card)', maxWidth: 1100 }}
+            >
+              <h3 className="ui-card-header !text-small !leading-4 mb-3">{t('variance.title')}</h3>
+              <VarianceReport />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

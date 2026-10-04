@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "calc-workspace": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "mcp-server/src/index.ts"]
+    }
+  }
+}

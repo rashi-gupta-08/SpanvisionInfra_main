@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="spanvision-mono">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000"><meta name="description" content="STL-3D map workspace by Spanvision Infra. Create printable 3D maps of the Netherlands.">
+<title>STL-3D map workspace — Spanvision Infra</title>
+<link rel="icon" href="/static/favicon.ico"><link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/static/brand-palette.css"><link rel="stylesheet" href="/static/style.css">
+<script src="/static/theme-init.js"></script>
+    <link rel="stylesheet" href="/static/appearance.css" />
+    <script src="/static/appearance.js" data-module="stl" data-slot="header"></script>
+  </head>
+<body>
+<a class="skip-link" href="#panel">Skip to settings</a>
+<div id="app">
+ <header id="topbar">
+  <div class="brand"><img class="mark" src="/static/stl-mark.svg" alt="STL"><div><h1>STL-3D map workspace</h1><span class="organization">Spanvision Infra</span></div><span class="ver" id="app-version">v1.1.1</span></div>
+  <div class="spacer"></div>
+  <div class="header-controls"><a class="pill" id="update-pill" href="#" target="_blank" rel="noopener noreferrer">Update available</a>
+  <label class="theme-label">Theme<select id="theme-select" aria-label="Interface theme"><option value="spanvision-mono">Spanvision Mono</option><option value="dark">Dark</option><option value="light">Light</option><option value="">System</option></select></label>
+  <button class="iconbtn hidden" id="btn-feedback">Feedback</button><button class="iconbtn" id="btn-about">About</button></div>
+ </header>
+ <nav class="mobile-tabs" aria-label="Workspace view"><button id="tab-map" aria-pressed="true" aria-controls="map">Map</button><button id="tab-settings" aria-pressed="false" aria-controls="panel">Settings</button></nav>
+ <div id="work" data-view="map">
+  <aside id="panel" tabindex="-1" aria-label="Map and print settings">
+   <div class="coverage"><span class="coverage-dot"></span> WORLDWIDE MAP <span>3D data: Netherlands</span></div>
+   <section><h2><i>1</i> Location</h2><label for="search">Find a location</label><div class="row"><input id="search" type="search" placeholder="Address, city or street…" autocomplete="off" role="combobox" aria-controls="search-results" aria-expanded="false" aria-autocomplete="list"></div><ul id="search-results" class="results hidden" role="listbox" aria-label="Location suggestions"></ul></section>
+   <section><h2><i>2</i> Area</h2><div class="row"><button id="btn-draw" class="ghost" aria-pressed="false">Draw area on map</button></div>
+    <div class="row split"><label>Width (m)<input id="area-w" type="number" value="1200" min="100" step="50"></label><label>Height (m)<input id="area-h" type="number" value="1200" min="100" step="50"></label></div>
+    <div class="row"><button id="btn-center-area" class="ghost">Area around map center</button></div><div class="row"><button id="btn-load" class="primary">Load map data</button></div><div id="area-stats" class="card hidden"></div>
+   </section>
+   <section id="sec-buildings" class="disabled" inert><h2><i>3</i> Hide buildings</h2><p class="hint">Click a building to make room for your design.</p><div class="row split"><button id="btn-mode-click" class="ghost active" aria-pressed="true">Click</button><button id="btn-mode-box" class="ghost" aria-pressed="false">Drag box</button></div><div class="row"><button id="btn-clear-hidden" class="ghost">Show all buildings</button></div><div id="hidden-count" class="card"></div><details class="building-list-wrap"><summary>Choose buildings with keyboard</summary><div id="building-list"></div></details></section>
+   <section id="sec-design" class="disabled" inert><h2><i>4</i> Imported design</h2><p class="hint">Import IFC, STL, OBJ or 3MF. Place it at ground level.</p><label for="design-file">Design file</label><div class="row"><input id="design-file" type="file" accept=".ifc,.ifczip,.stl,.obj,.3mf,.ply,.glb,.gltf"></div><div id="design-info" class="card hidden"></div>
+    <div id="design-controls" class="hidden"><div class="row split"><label>Rotation (°)<input id="design-rot" type="number" value="0" step="5"></label><label>Scale (×)<input id="design-scale" type="number" value="1" step="0.1" min="0.05"></label></div><div class="row split"><label>Z offset (mm)<input id="design-z" type="number" value="0" step="0.2"></label><label>CFS slot<select id="design-slot"></select></label></div><p class="hint">Drag the yellow design pin, or adjust its coordinates.</p><div class="row split"><label>Longitude<input id="design-lon" type="number" step="0.00001" min="-180" max="180"></label><label>Latitude<input id="design-lat" type="number" step="0.00001" min="-90" max="90"></label></div><div class="row"><button id="btn-design-center" class="ghost">Place at map center</button></div><div class="row"><button id="btn-design-remove" class="ghost danger">Remove design</button></div></div>
+   </section>
+   <section><h2><i>5</i> Layers</h2><div class="checks"><label><input id="set-water" type="checkbox" checked> Water</label><label><input id="set-roads" type="checkbox" checked> Roads</label><label><input id="set-buildings" type="checkbox" checked> Buildings</label><label><input id="set-shrubs" type="checkbox"> Shrubs / vegetation</label><label><input id="set-trees" type="checkbox"> Trees / woodland</label></div><div class="row detail-choice"><label><input id="set-detailed" type="checkbox"> Detailed roofs (LoD2.2)</label><p class="hint">Actual roof shapes. Larger areas can take several minutes.</p></div></section>
+   <section><h2><i>6</i> Print settings</h2><div class="row split"><label>Max. size (mm)<input id="set-size" type="number" value="200" min="20" max="290" step="10"></label><label>Layer height (mm)<input id="set-layer" type="number" value="0.2" min="0.06" max="0.32" step="0.02"></label></div><div class="row split"><label>Base plate top (mm)<input id="set-base" type="number" value="1.2" step="0.2"></label><label>Road top (mm)<input id="set-road" type="number" value="1.8" step="0.2"></label></div><div class="row split"><label>Ground top (mm)<input id="set-land" type="number" value="2.0" step="0.2"></label><label>Height factor (×)<input id="set-exag" type="number" value="1.5" min="0.5" max="10" step="0.5"></label></div><div class="row split"><label>Min. road width (mm)<input id="set-roadw" type="number" value="0.9" min="0.4" step="0.1"></label><label>Road style<select id="set-roadstyle"><option value="recessed">Recessed</option><option value="raised">Raised</option></select></label></div></section>
+   <section><h2><i>7</i> Filament slots (CFS)</h2><p class="hint">Assign each layer a slot. CFS-C has 4; additional slots need a manual change.</p><div id="slots" class="slots"></div><div id="slot-warn" class="slot-warn" role="status"></div></section>
+   <section><h2><i>8</i> Generate</h2><label for="export-dir">Export folder</label><div class="row pathrow"><input id="export-dir" type="text" readonly><button id="btn-pick-dir" class="ghost" aria-label="Choose export folder">…</button></div><div class="row split"><button id="btn-build" class="primary">Generate</button><button id="btn-build-as" class="ghost">Save as…</button></div><div id="build-result" class="hidden"></div><div class="row"><button id="btn-reveal" class="ghost hidden">Open folder in Explorer</button></div></section>
+  </aside>
+  <main id="map" aria-label="Map canvas" tabindex="0"><div id="map-guidance">SELECT AN AREA <span>Search a location or draw a boundary to begin.</span></div></main>
+ </div>
+ <div id="statusbar"><span id="status" role="status" aria-live="polite">Ready. Select a location to begin.</span><span class="status-brand">STL / SPANVISION INFRA</span></div>
+</div>
+<div id="busy" class="hidden" role="status" aria-live="polite"><div class="spinner"></div><span id="busy-text">Working…</span></div>
+<dialog id="about-dialog" aria-labelledby="about-title"><div class="dialog-heading"><img src="/static/stl-mark.svg" alt="STL"><button id="btn-about-close" class="iconbtn" aria-label="Close about">×</button></div><p class="eyebrow">SPANVISION INFRA</p><h2 id="about-title">STL-3D map workspace</h2><p>Turn a Netherlands map area into a printable 3D model.</p><p class="hint">Local geometry processing · STL / 3MF export</p><a class="notice-link" href="/api/notices" target="_blank" rel="noopener noreferrer">Open-source notices ↗</a></dialog>
+<script src="/static/vendor/leaflet/leaflet.js"></script><script src="/static/app.js"></script>
+</body></html>

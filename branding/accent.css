@@ -1,0 +1,32 @@
+/* Shared chrome roles. Engineering results and document colors remain data. */
+:root[data-sv-mode][data-sv-tool] {
+  --sv-accent:var(--sv-text);--sv-on-accent:var(--sv-surface);
+  --theme-accent:var(--sv-accent);--theme-accent-hover:var(--sv-text-soft);
+  --theme-accent-text:var(--sv-on-accent);--theme-on-accent:var(--sv-on-accent);
+  --theme-accent-soft:var(--sv-raised);--theme-accent-tint:var(--sv-text-soft);
+  --theme-focus-color:var(--sv-focus);--theme-focus:var(--sv-focus);
+  --theme-hover:var(--sv-raised);--theme-hover-strong:var(--sv-raised);
+  --theme-active:var(--sv-raised);--theme-active-border:var(--sv-border);
+  --theme-file-tab-bg:var(--sv-accent);--theme-file-tab-hover:var(--sv-text-soft);--theme-file-tab-text:var(--sv-on-accent);
+  --theme-ribbon-btn-hover:var(--sv-raised);--theme-ribbon-btn-hover-border:var(--sv-border);
+  --theme-ribbon-btn-active-bg:var(--sv-raised);--theme-ribbon-btn-active-border:var(--sv-focus);
+  --theme-ribbon-btn-active-text:var(--sv-text);--theme-ribbon-icon-active:var(--sv-text);--theme-ribbon-text-hover:var(--sv-text);
+  --theme-ribbon-tab-active-border:var(--sv-focus);--theme-ribbon-group-label:var(--sv-muted);
+  --theme-dialog-header-text:var(--sv-text);--theme-dialog-tab-hover:var(--sv-raised);--theme-dialog-tab-hover-text:var(--sv-text);
+  --theme-dialog-tab-active-bg:var(--sv-raised);--theme-dialog-tab-active-text:var(--sv-text);--theme-dialog-tab-active-accent:var(--sv-accent);
+  --theme-dialog-btn-bg:var(--sv-accent);--theme-dialog-btn-text:var(--sv-on-accent);--theme-dialog-btn-hover:var(--sv-text-soft);
+  --theme-btn-primary-bg:var(--sv-accent);--theme-btn-primary-text:var(--sv-on-accent);--theme-btn-primary-border:var(--sv-accent);
+  --theme-btn-primary-hover-bg:var(--sv-text-soft);--theme-btn-primary-hover-text:var(--sv-on-accent);
+  --theme-btn-secondary-hover-bg:var(--sv-raised);--theme-backstage-item-shortcut-hover:var(--sv-text-soft);
+  --theme-placeholder-icon:var(--sv-muted);--theme-selected:var(--sv-raised);--theme-selection:var(--sv-raised);
+  --theme-panel-accent:var(--sv-accent);--theme-tab-active-accent:var(--sv-accent);
+  --theme-primary-bg:var(--sv-accent);--theme-primary-text:var(--sv-on-accent);
+  --primary:var(--sv-accent);--primary-hover:var(--sv-text-soft);--primary-light:var(--sv-raised);
+  --accent:var(--sv-accent);--accent-hover:var(--sv-text-soft);--accent-color:var(--sv-accent);
+}
+:root[data-sv-tool="cad2d"][data-sv-mode] {--theme-canvas:var(--sv-canvas);--theme-grid:var(--sv-border);}
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="bg-blue-500"],
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="bg-blue-600"] {background-color:var(--sv-accent);color:var(--sv-on-accent);}
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="text-blue-400"],
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="text-blue-500"],
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="text-pink-500"] {color:var(--sv-accent);}

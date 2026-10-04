@@ -1,0 +1,1044 @@
+/* ──────────────────────────────────────────────────────────────────
+   SonderingstekeningView — paper-rect with embedded map + toolbox.
+   The paper aspect-ratio is set inline (A2 vs A3 landscape). The
+   embedded Leaflet map fills the paper interior; the title block
+   floats over the bottom-right corner; user-loaded SVG frame and
+   dropped overlays stack on top of the map.
+   ────────────────────────────────────────────────────────────────── */
+
+.tek-view {
+  /* relative zodat het zwevende zoekscherm (.map-addrsearch) zich aan de
+     view kan verankeren — buiten het papier, dus nooit in de PDF-export. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+/* ── Topbar with paper-size / scale / export ─────────────────── */
+
+.tek-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  background: var(--theme-bg-lighter);
+  flex-shrink: 0;
+}
+
+.tek-topbar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tek-topbar-spacer {
+  flex: 1;
+}
+
+.tek-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--theme-text-secondary);
+  font-weight: 500;
+}
+
+.tek-select {
+  appearance: none;
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  font: 500 12px 'Inter', sans-serif;
+  padding: 4px 24px 4px 8px;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--theme-text) 50%),
+    linear-gradient(135deg, var(--theme-text) 50%, transparent 50%);
+  background-position:
+    calc(100% - 12px) 50%,
+    calc(100% - 8px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+
+.tek-select-sm {
+  font-size: 11px;
+  padding: 3px 22px 3px 6px;
+}
+
+.tek-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--theme-text);
+  cursor: pointer;
+}
+
+.tek-btn {
+  appearance: none;
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  font: 500 12px 'Inter', sans-serif;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.tek-btn:hover:not(:disabled) {
+  background: var(--theme-bg-lighter);
+}
+.tek-btn-primary {
+  background: var(--amber, #d97706);
+  color: white;
+  border-color: var(--amber, #d97706);
+}
+.tek-btn-primary:hover:not(:disabled) {
+  background: var(--signal-orange, #ea580c);
+  border-color: var(--signal-orange, #ea580c);
+}
+
+/* ── Main canvas area: paper + toolbox ───────────────────────── */
+
+.tek-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  min-height: 0;
+  background: var(--theme-bg);
+  overflow: hidden; /* CAD-style viewport: clip overflow, no scrollbars */
+}
+/* Freeze: zoomen gaat naar de cursor toe en pannen via klik+sleep
+   (CSS-translate op de stage) — het papier blijft gewoon gecentreerd
+   en de canvas clipt. De oude flex-start + scrollbars-aanpak zoomde
+   vast vanaf linksboven ("links gelokt") en is vervangen. */
+.tek-view.tek-view-frozen .tek-canvas {
+  overflow: hidden;
+  cursor: grab;
+}
+.tek-view.tek-view-frozen .tek-canvas:active {
+  cursor: grabbing;
+}
+
+/* Stage-wrapper: heeft de visuele (gescaled) afmetingen van het
+   papier. De canvas-flex centreert deze; de echte paper-div zit er
+   absoluut in en wordt via CSS transform: scale verkleind. */
+.tek-paper-stage {
+  position: relative;
+  flex: 0 0 auto;
+  /* width/height worden inline gezet via paperStageStyle */
+}
+
+.tek-paper {
+  /* width/height/transform worden inline gezet via paperStyle —
+     vaste mm × DPI grootte zodat 1:N exact uitkomt en het titleblock
+     niet uitrekt bij venster-resize. */
+  background: white;
+  color: #111;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  border: 1px solid #d4d4d4;
+}
+/* Zwarte tekening-rand 10mm vanaf de paper-edge, traditioneel CAD-
+   bouwkundig kader. Pseudo-element zodat het bovenop alles ligt
+   maar geen mouse-events vangt. */
+.tek-paper::after {
+  content: "";
+  position: absolute;
+  top: 10mm;
+  left: 10mm;
+  right: 10mm;
+  bottom: 10mm;
+  border: 1.2px solid #111;
+  pointer-events: none;
+  z-index: 5;
+}
+.tek-paper-dragover {
+  outline: 3px dashed var(--amber, #d97706);
+  outline-offset: -4px;
+}
+
+.tek-paper-map {
+  /* Map vult de tekening-zone tussen de 10mm-rand en het titleblock.
+     Door bottom op 60mm te zetten (50mm titleblock + 10mm zwarte
+     rand) loopt de kaart niet meer door achter het titleblock heen.
+     Boven + zijkanten 10mm zodat de zwarte rand-frame zichtbaar
+     blijft. */
+  position: absolute;
+  top: 10mm;
+  left: 10mm;
+  right: 10mm;
+  bottom: 60mm;
+  z-index: 1;
+}
+
+.tek-frame-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.tek-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  object-fit: contain;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Image / SVG overlays die door Leaflet als imageOverlay zijn
+   bijgehangen (className tek-overlay-img). Klikbaar zodat de
+   gebruiker kan selecteren; cursor: pointer maakt dat ook visueel
+   duidelijk. .selected krijgt een dikke amber outline + box-shadow
+   zodat zichtbaar is dat hij geselecteerd is — anders denkt de
+   gebruiker dat de klik niet werkte. */
+.tek-overlay-img {
+  cursor: pointer;
+  /* Sinds we `preferCanvas: false` zetten op de tekening-map gebruiken
+     polylines SVG-rendering met eigen <path>-elementen + hit-detect
+     op de stroke. Geen canvas meer in de overlay-pane dat alle klikken
+     vangt → de IMG is automatisch klikbaar als gewoon DOM-element op
+     z-index:1, lijnen op z-index:200 (svg-pane), markers in marker-
+     pane (z-index:600). Alle drie tegelijkertijd selecteerbaar. */
+}
+/* "Naar voren brengen" toggle in TekeningProperties zet deze klasse
+   zodat de overlay boven andere lagen komt — handig wanneer de user
+   tijdelijk de underlay als hoofd-content wil. */
+.tek-overlay-img.tek-overlay-foreground {
+  z-index: 250 !important;
+}
+.tek-overlay-img.selected {
+  outline: 3px solid #d97706;
+  outline-offset: -3px;
+  box-shadow: 0 0 10px rgba(217, 119, 6, 0.55);
+}
+
+/* Raster-cell sondering-label — compact zodat dichte rasters niet
+   in een wolk van overlappende labels veranderen. Iets kleiner +
+   transparanter dan het reguliere marker-label, geen achtergrond. */
+.tek-raster-cell-label {
+  font-size: 8px;
+  font-weight: 600;
+  color: #1e3a8a;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  text-shadow: 0 0 2px white, 0 0 1px white;
+  left: 6px;
+  top: -1px;
+}
+
+/* Noordpijl — rechtsboven op het papier, vaste mm-grootte. Boven
+   de map-tile-layer maar onder het titleblock. Witte cirkel achter
+   de pijl zodat hij ook over luchtfoto leesbaar is. */
+.tek-north-arrow {
+  /* Binnen de 10mm-zwarte-rand, in de rechter-bovenhoek van de
+     tekening-zone. 14mm vanaf paper-edge = 4mm vanaf de zwarte
+     rand, vergelijkbaar met een traditioneel CAD-blad. */
+  position: absolute;
+  top: 14mm;
+  right: 14mm;
+  z-index: 50;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+.tek-north-arrow svg {
+  display: block;
+}
+
+/* Schaalbalk — vaste positie linksonder boven het titleblock, op het
+   papier. z-index hoger dan de kaart-tegels (1) en frame (3) zodat
+   de bar altijd boven de map zichtbaar is, lager dan het titleblock
+   (1100) zodat die er overheen kan rangschikken. */
+.tek-scale-bar {
+  /* Linksonder binnen de tekening-zone, net boven het titleblock.
+     bottom 64mm = 60mm map-bottom + 4mm gap. */
+  position: absolute;
+  left: 14mm;
+  bottom: 64mm;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(17, 17, 17, 0.25);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font: 600 9px 'JetBrains Mono', monospace;
+  color: #111;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+.tek-scale-bar svg {
+  display: block;
+}
+.tek-overlay-pdf {
+  border: none;
+  opacity: 0.85;
+}
+.tek-overlay-stub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.85);
+  color: #444;
+  font: 500 14px 'Inter', sans-serif;
+  text-align: center;
+  padding: 24px;
+}
+.tek-overlay-stub p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #777;
+}
+
+/* ── Title block (bottom-right of paper) ─────────────────────── */
+
+.tek-titleblock {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 280px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #333;
+  z-index: 4;
+  font: 10px 'Inter', sans-serif;
+  color: #111;
+}
+
+.tek-titleblock-grid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 0;
+}
+
+.tek-tb-label {
+  padding: 4px 6px;
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  background: #f5f5f5;
+  font-weight: 600;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tek-tb-value {
+  padding: 4px 8px;
+  border-bottom: 1px solid #ddd;
+  font-size: 11px;
+}
+
+.tek-tb-label:last-of-type,
+.tek-tb-value:last-of-type {
+  border-bottom: none;
+}
+
+/* ── Markers rendered inside the map ────────────────────────── */
+
+.tek-marker {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.tek-marker svg {
+  width: 48px; /* 2× nogmaals — gebruiker-verzoek: sondering/boring symbolen nog 2x groter */
+  height: 48px;
+  overflow: visible;
+  /* Anti-aliasing op de driehoek-polygon zodat hij niet gekarteld
+     overkomt bij grotere zoom-niveaus van het papier. */
+  shape-rendering: geometricPrecision;
+}
+.tek-marker-label {
+  position: absolute;
+  left: 52px; /* mee-geschaald (was 26px voor 24px icon) */
+  top: -4px;
+  /* 13px → 17px: sondeernummer moet op afdruk-schaal leesbaar zijn
+     (gebruiker-verzoek: "dat sondeernummer mag wat groter"). */
+  font: 700 17px 'Inter', sans-serif;
+  color: #1e3a8a;
+  text-shadow: 0 0 2px white, 0 0 3px white;
+  white-space: nowrap;
+}
+
+/* ── Toolbox (right side) ────────────────────────────────────── */
+
+.tek-toolbox {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px;
+  background: var(--theme-bg-lighter);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: 8px;
+  align-self: flex-start;
+}
+
+.tek-toolbox-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--theme-text);
+  letter-spacing: 0.01em;
+}
+
+.tek-tool-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tek-tool-sub {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--theme-text-secondary);
+}
+
+.tek-tool-btn {
+  appearance: none;
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  font: 500 12px 'Inter', sans-serif;
+  padding: 7px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+.tek-tool-btn:hover:not(:disabled) {
+  background: var(--theme-bg-lighter);
+  border-color: var(--amber, #d97706);
+}
+.tek-tool-btn-active {
+  background: var(--amber, #d97706);
+  color: white;
+  border-color: var(--amber, #d97706);
+}
+.tek-tool-btn-ghost {
+  background: transparent;
+  border-color: var(--theme-border-subtle);
+  color: var(--theme-text-secondary);
+  font-size: 11px;
+}
+.tek-tool-btn-sm {
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.tek-tool-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tek-tool-hint {
+  font-size: 10px;
+  color: var(--theme-text-secondary);
+  margin: 0;
+}
+
+.tek-tb-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.tek-tb-field {
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  color: var(--theme-text-secondary);
+}
+.tek-tb-field input {
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font: 500 12px 'Inter', sans-serif;
+}
+
+/* ── Raster object: derived markers, label pill, edit handles ── */
+
+.tek-marker-raster {
+  width: 40px; /* 2× nogmaals (was 20px) */
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tek-marker-raster.selected {
+  filter: drop-shadow(0 0 3px rgba(217, 119, 6, 0.7));
+}
+
+/* The leaflet divIcon wrapper inherits a default white background — strip it. */
+.tek-raster-marker,
+.tek-raster-label,
+.tek-handle {
+  background: transparent !important;
+  border: none !important;
+}
+
+.tek-raster-label-pill {
+  display: inline-block;
+  padding: 2px 6px;
+  background: rgba(54, 54, 62, 0.85);
+  color: #fafaf9;
+  border-radius: 9999px;
+  font: 600 10px 'Inter', sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  text-align: center;
+}
+
+/* Corner handle = white square w/ amber outline. Resize cursor. */
+.tek-handle-dot {
+  width: 12px;
+  height: 12px;
+  background: #fafaf9;
+  border: 1.6px solid #d97706;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: nwse-resize;
+}
+
+/* Edge midpoint handle = small white circle w/ amber border. Move cursor.
+   Lives on each side midpoint of the bounding box — grab it to translate
+   the whole raster. */
+.tek-handle-edge-dot {
+  width: 14px;
+  height: 14px;
+  background: #fafaf9;
+  border: 1.6px solid #d97706;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  cursor: move;
+}
+
+/* Rotation button = bigger amber circle with a curved-arrow icon. Reads
+   as a button so the user knows to press-and-hold + drag instead of
+   click. The press state slightly darkens the fill for tactile feedback. */
+.tek-handle-rot-btn {
+  appearance: none;
+  background: #d97706;
+  border: 2px solid #fafaf9;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  transition: background 0.12s ease;
+}
+.tek-handle-rot-btn:hover {
+  background: #c2670a;
+}
+.tek-handle-rot-btn:active {
+  background: #a3550b;
+  cursor: grabbing;
+}
+
+/* Move grip = blauwe cirkel met vierpijls-icoon in het rastermidden.
+   Duidelijk "pak-en-sleep"-symbool om het hele raster te verplaatsen. */
+.tek-handle-move-btn {
+  appearance: none;
+  background: #2563eb;
+  border: 2px solid #fafaf9;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  transition: background 0.12s ease;
+}
+.tek-handle-move-btn:hover {
+  background: #1d4ed8;
+}
+.tek-handle-move-btn:active {
+  background: #1e40af;
+  cursor: grabbing;
+}
+
+/* ── RD-coördinatentabel (nog uit te voeren sonderingen) ─────────
+   Automatisch tabelletje rechtsonder op het papier, direct boven het
+   titleblock (dat op bottom 10mm staat en ~50mm hoog is). pointer-events
+   none zodat teken-kliks er dwars doorheen op de kaart landen; het
+   tabelletje print/exporteert gewoon mee (het is DOM op het papier). */
+.tek-coord-table {
+  position: absolute;
+  right: 10mm;
+  bottom: 62mm;
+  z-index: 900;
+  pointer-events: none;
+  background: #ffffff;
+  border: 1.2px solid #1c1917;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  min-width: 168px;
+}
+.tek-coord-table-title {
+  background: #1e3a8a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+}
+.tek-coord-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.tek-coord-table th,
+.tek-coord-table td {
+  font-size: 9.5px;
+  line-height: 1.25;
+  padding: 1.5px 8px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 0.6px solid #d6d3d1;
+  color: #1c1917;
+}
+.tek-coord-table th {
+  background: #f5f5f4;
+  font-weight: 600;
+  border-bottom: 1px solid #1c1917;
+}
+.tek-coord-table th:first-child,
+.tek-coord-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+.tek-coord-table td:nth-child(2),
+.tek-coord-table td:nth-child(3) {
+  font-family: "Cascadia Mono", "Consolas", monospace;
+}
+.tek-coord-table tr:last-child td {
+  border-bottom: none;
+}
+.tek-coord-table-more {
+  font-size: 8.5px;
+  color: #57534e;
+  padding: 2px 8px 3px;
+  border-top: 0.6px solid #d6d3d1;
+  font-style: italic;
+}
+
+/* Inline edit panel that appears in the toolbox when a raster is selected. */
+.tek-tool-group-edit {
+  border: 1px solid var(--amber, #d97706);
+  border-radius: 6px;
+  padding: 8px;
+  background: rgba(217, 119, 6, 0.06);
+}
+
+.tek-numfield {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 500 0.75rem 'Inter', sans-serif;
+  color: var(--theme-text, #36363e);
+  flex: 1;
+}
+.tek-numfield-wide {
+  margin-top: 6px;
+}
+.tek-numfield > span {
+  min-width: 64px;
+  color: var(--theme-text-secondary, #71717a);
+}
+.tek-numfield input[type="number"] {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--theme-border, #e7e5e4);
+  border-radius: 4px;
+  background: var(--theme-bg, #fff);
+  color: var(--theme-text, #36363e);
+  font: inherit;
+}
+.tek-numfield input[type="range"] {
+  flex: 1;
+  min-width: 0;
+}
+.tek-num-val {
+  width: 36px;
+  text-align: right;
+  font: 500 0.72rem var(--font-code, 'JetBrains Mono'), monospace;
+  color: var(--theme-text-secondary, #71717a);
+  flex-shrink: 0;
+}
+
+/* ── Detailblad title block (page 2 of preview-titleblock.html) ── */
+
+.tek-titleblock-db {
+  /* Titleblock past binnen de 10mm-rand. Hoogte ~50mm zodat er
+     genoeg ruimte is voor project-bar + 8 cellen + logo + format-
+     corner. De map-laag heeft bottom 60mm (50mm titleblock + 10mm
+     rand) zodat de kaart precies stopt op de bovenrand van het
+     titleblock — geen overlap meer.
+     2-row grid (auto + 1fr) zorgt dat de project-bar zijn natuurlijke
+     hoogte houdt en de body-rij de resterende ruimte (cellen, logo,
+     format-corner) volledig vult. Geen witte band meer onderaan. */
+  position: absolute;
+  left: 10mm;
+  right: 10mm;
+  bottom: 10mm;
+  height: 50mm;
+  background: #fff;
+  border: 1.5px solid #36363e;
+  font: 500 1.5rem 'Inter', system-ui, sans-serif; /* 0.75 × 2 */
+  color: #36363e;
+  pointer-events: auto;
+  z-index: 1100;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.tek-db-project-bar {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: #36363e;
+  color: #fafaf9;
+  gap: 12px;
+}
+.tek-dbp-title {
+  font: 700 1.7rem var(--font-heading, 'Space Grotesk'), 'Inter', sans-serif; /* 0.85 × 2 */
+  letter-spacing: -0.01em;
+  flex: 0 0 auto;
+}
+.tek-dbp-address {
+  font: 400 1.44rem 'Inter', sans-serif; /* 0.72 × 2 */
+  color: rgba(250, 250, 249, 0.7);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tek-dbp-type {
+  font: 600 1.4rem var(--font-code, 'JetBrains Mono'), monospace; /* 0.7 × 2 */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #d97706;
+}
+
+/* Inline-edit voor de project-naam + adres in de project-bar van
+   het titleblock. Standaard zichtbaar als gewone text op de donkere
+   bar; bij focus wordt het een echte input met witte achtergrond. */
+.tek-dbp-edit {
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  font: inherit;
+  padding: 1px 4px;
+  border-radius: 3px;
+  cursor: text;
+  outline: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  /* `tek-dbp-title` is `flex: 0 0 auto` met font-size 0.85rem dus
+     de input mag zijn natuurlijke grootte aannemen — niet 100%. */
+}
+.tek-dbp-edit::placeholder {
+  color: rgba(250, 250, 249, 0.45);
+  font-style: italic;
+}
+.tek-dbp-edit:hover:not(:focus) {
+  background: rgba(250, 250, 249, 0.08);
+  border-color: rgba(250, 250, 249, 0.18);
+}
+.tek-dbp-edit:focus {
+  background: #fafaf9;
+  color: #36363e;
+  border-color: var(--amber, #d97706);
+}
+.tek-dbp-edit:focus::placeholder {
+  color: #a1a1aa;
+}
+/* Address-input mag mee-stretchen */
+.tek-dbp-address.tek-dbp-edit {
+  flex: 1;
+  min-width: 80px;
+}
+
+.tek-db-body {
+  display: grid;
+  /* Kolombreedtes 2× (logo 220px, format-corner 180px) zodat de
+     verdubbelde tekstgroottes daarbinnen passen zonder af te kappen. */
+  grid-template-columns: 220px 1fr 180px;
+  align-items: stretch;
+  min-height: 0; /* sta krimp toe binnen de grid-row */
+}
+
+.tek-db-logo-cell {
+  border-right: 1px solid #36363e;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+/* Klikbare logo-cell — <button> reset. Hover toont een subtiele
+   amber-rand zodat de gebruiker doorheeft dat het klikbaar is. */
+.tek-db-logo-clickable {
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.tek-db-logo-clickable:hover {
+  border-color: var(--amber, #d97706);
+  background: rgba(217, 119, 6, 0.04);
+}
+.tek-db-logo-custom {
+  max-width: 90px;
+  max-height: 60px;
+  object-fit: contain;
+  display: block;
+}
+.tek-db-logo-text {
+  font: 700 1.7rem var(--font-heading, 'Space Grotesk'), 'Inter', sans-serif; /* 0.85 × 2 */
+  color: #36363e;
+}
+.tek-db-logo-text span { color: #d97706; }
+.tek-db-logo-sub {
+  font: 500 1.2rem var(--font-code, 'JetBrains Mono'), monospace; /* 0.6 × 2 */
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tek-db-cells {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr 1fr; /* 2 rijen, elk vult de helft — geen witte ruimte */
+  min-height: 0;
+}
+.tek-db-cell {
+  padding: 3px 6px;
+  border-right: 1px solid #d4d4d8;
+  border-bottom: 1px solid #d4d4d8;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.tek-db-cell:nth-child(4n) { border-right: 1px solid #36363e; }
+.tek-db-cell:nth-last-child(-n+4) { border-bottom: none; }
+.tek-db-cell-label {
+  font: 500 1.16rem 'Inter', sans-serif; /* 0.58 × 2 */
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.tek-db-cell-val {
+  font: 600 1.56rem 'Inter', sans-serif; /* 0.78 × 2 */
+  color: #36363e;
+}
+.tek-db-cell-val.mono { font-family: var(--font-code, 'JetBrains Mono'), monospace; }
+.tek-db-cell-val.amber { color: #d97706; }
+
+.tek-db-geo {
+  border-left: 1px solid #36363e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: #fafaf9;
+}
+.tek-db-geo-label {
+  font: 500 1.1rem 'Inter', sans-serif; /* 0.55 × 2 */
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.tek-db-geo-format {
+  font: 700 2.8rem var(--font-heading, 'Space Grotesk'), 'Inter', sans-serif; /* 1.4 × 2 */
+  color: #d97706;
+}
+
+/* ── Maatlijn-label (afstand tussen twee punten) ─────────────── */
+.tek-dim-label {
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+}
+.tek-dim-label span {
+  background: rgba(255, 255, 255, 0.95);
+  color: #36363e;
+  border: 1.5px solid #d97706;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font: 700 1.1rem 'Inter', sans-serif; /* groot leesbaar boven de maatlijn */
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+/* ── RD-coordinate tag (a small label dropped at click) ─────── */
+
+.tek-coord-icon {
+  background: transparent !important;
+  border: none !important;
+}
+.tek-coord-tag {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.tek-coord-tag > svg {
+  margin-left: 6px;
+}
+.tek-coord-text {
+  margin-top: 4px; /* 2× */
+  margin-left: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid #d97706;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font: 500 1.3rem var(--font-code, 'JetBrains Mono'), monospace; /* 0.65 × 2 */
+  color: #36363e;
+  white-space: nowrap;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.tek-coord-text strong {
+  color: #d97706;
+}
+
+/* ── WFS snap-indicator ──────────────────────────────────────── */
+/* Wordt getoond door SonderingstekeningView wanneer de cursor in
+   een place-mode (sondering / boring / coord-tag) binnen 12 px
+   van een BAG / Kadaster polygon-vertex of edge-projectie zit.
+   Eigen divIcon (geen Leaflet-default marker-styling), met een
+   semi-transparante oranje cirkel + outline + glow zodat hij ook
+   over donkere ondergronden goed zichtbaar blijft. */
+.tek-snap-marker {
+  background: transparent !important;
+  border: 0 !important;
+}
+.tek-snap-marker-inner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #d97706;
+  border-radius: 50%;
+  background: rgba(217, 119, 6, 0.18);
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.7);
+  pointer-events: none;
+}
+
+/* ── Toast for transient messages ────────────────────────────── */
+
+.tek-toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  border: 1px solid var(--amber, #d97706);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font: 500 12px 'Inter', sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+}
+
+/* ── Print-only paper for "Exporteer als PDF" ───────────────── */
+
+@media print {
+  .tek-topbar,
+  .tek-toolbox,
+  .tek-toast {
+    display: none !important;
+  }
+  .tek-canvas {
+    padding: 0;
+  }
+  .tek-paper {
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+/* ── Plaats/teken-modus: crosshair i.p.v. het Leaflet-handje ─────
+   Tijdens sondering/boring plaatsen, lijn/maatlijn tekenen en RD-
+   coördinaat plaatsen is een grab-cursor onlogisch — je bent aan het
+   plaatsen, niet aan het pannen. */
+.tek-paper-placing .leaflet-container,
+.tek-paper-placing .leaflet-grab,
+.tek-paper-placing .leaflet-interactive {
+  cursor: crosshair !important;
+}
+
+/* Preview-label voor de maatlijn-rubber-band (iets doorzichtiger dan
+   het definitieve label zodat het duidelijk een preview is). */
+.tek-dim-label-preview span {
+  opacity: 0.75;
+}
+
+/* Live RD-coördinaat-preview naast de cursor tijdens coord-mode. */
+.tek-coord-preview span {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d97706;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font: 600 11px 'JetBrains Mono', monospace;
+  color: #36363e;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Opmerking (tekst-note) op het papier ────────────────────────
+   Wit kaartje met amber-rand, leesbaar over kaart/luchtfoto. */
+.tek-note {
+  display: inline-block;
+  transform: translate(6px, -50%);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #d97706;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font: 600 13px 'Inter', sans-serif;
+  color: #36363e;
+  white-space: pre-wrap;
+  max-width: 240px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.tek-note.selected {
+  border-width: 2px;
+  border-color: #92400e;
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.6);
+}

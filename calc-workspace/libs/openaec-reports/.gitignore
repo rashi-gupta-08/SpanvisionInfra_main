@@ -1,0 +1,171 @@
+# Node
+node_modules/
+frontend/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+pytest-cache-files-*/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Test output (mockups, vergelijkingen)
+test_output/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+nul
+
+# Auth database
+data/auth.db
+data/auth.db-wal
+data/auth.db-shm
+
+# Output
+output/
+
+# User uploads
+uploads/
+*.pdf
+# Stationery PDF's zijn wél nodig
+!tenants/**/stationery/*.pdf
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Claude Code
+SESSION_STATUS.md
+.claude/
+
+# Development artifacts (prompts, analysis, archive)
+_archive/
+huisstijl/
+DIAGNOSE_*.md
+PROMPT_*.md
+PLAN_*.md
+ORCHESTRATION_GUIDE.md
+TODO_TENANT_TEMPLATES.md
+frontend/_archive/
+frontend/PROMPT_*.md
+
+# Temp analysis scripts
+_temp_*.py
+t2_analyze.py
+stationery_diff.py
+
+# TypeScript build cache
+frontend/tsconfig.tsbuildinfo
+
+# Ruff
+.ruff_cache/
+data/
+
+# Rust
+target/
+rust/target/
+rust/Cargo.lock
+Cargo.lock
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Tenant-data (per-tenant bind-mounts op host) — behalve de public default
+/tenants/*
+!/tenants/default
+!/tenants/default/**
+
+# Tenant-specifieke assets in src — private, niet publiceren
+/src/openaec_reports/assets/brands/default.yaml
+/src/openaec_reports/assets/brands/customer/
+/src/openaec_reports/assets/stationery/default/
+/src/openaec_reports/assets/templates/default/
+/src/openaec_reports/assets/templates/default.yaml
+/src/openaec_reports/assets/templates/customer/
+/src/openaec_reports/assets/logos/default*
+
+# Tenant-specifieke Python modules (plugins)
+/src/openaec_reports/modules/customer/
+
+# Tenant-specifieke tests
+/tests/test_customer_*.py
+/tests/test_yaml_modules.py
+
+# Tenant-specifieke docs + scripts
+/docs/CUSTOMER_*.md
+/docs/customer_*.json
+/docs/ai-instructions.md
+/docs/architecture/02_JSON_SCHEMA_CUSTOMER.md
+/docs/architecture/03_JSON_SCHEMA_OpenAEC.md
+/docs/architecture/architecture.html
+/docs/uitleg.html
+/docs/ARCHITECTURE_PLAN_TENANT_MODULES.md
+/examples/default/
+/examples/customer/
+/frontend/_archive/
+/schemas/example_customer_*.json
+/scripts/compare_pdfs.py
+/scripts/extract_openaec_stationery.py
+/scripts/generate_flyer.py
+/scripts/SKILL_BRAND_EXTRACTION.md
+/PLAN-rust-implementation.md
+
+# Huisstijl-bronmateriaal (private)
+/huisstijl/
+
+# Archief (dev notes, niet voor public)
+/_archive/
+
+# Tenant-data — leven in openaec-tenants private repo (B-3, 2026-04-20)
+# Bind-mount in productie: /opt/openaec/reports-tenants → /app/tenants
+# Assets per tenant onder slug-key (3bm, symitech, openaec_foundation, ...)
+src/openaec_reports/modules/symitech/
+src/openaec_reports/assets/brands/symitech/
+src/openaec_reports/assets/brands/3bm.yaml
+src/openaec_reports/assets/templates/symitech/
+src/openaec_reports/assets/templates/3bm/
+src/openaec_reports/assets/templates/3bm.yaml
+src/openaec_reports/assets/stationery/
+
+# Proprietary fonts (Hoefler&Co Gotham)
+src/openaec_reports/assets/fonts/Gotham-*
+
+# Tenant tests + voorbeelden + docs
+tests/test_symitech_*.py
+examples/symitech/
+examples/3bm_cooperatie/
+docs/SYMITECH_*.md
+docs/symitech_*.json
+docs/architecture/02_JSON_SCHEMA_SYMITECH.md
+schemas/example_symitech_*.json
+
+# User-specifieke Claude Code config
+.claude/settings.local.json
+.mcp.json
+
+# Fonts met proprietary licentie (precautie)
+src/openaec_reports/assets/fonts/Inter-*

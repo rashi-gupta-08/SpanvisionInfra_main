@@ -1,0 +1,91 @@
+{
+  "title": "Instellingen",
+  "tabs": {
+    "general": "Algemeen",
+    "appearance": "Uiterlijk",
+    "editor": "Editor",
+    "files": "Bestanden",
+    "shortcuts": "Sneltoetsen",
+    "plugins": "Invoegtoepassingen",
+    "about": "Over"
+  },
+  "general": {
+    "application": "Applicatie",
+    "language": "Taal",
+    "defaultCurrency": "Standaardvaluta",
+    "startup": "Opstarten",
+    "restoreSession": "Laatste sessie herstellen bij opstarten",
+    "checkUpdates": "Automatisch controleren op updates",
+    "author": "Auteur",
+    "authorName": "Auteursnaam"
+  },
+  "appearance": {
+    "theme": "Thema",
+    "themeDescription": "Kies een kleurthema voor de applicatie.",
+    "light": "Licht",
+    "forge": "Forge (donker)",
+    "dark": "Donker",
+    "blueprint": "Blueprint",
+    "contrast": "Hoog contrast",
+    "font": "Lettertype",
+    "uiFontSize": "UI-lettergrootte",
+    "interfaceScale": "Interfaceschaal",
+    "interfaceScaleDescription": "Gebruik Ctrl+= en Ctrl+- om de desktopinterface aan te passen. Ctrl+0 herstelt 100%.",
+    "spanvisionMono": "Spanvision Mono",
+    "canvas": "Tekencanvas",
+    "canvas_auto": "Thema volgen",
+    "canvas_light": "Licht",
+    "canvas_mono": "Monochroom"
+  },
+  "editor": {
+    "general": "Algemeen",
+    "wordWrap": "Woordterugloop",
+    "lineNumbers": "Regelnummers weergeven",
+    "minimap": "Minimap weergeven",
+    "indentation": "Inspringen",
+    "tabSize": "Tabgrootte",
+    "insertSpaces": "Spaties invoegen in plaats van tabs",
+    "nSpaces": "{{count}} spaties"
+  },
+  "files": {
+    "autoSave": "Automatisch opslaan",
+    "autoSaveOption": "Automatisch opslaan",
+    "off": "Uit",
+    "afterDelay": "Na vertraging",
+    "onFocusChange": "Bij focuswijziging",
+    "onWindowChange": "Bij vensterwijziging",
+    "encoding": "Bestandscodering",
+    "defaultEncoding": "Standaardcodering",
+    "backup": "Back-up",
+    "autoBackup": "Automatische back-ups maken"
+  },
+  "shortcuts": {
+    "placeholder": "Configuratie van sneltoetsen verschijnt hier."
+  },
+  "plugins": {
+    "placeholder": "Beheer van invoegtoepassingen verschijnt hier."
+  },
+  "mcp": {
+    "title": "AI-koppeling",
+    "description": "Geef een lokale AI tijdelijk toegang tot het geopende project. Bewerken kun je apart toestaan voor deze sessie.",
+    "enable": "MCP-toegang inschakelen voor deze sessie",
+    "allowEdits": "Bewerken via MCP toestaan",
+    "status_off": "Uitgeschakeld",
+    "status_starting": "Verbinding starten…",
+    "status_on": "Beschikbaar voor lokale AI-clients",
+    "status_stopping": "Verbinding stoppen…",
+    "status_error": "Verbinding niet beschikbaar",
+    "endpoint": "Adres",
+    "copyEndpoint": "Adres kopiëren",
+    "copyToken": "Toegangscode kopiëren",
+    "connectionError": "Verbindingsfout",
+    "copyError": "Kopiëren is niet gelukt"
+  },
+  "about": {
+    "version": "Versie",
+    "status": "Status",
+    "organization": "Onderdeel van",
+    "license": "Licentie",
+    "description": "Maak en beoordeel palenplannen op basis van belastinglocaties, sonderingselecties en funderingsadvies."
+  }
+}

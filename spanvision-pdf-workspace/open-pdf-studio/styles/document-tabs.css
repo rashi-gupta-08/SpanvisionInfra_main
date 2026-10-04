@@ -1,0 +1,156 @@
+/* Document Tabs Bar */
+.document-tabs {
+  display: flex;
+  position: relative; /* anchor for the .drag-dock-target drop-zone label */
+  background: var(--theme-tab-bg);
+  border-bottom: 1px solid var(--theme-tab-border);
+  height: 28px;
+  min-height: 28px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  user-select: none;
+}
+
+.document-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.document-tabs::-webkit-scrollbar-thumb {
+  background: var(--theme-tab-close-color);
+}
+
+.document-tab {
+  display: flex;
+  align-items: center;
+  padding: 0 4px 0 5px;
+  height: 100%;
+  background: var(--theme-tab-bg);
+  border-right: 1px solid var(--theme-tab-border);
+  min-width: 140px;
+  max-width: 240px;
+  user-select: none;
+}
+
+.document-tab:hover {
+  background: var(--theme-tab-hover);
+}
+
+.document-tab.active {
+  background: var(--theme-tab-active-bg);
+  border-bottom: 2px solid var(--theme-tab-active-accent);
+}
+
+.document-tab-title {
+  flex: 1;
+  font-size: 12px;
+  color: var(--theme-tab-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 8px;
+}
+
+.document-tab.active .document-tab-title {
+  color: var(--theme-tab-active-text);
+}
+
+.document-tab-close {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  opacity: 0;
+  color: var(--theme-tab-close-color);
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.document-tab:hover .document-tab-close,
+.document-tab.active .document-tab-close {
+  opacity: 1;
+}
+
+.document-tab-close:hover {
+  background: var(--theme-app-menu-item-hover);
+  color: var(--theme-app-menu-item-hover-text);
+}
+
+.document-tab-modified {
+  color: var(--theme-tab-modified);
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.document-tab-rename-input {
+  flex: 1;
+  font-size: 12px;
+  color: var(--theme-tab-active-text);
+  background: var(--theme-tab-active-bg);
+  border: 1px solid var(--theme-tab-active-accent);
+  outline: none;
+  padding: 0 2px;
+  margin-right: 8px;
+  height: 20px;
+  min-width: 0;
+  font-family: inherit;
+}
+
+.document-tab.dragging {
+  opacity: 0.4;
+}
+
+.document-tab.drop-target {
+  border-left: 2px solid var(--theme-tab-active-accent);
+}
+
+/* Cross-instance re-dock drop zone: when a PDF is dragged from another app
+   instance over this window's tab bar, the bar lights up to preview where the
+   tab will land. Windows-style flat accent — inset glow + accent underline. */
+.document-tabs.drag-dock-target {
+  background: rgba(0, 120, 215, 0.12);
+  box-shadow: inset 0 0 0 2px var(--theme-tab-active-accent, #0078d7);
+}
+
+.document-tabs.drag-dock-target::after {
+  content: 'Sleep hier om te koppelen';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 4px;
+  padding: 2px 10px;
+  background: var(--theme-tab-active-accent, #0078d7);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.document-tabs-empty {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--theme-tab-empty-text);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.document-tabs-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 100%;
+  color: var(--theme-tab-add-color);
+  font-size: 18px;
+  font-weight: 300;
+  border-left: 1px solid var(--theme-tab-add-border);
+}
+
+.document-tabs-add:hover {
+  background: var(--theme-tab-add-hover);
+  color: var(--theme-tab-active-text);
+}

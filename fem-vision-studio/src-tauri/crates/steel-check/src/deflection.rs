@@ -1,0 +1,661 @@
+//! BGT-doorbuigingstoetsen: eindzakking `w_fin` en bijkomende zakking `w_add`.
+//!
+//! De grenswaarden komen uit **NEN-EN 1990:2002/NB:2019, A1.4.3**. Twee
+//! artikelen, twee verschillende grootheden:
+//!
+//! * **A1.4.3(4)** gaat over `w_max` — de totale doorbuiging met de zeeg
+//!   verrekend. "Indien het uiterlijk van de constructie van belang is, moet de
+//!   doorbuiging w_max bij zowel vloeren als daken worden beperkt tot 1/250
+//!   deel van ℓ_rep." Dat is de eis waar `w_fin` op wordt getoetst.
+//! * **A1.4.3(3)** gaat over `w2 + w3` — het deel van de doorbuiging bovenop
+//!   wat de blijvende belasting al veroorzaakt (zie figuur NB.1 bij A1.4.3(2)).
+//!   Dat is de eis waar `w_add` op wordt getoetst, en hij kent VIER
+//!   categorieën met vier verschillende noemers.
+//!
+//! In beide gevallen geldt: "ℓ_rep is de lengte van een overspanning of
+//! tweemaal de lengte van een uitkraging."
+
+use crate::input::DeflectionClass;
+// De vier grenswaarden van A1.4.3(3) zijn nationaal bepaalde parameters en
+// komen uit de normnaad, niet uit losse getallen hieronder.
+use crate::NDP_1990;
+use mechanics::{ForceStateSnapshot, InternalForces};
+use nen_en_1993_1_1_section::{CheckStatus, NamedValue, ResistanceCalc, UnityCheck};
+
+/// Noemer n in de eindzakkingsgrens L/n voor `w_fin` (≈ w_max).
+///
+/// Deze waarden zijn ongewijzigd. Waar ze vandaan komen, gemeten langs
+/// A1.4.3(4) (w_max ≤ ℓ_rep/250 voor zowel vloeren als daken):
+///
+/// * `Roof` = 250 — letterlijk de NB-waarde, met ℓ_rep = de overspanning.
+/// * `Floor` = 333 — strenger dan de 250 die de NB minimaal eist. Veilig aan
+///   de goede kant; het getal is een huiskeuze, geen normwaarde.
+/// * `FloorBrittlePartitions` = 333 — dezelfde huiskeuze als `Floor`. De NB
+///   geeft voor deze categorie geen eigen w_max-eis (het onderscheid zit in
+///   A1.4.3(3), dus in w_add); daarom nooit ruimer dan een gewone vloer.
+/// * `Cantilever` = 150 op de **staaflengte**. Met ℓ_rep = 2·L komt dat neer
+///   op ℓ_rep/300, opnieuw strenger dan de ℓ_rep/250 uit A1.4.3(4).
+/// * `Custom` — volledig door de aanroeper opgegeven. Een noemer van 0 of
+///   kleiner is daar geen keuze maar een invoerfout; zie [`keur_noemers`].
+pub fn default_numerator(class: DeflectionClass, custom: i32) -> i32 {
+    match class {
+        DeflectionClass::Floor => 333,
+        DeflectionClass::FloorBrittlePartitions => 333,
+        DeflectionClass::Roof => 250,
+        DeflectionClass::Cantilever => 150,
+        DeflectionClass::Custom => custom,
+    }
+}
+
+/// Keurt de twee doorbuigingsnoemers VOORDAT er getoetst wordt.
+///
+/// WAAROM. Een grenswaarde L/n bestaat alleen voor n > 0. Tot september 2026
+/// maakte de kern van `Custom` met n = 0 een grens van oneindig; de UC werd
+/// dan 0 en de toets op w_fin meldde "Ok" zonder iets getoetst te hebben. Bij
+/// w_add viel hetzelfde geval terug op 3/1 000 · ℓ_rep, en een negatieve
+/// w_add-noemer werd gelezen als "niet opgegeven".
+///
+/// DE REGEL, voor w_fin én w_add gelijk: een noemer die de aanroeper OPGEEFT
+/// moet een eindig getal groter dan nul zijn. Is hij dat niet, dan is dat een
+/// invoerfout en wordt de staaf geweigerd met deze reden — dezelfde vorm als
+/// een onbekende staalsoort. Er wordt geen noemer geraden: welke categorie
+/// uit NEN-EN 1990:2002/NB:2019 A1.4.3(3) of (4) van toepassing is, weet
+/// alleen wie de klasse 'Custom' koos.
+///
+/// Wat GEEN fout is:
+/// * een w_fin-noemer bij een andere klasse dan `Custom`: die wordt niet
+///   gelezen (zie [`default_numerator`]);
+/// * een w_add-noemer van precies 0: dat is de gedocumenteerde betekenis
+///   "leid de noemer af uit de klasse" (zie [`w_add_grens`]). Bij `Custom`
+///   is dat de opgegeven w_fin-noemer, die hier dan al gekeurd is.
+pub fn keur_noemers(
+    class: DeflectionClass,
+    limit_numerator: i32,
+    w_add_limit_numerator: f64,
+) -> Result<(), String> {
+    if class == DeflectionClass::Custom && limit_numerator <= 0 {
+        return Err(format!(
+            "doorbuigingsklasse 'Custom' met noemer {limit_numerator}: de grens L/n bestaat \
+             alleen voor n > 0, dus de toetsen op w_fin (NEN-EN 1990:2002/NB:2019 A1.4.3(4)) en \
+             w_add (A1.4.3(3)) zijn niet uit te voeren; geef een noemer groter dan nul op of \
+             kies een andere klasse — er is niet getoetst"
+        ));
+    }
+    if !w_add_limit_numerator.is_finite() || w_add_limit_numerator < 0.0 {
+        return Err(format!(
+            "noemer voor de bijkomende doorbuiging w_add is {w_add_limit_numerator}: de grens \
+             L/n bestaat alleen voor n > 0 (0 = afleiden uit de klasse volgens \
+             NEN-EN 1990:2002/NB:2019 A1.4.3(3)) — er is niet getoetst"
+        ));
+    }
+    Ok(())
+}
+
+/// Leesbare naam van een klasse, voor het rapport.
+fn class_label(class: DeflectionClass) -> &'static str {
+    match class {
+        DeflectionClass::Floor => "Floor",
+        DeflectionClass::FloorBrittlePartitions => "FloorBrittlePartitions",
+        DeflectionClass::Roof => "Roof",
+        DeflectionClass::Cantilever => "Cantilever",
+        DeflectionClass::Custom => "Custom",
+    }
+}
+
+pub fn check_deflection(
+    actual_mm: f64,
+    length_m: f64,
+    class: DeflectionClass,
+    limit_numerator: i32,
+) -> ResistanceCalc {
+    let numerator = default_numerator(class, limit_numerator);
+    // Geen `max(1)` meer: L/1 is geen grens maar een toets die altijd slaagt.
+    let limit_mm = grens_mm(length_m * 1000.0, numerator as f64);
+    let getoetst = limit_mm.is_finite() && limit_mm > 0.0;
+    let uc = if getoetst { actual_mm / limit_mm } else { 0.0 };
+
+    ResistanceCalc {
+        deelstappen: Vec::new(),
+        id: "sls_deflection".to_string(),
+        title: "Doorbuiging (BGT)".to_string(),
+        article: "NEN-EN 1990 (SLS)".to_string(),
+        force_state: ForceStateSnapshot { combination_id: 0, position_mm: 0.0, forces: InternalForces::default() },
+        formula_latex: format!(r"\delta_{{lim}} = L / {}", numerator),
+        variables: vec![
+            NamedValue { symbol: "L".to_string(), value: length_m * 1000.0, unit: "mm".to_string() },
+            NamedValue { symbol: "L_{type}".to_string(), value: numerator as f64, unit: format!("({})", class_label(class)) },
+        ],
+        value: limit_mm,
+        unit: "mm".to_string(),
+        uc: getoetst.then(|| UnityCheck {
+            ed: actual_mm, rd: limit_mm, uc,
+            formula_latex: r"\delta / \delta_{lim}".to_string(),
+        }),
+        status: if !getoetst {
+            CheckStatus::NotApplicable
+        } else if uc <= 1.0 {
+            CheckStatus::Ok
+        } else {
+            CheckStatus::NotOk
+        },
+        notes: if getoetst { vec![] } else { vec![niet_getoetst(numerator as f64)] },
+    }
+}
+
+/// Reden bij een doorbuigingstoets zonder bruikbare grens. Via
+/// `steel_check::check_beam` komt het zover niet ([`keur_noemers`] weigert de
+/// staaf eerder); deze regel is er voor wie de functies hier rechtstreeks
+/// aanroept, zodat ook die nooit een "Ok" zonder toets krijgt.
+fn niet_getoetst(noemer: f64) -> String {
+    format!(
+        "Niet getoetst: noemer n = {noemer} geeft geen grenswaarde L/n (n moet groter dan nul \
+         zijn)."
+    )
+}
+
+/// Eindzakking: w_fin = w_z + w_zeeg.
+///
+/// TEKENS. De zakking w_z is negatief OMLAAG: een doorhangende ligger geeft een
+/// negatief getal. De zeeg w_zeeg is positief OMHOOG: de ligger is vooraf
+/// opgebogen. Een zeeg omhoog verkleint dus een zakking omlaag (−14,4 + 10 =
+/// −4,4 mm), en vergroot een OPWAARTSE zakking, bijvoorbeeld onder windzuiging
+/// (+40 + 10 = +50 mm): die ligger stond al hoger.
+///
+/// NORMGROND. NEN-EN 1990:2002+A1:2019/NB:2019 A1.4.3(2), figuur A1.1 (NB.1):
+/// "w_max maximale doorbuiging, rekening houdend met de zeeg, w_tot − w_c",
+/// met w_c de "zeeg van het onbelaste constructief element". De figuur meet
+/// beide omlaag positief; in de tekenafspraak van deze kern (omhoog positief)
+/// staat daar w_fin = w_z + w_zeeg.
+///
+/// Tot september 2026 stond hier w_z − w_zeeg, met als toelichting "zelfde
+/// tekenconventie als de zakking". De invoerhint zei "negatief = omlaag", dus
+/// een zeeg omhoog werd als +10 ingevoerd — en vergrootte dan de zakking.
+pub fn w_fin_mm(w_z_mm: f64, w_zeeg_omhoog_mm: f64) -> f64 {
+    w_z_mm + w_zeeg_omhoog_mm
+}
+
+/// Bijkomende zakking: w_add = w_z − w_BGT,permanent, ZONDER zeeg.
+///
+/// A1.4.3(3) begrenst "de som van de vervorming w_2 en w_3", de doorbuiging
+/// bovenop het blijvende deel. De zeeg w_c staat in figuur A1.1 alleen in
+/// w_max; hij hoort w_2 + w_3 dus niet te verkleinen. Tot september 2026 werd
+/// hier w_fin gebruikt, zodat een zeeg ook de bijkomende doorbuiging kleiner
+/// maakte dan de norm toelaat.
+pub fn w_add_mm(w_z_mm: f64, w_sls_permanent_mm: f64) -> f64 {
+    w_z_mm - w_sls_permanent_mm
+}
+
+/// Grenswaarde L/noemer in mm.
+///
+/// Voor een noemer die geen grens geeft (0, negatief, niet eindig) is de
+/// uitkomst oneindig; wie dat getal gebruikt, moet de toets als niet
+/// uitgevoerd melden en niet als voldaan.
+pub fn grens_mm(lengte_mm: f64, noemer: f64) -> f64 {
+    if !noemer.is_finite() || noemer < 1e-9 { return f64::INFINITY; }
+    lengte_mm / noemer
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Grenswaarde voor w_add — NEN-EN 1990:2002/NB:2019 A1.4.3(3)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// De vier gedachtestreepjes van A1.4.3(3), letterlijk:
+//
+//   1. bij vloeren die scheurgevoelige scheidingswanden dragen, de som van de
+//      vervorming w2 en w3 bij de FREQUENTE belastingscombinatie (6.15b) niet
+//      groter dan 1/500 deel van ℓ_rep;
+//   2. bij overige vloeren en daken die intensief door personen worden
+//      gebruikt, w2 + w3 bij de FREQUENTE belastingscombinatie (6.15b) niet
+//      groter dan 3/1 000 deel van ℓ_rep;
+//   3. bij overige daken, w2 + w3 bij de KARAKTERISTIEKE belastingscombinatie
+//      (6.14b) met afzonderlijk de gebruiksbelasting, de windbelasting en de
+//      sneeuwbelasting als extreme veranderlijke belasting, niet groter dan
+//      1/250 deel van ℓ_rep;
+//   4. bij VLOERAFSCHEIDINGEN ter plaatse van een hoogteverschil, de verticale
+//      w2 + w3 van de bovenrand/bovenregel (of de onderregel) niet groter dan
+//      1/150 deel van ℓ_rep.
+//
+// Hier stond tot september 2026 één constante `W_ADD_NOEMER = 150,0`, voor elke
+// staaf, "conform de referentie-uitwerking". Dat is de vierde regel hierboven,
+// en die gaat over een balustrade — niet over een ligger. Voor een gewone
+// vloerligger is L/150 twee tot ruim drie keer zo ruim als de norm toestaat.
+//
+// De referentie-uitwerking blijft na te rekenen: `deflection_add_limit_numerator`
+// zet elke noemer die je wilt, en het rapport zegt er dan bij dat hij is
+// opgegeven en niet uit de norm volgt.
+
+/// De grenswaarde voor w_add plus de verantwoording ervan.
+#[derive(Clone, Debug)]
+pub struct WAddGrens {
+    /// Noemer n in ℓ_rep/n.
+    pub noemer: f64,
+    /// Referentielengte ℓ_rep in mm: de overspanning, of tweemaal de
+    /// uitkraaglengte.
+    pub l_rep_mm: f64,
+    /// De grenswaarde zelf, in mm.
+    pub grens_mm: f64,
+    /// Artikel dat in de kop van de toets komt te staan.
+    pub artikel: &'static str,
+    /// Regels voor `notes`: welke NB-categorie, welk artikel, welke combinatie.
+    pub toelichting: Vec<String>,
+}
+
+/// Noemer als leesbaar getal: "150" in plaats van "150.0000", "333.33" waar
+/// hij werkelijk niet geheel is.
+fn noemer_tekst(n: f64) -> String {
+    if (n - n.round()).abs() < 1e-9 {
+        format!("{}", n.round() as i64)
+    } else {
+        format!("{n:.2}")
+    }
+}
+
+/// Bepaalt de grenswaarde voor w_add uit de doorbuigingsklasse.
+///
+/// `opgegeven_noemer > 0` overschrijft de klassewaarde en rekent op de
+/// **staaflengte** (geen ℓ_rep-verdubbeling): dat is de escape voor een
+/// externe referentie-uitwerking met een vaste noemer.
+///
+/// `fin_noemer` is de noemer van de eindzakking; hij telt alleen mee bij
+/// klasse `Custom`, waar dezelfde opgegeven n voor w_fin én w_add geldt —
+/// dezelfde afspraak als de houttoetsing hanteert. Een `Custom`-noemer van 0
+/// of kleiner wordt NIET vervangen; [`keur_noemers`] weigert die invoer.
+pub fn w_add_grens(
+    lengte_mm: f64,
+    class: DeflectionClass,
+    fin_noemer: i32,
+    opgegeven_noemer: f64,
+    is_cantilever: bool,
+) -> WAddGrens {
+    const NB_A1_4_3_3: &str = "NEN-EN 1990:2002/NB:2019 A1.4.3(3)";
+    // De vier NB-waarden op een rij, voor een lezer die wil zien wat er níet
+    // is gekozen.
+    const NB_OVERZICHT: &str = "De NB kent voor w2 + w3 alleen ℓ_rep/500 \
+        (vloeren met scheurgevoelige scheidingswanden), 3/1 000 · ℓ_rep \
+        (overige vloeren en daken die intensief door personen worden gebruikt), \
+        ℓ_rep/250 (overige daken) en — uitsluitend voor vloerafscheidingen ter \
+        plaatse van een hoogteverschil — ℓ_rep/150.";
+
+    // w_add ÍS w2 + w3: de doorbuiging bovenop het deel dat de blijvende
+    // belasting al veroorzaakt. Die gelijkstelling hoort in het rapport te
+    // staan, want zij bepaalt welk artikel van toepassing is.
+    let definitie = "w_add = w_fin − w_BGT,permanent staat voor de som w2 + w3 uit figuur NB.1 \
+         bij NEN-EN 1990:2002/NB:2019 A1.4.3(2): de doorbuiging bovenop het deel dat de \
+         blijvende belasting al veroorzaakt."
+        .to_string();
+
+    // ── Opgegeven noemer: klassewaarde overschreven ─────────────────────────
+    if opgegeven_noemer > 0.0 {
+        return WAddGrens {
+            noemer: opgegeven_noemer,
+            l_rep_mm: lengte_mm,
+            grens_mm: grens_mm(lengte_mm, opgegeven_noemer),
+            artikel: "NEN-EN 1990 (BGT) — noemer opgegeven",
+            toelichting: vec![
+                definitie,
+                format!(
+                    "De noemer n = {n} is expliciet opgegeven en op de staaflengte toegepast; \
+                     de klassewaarde uit {NB_A1_4_3_3} is daarmee overschreven. Grens = \
+                     {grens:.1} mm. {NB_OVERZICHT}",
+                    n = noemer_tekst(opgegeven_noemer),
+                    grens = grens_mm(lengte_mm, opgegeven_noemer),
+                ),
+            ],
+        };
+    }
+
+    // ── Custom: één opgegeven n voor w_fin én w_add ─────────────────────────
+    if class == DeflectionClass::Custom {
+        // Tot september 2026 viel n <= 0 hier terug op 3/1 000 · ℓ_rep, terwijl
+        // w_fin met dezelfde invoer stil "Ok" gaf. Nu één regel voor beide:
+        // [`keur_noemers`] weigert die invoer, en wie deze functie toch met
+        // n <= 0 aanroept krijgt een oneindige grens, die
+        // [`check_deflection_pair`] als "niet getoetst" meldt.
+        let n = fin_noemer as f64;
+        return WAddGrens {
+            noemer: n,
+            l_rep_mm: lengte_mm,
+            grens_mm: grens_mm(lengte_mm, n),
+            artikel: "NEN-EN 1990 (BGT) — noemer opgegeven",
+            toelichting: vec![
+                definitie,
+                format!(
+                    "Klasse 'Custom': de opgegeven noemer n = {tekst} geldt voor w_fin én w_add, \
+                     en is op de staaflengte toegepast. Grens = {grens:.1} mm. {NB_OVERZICHT}",
+                    tekst = noemer_tekst(n),
+                    grens = grens_mm(lengte_mm, n),
+                ),
+            ],
+        };
+    }
+
+    // ── NB-categorie bij de klasse ──────────────────────────────────────────
+    //
+    // `grens_tekst` is de formulering van de norm zélf ("3/1 000 deel van
+    // ℓ_rep"), niet een afgeronde noemer. Anders zou het rapport "ℓ_rep/333,3"
+    // melden waar de NB "3/1 000" schrijft, en dan is niet meer na te gaan of
+    // de 333 uit de norm komt of uit een afronding.
+    //
+    // `Cantilever` zegt niets over het gebruik van het vlak, alleen over de
+    // referentielengte. Voor de categorie wordt daarom dezelfde regel
+    // aangehouden als bij `Floor` — het tweede gedachtestreepje, dat samen met
+    // het eerste de strengste van de twee vloerregels is die zonder verdere
+    // kennis van het gebouw te verantwoorden valt. Draagt de uitkraging
+    // scheurgevoelige scheidingswanden, dan hoort de klasse
+    // `FloorBrittlePartitions` gekozen te worden; dat staat ook in de notitie.
+    let (noemer, grens_tekst, categorie, streepje, combinatie) = match class {
+        DeflectionClass::FloorBrittlePartitions => (
+            NDP_1990.w_add_noemer_scheurgevoelig,
+            "1/500 deel van ℓ_rep",
+            "vloeren die scheurgevoelige scheidingswanden dragen",
+            "eerste",
+            "de FREQUENTE belastingscombinatie (uitdrukking 6.15b)",
+        ),
+        DeflectionClass::Roof => (
+            NDP_1990.w_add_noemer_overige_daken,
+            "1/250 deel van ℓ_rep",
+            "overige daken",
+            "derde",
+            "de KARAKTERISTIEKE belastingscombinatie (uitdrukking 6.14b), met afzonderlijk de \
+             gebruiksbelasting, de windbelasting en de sneeuwbelasting als extreme veranderlijke \
+             belasting",
+        ),
+        // Floor en Cantilever delen dezelfde categorie.
+        _ => (
+            NDP_1990.w_add_noemer_intensief,
+            "3/1 000 deel van ℓ_rep",
+            "overige vloeren en daken die intensief door personen worden gebruikt",
+            "tweede",
+            "de FREQUENTE belastingscombinatie (uitdrukking 6.15b)",
+        ),
+    };
+
+    // ℓ_rep: "de lengte van een overspanning of tweemaal de lengte van een
+    // uitkraging" (A1.4.3(3), verklaring bij ℓ_rep). Zowel de klasse als de
+    // losse vlag `is_cantilever` mag dat aanzetten; ze horen hetzelfde te
+    // zeggen, maar één van beide vergeten mag niet stil goed gaan.
+    let uitkraging = is_cantilever || class == DeflectionClass::Cantilever;
+    let l_rep_mm = if uitkraging { 2.0 * lengte_mm } else { lengte_mm };
+
+    let mut toelichting = vec![
+        definitie,
+        format!(
+            "Grenswaarde: {grens_tekst}, volgens {NB_A1_4_3_3}, {streepje} gedachtestreepje: \
+             {categorie}. Met ℓ_rep = {l_rep_mm:.0} mm is dat {grens:.1} mm. De norm meet w2 + w3 \
+             daar bij {combinatie} — controleer dat de doorbuiging waarmee hier is gerekend uit \
+             die combinatie komt.",
+            grens = grens_mm(l_rep_mm, noemer),
+        ),
+    ];
+    if uitkraging {
+        toelichting.push(format!(
+            "ℓ_rep = 2 × {lengte_mm:.0} = {l_rep_mm:.0} mm: bij een uitkraging is ℓ_rep tweemaal \
+             de uitkraaglengte ({NB_A1_4_3_3}, verklaring bij ℓ_rep). De eindzakking w_fin \
+             hierboven rekent NIET met deze verdubbeling maar met de staaflengte en noemer 150, \
+             wat op ℓ_rep/300 neerkomt en dus strenger is dan de ℓ_rep/250 uit A1.4.3(4)."
+        ));
+    }
+    if class == DeflectionClass::Cantilever {
+        toelichting.push(
+            "De klasse 'uitkraging' zegt niets over het gebruik van het vloer- of dakvlak; hier \
+             is de categorie 'overige vloeren en daken die intensief door personen worden \
+             gebruikt' aangehouden. Draagt de uitkraging scheurgevoelige scheidingswanden, kies \
+             dan de klasse daarvoor; is het een overig dak, kies dan 'dak'."
+                .to_string(),
+        );
+    }
+
+    WAddGrens {
+        noemer,
+        l_rep_mm,
+        grens_mm: grens_mm(l_rep_mm, noemer),
+        artikel: NB_A1_4_3_3,
+        toelichting,
+    }
+}
+
+/// Beide doorbuigingstoetsen: eindzakking w_fin (L/klasse, A1.4.3(4)) en
+/// bijkomende zakking w_add (ℓ_rep/n uit A1.4.3(3), zie [`w_add_grens`]).
+#[allow(clippy::too_many_arguments)]
+pub fn check_deflection_pair(
+    w_z_mm: f64,
+    w_pre_camber_mm: f64,
+    w_sls_permanent_mm: f64,
+    length_m: f64,
+    class: DeflectionClass,
+    limit_numerator: i32,
+    w_add_limit_numerator: f64,
+    is_cantilever: bool,
+) -> (ResistanceCalc, ResistanceCalc) {
+    let lengte_mm = length_m * 1000.0;
+    let noemer_fin = default_numerator(class, limit_numerator) as f64;
+
+    let w_fin = w_fin_mm(w_z_mm, w_pre_camber_mm);
+    // Uit w_z en niet uit w_fin: de zeeg hoort niet in w_2 + w_3; zie w_add_mm.
+    let w_add = w_add_mm(w_z_mm, w_sls_permanent_mm);
+    let add = w_add_grens(lengte_mm, class, limit_numerator, w_add_limit_numerator, is_cantilever);
+
+    let calc = |id: &str,
+                titel: &str,
+                artikel: &str,
+                w: f64,
+                noemer: f64,
+                referentie_mm: f64,
+                latex: &str,
+                notes: Vec<String>| {
+        let grens = grens_mm(referentie_mm, noemer);
+        // Zonder eindige, positieve grens is er niets getoetst. Dan ook geen
+        // UC (een UC van 0 leest als "ruim voldaan") en geen status Ok.
+        let getoetst = grens.is_finite() && grens > 0.0;
+        let uc = if getoetst { w.abs() / grens } else { 0.0 };
+        let mut notes = notes;
+        if !getoetst {
+            notes.push(niet_getoetst(noemer));
+        }
+        ResistanceCalc {
+            deelstappen: Vec::new(),
+            id: id.to_string(),
+            title: titel.to_string(),
+            article: artikel.to_string(),
+            force_state: ForceStateSnapshot {
+                combination_id: 0, position_mm: 0.0, forces: InternalForces::default(),
+            },
+            formula_latex: latex.to_string(),
+            variables: vec![
+                NamedValue { symbol: "L".to_string(), value: referentie_mm, unit: "mm".to_string() },
+                NamedValue { symbol: "w".to_string(), value: w, unit: "mm".to_string() },
+                NamedValue { symbol: "L/n".to_string(), value: noemer, unit: "-".to_string() },
+            ],
+            value: grens,
+            unit: "mm".to_string(),
+            uc: getoetst.then(|| UnityCheck {
+                ed: w.abs(), rd: grens, uc,
+                formula_latex: r"|w| / w_{max}".to_string(),
+            }),
+            status: if !getoetst {
+                CheckStatus::NotApplicable
+            } else if uc <= 1.0 {
+                CheckStatus::Ok
+            } else {
+                CheckStatus::NotOk
+            },
+            notes,
+        }
+    };
+
+    let mut fin = calc(
+        "deflection_w_fin", "Doorbuiging w_fin (BGT)", "NEN-EN 1990 (BGT)",
+        w_fin, noemer_fin, lengte_mm,
+        r"w_{fin,z} = w_z + w_{zeeg,z}",
+        vec![],
+    );
+    // Met een zeeg is w_fin niet uit w alleen na te rekenen: dan staan w_z en
+    // de zeeg er als eigen regels bij, met het teken van beide uitgeschreven.
+    if w_pre_camber_mm != 0.0 {
+        let nl2 = |v: f64| format!("{v:.2}").replace('.', ",");
+        fin.variables.push(NamedValue { symbol: "w_z".to_string(), value: w_z_mm, unit: "mm".to_string() });
+        fin.variables.push(NamedValue { symbol: "w_{zeeg}".to_string(), value: w_pre_camber_mm, unit: "mm".to_string() });
+        fin.notes.push(format!(
+            "Zeeg verrekend: w_fin = w_z + w_zeeg = {} + {} = {} mm. De zakking w_z is negatief \
+             omlaag, de zeeg positief omhoog (NEN-EN 1990 A1.4.3(2), figuur A1.1: w_max = w_tot − \
+             w_c, daar beide omlaag positief). De zeeg telt NIET mee in w_add: A1.4.3(3) begrenst \
+             w_2 + w_3, en daarin zit de zeeg niet.",
+            nl2(w_z_mm),
+            nl2(w_pre_camber_mm),
+            nl2(w_fin),
+        ));
+    }
+    (
+        fin,
+        calc(
+            "deflection_w_add", "Doorbuiging w_add (BGT)", add.artikel,
+            w_add, add.noemer, add.l_rep_mm,
+            r"w_{add,z} = w_z - w_{BGT,perm,z}",
+            add.toelichting,
+        ),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    /// Regressie op de vier noemers uit NEN-EN 1990:2002/NB:2019 A1.4.3(3).
+    /// De tabelregel staat bij elke waarde, zodat een latere wijziging opvalt.
+    #[test]
+    fn nb_noemers_per_klasse() {
+        let g = |class, is_cant| w_add_grens(6000.0, class, 333, 0.0, is_cant);
+
+        // A1.4.3(3), eerste gedachtestreepje: "bij vloeren die scheurgevoelige
+        // scheidingswanden dragen … niet groter dan 1/500 deel van ℓ_rep".
+        let brittle = g(DeflectionClass::FloorBrittlePartitions, false);
+        assert_relative_eq!(brittle.noemer, 500.0);
+        assert_relative_eq!(brittle.l_rep_mm, 6000.0);
+        assert_relative_eq!(brittle.grens_mm, 12.0);
+
+        // A1.4.3(3), tweede gedachtestreepje: "bij overige vloeren en daken die
+        // intensief door personen worden gebruikt … niet groter dan 3/1 000
+        // deel van ℓ_rep".
+        let floor = g(DeflectionClass::Floor, false);
+        assert_relative_eq!(floor.noemer, 1000.0 / 3.0);
+        assert_relative_eq!(floor.grens_mm, 18.0); // 3/1000 · 6000
+
+        // A1.4.3(3), derde gedachtestreepje: "bij overige daken … niet groter
+        // dan 1/250 deel van ℓ_rep".
+        let roof = g(DeflectionClass::Roof, false);
+        assert_relative_eq!(roof.noemer, 250.0);
+        assert_relative_eq!(roof.grens_mm, 24.0);
+
+        // A1.4.3(3), verklaring: "ℓ_rep is de lengte van een overspanning of
+        // tweemaal de lengte van een uitkraging."
+        let cant = g(DeflectionClass::Cantilever, false);
+        assert_relative_eq!(cant.noemer, 1000.0 / 3.0);
+        assert_relative_eq!(cant.l_rep_mm, 12000.0);
+        assert_relative_eq!(cant.grens_mm, 36.0); // 3/1000 · 12000
+
+        // Dezelfde verdubbeling via de losse vlag, zonder de klasse.
+        let vlag = g(DeflectionClass::Floor, true);
+        assert_relative_eq!(vlag.l_rep_mm, 12000.0);
+        assert_relative_eq!(vlag.grens_mm, 36.0);
+    }
+
+    /// De vaste L/150 uit de oude constante is geen NB-waarde voor een ligger
+    /// (die 150 hoort bij vloerafscheidingen, A1.4.3(3) vierde
+    /// gedachtestreepje). Hij blijft bereikbaar via het expliciete veld, en
+    /// levert dan exact het oude getal.
+    #[test]
+    fn opgegeven_noemer_overschrijft_de_klasse() {
+        let g = w_add_grens(6000.0, DeflectionClass::Floor, 333, 150.0, false);
+        assert_relative_eq!(g.noemer, 150.0);
+        assert_relative_eq!(g.l_rep_mm, 6000.0);
+        assert_relative_eq!(g.grens_mm, 40.0);
+        assert!(g.toelichting.iter().any(|n| n.contains("expliciet opgegeven")));
+
+        // Ook bij een uitkraging blijft de opgegeven noemer op de staaflengte
+        // staan: wie zelf een getal geeft, krijgt geen stille verdubbeling.
+        let c = w_add_grens(6000.0, DeflectionClass::Cantilever, 333, 150.0, true);
+        assert_relative_eq!(c.l_rep_mm, 6000.0);
+        assert_relative_eq!(c.grens_mm, 40.0);
+    }
+
+    /// Klasse `Custom`: één noemer voor w_fin én w_add.
+    #[test]
+    fn custom_gebruikt_dezelfde_noemer_als_w_fin() {
+        let g = w_add_grens(6000.0, DeflectionClass::Custom, 400, 0.0, false);
+        assert_relative_eq!(g.noemer, 400.0);
+        assert_relative_eq!(g.grens_mm, 15.0);
+
+        // Custom zonder bruikbare noemer valt NIET meer terug op 3/1 000 ·
+        // ℓ_rep (issue #9): de grens is oneindig, de toets meldt "niet
+        // getoetst", en de invoer zelf weigert `keur_noemers`.
+        let leeg = w_add_grens(6000.0, DeflectionClass::Custom, 0, 0.0, false);
+        assert!(leeg.grens_mm.is_infinite());
+    }
+
+    /// Issue #9: `Custom` met noemer 0 of negatief is een invoerfout, voor
+    /// w_fin en w_add gelijk; een negatieve of niet-eindige w_add-noemer ook.
+    #[test]
+    fn keur_noemers_weigert_nul_en_negatief() {
+        for n in [0, -1, -333] {
+            let fout = keur_noemers(DeflectionClass::Custom, n, 0.0).unwrap_err();
+            assert!(fout.contains("'Custom'") && fout.contains("niet getoetst"), "{fout}");
+        }
+        for n in [-1.0, -150.0, f64::NAN, f64::INFINITY] {
+            let fout = keur_noemers(DeflectionClass::Floor, 333, n).unwrap_err();
+            assert!(fout.contains("w_add") && fout.contains("niet getoetst"), "{fout}");
+        }
+        // Geen fout: de klassenoemer bij een andere klasse wordt niet gelezen,
+        // en w_add = 0 betekent "afleiden uit de klasse".
+        assert!(keur_noemers(DeflectionClass::Floor, 0, 0.0).is_ok());
+        assert!(keur_noemers(DeflectionClass::Custom, 400, 0.0).is_ok());
+        assert!(keur_noemers(DeflectionClass::Roof, -5, 150.0).is_ok());
+    }
+
+    /// Wie de toetsfuncties rechtstreeks aanroept met een noemer zonder grens,
+    /// krijgt "niet getoetst" — geen UC en nooit status Ok.
+    #[test]
+    fn noemer_zonder_grens_is_nooit_ok() {
+        for n in [0, -300] {
+            let (fin, add) = check_deflection_pair(
+                -5.0, 0.0, 0.0, 6.0, DeflectionClass::Custom, n, 0.0, false,
+            );
+            for c in [&fin, &add] {
+                assert_eq!(c.status, CheckStatus::NotApplicable, "{} bij n = {n}", c.id);
+                assert!(c.uc.is_none(), "{} bij n = {n}", c.id);
+                assert!(c.notes.iter().any(|t| t.starts_with("Niet getoetst")), "{}", c.id);
+            }
+            let los = check_deflection(-5.0, 6.0, DeflectionClass::Custom, n);
+            assert_eq!(los.status, CheckStatus::NotApplicable);
+            assert!(los.uc.is_none());
+        }
+    }
+
+    /// De reden staat in het rapport: categorie, artikel en combinatie.
+    #[test]
+    fn toelichting_noemt_categorie_artikel_en_combinatie() {
+        let (_, add) = check_deflection_pair(
+            -20.0, 0.0, 0.0, 6.0, DeflectionClass::Roof, 333, 0.0, false,
+        );
+        assert_eq!(add.article, "NEN-EN 1990:2002/NB:2019 A1.4.3(3)");
+        let tekst = add.notes.join(" ");
+        assert!(tekst.contains("overige daken"));
+        assert!(tekst.contains("derde gedachtestreepje"));
+        assert!(tekst.contains("KARAKTERISTIEKE"));
+        // 6000/250 = 24 mm.
+        assert_relative_eq!(add.uc.as_ref().unwrap().rd, 24.0);
+    }
+
+    /// Een vloerligger van 6 m: de oude vaste L/150 gaf 40 mm, de NB-regel
+    /// geeft 18 mm. Dat is de fout die deze wijziging repareert — factor 2,2.
+    #[test]
+    fn vloerligger_was_ruim_twee_keer_te_ruim() {
+        let (_, add) = check_deflection_pair(
+            -20.0, 0.0, 0.0, 6.0, DeflectionClass::Floor, 333, 0.0, false,
+        );
+        let uc = add.uc.as_ref().unwrap();
+        assert_relative_eq!(uc.rd, 18.0);
+        assert_relative_eq!(uc.uc, 20.0 / 18.0, max_relative = 1e-9);
+        assert_eq!(add.status, CheckStatus::NotOk); // met L/150 was dit UC 0,50
+    }
+}

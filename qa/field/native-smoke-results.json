@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "records": [
+    {
+      "name": "native-window-identity"
+    },
+    {
+      "name": "native-filesystem-bridge"
+    },
+    {
+      "name": "native-http-bridge",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "name": "native-project-reload"
+    },
+    {
+      "name": "native-real-webview-profile-migration",
+      "theme": "light",
+      "lang": "fr"
+    },
+    {
+      "name": "native-packaged-ifc",
+      "status": "native-sample.ifc loaded — 6 objects rendered."
+    }
+  ],
+  "profileRoot": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\qa\\field\\native-profiles-1791009084457"
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "width": 390,
+    "branding": "passed",
+    "legalLinks": "passed",
+    "legalOverflow": false,
+    "externalRequests": [],
+    "errors": []
+  },
+  {
+    "width": 820,
+    "branding": "passed",
+    "legalLinks": "passed",
+    "legalOverflow": false,
+    "externalRequests": [],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "branding": "passed",
+    "legalLinks": "passed",
+    "legalOverflow": false,
+    "externalRequests": [],
+    "errors": []
+  }
+]

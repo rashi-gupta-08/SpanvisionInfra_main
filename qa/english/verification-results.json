@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-10-03T18:55:59.573Z",
+  "englishTools": 16,
+  "browserErrors": [],
+  "field": {
+    "status": "passed",
+    "scenarios": 89
+  },
+  "studios": {
+    "scenarios": 13,
+    "errors": []
+  },
+  "bim": {
+    "scenarios": 12,
+    "errors": []
+  },
+  "hub": {
+    "scenarios": 32,
+    "errors": []
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "results": [
+    {
+      "name": "REST identity and route catalogue",
+      "health": {
+        "cpts_loaded": 0,
+        "organization": "Spanvision infra",
+        "service": "geptechniek workspace · Geotechniek REST API",
+        "status": "running",
+        "version": "0.4.1"
+      }
+    },
+    {
+      "name": "GEF import, retained measurements, layers and CSV",
+      "cptId": "CPT000000036564",
+      "layerCount": 9
+    },
+    {
+      "name": "single-cpt report",
+      "bytes": 223503,
+      "elapsedMs": 503
+    },
+    {
+      "name": "multiple-cpt report",
+      "bytes": 5744892,
+      "elapsedMs": 1313
+    },
+    {
+      "name": "ifc4x3 presentation"
+    },
+    {
+      "name": "ifcx presentation"
+    },
+    {
+      "name": "MCP identity and compatible tool names",
+      "serverInfo": {
+        "name": "spanvision-geotechniek-workspace",
+        "title": "geptechniek workspace · Geotechniek",
+        "version": "0.4.1"
+      },
+      "toolCount": 31
+    },
+    {
+      "name": "Spanvision tenant and legacy identifier compatibility"
+    },
+    {
+      "name": "BRO XML export and import"
+    },
+    {
+      "name": "Minimal project round trip and export identity"
+    },
+    {
+      "name": "Full project round trip preserves data, paper, scale and customer artwork"
+    },
+    {
+      "name": "Raw IFCGEO snapshot preserves CPT data and records the imported filename"
+    },
+    {
+      "name": "Tenant report generation"
+    }
+  ],
+  "error": null
+}

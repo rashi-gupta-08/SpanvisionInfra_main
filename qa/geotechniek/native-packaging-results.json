@@ -1,0 +1,15 @@
+{
+  "packageIdentity": "com.spanvisioninfra.geotechniek",
+  "productName": "geptechniek workspace \u00b7 Geotechniek",
+  "windowTitle": "geptechniek workspace \u00b7 Geotechniek \u2014 Spanvision infra",
+  "requiredInstallerResources": [
+    "tenants\\spanvision_infra\\brand.yaml",
+    "tenants\\spanvision_infra\\fonts\\Inter-Regular.ttf",
+    "tenants\\spanvision_infra\\logos\\gw-wordmark.png",
+    "tenants\\spanvision_infra\\templates\\constructie_rapport.yaml",
+    "WebView2Loader.dll"
+  ],
+  "resourcesPreserveDirectories": true,
+  "nsisResourceCount": 28,
+  "nativeWindowVisualInspection": "unavailable; see native-ui-results.json"
+}

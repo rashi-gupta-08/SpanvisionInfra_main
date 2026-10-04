@@ -1,0 +1,108 @@
+name: Render regression
+
+on:
+  pull_request:
+    paths:
+      - 'open-pdf-render/**'
+      - 'open-pdf-studio/src-tauri/**'
+      - 'open-pdf-studio/js/pdf/**'
+      - 'scripts/render_test/**'
+      - 'scripts/run-render-regression.mjs'
+      - 'scripts/render-regression-test.py'
+      - 'scripts/requirements-test.txt'
+  workflow_dispatch:
+
+jobs:
+  render-regression:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      # Workspace .cargo/config.toml forces target-feature=+crt-static
+      # (self-contained release binaries, #337) — on a debug Cargo profile
+      # that pulls in the STATIC DEBUG CRT (libcmtd), but tesseract-rs's
+      # Windows build.rs hardcodes CMAKE_BUILD_TYPE=Release (always /MD, the
+      # dynamic RELEASE CRT) regardless of Cargo's own profile. MSVC forbids
+      # mixing debug and release CRT variants in one binary, so linking a
+      # debug `cargo build` against it fails with a wall of
+      # "unresolved external symbol __imp_fgets" (etc.) errors. This job only
+      # ever builds a debug binary for local test runs (nothing here is
+      # distributed to end users), so explicitly negate the feature back to
+      # rustc's default dynamic linking, which — unlike the static case — is
+      # always release-CRT-flavored regardless of debug/release profile,
+      # matching tesseract-rs's own choice. (An empty
+      # CARGO_TARGET_..._RUSTFLAGS does NOT work here — Cargo treats an empty
+      # env var as unset and falls back to config.toml's rustflags, so
+      # /defaultlib:libcmt still got added. RUSTFLAGS takes precedence over
+      # config.toml's target.<triple>.rustflags, and an explicit "-crt-static"
+      # unambiguously overrides rather than relying on emptiness.)
+      RUSTFLAGS: '-C target-feature=-crt-static'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'open-pdf-studio/package-lock.json'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore cargo registry + target
+        id: cargo-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: render-regression-v2-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install npm deps (open-pdf-studio)
+        working-directory: open-pdf-studio
+        run: npm ci
+
+      - name: Prebuild desktop app
+        shell: pwsh
+        run: |
+          cargo build -p pdfium-worker
+          New-Item -ItemType Directory -Force open-pdf-studio/src-tauri/binaries | Out-Null
+          Copy-Item target/debug/pdfium-worker.exe open-pdf-studio/src-tauri/binaries/pdfium-worker-x86_64-pc-windows-msvc.exe -Force
+          cargo build -p open-pdf-studio
+
+      - name: Save cargo registry + target
+        if: steps.cargo-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: render-regression-v2-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Set up python venv
+        shell: bash
+        run: |
+          python -m venv scripts/.venv-test
+          scripts/.venv-test/Scripts/python.exe -m pip install -U pip
+          scripts/.venv-test/Scripts/python.exe -m pip install -r scripts/requirements-test.txt
+
+      - name: Run render regression
+        working-directory: open-pdf-studio
+        env:
+          OPS_ENABLE_MCP: '1'
+          OPS_TEST_PDFS_DIR: ${{ github.workspace }}/open-pdf-studio/src-tauri/resources/kaders
+        run: npm run test:render:auto -- --pdf grootformaat_a1_liggend.pdf --out-root "../test pdf-bestanden/render-regression-runs"
+
+      - name: Upload regression report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-regression-${{ github.run_id }}
+          path: 'test pdf-bestanden/render-regression-runs/'
+          if-no-files-found: warn
+          retention-days: 14

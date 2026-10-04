@@ -1,0 +1,21 @@
+# Reviewed false positives: Rust hashing constants, a local test password,
+# source-file SHA-256 fingerprints, a TypeScript documentation comment, and
+# disposable signing fixtures documented in the fixtures' README.md.
+# Each exception is restricted to one file, rule and line.
+SpanvisionCAD/src/scene/pipeline/face3d_gpu.rs:generic-api-key:55
+SpanvisionCAD/src/scene/view/render.rs:generic-api-key:3982
+calc-workspace/libs/openaec-reports/tests/test_registration.py:generic-api-key:37
+qa/geotechniek/provenance-results.json:generic-api-key:102
+qa/geotechniek/provenance-results.json:generic-api-key:203
+qa/geotechniek/provenance-results.json:generic-api-key:561
+qa/motion/cad-browser-baseline.json:jfrog-identity-token:358
+qa/motion/cad-browser-baseline.json:generic-api-key:480
+qa/motion/cad-browser-baseline.json:generic-api-key:839
+spanvision-2d-cad-workspace/src/components/panels/IfcDashboard.tsx:generic-api-key:206
+spanvision-pdf-workspace/open-pdf-studio/src-tauri/tests/fixtures/pkcs12/certutil-3des.p12:pkcs12-file:0
+spanvision-pdf-workspace/open-pdf-studio/src-tauri/tests/fixtures/pkcs12/sleutel-zonder-certificaat.p12:pkcs12-file:0
+spanvision-pdf-workspace/open-pdf-studio/src-tauri/tests/fixtures/pkcs12/zonder-mac-3des.p12:pkcs12-file:0
+spanvision-pdf-workspace/open-pdf-studio/src-tauri/tests/fixtures/pkcs12/alleen-certificaat.p12:pkcs12-file:0
+spanvision-pdf-workspace/open-pdf-studio/src-tauri/tests/fixtures/pkcs12/openssl3-aes256.p12:pkcs12-file:0
+spanvision-pdf-workspace/open-pdf-studio/src-tauri/tests/fixtures/pkcs12/zonder-wachtwoord.p12:pkcs12-file:0
+spanvision-pdf-workspace/open-pdf-studio/src-tauri/tests/fixtures/pkcs12/windows-export-3des.p12:pkcs12-file:0

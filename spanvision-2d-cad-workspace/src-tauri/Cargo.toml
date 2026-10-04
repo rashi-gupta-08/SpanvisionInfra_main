@@ -1,0 +1,43 @@
+[package]
+name = "spanvision-2d-cad-workspace"
+version = "0.35.0"
+description = "2D CAD Workspace by Spanvision Infra"
+authors = ["Spanvision Infra", "Open 2D Studio Contributors"]
+license = "LGPL-3.0-or-later"
+repository = ""
+edition = "2021"
+rust-version = "1.70"
+
+[lib]
+name = "spanvision_cad"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-store = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+dxf = "0.6"
+tiny_http = "0.12"
+clap = { version = "4", features = ["derive"] }
+tauri-plugin-http = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+dwg-parser = { path = "dwg-parser" }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

@@ -1,0 +1,290 @@
+/* src/index.css
+ * Open FEM2D Studio — base styles
+ * Imports OpenAEC design tokens + theme + canvas tokens.
+ */
+
+@import './styles/tokens.css';
+@import './styles/themes.css';
+@import './styles/canvas-tokens.css';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--theme-bg);
+  color: var(--theme-fg);
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Typography per OpenAEC §2.2 ─── */
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+code, pre, kbd {
+  font-family: var(--font-mono);
+}
+
+button, input, select, textarea {
+  font-family: var(--font-body);
+}
+
+/* ─── App shell ─── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: var(--theme-bg);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ─── Canvas & Split View ─── */
+.canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--theme-bg);
+}
+
+.split-view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.split-view-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.split-view-divider {
+  flex-shrink: 0;
+  height: 6px;
+  background: var(--border, #2a2a4a);
+  cursor: row-resize;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.split-view-divider:hover,
+.split-view-divider:active {
+  background: var(--accent, #3b82f6);
+}
+
+.split-view-divider::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 2px;
+  background: var(--text-muted, #6a6a8a);
+  border-radius: 1px;
+}
+
+.split-view-bottom {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Title Bar ─── */
+.title-bar {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  background: var(--theme-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0 12px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.title-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.title-bar-left svg {
+  color: var(--accent);
+}
+
+.title-bar-center {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.title-bar-right {
+  width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.title-bar-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.title-bar-btn:hover {
+  background: var(--theme-bg-secondary);
+  color: var(--text-primary);
+}
+
+.title-bar-btn.active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ─── Global button styles ─── */
+button {
+  cursor: pointer;
+  border: none;
+  background: var(--theme-bg-secondary);
+  color: var(--theme-fg);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+button:hover {
+  background: var(--theme-bg-tertiary);
+}
+
+button.active {
+  background: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Form elements ─── */
+input[type="number"],
+input[type="text"] {
+  background: var(--theme-bg-primary);
+  border: 1px solid var(--border-light);
+  color: var(--theme-fg);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+select {
+  background: var(--theme-bg-primary);
+  border: 1px solid var(--border-light);
+  color: var(--theme-fg);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+/* ─── Checkbox styling ─── */
+input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ─── Scrollbar styling ─── */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-bg-tertiary);
+  border-radius: 5px;
+  border: 2px solid var(--theme-bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-bg-elevated);
+}
+
+/* ─── Selection colors ─── */
+::selection {
+  background: var(--accent);
+  color: white;
+}

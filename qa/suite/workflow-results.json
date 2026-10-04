@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "scenario": "IFC file loading and model viewport",
+      "passed": true
+    },
+    {
+      "scenario": "IFC loaded canvas preserved on resize",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

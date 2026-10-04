@@ -1,0 +1,198 @@
+{
+  "results": [
+    {
+      "scenario": "chart",
+      "width": 320
+    },
+    {
+      "scenario": "fresh-theme-and-retained-curves",
+      "width": 320,
+      "palette": {
+        "--theme-bg": "#000000",
+        "--theme-content-bg": "#1B1B1B",
+        "--theme-text-secondary": "#999999",
+        "--domain-cpt-qc": "#D97706",
+        "--domain-cpt-fs": "#EA580C",
+        "--domain-cpt-rf": "#F59E0B"
+      }
+    },
+    {
+      "scenario": "drawer-focus-and-escape",
+      "width": 320
+    },
+    {
+      "scenario": "settings",
+      "width": 320
+    },
+    {
+      "scenario": "settings-focus-live-preview-cancel",
+      "width": 320
+    },
+    {
+      "scenario": "drawing",
+      "width": 320
+    },
+    {
+      "scenario": "browser-gef-import",
+      "width": 320
+    },
+    {
+      "scenario": "project-dialog",
+      "width": 320
+    },
+    {
+      "scenario": "browser-project-import",
+      "width": 320
+    },
+    {
+      "scenario": "saved-theme-language-extension-preferences",
+      "width": 320
+    },
+    {
+      "scenario": "chart",
+      "width": 390
+    },
+    {
+      "scenario": "fresh-theme-and-retained-curves",
+      "width": 390,
+      "palette": {
+        "--theme-bg": "#000000",
+        "--theme-content-bg": "#1B1B1B",
+        "--theme-text-secondary": "#999999",
+        "--domain-cpt-qc": "#D97706",
+        "--domain-cpt-fs": "#EA580C",
+        "--domain-cpt-rf": "#F59E0B"
+      }
+    },
+    {
+      "scenario": "drawer-focus-and-escape",
+      "width": 390
+    },
+    {
+      "scenario": "settings",
+      "width": 390
+    },
+    {
+      "scenario": "settings-focus-live-preview-cancel",
+      "width": 390
+    },
+    {
+      "scenario": "drawing",
+      "width": 390
+    },
+    {
+      "scenario": "browser-gef-import",
+      "width": 390
+    },
+    {
+      "scenario": "project-dialog",
+      "width": 390
+    },
+    {
+      "scenario": "browser-project-import",
+      "width": 390
+    },
+    {
+      "scenario": "saved-theme-language-extension-preferences",
+      "width": 390
+    },
+    {
+      "scenario": "chart",
+      "width": 820
+    },
+    {
+      "scenario": "fresh-theme-and-retained-curves",
+      "width": 820,
+      "palette": {
+        "--theme-bg": "#000000",
+        "--theme-content-bg": "#1B1B1B",
+        "--theme-text-secondary": "#999999",
+        "--domain-cpt-qc": "#D97706",
+        "--domain-cpt-fs": "#EA580C",
+        "--domain-cpt-rf": "#F59E0B"
+      }
+    },
+    {
+      "scenario": "drawer-focus-and-escape",
+      "width": 820
+    },
+    {
+      "scenario": "settings",
+      "width": 820
+    },
+    {
+      "scenario": "settings-focus-live-preview-cancel",
+      "width": 820
+    },
+    {
+      "scenario": "drawing",
+      "width": 820
+    },
+    {
+      "scenario": "browser-gef-import",
+      "width": 820
+    },
+    {
+      "scenario": "project-dialog",
+      "width": 820
+    },
+    {
+      "scenario": "browser-project-import",
+      "width": 820
+    },
+    {
+      "scenario": "saved-theme-language-extension-preferences",
+      "width": 820
+    },
+    {
+      "scenario": "chart",
+      "width": 1440
+    },
+    {
+      "scenario": "fresh-theme-and-retained-curves",
+      "width": 1440,
+      "palette": {
+        "--theme-bg": "#000000",
+        "--theme-content-bg": "#1B1B1B",
+        "--theme-text-secondary": "#999999",
+        "--domain-cpt-qc": "#D97706",
+        "--domain-cpt-fs": "#EA580C",
+        "--domain-cpt-rf": "#F59E0B"
+      }
+    },
+    {
+      "scenario": "settings",
+      "width": 1440
+    },
+    {
+      "scenario": "settings-focus-live-preview-cancel",
+      "width": 1440
+    },
+    {
+      "scenario": "drawing",
+      "width": 1440
+    },
+    {
+      "scenario": "customer-logo",
+      "width": 1440
+    },
+    {
+      "scenario": "browser-gef-import",
+      "width": 1440
+    },
+    {
+      "scenario": "project-dialog",
+      "width": 1440
+    },
+    {
+      "scenario": "browser-project-import",
+      "width": 1440
+    },
+    {
+      "scenario": "saved-theme-language-extension-preferences",
+      "width": 1440
+    }
+  ],
+  "errors": [],
+  "requests": []
+}

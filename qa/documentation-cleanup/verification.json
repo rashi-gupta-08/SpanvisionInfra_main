@@ -1,0 +1,57 @@
+{
+  "checkedAt": "2026-10-04T14:56:33.779Z",
+  "archivedFilesVerified": 361,
+  "protectedFilesUnchanged": 596,
+  "archiveLinksVerified": 17,
+  "brokenMovedLinks": [],
+  "modules": [
+    {
+      "directory": "vision-bim-validator",
+      "archived": 24
+    },
+    {
+      "directory": "spanvision-pdf-workspace",
+      "archived": 108
+    },
+    {
+      "directory": "calc-workspace",
+      "archived": 23
+    },
+    {
+      "directory": "open-vision-studio",
+      "archived": 159
+    },
+    {
+      "directory": "fem-vision-studio",
+      "archived": 22
+    },
+    {
+      "directory": "frame-vision-studio",
+      "archived": 5
+    },
+    {
+      "directory": "vision-calculation-studio",
+      "archived": 5
+    },
+    {
+      "directory": "spanvision-geptechniek-workspace",
+      "archived": 10
+    },
+    {
+      "directory": "spanvision-speech-workspace",
+      "archived": 4
+    },
+    {
+      "directory": "spanvision-pile-plane-workspace",
+      "archived": 1
+    }
+  ],
+  "refreshedBuilds": [
+    "pdf",
+    "planner",
+    "frame",
+    "calculation"
+  ],
+  "currentBuilds": 17,
+  "availableTools": 16
+}

@@ -1,0 +1,666 @@
+/**
+ * SectionDialog - Dialog for inserting structural profile sections
+ *
+ * Allows users to:
+ * - Select profile type (I-beam, channel, angle, etc.)
+ * - Choose from standard library (AISC, EN) or enter custom dimensions
+ * - Preview the profile shape
+ * - Insert into the drawing
+ */
+
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { X, Search, RotateCw } from 'lucide-react';
+import { DraggableModal, ModalButton } from '../../shared/DraggableModal';
+import { CAD_DEFAULT_FONT } from '../../../constants/cadDefaults';
+import {
+  PROFILE_TEMPLATES,
+  getDefaultParameters,
+  getAllProfileTemplates,
+} from '../../../services/parametric/profileTemplates';
+import {
+  getAvailableStandards,
+  getCategoriesForStandard,
+  searchPresets,
+  getPresetById,
+  getPresetsForMaterial,
+} from '../../../services/parametric/profileLibrary';
+import { generateProfileGeometry } from '../../../services/parametric/geometryGenerators';
+import type {
+  ProfileType,
+  ParameterValues,
+  ParameterDefinition,
+  ProfileMaterial,
+} from '../../../types/parametric';
+import { useUnitSettings } from '../../../state/appStore';
+import { formatNumber } from '../../../units';
+
+interface SectionDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: (profileType: ProfileType, parameters: ParameterValues, presetId?: string, rotation?: number) => void;
+}
+
+export function SectionDialog({ isOpen, onClose, onInsert }: SectionDialogProps) {
+  const unitSettings = useUnitSettings();
+
+  // Profile selection state
+  const [selectedProfileType, setSelectedProfileType] = useState<ProfileType>('i-beam');
+  const [selectedStandard, setSelectedStandard] = useState<string>('AISC');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
+
+  // Material tab state
+  const [selectedMaterialTab, setSelectedMaterialTab] = useState<ProfileMaterial>('steel');
+
+  // Parameter values (custom or from preset)
+  const [parameters, setParameters] = useState<ParameterValues>({});
+
+  // Rotation
+  const [rotation, setRotation] = useState(0);
+
+  // Canvas ref for preview
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Get current template
+  const template = PROFILE_TEMPLATES[selectedProfileType];
+
+  // Initialize parameters when profile type changes
+  useEffect(() => {
+    if (isOpen) {
+      setParameters(getDefaultParameters(selectedProfileType));
+      setSelectedPresetId('');
+      setUseCustom(false);
+    }
+  }, [selectedProfileType, isOpen]);
+
+  // Update parameters when preset is selected
+  useEffect(() => {
+    if (selectedPresetId) {
+      const preset = getPresetById(selectedPresetId);
+      if (preset) {
+        setParameters(preset.parameters);
+        setUseCustom(false);
+      }
+    }
+  }, [selectedPresetId]);
+
+  // Get presets for the selected material tab
+  const materialPresets = useMemo(() => {
+    return getPresetsForMaterial(selectedMaterialTab);
+  }, [selectedMaterialTab]);
+
+  // Get available presets for current profile type within material
+  const allPresets = useMemo(() => {
+    return materialPresets.filter(p => p.profileType === selectedProfileType);
+  }, [materialPresets, selectedProfileType]);
+
+  // Get profile types that exist for this material
+  const materialProfileTypes = useMemo(() => {
+    const types = new Set(materialPresets.map(p => p.profileType));
+    return getAllProfileTemplates().filter(t => types.has(t.id));
+  }, [materialPresets]);
+
+  // Filter presets by standard and category (or global search)
+  const filteredPresets = useMemo(() => {
+    if (searchQuery) {
+      // Global search across ALL profile types, standards, and categories
+      return searchPresets(searchQuery);
+    }
+
+    let presets = allPresets;
+    if (selectedStandard) {
+      presets = presets.filter(p => p.standard === selectedStandard);
+    }
+    if (selectedCategory) {
+      presets = presets.filter(p => p.category === selectedCategory);
+    }
+    return presets;
+  }, [allPresets, selectedStandard, selectedCategory, searchQuery]);
+
+  // Group search results by profile type for display
+  const groupedSearchResults = useMemo(() => {
+    if (!searchQuery) return null;
+    const groups: Record<string, typeof filteredPresets> = {};
+    for (const preset of filteredPresets) {
+      const key = preset.profileType;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(preset);
+    }
+    return groups;
+  }, [searchQuery, filteredPresets]);
+
+  // Get available standards for current material tab + profile type
+  const materialStandards = useMemo(() => {
+    const standards = new Set(allPresets.map(p => p.standard));
+    return Array.from(standards);
+  }, [allPresets]);
+
+  // Get available categories for current standard
+  const categories = useMemo(() => {
+    return getCategoriesForStandard(selectedStandard).filter(cat =>
+      allPresets.some(p => p.standard === selectedStandard && p.category === cat)
+    );
+  }, [selectedStandard, allPresets]);
+
+  // Draw preview
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !isOpen) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear canvas
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Generate geometry for preview
+    try {
+      const geometry = generateProfileGeometry(
+        selectedProfileType,
+        parameters,
+        { x: 0, y: 0 },
+        rotation * (Math.PI / 180),
+        1
+      );
+
+      if (geometry.outlines.length === 0) return;
+
+      // Calculate scale to fit in canvas
+      const bounds = geometry.bounds;
+      const width = bounds.maxX - bounds.minX;
+      const height = bounds.maxY - bounds.minY;
+      const padding = 20;
+      const scaleX = (canvas.width - padding * 2) / width;
+      const scaleY = (canvas.height - padding * 2) / height;
+      const scale = Math.min(scaleX, scaleY, 2); // Limit max scale
+
+      // Center in canvas
+      const offsetX = canvas.width / 2 - ((bounds.minX + bounds.maxX) / 2) * scale;
+      const offsetY = canvas.height / 2 - ((bounds.minY + bounds.maxY) / 2) * scale;
+
+      // Draw outlines
+      ctx.strokeStyle = '#00d4ff';
+      ctx.lineWidth = 1.5;
+      ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
+
+      for (let i = 0; i < geometry.outlines.length; i++) {
+        const outline = geometry.outlines[i];
+        const closed = geometry.closed[i];
+
+        if (outline.length < 2) continue;
+
+        ctx.beginPath();
+        ctx.moveTo(
+          outline[0].x * scale + offsetX,
+          outline[0].y * scale + offsetY
+        );
+
+        for (let j = 1; j < outline.length; j++) {
+          ctx.lineTo(
+            outline[j].x * scale + offsetX,
+            outline[j].y * scale + offsetY
+          );
+        }
+
+        if (closed) {
+          ctx.closePath();
+          // Only fill outer outline
+          if (i === 0) {
+            ctx.fill();
+          }
+        }
+        ctx.stroke();
+      }
+
+      // Draw center crosshair
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.moveTo(0, canvas.height / 2);
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+    } catch {
+      // Draw error message
+      ctx.fillStyle = '#ff6b6b';
+      ctx.font = `12px ${CAD_DEFAULT_FONT}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Preview error', canvas.width / 2, canvas.height / 2);
+    }
+  }, [isOpen, selectedProfileType, parameters, rotation]);
+
+  // Parameter change handler
+  const handleParameterChange = (paramId: string, value: number | string | boolean) => {
+    setParameters(prev => ({ ...prev, [paramId]: value }));
+    setSelectedPresetId(''); // Clear preset when manually changing
+    setUseCustom(true);
+  };
+
+  // Insert handler
+  const handleInsert = () => {
+    onInsert(selectedProfileType, parameters, useCustom ? undefined : selectedPresetId, rotation);
+    onClose();
+  };
+
+  // Reset search query and rotation when opening
+  useEffect(() => {
+    if (isOpen) {
+      setSearchQuery('');
+      setRotation(0);
+    }
+  }, [isOpen]);
+
+  const footerContent = (
+    <>
+      <div className="text-xs text-cad-text-dim">
+        Click Insert, then click on canvas to place the section
+      </div>
+      <div className="flex gap-2">
+        <ModalButton onClick={onClose}>Cancel</ModalButton>
+        <ModalButton onClick={handleInsert} variant="primary">Insert</ModalButton>
+      </div>
+    </>
+  );
+
+  return (
+    <DraggableModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Insert Section Profile"
+      width={800}
+      height={550}
+      footer={footerContent}
+      footerClassName="px-3 py-2 border-t border-cad-border flex justify-between items-center"
+    >
+      {/* Global Search Bar */}
+      <div className="px-3 py-2 border-b border-cad-border bg-cad-surface">
+        <div className="relative">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-cad-text-dim" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search all profiles (e.g. W8x31, IPE200, L6x6)..."
+            className="w-full pl-8 pr-8 py-1.5 text-sm bg-cad-input border border-cad-border text-cad-text rounded"
+            autoFocus
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-cad-text-dim hover:text-cad-text"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Material Tabs */}
+      <div className="px-3 py-1 border-b border-cad-border bg-cad-surface flex gap-1 overflow-x-auto">
+        {([
+          { key: 'steel' as ProfileMaterial, label: 'Steel' },
+          { key: 'cold-formed-steel' as ProfileMaterial, label: 'Cold-Formed' },
+          { key: 'concrete' as ProfileMaterial, label: 'Concrete' },
+          { key: 'timber' as ProfileMaterial, label: 'Timber' },
+          { key: 'aluminum' as ProfileMaterial, label: 'Aluminum' },
+          { key: 'other' as ProfileMaterial, label: 'Other' },
+        ]).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => {
+              setSelectedMaterialTab(tab.key);
+              setSelectedPresetId('');
+              setSelectedCategory('');
+              setSearchQuery('');
+            }}
+            className={`px-2.5 py-1 text-[10px] font-medium whitespace-nowrap transition-colors border-b-2 ${
+              selectedMaterialTab === tab.key
+                ? 'border-cad-accent text-cad-accent'
+                : 'border-transparent text-cad-text-dim hover:text-cad-text hover:border-cad-border'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left: Profile Type & Presets */}
+        <div className="w-[280px] border-r border-cad-border flex flex-col">
+          {/* Filters (hidden during search) */}
+          {!searchQuery && (
+            <>
+              {/* Profile Type Selection (filtered by material) */}
+              <div className="p-3 border-b border-cad-border">
+                <label className="block text-xs text-cad-text-dim mb-1">Profile Type:</label>
+                <select
+                  value={selectedProfileType}
+                  onChange={(e) => {
+                    setSelectedProfileType(e.target.value as ProfileType);
+                    setSelectedPresetId('');
+                    setSelectedCategory('');
+                  }}
+                  className="w-full px-2 py-1.5 text-sm bg-cad-input border border-cad-border text-cad-text"
+                >
+                  {(materialProfileTypes.length > 0 ? materialProfileTypes : getAllProfileTemplates()).map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Standard & Category */}
+              <div className="p-3 border-b border-cad-border">
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-xs text-cad-text-dim mb-1">Standard:</label>
+                    <select
+                      value={selectedStandard}
+                      onChange={(e) => {
+                        setSelectedStandard(e.target.value);
+                        setSelectedCategory('');
+                        setSelectedPresetId('');
+                      }}
+                      className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+                    >
+                      {(materialStandards.length > 0 ? materialStandards : getAvailableStandards()).map(std => (
+                        <option key={std} value={std}>{std}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs text-cad-text-dim mb-1">Category:</label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => {
+                        setSelectedCategory(e.target.value);
+                        setSelectedPresetId('');
+                      }}
+                      className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+                    >
+                      <option value="">All</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Preset List */}
+          <div className="flex-1 overflow-y-auto p-2">
+            <div className="space-y-1">
+              {/* Custom option (hidden during search) */}
+              {!searchQuery && (
+                <button
+                  onClick={() => {
+                    setUseCustom(true);
+                    setSelectedPresetId('');
+                    setParameters(getDefaultParameters(selectedProfileType));
+                  }}
+                  className={`w-full text-left px-2 py-1.5 text-xs transition-colors ${
+                    useCustom && !selectedPresetId
+                      ? 'bg-cad-accent text-white'
+                      : 'hover:bg-cad-hover text-cad-text'
+                  }`}
+                >
+                  [Custom Dimensions]
+                </button>
+              )}
+
+              {/* Search results grouped by profile type */}
+              {groupedSearchResults ? (
+                Object.entries(groupedSearchResults).map(([profileType, presets]) => {
+                  const typeName = PROFILE_TEMPLATES[profileType as ProfileType]?.name || profileType;
+                  return (
+                    <div key={profileType}>
+                      <div className="px-2 py-1 text-[10px] font-semibold text-cad-text-muted uppercase tracking-wider bg-cad-surface sticky top-0 border-b border-cad-border">
+                        {typeName}
+                      </div>
+                      {presets.map(preset => (
+                        <button
+                          key={preset.id}
+                          onClick={() => {
+                            setSelectedProfileType(preset.profileType);
+                            setSelectedStandard(preset.standard);
+                            setSelectedCategory(preset.category);
+                            setSelectedPresetId(preset.id);
+                            setUseCustom(false);
+                            setSearchQuery('');
+                          }}
+                          className="w-full text-left px-2 py-1.5 text-xs transition-colors hover:bg-cad-hover text-cad-text"
+                        >
+                          <span className="font-medium">{preset.name}</span>
+                          <span className="ml-2 text-cad-text-dim text-[10px]">
+                            {preset.standard} · {preset.category}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })
+              ) : (
+                /* Normal filtered list */
+                filteredPresets.map(preset => (
+                  <button
+                    key={preset.id}
+                    onClick={() => {
+                      setSelectedPresetId(preset.id);
+                      setUseCustom(false);
+                    }}
+                    className={`w-full text-left px-2 py-1.5 text-xs transition-colors ${
+                      selectedPresetId === preset.id
+                        ? 'bg-cad-accent text-white'
+                        : 'hover:bg-cad-hover text-cad-text'
+                    }`}
+                  >
+                    <span className="font-medium">{preset.name}</span>
+                    {preset.properties?.weight && (
+                      <span className="ml-2 text-cad-text-dim text-[10px]">
+                        {formatNumber(preset.properties.weight, 1, unitSettings.numberFormat)} kg/m
+                      </span>
+                    )}
+                  </button>
+                ))
+              )}
+
+              {filteredPresets.length === 0 && !searchQuery && (
+                <div className="text-center text-cad-text-dim py-4 text-xs">
+                  No presets for this profile type
+                </div>
+              )}
+
+              {filteredPresets.length === 0 && searchQuery && (
+                <div className="text-center text-cad-text-dim py-4 text-xs">
+                  No results for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Middle: Parameters */}
+        <div className="w-[240px] border-r border-cad-border flex flex-col">
+          <div className="p-3 border-b border-cad-border">
+            <h3 className="text-xs font-medium text-cad-text">
+              {useCustom ? 'Custom Dimensions' : (selectedPresetId ? `Preset: ${selectedPresetId}` : 'Dimensions')}
+            </h3>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3">
+            <div className="space-y-3">
+              {template?.parameters.map(param => (
+                <ParameterInput
+                  key={param.id}
+                  definition={param}
+                  value={parameters[param.id]}
+                  onChange={(value) => handleParameterChange(param.id, value)}
+                  disabled={!useCustom && !!selectedPresetId}
+                />
+              ))}
+            </div>
+
+            {/* Rotation */}
+            <div className="mt-4 pt-4 border-t border-cad-border">
+              <label className="block text-xs text-cad-text-dim mb-1">
+                <RotateCw size={10} className="inline mr-1" />
+                Rotation (degrees):
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={rotation}
+                  onChange={(e) => setRotation(parseFloat(e.target.value) || 0)}
+                  className="flex-1 px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+                  step={15}
+                />
+                <button
+                  onClick={() => setRotation(r => (r + 90) % 360)}
+                  className="px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text hover:bg-cad-hover"
+                  title="Rotate 90°"
+                >
+                  +90°
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Preview */}
+        <div className="flex-1 flex flex-col">
+          <div className="p-3 border-b border-cad-border">
+            <h3 className="text-xs font-medium text-cad-text">Preview</h3>
+          </div>
+
+          <div className="flex-1 p-3 flex items-center justify-center bg-[#1a1a2e]">
+            <canvas
+              ref={canvasRef}
+              width={260}
+              height={260}
+              className="border border-cad-border"
+            />
+          </div>
+
+          {/* Section Properties (if available) */}
+          {selectedPresetId && (() => {
+            const preset = getPresetById(selectedPresetId);
+            if (preset?.properties) {
+              return (
+                <div className="p-3 border-t border-cad-border">
+                  <h4 className="text-[10px] font-medium text-cad-text-dim uppercase tracking-wider mb-2">
+                    Section Properties
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
+                    {preset.properties.area && (
+                      <div className="flex justify-between">
+                        <span className="text-cad-text-dim">Area:</span>
+                        <span className="text-cad-text">{formatNumber(preset.properties.area, 0, unitSettings.numberFormat)} mm²</span>
+                      </div>
+                    )}
+                    {preset.properties.weight && (
+                      <div className="flex justify-between">
+                        <span className="text-cad-text-dim">Weight:</span>
+                        <span className="text-cad-text">{formatNumber(preset.properties.weight, 1, unitSettings.numberFormat)} kg/m</span>
+                      </div>
+                    )}
+                    {preset.properties.Ix && (
+                      <div className="flex justify-between">
+                        <span className="text-cad-text-dim">Ix:</span>
+                        <span className="text-cad-text">{formatNumber(preset.properties.Ix / 1e6, 2, unitSettings.numberFormat)}×10⁶ mm⁴</span>
+                      </div>
+                    )}
+                    {preset.properties.Iy && (
+                      <div className="flex justify-between">
+                        <span className="text-cad-text-dim">Iy:</span>
+                        <span className="text-cad-text">{formatNumber(preset.properties.Iy / 1e6, 2, unitSettings.numberFormat)}×10⁶ mm⁴</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </div>
+      </div>
+    </DraggableModal>
+  );
+}
+
+// ============================================================================
+// Parameter Input Component
+// ============================================================================
+
+interface ParameterInputProps {
+  definition: ParameterDefinition;
+  value: number | string | boolean | undefined;
+  onChange: (value: number | string | boolean) => void;
+  disabled?: boolean;
+}
+
+function ParameterInput({ definition, value, onChange, disabled }: ParameterInputProps) {
+  const displayValue = value ?? definition.defaultValue;
+
+  return (
+    <div>
+      <label className="block text-xs text-cad-text-dim mb-1" title={definition.description}>
+        {definition.label}
+        {definition.unit && <span className="ml-1 text-[10px]">({definition.unit})</span>}
+      </label>
+
+      {definition.type === 'number' && (
+        <input
+          type="number"
+          value={displayValue as number}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          min={definition.min}
+          max={definition.max}
+          step={definition.step || 1}
+          disabled={disabled}
+          className={`w-full px-2 py-1 text-xs border border-cad-border text-cad-text ${
+            disabled ? 'bg-cad-surface text-cad-text-dim cursor-not-allowed' : 'bg-cad-input'
+          }`}
+        />
+      )}
+
+      {definition.type === 'select' && definition.options && (
+        <select
+          value={displayValue as string}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className={`w-full px-2 py-1 text-xs border border-cad-border text-cad-text ${
+            disabled ? 'bg-cad-surface text-cad-text-dim cursor-not-allowed' : 'bg-cad-input'
+          }`}
+        >
+          {definition.options.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      )}
+
+      {definition.type === 'boolean' && (
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={displayValue as boolean}
+            onChange={(e) => onChange(e.target.checked)}
+            disabled={disabled}
+            className="form-checkbox"
+          />
+          <span className="text-xs text-cad-text">{definition.label}</span>
+        </label>
+      )}
+    </div>
+  );
+}
+
+export default SectionDialog;

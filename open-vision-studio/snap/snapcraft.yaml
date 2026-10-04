@@ -1,0 +1,106 @@
+name: open-planner-studio
+base: core22
+# Versie wordt in CI overschreven met het release-versienummer (zie .github/workflows/snap.yml).
+version: '0.0.0'
+title: Open Planner Studio
+summary: Construction scheduling with Gantt charts and Critical Path Method
+description: |
+  Open Planner Studio is a desktop application for construction planning:
+  Gantt charts, Critical Path Method (CPM) scheduling, resources and
+  calendars, with IFC 4.3 (buildingSMART) as its native file format — no
+  separate project format, no lock-in.
+
+  Scheduling & the Gantt chart:
+  - Interactive Gantt chart rendered on Canvas, with drag & drop (including
+    vertical drag to reorder or reparent tasks) and zoom
+  - Critical Path Method (CPM) with automatic critical-path and float
+    calculation
+  - Work Breakdown Structure (WBS) with collapsible task groups
+  - Spreadsheet-style table view for quick bulk editing
+  - Construction-specific calendars: holidays, seasonal shutdowns,
+    inspection milestones, phasing
+  - Built-in report view with a live, configurable print preview
+
+  Resource libraries:
+  - Resources and calendars live in a shared, project-independent library
+    instead of being copied into every project file
+  - Assigning a resource from the library materializes it into the
+    project, with per-item provenance stamps showing what it came from and
+    whether it has since drifted from the library version
+  - Share a resource library across a whole team or company, and reuse
+    the same equipment, crews, and calendars across many projects
+
+  File formats & interoperability:
+  - IFC 4.3 native file format — open and save directly in the
+    buildingSMART standard, so a project file is a standard-compliant IFC
+    model, not a proprietary blob
+  - Import/export for CSV, Microsoft Project, and Primavera P6
+
+  AI assistant (MCP):
+  - Open Planner Studio can expose itself as an MCP server, so an AI
+    assistant (such as Claude Code) can read and edit the open plan
+    directly — creating and rescheduling tasks, wiring up dependencies,
+    managing resources and calendars — instead of you doing it by hand
+  - Built-in safety controls: pause the assistant, put it in read-only
+    mode, automatic backups before AI-driven changes, and a visible
+    activity log of everything it did
+  - You decide when it's on — the AI assistant and its MCP server are
+    opt-in and off by default
+
+  Also included:
+  - An extension system for adding custom ribbon buttons and behavior
+  - 14 languages, including right-to-left support for Arabic and Persian
+
+  Open Planner Studio is free and open source (LGPL-3.0-or-later), part of
+  the OpenAEC Foundation family of applications, and built with Tauri for
+  a small, native footprint.
+
+grade: stable
+confinement: strict
+
+apps:
+  open-planner-studio:
+    # Snapnaam == appnaam, dus het commando is gewoon `open-planner-studio`.
+    command: usr/bin/open-planner-studio
+    # De gnome-extensie wired GTK3 + WebKitGTK uit het GNOME-platform-snap en voegt
+    # zelf de desktop/wayland/x11/opengl/gsettings-plugs toe (auto-connected).
+    extensions: [gnome]
+    desktop: usr/share/applications/open-planner-studio.desktop
+    plugs:
+      # Alleen de plugs die de gnome-extensie niet al levert:
+      - home            # IFC openen/opslaan/exporteren in de home-map
+      - removable-media # idem op externe schijven/USB
+      - network         # update-check, extensie-catalogus (CLIENT-verkeer)
+      # De MCP-bridge is een echte server: `mcp_bridge.rs` bindt een tiny_http-listener op
+      # 127.0.0.1:<poort>, en `network` is uitdrukkelijk client-only ("Can access the network as a
+      # client" in het gegenereerde AppArmor-profiel, zonder inet-regels). `network-bind` is de
+      # interface die luisteren dekt, dus die hoort hier te staan.
+      #
+      # GEMETEN (2026-07-30, snap 2026.7.13 rev 1, ZONDER deze plug): binden werkt daar tóch —
+      # een listener op 127.0.0.1 lukt binnen `snap run --shell`, en de geïnstalleerde app luisterde
+      # daadwerkelijk op 3877 met een volledig werkende bridge (401/403-paden, initialize, 39 tools,
+      # echte tool-call). De oorzaak is `browser-support`: die staat in het seccomp-profiel
+      # bind/listen/accept toe "for anonymous sockets", en er zijn geen AppArmor-inet-regels die het
+      # alsnog mediëren. De mogelijkheid om te luisteren komt dus VAN EEN PLUG DIE ER VOOR WEBKIT
+      # ZIT, niet van een bewuste keuze. Deze regel repareert daarom niets — hij legt de afhankelijk-
+      # heid vast, zodat de bridge niet stilvalt als browser-support ooit wordt aangescherpt of
+      # verdwijnt. Auto-connect, dus geen store-review.
+      - network-bind    # AI-modus: de MCP-bridge luistert op localhost
+      - browser-support # WebKit-rendering/sandbox
+      - audio-playback
+
+parts:
+  open-planner-studio:
+    plugin: nil
+    # De CI-stap kopieert de gepubliceerde release-deb naar de project-root als
+    # `open-planner-studio.deb`; we herverpakken die i.p.v. opnieuw te bouwen.
+    override-build: |
+      set -eu
+      dpkg-deb -x "${CRAFT_PROJECT_DIR}/open-planner-studio.deb" "${CRAFT_PART_INSTALL}"
+      # Tauri's desktop-file heeft spaties in de bestandsnaam; hernoem naar een
+      # stabiel pad zodat de `desktop:`-sleutel hierboven klopt.
+      mv "${CRAFT_PART_INSTALL}/usr/share/applications/Open Planner Studio.desktop" \
+         "${CRAFT_PART_INSTALL}/usr/share/applications/open-planner-studio.desktop"
+    # stage-packages bewust leeg: GTK3 + WebKitGTK komen uit de gnome-runtime.
+    # Ontbreekt er bij de verificatie-run toch een lib, dan voegen we 'm hier toe
+    # (itereren via de workflow_dispatch-route, niet gokken).

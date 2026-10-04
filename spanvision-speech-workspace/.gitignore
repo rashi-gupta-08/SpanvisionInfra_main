@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+target/
+
+# Build output
+dist/
+src-tauri/target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Models worden via Git LFS bijgehouden
+# *.bin bestanden in models/ worden WEL meegenomen (LFS)
+
+# Logs
+*.log
+
+# Temp
+temp/
+.temp/
+
+# Claude Code
+.claude/
+CLAUDE.md
+PROMPTS.md
+.superpowers/

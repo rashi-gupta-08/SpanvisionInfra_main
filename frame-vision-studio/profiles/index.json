@@ -1,0 +1,54 @@
+{
+  "version": "2.1",
+  "description": "Open Frame Studio Profielbibliotheek - KVT-/systeemgeverifieerde specificaties (zie ../source-provenance/frame-vision-studio/docs/profielmaten-onderzoek.md; velden 'sources', 'unverifiedFields' en 'dataNotes' per profiel)",
+  "categories": [
+    {
+      "id": "wood",
+      "label": "Hout",
+      "icon": "tree",
+      "files": [
+        "wood/kvt-standaard.json",
+        "wood/abc-profiel.json",
+        "wood/raamhout.json",
+        "wood/glaslatten.json",
+        "wood/meranti.json",
+        "wood/accoya.json",
+        "wood/hardhout-fsc.json",
+        "wood/naaldhout.json"
+      ]
+    },
+    {
+      "id": "aluminum",
+      "label": "Aluminium",
+      "icon": "layers",
+      "files": [
+        "aluminum/reynaers.json",
+        "aluminum/schuco.json",
+        "aluminum/generic.json"
+      ]
+    },
+    {
+      "id": "pvc",
+      "label": "Kunststof (PVC)",
+      "icon": "box",
+      "files": [
+        "pvc/gealan.json",
+        "pvc/veka.json",
+        "pvc/kommerling.json",
+        "pvc/schuco-living.json",
+        "pvc/aluplast.json",
+        "pvc/deceuninck.json",
+        "pvc/hebo.json",
+        "pvc/generic.json"
+      ]
+    },
+    {
+      "id": "wood-aluminum",
+      "label": "Hout-Aluminium",
+      "icon": "combine",
+      "files": [
+        "wood-aluminum/hout-aluminium.json"
+      ]
+    }
+  ]
+}

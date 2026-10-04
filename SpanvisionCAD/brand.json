@@ -1,0 +1,20 @@
+{
+  "organization": "Spanvision Infra",
+  "product": "CAD",
+  "display_name": "CAD — Spanvision Infra",
+  "executable": "SpanvisionCAD",
+  "app_id": "com.spanvisioninfra.cad",
+  "website_url": null,
+  "repository_url": null,
+  "feedback_url": null,
+  "donation_url": null,
+  "release_url": null,
+  "release_api_url": null,
+  "community_url": null,
+  "community_feed_url": null,
+  "tutorial_playlist_url": null,
+  "plugin_registry_url": null,
+  "font_repository_url": null,
+  "mark": "CAD",
+  "theme": "spanvision-mono"
+}

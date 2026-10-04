@@ -1,0 +1,7 @@
+# Product Owner: Nozzit
+#
+# Dit bestand stuurt de review-verzoeken. De issue-triage staat in
+# .github/workflows/auto-assign-issues.yml en wijst naar hetzelfde account —
+# houd die twee gelijk. (CODEOWNERS kan geen `vars.*` lezen, dus het account
+# staat hier noodgedwongen letterlijk.)
+* @Nozzit

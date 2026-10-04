@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 -870 12040 8490" width="800" height="600">
+  <style>
+    .shape { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x="0" y="0" width="12000" height="7600" />
+  <rect class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x="160" y="160" width="11680" height="7280" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="4200" y1="160" x2="4200" y2="2800" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="4360" y1="160" x2="4360" y2="2800" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="4200" y1="3700" x2="4200" y2="7440" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="4360" y1="3700" x2="4360" y2="7440" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="160" y1="4700" x2="4200" y2="4700" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="160" y1="4860" x2="4200" y2="4860" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="4360" y1="4700" x2="9600" y2="4700" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="4360" y1="4860" x2="9600" y2="4860" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="10600" y1="4700" x2="11840" y2="4700" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="8400" y1="160" x2="8400" y2="2300" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="8560" y1="160" x2="8560" y2="2300" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="8400" y1="3200" x2="8400" y2="4700" />
+  <line class="shape" stroke="#eeeeee" stroke-width="1" fill="none" x1="8560" y1="3200" x2="8560" y2="4700" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="900" y="1400" width="2400" height="1100" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="1300" y="1080" width="420" height="250" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="2480" y="1080" width="420" height="250" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="1300" y="2560" width="420" height="250" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="2480" y="2560" width="420" height="250" />
+  <rect class="shape" stroke="#78bbb3" stroke-width="1" fill="none" x="5100" y="1300" width="1300" height="600" />
+  <rect class="shape" stroke="#78bbb3" stroke-width="1" fill="none" x="6800" y="1300" width="1300" height="600" />
+  <rect class="shape" stroke="#78bbb3" stroke-width="1" fill="none" x="5100" y="2300" width="1300" height="600" />
+  <rect class="shape" stroke="#78bbb3" stroke-width="1" fill="none" x="6800" y="2300" width="1300" height="600" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="9300" y="1200" width="1750" height="700" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="9500" y="2200" width="650" height="400" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="9450" y="3350" width="1800" height="350" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="850" y="5700" width="2050" height="450" />
+  <rect class="shape" stroke="#999999" stroke-width="1" fill="none" x="1500" y="6400" width="600" height="300" />
+  <line class="shape" stroke="#777777" stroke-width="1" fill="none" x1="0" y1="-600" x2="12000" y2="-600" />
+  <line class="shape" stroke="#777777" stroke-width="1" fill="none" x1="0" y1="-850" x2="0" y2="-350" />
+  <line class="shape" stroke="#777777" stroke-width="1" fill="none" x1="12000" y1="-850" x2="12000" y2="-350" />
+</svg>

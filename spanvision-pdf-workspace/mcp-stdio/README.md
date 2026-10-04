@@ -1,0 +1,133 @@
+# geptechniek workspace · PDF — MCP for Claude Desktop / Claude Code
+
+geptechniek workspace · PDF ships a **full MCP server inside the app** (~50 tools: open /
+zoom / annotate / save PDFs, drive the assistant, call the Spanvision assistant, inspect
+viewport state, …). It is implemented in Rust (`src-tauri/src/mcp_server.rs`)
+and speaks **HTTP JSON-RPC** on `127.0.0.1:9223/mcp`.
+
+Claude Desktop and Claude Code speak MCP over **stdio**, so this folder adds a
+tiny zero-dependency bridge (`server.mjs`) that proxies stdio ⇄ HTTP. Nothing
+is reimplemented here — `tools/list` / `tools/call` are answered by the live
+app, so the bridge always reflects exactly what the app exposes.
+
+```
+Claude Desktop / Code  ──stdio──►  server.mjs  ──HTTP──►  geptechniek workspace · PDF
+                       ◄─stdio──                ◄──HTTP──  (in-app Rust server)
+```
+
+This mirrors the working `open-calc-studio` setup, but thinner: Calc reimplements
+its domain logic in the Node server; here the app already *is* the MCP server.
+
+---
+
+## 1. Start the app with the MCP server enabled
+
+The MCP server is **on by default**; check it in the app under
+**Settings > General > AI link (MCP)** (port 9223 by default). That starts the
+server with the public tool set — every user-facing tool, each with MCP
+annotations, without the developer/test tools.
+
+Developers can start it with a flag instead; that route exposes **all** tools,
+including the test tools:
+
+```bash
+# Dev (debug build) — from open-pdf-studio/open-pdf-studio/
+npm run tauri -- dev -- -- --mcp-server
+#                       └── pass-through to the app binary ──┘
+
+# Different port:
+npm run tauri -- dev -- -- --mcp-server --mcp-port 9300
+
+# Release build — must also set OPS_ENABLE_MCP=1 (safety guard):
+OPS_ENABLE_MCP=1 "geptechniek workspace · PDF.exe" --mcp-server
+```
+
+When ready the app logs `MCP server listening on http://127.0.0.1:9223/mcp`
+and `[mcp-bridge] WebView ready, listening for: [...]`.
+
+## 2. Verify the bridge can reach it
+
+```bash
+node mcp-stdio/server.mjs --probe
+# → [open-pdf-studio mcp bridge] OK — 50 tools available at http://127.0.0.1:9223/mcp
+```
+
+If you used a non-default port, set it first: `OPS_MCP_PORT=9300 node mcp-stdio/server.mjs --probe`.
+
+## 3a. Claude Code
+
+`.mcp.json` already lives in the repo root, so just open this repo in Claude
+Code and approve the **open-pdf-studio** server when prompted. Then ask Claude
+to call e.g. `app_accounts_status` or `app_list_tabs`.
+
+Change the port via the `env.OPS_MCP_PORT` field in `.mcp.json`.
+
+## 3b. Claude Desktop
+
+Edit `claude_desktop_config.json`
+(Windows: `%APPDATA%\Claude\claude_desktop_config.json`) and add:
+
+```json
+{
+  "mcpServers": {
+    "open-pdf-studio": {
+      "command": "node",
+      "args": ["C:\\Users\\rickd\\Documents\\GitHub\\open-pdf-studio\\mcp-stdio\\server.mjs"],
+      "env": { "OPS_MCP_PORT": "9223" }
+    }
+  }
+}
+```
+
+Restart Claude Desktop. The **open-pdf-studio** tools appear in the 🔌 menu.
+(If `node` isn't on Claude Desktop's PATH, use its absolute path, e.g.
+`"command": "C:\\Program Files\\nodejs\\node.exe"`.)
+
+---
+
+## Talking to the assistant
+
+The reason this exists — drive geptechniek workspace · PDF's assistant from Claude:
+
+- **`app_assistant_ask`** — submit a message into the in-app assistant window,
+  exactly as if the user typed it. The answer comes from whichever provider
+  resolves: Spanvision assistant → a personal Claude key → the **MCP relay** (below).
+- **`app_assistant_pending`** → **`app_assistant_answer`** — the relay. When no
+  AI provider is configured, the app queues each assistant question. Call
+  `app_assistant_pending` to take the oldest question, compute an answer, then
+  `app_assistant_answer { id, text }` to make it appear in the window. This is
+  how *Claude itself becomes the assistant's brain*.
+- **`app_assistant_history`** — read back the conversation to confirm a reply.
+- **`app_ai_complete`** — call the Spanvision assistant directly (needs the app signed in
+  to Spanvision infra; returns `{ ok, signedInAs, text, credits }`).
+- **`app_accounts_status`** / **`app_accounts_fetch`** — check sign-in and call
+  any `/me/*` Accounts API from the signed-in app.
+
+A few of the many PDF tools: `app_open_pdf`, `app_new_blank_pdf`,
+`app_go_to_page`, `app_set_zoom` / `app_fit_width`, `app_create_annotation`,
+`app_list_annotations`, `app_save_pdf`, `app_screenshot_view`. The full,
+authoritative list is in `src-tauri/src/mcp_server.rs` (`handle_tools_list`)
+and documented in `../source-provenance/spanvision-pdf-workspace/docs/superpowers/specs/2026-05-09-mcp-app-tools.md`.
+
+---
+
+## Direct HTTP (no bridge) — Claude Code only, optional
+
+Claude Code also supports HTTP MCP servers, so you can skip `server.mjs`:
+
+```json
+{ "mcpServers": { "open-pdf-studio": { "type": "http", "url": "http://127.0.0.1:9223/mcp" } } }
+```
+
+The stdio bridge is the recommended default because it works identically in
+both Claude Desktop and Claude Code and gives clearer "app not running" errors.
+
+## Troubleshooting
+
+- **`geptechniek workspace · PDF is not reachable`** — the app isn't running, or the AI
+  link was turned off, or it's on a different port. Check Settings > General >
+  AI link (MCP) (on by default) and that the port matches. While the app is down the bridge
+  still answers `tools/list` (from `tools.json`), so the client keeps its tools.
+- **Tools call but nothing happens in the UI** — `app_*` tools need the live
+  WebView; make sure you launched the GUI app (not a headless build).
+- **Release build "refused to start"** — set `OPS_ENABLE_MCP=1`.

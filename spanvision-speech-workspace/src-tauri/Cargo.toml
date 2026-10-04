@@ -1,0 +1,61 @@
+[package]
+name = "spanvision-speech-workspace"
+version = "0.12.0"
+description = "Local speech workspace by Spanvision infra"
+authors = ["Spanvision infra"]
+license = "Apache-2.0"
+edition = "2021"
+
+[lib]
+name = "spanvision_speech_workspace_lib"
+crate-type = ["lib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-store = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+cpal = "0.15"
+hound = "3.5"
+tokio = { version = "1", features = ["full"] }
+enigo = "0.2"
+dirs = "5"
+log = "0.4"
+env_logger = "0.11"
+regex-lite = "0.1"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+symphonia = { version = "0.5", default-features = false, features = ["mp3", "aac", "flac", "wav", "pcm"] }
+ort = { version = "=2.0.0-rc.11", default-features = false, features = ["std", "ndarray", "load-dynamic"] }
+ndarray = "0.17"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "multipart", "json"] }
+tiny_http = "0.12"
+url = "2"
+rand = "0.8"
+sha2 = "0.10"
+base64 = "0.22"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.60", features = ["Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_Foundation"] }
+
+[target.'cfg(not(windows))'.dependencies]
+libc = "0.2"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+lto = "thin"
+opt-level = "s"
+strip = true

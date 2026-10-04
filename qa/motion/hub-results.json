@@ -1,0 +1,11 @@
+{
+  "results": [
+    "Real page entrances, 16 tool icons and no globe controls",
+    "Scroll reveal and immediately visible keyboard focus",
+    "All routes, Explore tools scroll and scan dialog remain usable",
+    "Theme transition completes and reduced motion reveals all content",
+    "Eight responsive layouts in light/dark mode",
+    "Reduced-motion startup keeps content visible without animations"
+  ],
+  "errors": []
+}

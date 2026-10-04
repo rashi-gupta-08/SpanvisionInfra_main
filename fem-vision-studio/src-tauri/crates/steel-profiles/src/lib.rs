@@ -1,0 +1,110 @@
+//! Steel profile database — single source of truth shared with TS frontend.
+//! JSON loaded at compile-time via include_str!, parsed once via OnceLock.
+
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::OnceLock;
+use ts_rs::TS;
+use section_properties::SectionProperties;
+
+const PROFILES_JSON: &str = include_str!("../data/profiles.json");
+
+/// De doorsnedesoorten in de catalogus.
+///
+/// `Angle` is de hoeklijn (EN 10056-1), gelijk- of ongelijkbenig. Hij staat
+/// hier apart en niet onder `ISection` omdat er niets van de I-regels op hem
+/// van toepassing is: NEN-EN 1993-1-1 tabel 5.2 heeft er een eigen blad voor
+/// (blad 3 van 3), par. 1.7(2) legt de assen anders, en de y-y- en z-z-as zijn
+/// geen hoofdassen. Wie hem als I-profiel zou meenemen, rekent stilzwijgend
+/// met de verkeerde regels.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub enum ProfileKind { ISection, Channel, Rhs, Shs, Chs, Angle }
+
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct ProfileGeometry {
+    pub h: f64, pub b: f64,
+    #[serde(default)] pub tw: f64,
+    #[serde(default)] pub tf: f64,
+    #[serde(default)] pub t: f64,
+    #[serde(default)] pub r: f64,
+    /// Tweede afrondingsstraal, in mm. Alleen de hoeklijn heeft er twee: `r`
+    /// is de walsuitronding in de holle hoek tussen de benen en `r2` de
+    /// teenafronding aan het eind van elk been. Beide staan in de maattabel.
+    /// Voor elke andere soort blijft dit veld nul, en dat is ook precies wat
+    /// de bestaande regels in `profiles.json` opleveren — ze noemen het niet.
+    #[serde(default)] pub r2: f64,
+    /// Flenshelling als verhouding (0,08 voor UNP volgens DIN 1026-1, 0,14
+    /// voor INP volgens DIN 1025-1); 0 voor evenwijdige flenzen. Staat al in
+    /// `profiles.json` bij die reeksen en beslist welke contour de
+    /// doorsnedemotor bouwt; wie hem negeert rekent een INP als I met
+    /// evenwijdige flenzen en zit 19 % naast I_z.
+    #[serde(default)] pub flange_slope: f64,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct BucklingCurves {
+    pub y_axis: char,
+    pub z_axis: char,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct SteelProfile {
+    pub name: String,
+    pub kind: ProfileKind,
+    pub geometry: ProfileGeometry,
+    pub properties: SectionProperties,
+    pub buckling_curves: BucklingCurves,
+}
+
+pub struct SteelProfileDb {
+    profiles: Vec<SteelProfile>,
+    by_name: HashMap<String, usize>,
+    by_key: HashMap<String, usize>,
+}
+
+/// Zoeksleutel voor een profielnaam: spaties, koppeltekens en punten eruit,
+/// alles naar hoofdletters. Zo vindt "HEA 320" hetzelfde profiel als "HEA320"
+/// of "hea-320". De database schrijft de namen met spatie, maar de frontend en
+/// externe aanroepers doen dat niet altijd.
+fn lookup_key(name: &str) -> String {
+    name.chars()
+        .filter(|c| !c.is_whitespace() && *c != '-' && *c != '.')
+        .flat_map(|c| c.to_uppercase())
+        .collect()
+}
+
+impl SteelProfileDb {
+    fn load() -> Self {
+        let profiles: Vec<SteelProfile> = serde_json::from_str(PROFILES_JSON)
+            .expect("profiles.json must parse — checked by build.rs");
+        let by_name = profiles.iter().enumerate()
+            .map(|(i, p)| (p.name.clone(), i))
+            .collect();
+        // Eerste treffer wint, zodat een later profiel met dezelfde
+        // genormaliseerde sleutel een eerder profiel niet overschrijft.
+        let mut by_key: HashMap<String, usize> = HashMap::new();
+        for (i, p) in profiles.iter().enumerate() {
+            by_key.entry(lookup_key(&p.name)).or_insert(i);
+        }
+        Self { profiles, by_name, by_key }
+    }
+
+    /// Zoekt eerst op exacte naam, daarna op de genormaliseerde sleutel.
+    pub fn find(&self, name: &str) -> Option<&SteelProfile> {
+        self.by_name
+            .get(name)
+            .or_else(|| self.by_key.get(&lookup_key(name)))
+            .map(|&i| &self.profiles[i])
+    }
+
+    pub fn all(&self) -> &[SteelProfile] { &self.profiles }
+}
+
+pub fn db() -> &'static SteelProfileDb {
+    static DB: OnceLock<SteelProfileDb> = OnceLock::new();
+    DB.get_or_init(SteelProfileDb::load)
+}

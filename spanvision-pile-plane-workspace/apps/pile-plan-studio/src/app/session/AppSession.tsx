@@ -1,0 +1,2376 @@
+import {applyIlpPreviewInteraction} from "../../domain/pile-plans/ilp-optimization/ilpLivePreview.ts";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type SetStateAction } from "react";
+import { flushSync } from "react-dom";
+import { useTranslation } from "react-i18next";
+import sampleProjectText from "../../../../../sample_project/sample_project.ifcpp?raw";
+import TitleBar from "../../components/template/TitleBar";
+import Ribbon from "../../components/template/ribbon/Ribbon";
+import {useIlpOptimization} from "../optimization/useIlpOptimization.ts";
+import { createProjectMarker } from "../mcp/projectMarker.ts";
+import { createMcpDispatcher, type McpSnapshot } from "../mcp/protocol.ts";
+import { createDesktopMcpBridge, type McpConnection } from "../mcp/desktopBridge.ts";
+import { createDerivedSnapshotGate, type DerivedSnapshotGate } from "../mcp/derivedSnapshotGate.ts";
+import { prepareMcpWrite } from "../mcp/writeModel.ts";
+import { McpReadError } from "../mcp/readModel.ts";
+import { prepareOptimizationStart, requireMatchingRunId } from "../mcp/optimizationControls.ts";
+import { createSourceImportSession, SourceImportValidationError } from "../mcp/sourceImportSession.ts";
+import { createMcpFileOperationSession } from "../mcp/fileOperationSession.ts";
+import { createPilePlanImportSession } from "../mcp/pilePlanImportSession.ts";
+import { requireCurrentGroups } from "../mcp/projectSettingsSources.ts";
+import { runProjectFileOperation } from "../project/projectFileOperations.ts";
+import { summarizeImportReconciliation } from "../mcp/sourceImportSummary.ts";
+import { prepareLegendEditorEdit, prepareProjectDocumentEdit,
+  type PreparedProjectDocumentEdit } from "../project/projectEditOperations.ts";
+import type { LegendEditorDraft } from "../../domain/legend/legendEditorModel.ts";
+import { buildLoadPointGroupSignature } from "../derived-state/loadPointGroupController.ts";
+import { buildTechnicalAssignmentSignature } from "../derived-state/technicalAssignmentController.ts";
+import { buildGroupAssignmentAssessmentSignature } from "../derived-state/groupAssignmentAssessmentController.ts";
+import IlpOptimizationSettingsPanel from "../../components/domain/pile-plans/ilp-optimization/IlpOptimizationSettingsPanel.tsx";
+import IlpOptimizationResultPanel from "../../components/domain/pile-plans/ilp-optimization/IlpOptimizationResultPanel.tsx";
+import Backstage from "../../components/template/backstage/Backstage";
+import { applyCanvasBackground } from "../../domain/settings/canvasBackground.ts";
+import { useResponsiveWorkspace, WorkspaceNavigation } from "../../components/template/WorkspaceNavigation.tsx";
+import SettingsDialog, { applyTheme } from "../../components/template/settings/SettingsDialog";
+import FeedbackDialog from "../../components/template/feedback/FeedbackDialog";
+import StatusBar from "../../components/template/StatusBar";
+import InterfaceScaleNotice, { type InterfaceScaleNoticeValue } from "../../components/template/InterfaceScaleNotice";
+import ActionNotice, { type ActionNoticeTone } from "../../components/viewer/ActionNotice";
+import PilePlanWorkspace from "../../components/domain/pile-plans/PilePlanWorkspace";
+import RightPanel, { type RightTaskPanel } from "../../components/domain/right-panel/RightPanel";
+import { useLoadPointGroups } from "../derived-state/useLoadPointGroups.ts";
+import { useTechnicalAssignment } from "../derived-state/useTechnicalAssignment.ts";
+import { useGroupAssignmentAssessment } from "../derived-state/useGroupAssignmentAssessment.ts";
+import ProjectInformationDialog from "../../components/domain/project/ProjectInformationDialog";
+import UnsavedChangesDialog from "../../components/domain/project/UnsavedChangesDialog.tsx";
+import PilePlanExplorer from "../../components/domain/pile-plans/PilePlanExplorer.tsx";
+import SourceDataViewer from "../../components/domain/source-data/SourceDataViewer.tsx";
+import type { InputSourceKind } from "../../domain/project/projectState.ts";
+import type { SourceLoadPointSelection } from "../../domain/source-data/sourceTableModel.ts";
+import {
+  applyLoadPointGroupAssignmentCore,
+  applyLoadPointGroupAssignmentBatchCore,
+  assessLoadPointGroupAssignmentsCore,
+  applyLoadPointGroupEditCore,
+  calculatePileCostCore,
+  calculatePileOptionAnalysisCore,
+  chooseDefaultPileOptionsCore,
+  exportPilePlanCsvCore,
+  exportPilePlanXlsxCore,
+  importProjectFromFilesCore,
+  previewImportSourceCore,
+  previewPilePlanImportCore,
+  readProjectDocumentCore,
+  previewLoadPointGroupEditCore,
+  refreshProjectFromFilesCore,
+  writeProjectDocumentCore,
+} from "../../core/coreClient";
+import { invokeDesktop, listenDesktop } from "../../core/coreTransport.ts";
+import type { PileConfigurationKey, PileCostSettings } from "../../core/projectTypes.ts";
+import { samePileConfiguration } from "../../core/pileConfigurationKey.ts";
+import type {
+  LoadPointGroupEditAction,
+  LoadPointGroupEditPreview,
+} from "../../core/loadPointGroupContract.ts";
+import type { ImportSourceInput } from "../../core/coreImportContract";
+import type { ProjectImportProperties } from "../../components/domain/imports/ProjectImportPanel.tsx";
+import type { ImportFileRole } from "../../core/importFiles.ts";
+import { getImportSummary } from "../../core/projectFile";
+import { createInitialProjectState, type ProjectState } from "../../domain/project/projectState";
+import { prepareOpenedProject } from "../../domain/project/openedProject.ts";
+import {
+  ProjectDocumentReadError,
+  type ProjectDocumentOutcome,
+} from "../../core/projectDocumentContract.ts";
+import { getSetting } from "../../store";
+import { optionKey } from "../../components/domain/right-panel/rightPanelModel";
+import { switchRightPanelMode } from "../../domain/workspace/selectionState";
+import {
+  getProjectFileCommands,
+  isDesktopRuntime,
+  pilePlanExportFileName,
+  projectFileName,
+  saveBinaryExport,
+  saveGeneratedFile,
+  savePreparedFile,
+} from "../../domain/project/projectPersistence.ts";
+import {
+  DEFAULT_EXPLORER_WIDTH,
+  DEFAULT_RIGHT_PANEL_WIDTH,
+  snapExplorerWidth,
+  snapRightPanelWidth,
+} from "../../viewer/panelLayout.ts";
+import { buildPilePlanExportInputForPlan } from "../../domain/pile-plans/pilePlanExport.ts";
+import {
+  applyPilePlanImportAsNewPlan,
+  pilePlanNameFromFileName,
+} from "../../domain/pile-plans/pilePlanImport.ts";
+import type { PilePlanImportPatch } from "../../core/pilePlanImportContract.ts";
+import { mergeDefaultPileChoices } from "../../domain/pile-plans/defaultPileChoices.ts";
+import { summarizePilePlanCosts } from "../../domain/pile-plans/projectCostSummary.ts";
+import {
+  createPilePlan,
+  deletePilePlan,
+  duplicatePilePlan,
+  renamePilePlan,
+  synchronizeActivePilePlan,
+  type PilePlanLanguage,
+} from "../../domain/pile-plans/pilePlanManagement.ts";
+import { activatePilePlanState } from "../../domain/pile-plans/pilePlanNavigation.ts";
+import {
+  activationFromConfigurations,
+} from "../../domain/pile-plans/pilePlanActivation.ts";
+import {
+  getAvailablePileConfigurationCatalog,
+} from "../../domain/pile-plans/optimization/optimizationCandidates.ts";
+import {
+  applyLoadPointLockDraft,
+  getActiveLockedLoadPointIds,
+  startLoadPointLockDraft,
+} from "../../domain/pile-plans/loadPointLocking.ts";
+import {
+  createManagedProjectState,
+  projectHistoryReducer,
+} from "../../domain/project/history/projectHistoryReducer.ts";
+import {
+  openedProjectLifecycleState,
+  projectDraftFromState,
+  projectStateSignature,
+} from "../project/projectLifecycleController.ts";
+import { createPileOptionAnalysisController } from "../derived-state/pileOptionAnalysisController.ts";
+import { describeHistoryAction, describeHistoryResult } from "../../domain/project/history/historyMessage.ts";
+import type { HistoryAction } from "../../domain/project/history/historyAction.ts";
+import { createBrowserRecoveryRecord } from "../../domain/project/recovery/browserRecovery.ts";
+import {
+  createBrowserRecoveryWriter,
+  type BrowserRecoveryStore,
+} from "../../domain/project/recovery/browserRecoveryStore.ts";
+import { classifyAppShortcut } from "../../domain/workspace/appShortcuts.ts";
+import { DEFAULT_INTERFACE_SCALE, normalizeInterfaceScale, stepInterfaceScale } from "../../domain/settings/interfaceScale.ts";
+import { applyDesktopInterfaceScale } from "../../domain/settings/interfaceScaleRuntime.ts";
+import {
+  DEFAULT_USER_SETTINGS,
+  patchPileCostDefaults,
+  patchUserSettings,
+  patchWorkspaceLayout,
+  type UserSettings,
+  type WorkspaceLayoutSettings,
+} from "../../domain/settings/userSettings.ts";
+import {
+  createPlatformUserSettingsStore,
+  loadUserSettings,
+  saveUserSettings,
+  type UserSettingsStore,
+} from "../../domain/settings/userSettingsStore.ts";
+import { changeLanguage } from "../../i18n/config.ts";
+import { elementLayoutScale, screenToLocal } from "../../domain/settings/uiBaseline.ts";
+import { applyPileCostCatalogDefault, mergePileCostCatalog } from "../../domain/pile-plans/pileCostCatalog.ts";
+import { VIEWER_LAYOUT_CHANGE_EVENT } from "../../viewer/viewerGeometry.ts";
+import { transitionLassoSelectionMode } from "../../viewer/lassoSelection.ts";
+import {
+  applyCptSelectionPreviewResult,
+  beginCptSelectionPreview,
+  failCptSelectionPreview,
+  getEffectivePileOptionsByLoadPointId,
+  getCptSelectionPreviewInput,
+} from "../../domain/cpt-selection/cptSettingsModel.ts";
+import {
+  addReactViewerLoadPoints,
+  clearReactViewerSelection,
+  expandInitialReactViewerLoadPointGroup,
+  openReactViewerCpt,
+  setReactViewerLoadPoints,
+  toggleReactViewerLoadPoint,
+} from "../../domain/workspace/viewerInteractions.ts";
+import {
+  describeProjectOpenError,
+  getLoadPointGroupEditHistoryAction,
+  getLoadPointLockSignature,
+  importRoleForSource,
+} from "./appSessionSupport.ts";
+
+const BUILT_IN_PILE_COST_DEFAULTS = (
+  JSON.parse(sampleProjectText) as { settings: { pile_costs: PileCostSettings } }
+).settings.pile_costs;
+
+function requireValidProjectDocument(
+  outcome: ProjectDocumentOutcome,
+): Extract<ProjectDocumentOutcome, { status: "valid" }> {
+  if (outcome.status === "invalid") throw new ProjectDocumentReadError(outcome.error);
+  return outcome;
+}
+
+const POINTER_FOCUS_CONTROL_SELECTOR = "button, [role='option'], [role='tab'], [role='row'][tabindex='0']";
+
+function releasePointerActivatedControlFocus(event: ReactPointerEvent<HTMLDivElement>) {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const control = target.closest<HTMLElement>(POINTER_FOCUS_CONTROL_SELECTOR);
+  if (control && event.currentTarget.contains(control)) control.blur();
+}
+
+export type AppSessionProps = {
+  initialProject: Extract<ProjectDocumentOutcome, { status: "valid" }>;
+  initializeDefaultPiles: boolean;
+  initialSavedProjectSignature?: string;
+  initialWasDirty?: boolean;
+  initialStatusKey?: string;
+  recoveryStore?: BrowserRecoveryStore;
+};
+
+type ActionNoticeValue = {
+  id: number;
+  message: string;
+  tone: ActionNoticeTone;
+};
+
+export default function AppSession({
+  initialProject,
+  initializeDefaultPiles,
+  initialSavedProjectSignature,
+  initialWasDirty = false,
+  initialStatusKey,
+  recoveryStore,
+}: AppSessionProps) {
+  const { t, i18n } = useTranslation();
+  const [managedProject, dispatchProject] = useReducer(
+    projectHistoryReducer,
+    initialProject,
+    (project) => createManagedProjectState(createInitialProjectState(
+      project.project,
+      {
+        initializeDefaultPiles,
+        defaultPilePlanName: i18n.language.startsWith("nl") ? "Basisplan" : "Base plan",
+      },
+      project.keys,
+    )),
+  );
+  const projectState = managedProject.present;
+  const initialGroupSelectionRef = useRef({
+    loadPoints: projectState.loadPoints,
+    loadPointId: projectState.selectedLoadPointIds.length === 1
+      ? projectState.selectedLoadPointId
+      : null,
+    handled: false,
+  });
+  const [analysisPipeline] = useState(() => (
+    createPileOptionAnalysisController(calculatePileOptionAnalysisCore)
+  ));
+  const projectStateRef = useRef(projectState);
+  projectStateRef.current = projectState;
+  const mcpProjectMarkerRef = useRef<ReturnType<typeof createProjectMarker> | null>(null);
+  mcpProjectMarkerRef.current ??= createProjectMarker();
+  const mcpAnalysisBaselineRef = useRef({
+    request: projectState.analysisRequest,
+    options: projectState.pileOptionsByLoadPointId,
+    selections: projectState.selectedCptsByLoadPointId,
+  });
+  if (mcpAnalysisBaselineRef.current.request !== projectState.analysisRequest) {
+    mcpAnalysisBaselineRef.current = {
+      request: projectState.analysisRequest,
+      options: projectState.pileOptionsByLoadPointId,
+      selections: projectState.selectedCptsByLoadPointId,
+    };
+  }
+  const mcpAnalysisReady = projectState.pileOptionsByLoadPointId !== mcpAnalysisBaselineRef.current.options
+    && projectState.selectedCptsByLoadPointId !== mcpAnalysisBaselineRef.current.selections;
+  const loadPointGroups = useLoadPointGroups(
+    projectState.loadPoints,
+    projectState.loadPointGroupingSettings,
+  );
+  const hasCompletedLoadPointGroups = projectState.loadPoints.length === 0
+    || loadPointGroups.groups.length > 0;
+  const technicalPileOptionsByLoadPointId = useMemo(
+    () => getEffectivePileOptionsByLoadPointId(projectState),
+    [projectState.cptSelectionEditDraft, projectState.cptSelectionPreview, projectState.pileOptionsByLoadPointId],
+  );
+  const currentPreview = projectState.cptSelectionPreview?.draft === projectState.cptSelectionEditDraft
+    ? projectState.cptSelectionPreview
+    : null;
+  const technicalAssignmentInput = useMemo(() => (
+    !hasCompletedLoadPointGroups
+      || projectState.analysisError !== null
+      || currentPreview?.status === "analyzing"
+      || currentPreview?.status === "failed"
+      || technicalPileOptionsByLoadPointId.size !== projectState.loadPoints.length
+      ? null
+      : {
+          groups: loadPointGroups.groups,
+          optionsByLoadPoint: technicalPileOptionsByLoadPointId,
+        }
+  ), [currentPreview?.status, hasCompletedLoadPointGroups, loadPointGroups.groups, projectState.analysisError, projectState.loadPoints.length, technicalPileOptionsByLoadPointId]);
+  const assessedTechnicalAssignment = useTechnicalAssignment(technicalAssignmentInput);
+  const technicalAssignment = useMemo(() => {
+    const upstreamError = projectState.analysisError
+      ?? (!hasCompletedLoadPointGroups ? loadPointGroups.error : null)
+      ?? (currentPreview?.status === "failed" ? currentPreview.error : null);
+    if (upstreamError) {
+      return {
+        status: "error" as const,
+        assessment: null,
+        issuesByLoadPointId: new Map(),
+        error: upstreamError instanceof Error ? upstreamError : new Error(upstreamError),
+      };
+    }
+    if (technicalAssignmentInput === null) {
+      return {
+        status: "loading" as const,
+        assessment: null,
+        issuesByLoadPointId: new Map(),
+        error: null,
+      };
+    }
+    return assessedTechnicalAssignment;
+  }, [assessedTechnicalAssignment, currentPreview, hasCompletedLoadPointGroups, loadPointGroups.error, projectState.analysisError, technicalAssignmentInput]);
+  const loadPointGroupsRef = useRef(loadPointGroups.groups);
+  loadPointGroupsRef.current = loadPointGroups.groups;
+  const pileAssignmentRequestIdRef = useRef(0);
+  const [pileAssignmentPending, setPileAssignmentPending] = useState(false);
+  const groupEditRequestIdRef = useRef(0);
+  const [groupEditPending, setGroupEditPending] = useState(false);
+  const invalidatePileAssignmentRequests = useCallback(() => {
+    pileAssignmentRequestIdRef.current += 1;
+    setPileAssignmentPending(false);
+  }, []);
+  const setProjectState = useCallback((update: SetStateAction<ProjectState>) => {
+    dispatchProject({ type: "runtime", update });
+  }, []);
+  useEffect(() => {
+    const initialSelection = initialGroupSelectionRef.current;
+    if (
+      initialSelection.handled
+      || initialSelection.loadPoints !== projectState.loadPoints
+      || loadPointGroups.pending
+      || loadPointGroups.error !== null
+      || loadPointGroups.topology === null
+    ) {
+      return;
+    }
+    initialSelection.handled = true;
+    setProjectState((current) => {
+      if (current.loadPoints !== initialSelection.loadPoints) return current;
+      const selection = expandInitialReactViewerLoadPointGroup(
+        current,
+        initialSelection.loadPointId,
+        loadPointGroups.groups,
+      );
+      return selection === current ? current : { ...current, ...selection };
+    });
+  }, [
+    loadPointGroups.error,
+    loadPointGroups.groups,
+    loadPointGroups.pending,
+    loadPointGroups.topology,
+    projectState.loadPoints,
+    setProjectState,
+  ]);
+  const commitProjectState = useCallback((
+    update: SetStateAction<ProjectState>,
+    action?: HistoryAction,
+  ) => {
+    dispatchProject({ type: "commit", update, action });
+  }, []);
+  const amendProjectState = useCallback((update: SetStateAction<ProjectState>) => {
+    dispatchProject({ type: "amend", update });
+  }, []);
+  const symbolScaleHistoryRef = useRef<"idle" | "commit" | "amend">("idle");
+  const beginSymbolScaleChange = useCallback(() => {
+    if (symbolScaleHistoryRef.current === "idle") symbolScaleHistoryRef.current = "commit";
+  }, []);
+  const commitSymbolScaleChange = useCallback((symbolScalePercent: number) => {
+    const update = (current: ProjectState) => ({ ...current, symbolScalePercent });
+    if (symbolScaleHistoryRef.current === "amend") {
+      amendProjectState(update);
+      return;
+    }
+    commitProjectState(update);
+    if (symbolScaleHistoryRef.current === "commit") symbolScaleHistoryRef.current = "amend";
+  }, [amendProjectState, commitProjectState]);
+  const endSymbolScaleChange = useCallback(() => {
+    symbolScaleHistoryRef.current = "idle";
+  }, []);
+  const replaceProjectState = useCallback((state: ProjectState) => {
+    mcpProjectMarkerRef.current!.reset();
+    projectStateRef.current = state;
+    initialGroupSelectionRef.current = {
+      loadPoints: state.loadPoints,
+      loadPointId: state.selectedLoadPointIds.length === 1 ? state.selectedLoadPointId : null,
+      handled: false,
+    };
+    invalidatePileAssignmentRequests();
+    dispatchProject({ type: "replace", state });
+  }, [invalidatePileAssignmentRequests]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [mcpStatus, setMcpStatus] = useState<"off" | "starting" | "on" | "stopping" | "error">("off");
+  const [mcpConnection, setMcpConnection] = useState<McpConnection | null>(null);
+  const [mcpError, setMcpError] = useState<string | null>(null);
+  const [mcpWriteEnabled, setMcpWriteEnabled] = useState(false);
+  const mcpWriteEnabledRef = useRef(false);
+  const mcpBridgeRef = useRef<ReturnType<typeof createDesktopMcpBridge> | null>(null);
+  const mcpImportSessionRef = useRef<ReturnType<typeof createSourceImportSession> | null>(null);
+  const mcpFileOperationSessionRef = useRef<ReturnType<typeof createMcpFileOperationSession> | null>(null);
+  const mcpPilePlanImportSessionRef = useRef<ReturnType<typeof createPilePlanImportSession> | null>(null);
+  const mcpLifecycleRef = useRef(0);
+  const [backstageOpen, setBackstageOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [projectInformationOpen, setProjectInformationOpen] = useState(false);
+  const [rightTaskPanel, setRightTaskPanel] = useState<RightTaskPanel | null>(null);
+  const [lassoSelectionActive, setLassoSelectionActive] = useState(false);
+  const [activeSourceKind, setActiveSourceKind] = useState<InputSourceKind | null>(null);
+  const [initialImportSource, setInitialImportSource] = useState<{ role: ImportFileRole; file: File } | null>(null);
+  const [isDirty, setIsDirty] = useState(initialWasDirty);
+  const isDirtyRef = useRef(isDirty);
+  isDirtyRef.current = isDirty;
+  const [projectPath, setProjectPath] = useState<string | null>(null);
+  const projectPathRef = useRef(projectPath);
+  projectPathRef.current = projectPath;
+  const [unsavedChangesOpen, setUnsavedChangesOpen] = useState(false);
+  const appContentRef = useRef<HTMLDivElement | null>(null);
+  const explorerWidthRef = useRef(DEFAULT_EXPLORER_WIDTH);
+  const rightPanelWidthRef = useRef(DEFAULT_RIGHT_PANEL_WIDTH);
+  const userSettingsStoreRef = useRef<UserSettingsStore | null>(null);
+  const [userSettings, setUserSettings] = useState<UserSettings>(DEFAULT_USER_SETTINGS);
+  const userSettingsRef = useRef(userSettings);
+  const [userSettingsReady, setUserSettingsReady] = useState(false);
+  const appliedInterfaceScaleRef = useRef<number | null>(null);
+  const interfaceScaleNoticeIdRef = useRef(0);
+  const [interfaceScaleNotice, setInterfaceScaleNotice] = useState<InterfaceScaleNoticeValue | null>(null);
+  const expireInterfaceScaleNotice = useCallback((id: number) => {
+    setInterfaceScaleNotice((current) => current?.id === id ? null : current);
+  }, []);
+  const [creatingPilePlan, setCreatingPilePlan] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const statusMessageTimeoutRef = useRef<number | null>(null);
+  const lassoSelectionAvailable = projectState.loadPointLockDraft === null
+    && projectState.cptSelectionEditDraft === null;
+  const activeLockedLoadPointIdSet = useMemo(() => new Set(getActiveLockedLoadPointIds(
+    projectState.pilePlans,
+    projectState.activePilePlanId,
+  )), [projectState.activePilePlanId, projectState.pilePlans]);
+  const groupAssignmentAssessmentInput = useMemo(() => (
+    !hasCompletedLoadPointGroups
+      ? null
+      : {
+          groups: loadPointGroups.groups,
+          assignments: projectState.selectedPileConfigurationsByLoadPoint,
+          lockedLoadPointIds: [...activeLockedLoadPointIdSet],
+        }
+  ), [
+    activeLockedLoadPointIdSet,
+    loadPointGroups.groups,
+    hasCompletedLoadPointGroups,
+    projectState.selectedPileConfigurationsByLoadPoint,
+  ]);
+  const groupAssignmentAssessment = useGroupAssignmentAssessment(
+    groupAssignmentAssessmentInput,
+  );
+
+  useEffect(() => {
+    invalidatePileAssignmentRequests();
+  }, [invalidatePileAssignmentRequests, projectState.activePilePlanId]);
+
+  useEffect(() => {
+    setLassoSelectionActive((active) => transitionLassoSelectionMode(active, {
+      type: "editing-context",
+      available: lassoSelectionAvailable,
+    }));
+  }, [lassoSelectionAvailable]);
+
+  useEffect(() => {
+    const dismissLassoSelection = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setLassoSelectionActive((active) => transitionLassoSelectionMode(active, { type: "dismiss" }));
+    };
+    window.addEventListener("keydown", dismissLassoSelection);
+    return () => window.removeEventListener("keydown", dismissLassoSelection);
+  }, []);
+  const showStatusMessage = useCallback((message: string) => {
+    if (statusMessageTimeoutRef.current !== null) window.clearTimeout(statusMessageTimeoutRef.current);
+    setStatusMessage(message);
+    statusMessageTimeoutRef.current = window.setTimeout(() => {
+      setStatusMessage("");
+      statusMessageTimeoutRef.current = null;
+    }, 3500);
+  }, []);
+  const [actionNotice, setActionNotice] = useState<ActionNoticeValue>({
+    id: 0,
+    message: "",
+    tone: "neutral",
+  });
+  const actionNoticeIdRef = useRef(0);
+  const actionNoticeTimeoutRef = useRef<number | null>(null);
+  const showActionNotice = useCallback((message: string, tone: ActionNoticeTone = "neutral") => {
+    if (actionNoticeTimeoutRef.current !== null) window.clearTimeout(actionNoticeTimeoutRef.current);
+    actionNoticeIdRef.current += 1;
+    setActionNotice({ id: actionNoticeIdRef.current, message, tone });
+    actionNoticeTimeoutRef.current = window.setTimeout(() => {
+      setActionNotice((current) => ({ ...current, message: "" }));
+      actionNoticeTimeoutRef.current = null;
+    }, 3500);
+  }, []);
+  const defaultSelectionRequestRef = useRef<typeof projectState.analysisRequest | null>(null);
+  const defaultSelectionKeepsDirtyRef = useRef(false);
+  const replacementResolverRef = useRef<((proceed: boolean) => void) | null>(null);
+  const initialProjectSignature = projectStateSignature(projectState);
+  const [savedProjectSignature, setSavedProjectSignature] = useState(
+    initialWasDirty
+      ? (initialSavedProjectSignature ?? "")
+      : initialProjectSignature,
+  );
+  const savedProjectSignatureRef = useRef(savedProjectSignature);
+  const recoveredDirtySignatureRef = useRef(initialWasDirty ? initialProjectSignature : null);
+  const updateSavedProjectSignature = useCallback((signature: string) => {
+    recoveredDirtySignatureRef.current = null;
+    savedProjectSignatureRef.current = signature;
+    setSavedProjectSignature(signature);
+  }, []);
+  const preparedProjectRef = useRef<{ signature: string; blob: Blob } | null>(null);
+  const projectActionRef = useRef<(() => Promise<boolean>) | null>(null);
+  const openProjectActionRef = useRef<(() => Promise<void>) | null>(null);
+  const openDesktopProjectPathRef = useRef<((path: string) => Promise<void>) | null>(null);
+  const saveShortcutInFlightRef = useRef(false);
+  const isDesktop = isDesktopRuntime();
+  const { workspaceLayout } = userSettings.preferences;
+  const responsive = useResponsiveWorkspace();
+  const interfaceScalePercent = userSettings.preferences.interfaceScalePercent;
+  userSettingsRef.current = userSettings;
+
+  const commitUserSettings = useCallback((next: UserSettings) => {
+    setUserSettings(next);
+    if (userSettingsStoreRef.current) {
+      void saveUserSettings(userSettingsStoreRef.current, next);
+    }
+  }, []);
+
+  useEffect(() => {
+    const change = () => {
+      const theme=document.documentElement.dataset.svMode === 'light' ? 'light' : 'spanvision-mono';
+      const next=patchUserSettings(userSettingsRef.current,{theme});
+      applyTheme(theme);applyCanvasBackground(next.preferences.canvasBackground,theme);
+      userSettingsRef.current=next;commitUserSettings(next);
+    };
+    window.addEventListener('spanvision:mode-change',change);
+    return () => window.removeEventListener('spanvision:mode-change',change);
+  }, [commitUserSettings]);
+
+  const applyInterfaceScale = useCallback((scale: number) => {
+    const normalizedScale = normalizeInterfaceScale(scale);
+    const next = patchUserSettings(userSettingsRef.current, {
+      interfaceScalePercent: normalizedScale,
+    });
+    userSettingsRef.current = next;
+    commitUserSettings(next);
+    interfaceScaleNoticeIdRef.current += 1;
+    setInterfaceScaleNotice({
+      id: interfaceScaleNoticeIdRef.current,
+      percent: normalizedScale,
+    });
+  }, [commitUserSettings]);
+
+  const updateWorkspaceLayout = useCallback((patch: Partial<WorkspaceLayoutSettings>) => {
+    setUserSettings((current) => {
+      const next = patchWorkspaceLayout(current, patch);
+      if (userSettingsStoreRef.current) {
+        void saveUserSettings(userSettingsStoreRef.current, next);
+      }
+      return next;
+    });
+  }, []);
+  const projectFileCommands = getProjectFileCommands(isDesktop);
+  const canUndo = managedProject.history.past.length > 0;
+  const canRedo = managedProject.history.future.length > 0;
+  const undoEntry = managedProject.history.past[managedProject.history.past.length - 1];
+  const redoEntry = managedProject.history.future[managedProject.history.future.length - 1];
+  const historyTranslate = useCallback((key: string, options?: Record<string, unknown>) => (
+    t(key, options)
+  ), [t]);
+  const undoLabel = undoEntry
+    ? t("history.undoLabel", { action: describeHistoryAction(historyTranslate, undoEntry.action) })
+    : `${t("undo")} (Ctrl+Z)`;
+  const redoLabel = redoEntry
+    ? t("history.redoLabel", { action: describeHistoryAction(historyTranslate, redoEntry.action) })
+    : `${t("redo")} (Ctrl+Y)`;
+  const availablePileConfigurations = useMemo(
+    () => getAvailablePileConfigurationCatalog(projectState.pileOptionsByLoadPointId),
+    [projectState.pileOptionsByLoadPointId],
+  );
+  const persistedProjectDraft = projectDraftFromState(projectState);
+  const persistedProjectSignature = JSON.stringify(persistedProjectDraft);
+  useEffect(() => {
+    if (recoveredDirtySignatureRef.current === persistedProjectSignature) {
+      setIsDirty(true);
+      return;
+    }
+    recoveredDirtySignatureRef.current = null;
+    setIsDirty(persistedProjectSignature !== savedProjectSignature);
+  }, [persistedProjectSignature, savedProjectSignature]);
+
+  const recoveryWriter = useMemo(() => recoveryStore ? createBrowserRecoveryWriter({
+    store: recoveryStore,
+    onError: () => showStatusMessage(t("recovery.unavailable")),
+  }) : null, [recoveryStore, showStatusMessage, t]);
+
+  useEffect(() => {
+    if (initialStatusKey) showStatusMessage(t(initialStatusKey));
+    return () => {
+      if (statusMessageTimeoutRef.current !== null) window.clearTimeout(statusMessageTimeoutRef.current);
+      if (actionNoticeTimeoutRef.current !== null) window.clearTimeout(actionNoticeTimeoutRef.current);
+    };
+  }, [initialStatusKey, showStatusMessage, t]);
+
+  useEffect(() => {
+    if (!recoveryWriter) return;
+    recoveryWriter.markReady();
+    return () => {
+      void recoveryWriter.flush().finally(() => recoveryWriter.dispose());
+    };
+  }, [recoveryWriter]);
+
+  useEffect(() => {
+    if (!recoveryWriter) return;
+    const flushRecovery = () => { void recoveryWriter.flush(); };
+    const flushHiddenRecovery = () => {
+      if (document.visibilityState === "hidden") flushRecovery();
+    };
+    window.addEventListener("pagehide", flushRecovery);
+    document.addEventListener("visibilitychange", flushHiddenRecovery);
+    return () => {
+      window.removeEventListener("pagehide", flushRecovery);
+      document.removeEventListener("visibilitychange", flushHiddenRecovery);
+    };
+  }, [recoveryWriter]);
+
+  useEffect(() => {
+    if (!recoveryWriter || projectState.defaultPileSelectionPending) return;
+    recoveryWriter.schedule(async () => createBrowserRecoveryRecord({
+      appVersion: __APP_VERSION__,
+      ifcppText: await writeProjectDocumentCore(persistedProjectDraft),
+      projectName: persistedProjectDraft.metadata.name,
+      savedProjectSignature,
+      isDirty,
+      updatedAt: new Date().toISOString(),
+    }));
+  }, [isDirty, persistedProjectSignature, projectState.defaultPileSelectionPending, recoveryWriter, savedProjectSignature]);
+
+  useEffect(() => {
+    const result = managedProject.lastResult;
+    if (!result) return;
+    showActionNotice(describeHistoryResult(historyTranslate, result), "neutral");
+  }, [historyTranslate, managedProject.lastResult, showActionNotice]);
+
+  useEffect(() => {
+    const handleHistoryShortcut = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || isEditableTarget(event.target)) return;
+      const key = event.key.toLowerCase();
+      const undoRequested = key === "z" && !event.shiftKey;
+      const redoRequested = key === "y" || (key === "z" && event.shiftKey);
+      if (undoRequested) {
+        event.preventDefault();
+        dispatchProject({ type: "undo" });
+      } else if (redoRequested) {
+        event.preventDefault();
+        dispatchProject({ type: "redo" });
+      }
+    };
+    window.addEventListener("keydown", handleHistoryShortcut);
+    return () => window.removeEventListener("keydown", handleHistoryShortcut);
+  }, []);
+
+
+  const serializeProject = async () => {
+    return writeProjectDocumentCore(projectDraftFromState(projectState));
+  };
+
+  const downloadProject = async (): Promise<boolean> => {
+    const options = {
+      fileName: projectFileName(projectState.name),
+      mimeType: "application/json",
+      extensions: [".ifcpp"],
+    };
+    const prepared = preparedProjectRef.current;
+    const saved = prepared?.signature === persistedProjectSignature
+      ? await savePreparedFile(options, prepared.blob)
+      : await saveGeneratedFile(options, async () => new Blob([await serializeProject()], { type: "application/json" }));
+    if (!saved) return false;
+    updateSavedProjectSignature(projectStateSignature(projectState));
+    setIsDirty(false);
+    return true;
+  };
+
+  const saveProjectAs = async (): Promise<boolean> => {
+    if (!isDesktop) return downloadProject();
+    const { save } = await import("@tauri-apps/plugin-dialog");
+    const path = await save({
+      defaultPath: projectPath ?? projectFileName(projectState.name),
+      filters: [{ name: "IFCPP project", extensions: ["ifcpp"] }],
+    });
+    if (!path) return false;
+    await invokeDesktop("write_project_file", { path, contents: await serializeProject() });
+    setProjectPath(path);
+    updateSavedProjectSignature(projectStateSignature(projectState));
+    setIsDirty(false);
+    return true;
+  };
+
+  const saveProject = async (): Promise<boolean> => {
+    if (!isDesktop) return downloadProject();
+    if (!projectPath) return saveProjectAs();
+    await invokeDesktop("write_project_file", { path: projectPath, contents: await serializeProject() });
+    updateSavedProjectSignature(projectStateSignature(projectState));
+    setIsDirty(false);
+    return true;
+  };
+
+  projectActionRef.current = isDesktop ? saveProject : downloadProject;
+
+  useEffect(() => {
+    const handleAppShortcut = (event: KeyboardEvent) => {
+      const action = classifyAppShortcut(event, isDesktop);
+      if (!action) return;
+      event.preventDefault();
+
+      if (action === "save") {
+        if (saveShortcutInFlightRef.current || !projectActionRef.current) return;
+        saveShortcutInFlightRef.current = true;
+        void projectActionRef.current().finally(() => {
+          saveShortcutInFlightRef.current = false;
+        });
+        return;
+      }
+
+      if (action === "open") {
+        if (openProjectActionRef.current) void openProjectActionRef.current();
+        return;
+      }
+
+      const current = userSettingsRef.current;
+      const currentScale = current.preferences.interfaceScalePercent;
+      const scale = action === "zoom-reset"
+        ? DEFAULT_INTERFACE_SCALE
+        : stepInterfaceScale(currentScale, action === "zoom-in" ? 1 : -1);
+      applyInterfaceScale(scale);
+    };
+    window.addEventListener("keydown", handleAppShortcut);
+    return () => window.removeEventListener("keydown", handleAppShortcut);
+  }, [isDesktop]);
+
+  const activePilePlanName = projectState.pilePlans.find(
+    (pilePlan) => pilePlan.id === projectState.activePilePlanId,
+  )?.name ?? projectState.name;
+
+  const exportPilePlan = async (format: "xlsx" | "csv"): Promise<void> => {
+    const input = buildPilePlanExportInputForPlan(projectState, projectState.activePilePlanId);
+    const bytes = format === "xlsx"
+      ? await exportPilePlanXlsxCore(input)
+      : await exportPilePlanCsvCore(input);
+    await saveBinaryExport(
+      {
+        fileName: pilePlanExportFileName(activePilePlanName, format),
+        mimeType: format === "xlsx"
+          ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          : "text/csv",
+        extensions: [`.${format}`],
+      },
+      bytes,
+    );
+  };
+
+  const confirmProjectReplacement = useCallback((): Promise<boolean> => {
+    if (!isDirtyRef.current) return Promise.resolve(true);
+    setUnsavedChangesOpen(true);
+    return new Promise((resolve) => {
+      replacementResolverRef.current = resolve;
+    });
+  }, []);
+
+  const resolveProjectReplacement = (proceed: boolean) => {
+    setUnsavedChangesOpen(false);
+    const resolve = replacementResolverRef.current;
+    replacementResolverRef.current = null;
+    resolve?.(proceed);
+  };
+
+  const handleProjectStateChange = (nextState: typeof projectState) => {
+    commitProjectState(nextState);
+  };
+
+  const applyValidatedProjectEdit = async (
+    prepare: (state: ProjectState) => Promise<PreparedProjectDocumentEdit>,
+  ): Promise<boolean> => {
+    const captured = projectStateRef.current;
+    const signature = projectStateSignature(captured);
+    try {
+      const prepared = await prepare(captured);
+      if (projectStateSignature(projectStateRef.current) !== signature) {
+        showActionNotice(t("projectEdit.projectChanged"), "error");
+        return false;
+      }
+      if (prepared.changed) commitProjectState((current) => (
+        projectStateSignature(current) === signature ? prepared.update(current) : current
+      ));
+      return true;
+    } catch {
+      showActionNotice(t("projectEdit.failed"), "error");
+      return false;
+    }
+  };
+
+  const applyLegendEditor = (draft: LegendEditorDraft, enableTipLevelRegions: boolean) =>
+    applyValidatedProjectEdit((state) => prepareLegendEditorEdit(state, draft, enableTipLevelRegions));
+
+  const handleSourceLoadPointSelection = (intent: SourceLoadPointSelection) => {
+    if (projectState.loadPointLockDraft !== null || projectState.cptSelectionEditDraft !== null) return;
+    const loadPointIds = intent.loadPointIds.filter((id) => !activeLockedLoadPointIdSet.has(id));
+    if (loadPointIds.length === 0) return;
+    const selection = intent.mode === "toggle"
+      ? toggleReactViewerLoadPoint(projectState, loadPointIds[0], loadPointGroups.groups)
+      : intent.mode === "add"
+        ? addReactViewerLoadPoints(projectState, loadPointIds, loadPointGroups.groups)
+        : setReactViewerLoadPoints(projectState, loadPointIds, loadPointGroups.groups);
+    handleProjectStateChange({ ...projectState, ...selection });
+  };
+
+  const handleSourceCptSelection = (cptId: number) => {
+    if (projectState.loadPointLockDraft !== null || projectState.cptSelectionEditDraft !== null) return;
+    handleProjectStateChange({ ...projectState, ...openReactViewerCpt(projectState, cptId) });
+  };
+
+  const clearSourceSelection = () => {
+    if (projectState.loadPointLockDraft !== null || projectState.cptSelectionEditDraft !== null) return;
+    handleProjectStateChange({ ...projectState, ...clearReactViewerSelection(projectState) });
+  };
+
+  const previewGroupEdit = async (
+    action: LoadPointGroupEditAction,
+    selectedLoadPointIds = projectState.selectedLoadPointIds,
+  ): Promise<LoadPointGroupEditPreview | null> => {
+    if (loadPointGroups.pending || loadPointGroups.error !== null) return null;
+    return previewLoadPointGroupEditCore({
+      loadPoints: projectState.loadPoints,
+      settings: projectState.loadPointGroupingSettings,
+      selectedLoadPointIds,
+      action,
+    });
+  };
+
+  const applyGroupEdit = async (
+    action: LoadPointGroupEditAction,
+    selectedLoadPointIds = projectState.selectedLoadPointIds,
+  ): Promise<void> => {
+    if (groupEditPending || loadPointGroups.pending || loadPointGroups.error !== null) return;
+    const requestId = ++groupEditRequestIdRef.current;
+    const capturedLoadPoints = projectState.loadPoints;
+    const capturedSettings = projectState.loadPointGroupingSettings;
+    const capturedSelectedIds = [...selectedLoadPointIds];
+    setGroupEditPending(true);
+    try {
+      const result = await applyLoadPointGroupEditCore({
+        loadPoints: capturedLoadPoints,
+        settings: capturedSettings,
+        selectedLoadPointIds: capturedSelectedIds,
+        action,
+      });
+      if (
+        requestId !== groupEditRequestIdRef.current
+        || projectStateRef.current.loadPoints !== capturedLoadPoints
+        || projectStateRef.current.loadPointGroupingSettings !== capturedSettings
+      ) return;
+      if (result.status === "blocked") {
+        showActionNotice(t(`loadPointGroups.editBlocked.${result.reason}`), "error");
+        return;
+      }
+      commitProjectState((current) => {
+        if (
+          current.loadPoints !== capturedLoadPoints
+          || current.loadPointGroupingSettings !== capturedSettings
+        ) return current;
+        const groupingSettings = {
+          ...result.settings,
+          manualGroups: result.settings.manualGroups.map(({ loadPointIds }) => ({
+            loadPointIds: [...loadPointIds],
+          })),
+          ungroupedGroups: result.settings.ungroupedGroups.map(({ loadPointIds }) => ({
+            loadPointIds: [...loadPointIds],
+          })),
+        };
+        const selection = action === "group"
+          ? setReactViewerLoadPoints(current, capturedSelectedIds, result.grouping.groups)
+          : action === "ungroup"
+            ? setReactViewerLoadPoints(current, capturedSelectedIds)
+            : current;
+        return { ...current, ...selection, loadPointGroupingSettings: groupingSettings };
+      }, getLoadPointGroupEditHistoryAction(action));
+    } finally {
+      if (requestId === groupEditRequestIdRef.current) setGroupEditPending(false);
+    }
+  };
+
+  const applyGroupedPileConfiguration = async (
+    selectedLoadPointIds: number[],
+    requestedConfiguration: PileConfigurationKey | null,
+  ): Promise<void> => {
+    const groupsReady = hasCompletedLoadPointGroups;
+    if (!groupsReady || selectedLoadPointIds.length === 0) return;
+
+    pileAssignmentRequestIdRef.current += 1;
+    const requestId = pileAssignmentRequestIdRef.current;
+    const capturedActivePilePlanId = projectState.activePilePlanId;
+    const capturedAssignments = projectState.selectedPileConfigurationsByLoadPoint;
+    const capturedLoadPoints = projectState.loadPoints;
+    const capturedGroups = loadPointGroups.groups;
+    const capturedLockedLoadPointSignature = getLoadPointLockSignature(
+      projectState.pilePlans,
+      capturedActivePilePlanId,
+    );
+    const lockedLoadPointIds = getActiveLockedLoadPointIds(
+      projectState.pilePlans,
+      capturedActivePilePlanId,
+    );
+    setPileAssignmentPending(true);
+
+    try {
+      const result = await applyLoadPointGroupAssignmentCore({
+        selectedLoadPointIds,
+        groups: capturedGroups,
+        requestedConfiguration,
+        currentAssignments: capturedAssignments,
+        lockedLoadPointIds,
+      });
+      const latest = projectStateRef.current;
+      if (
+        requestId !== pileAssignmentRequestIdRef.current
+        || latest.activePilePlanId !== capturedActivePilePlanId
+        || latest.selectedPileConfigurationsByLoadPoint !== capturedAssignments
+        || loadPointGroupsRef.current !== capturedGroups
+        || getLoadPointLockSignature(latest.pilePlans, capturedActivePilePlanId)
+          !== capturedLockedLoadPointSignature
+      ) {
+        return;
+      }
+
+      if (result.status === "blocked") {
+        const names = result.blocking_locked_load_points.map(({ load_point_id }) =>
+          capturedLoadPoints.find(({ id }) => id === load_point_id)?.name ?? String(load_point_id));
+        showActionNotice(
+          t("loadPointGroups.assignmentBlocked", { names: names.join(", ") }),
+          "error",
+        );
+        return;
+      }
+
+      if (result.changes.length === 0) return;
+
+      commitProjectState((current) => {
+        if (
+          current.activePilePlanId !== capturedActivePilePlanId
+          || current.selectedPileConfigurationsByLoadPoint !== capturedAssignments
+          || loadPointGroupsRef.current !== capturedGroups
+          || getLoadPointLockSignature(current.pilePlans, capturedActivePilePlanId)
+            !== capturedLockedLoadPointSignature
+        ) {
+          return current;
+        }
+        const nextAssignments = new Map(capturedAssignments);
+        for (const change of result.changes) {
+          if (change.configuration) {
+            nextAssignments.set(change.load_point_id, { ...change.configuration });
+          } else {
+            nextAssignments.delete(change.load_point_id);
+          }
+        }
+        return {
+          ...current,
+          selectedPileConfigurationsByLoadPoint: nextAssignments,
+          pilePlans: synchronizeActivePilePlan(
+            current.pilePlans,
+            capturedActivePilePlanId,
+            nextAssignments,
+          ),
+        };
+      });
+    } catch (error) {
+      if (requestId === pileAssignmentRequestIdRef.current) {
+        showActionNotice(error instanceof Error ? error.message : String(error), "error");
+      }
+    } finally {
+      if (requestId === pileAssignmentRequestIdRef.current) {
+        setPileAssignmentPending(false);
+      }
+    }
+  };
+
+  const importPilePlan = (patch: PilePlanImportPatch, fileName: string) => {
+    commitProjectState((current) => applyPilePlanImportAsNewPlan(
+      current,
+      patch,
+      pilePlanNameFromFileName(fileName),
+    ));
+  };
+
+  const pilePlanLanguage = (): PilePlanLanguage => i18n.language.startsWith("nl") ? "nl" : "en";
+
+  const activatePilePlan = (pilePlanId: string) => {
+    setActiveSourceKind(null);
+    invalidatePileAssignmentRequests();
+    setProjectState((current) => activatePilePlanState(current, pilePlanId));
+  };
+
+  const startLockEditing = () => {
+    setRightTaskPanel(null);
+    setProjectState((current) => ({
+      ...current,
+      cptSelectionEditDraft: null,
+      loadPointLockDraft: startLoadPointLockDraft(
+        current.pilePlans,
+        current.activePilePlanId,
+        current.selectedLoadPointIds,
+      ),
+      loadPointLockSelectionSnapshot: {
+        selectedLoadPointIds: [...current.selectedLoadPointIds],
+        selectedLoadPointId: current.selectedLoadPointId,
+        selectedCptId: current.selectedCptId,
+      },
+      selectedLoadPointIds: [],
+      selectedLoadPointId: null,
+      selectedCptId: null,
+    }));
+  };
+
+  const cancelLockEditing = () => {
+    setProjectState((current) => {
+      const snapshot = current.loadPointLockSelectionSnapshot;
+      if (snapshot === null) {
+        return { ...current, loadPointLockDraft: null };
+      }
+      return {
+        ...current,
+        loadPointLockDraft: null,
+        loadPointLockSelectionSnapshot: null,
+        selectedLoadPointIds: snapshot.selectedLoadPointIds,
+        selectedLoadPointId: snapshot.selectedLoadPointId,
+        selectedCptId: snapshot.selectedCptId,
+      };
+    });
+  };
+
+  const unlockAllInDraft = () => {
+    setProjectState((current) => current.loadPointLockDraft === null
+      ? current
+      : { ...current, loadPointLockDraft: new Set() });
+  };
+
+  const applyLockEditing = () => {
+    commitProjectState((current) => {
+      const draft = current.loadPointLockDraft;
+      if (draft === null) return current;
+      const previous = getActiveLockedLoadPointIds(current.pilePlans, current.activePilePlanId);
+      const changed = previous.length !== draft.size || previous.some((id) => !draft.has(id));
+      const selectedLoadPointIds = current.selectedLoadPointIds.filter((id) => !draft.has(id));
+      const selectedLoadPointId = selectedLoadPointIds.includes(current.selectedLoadPointId ?? -1)
+        ? current.selectedLoadPointId
+        : selectedLoadPointIds[0] ?? null;
+      if (!changed) {
+        return {
+          ...current,
+          loadPointLockDraft: null,
+          loadPointLockSelectionSnapshot: null,
+        };
+      }
+      return {
+        ...current,
+        pilePlans: applyLoadPointLockDraft(current.pilePlans, current.activePilePlanId, draft),
+        loadPointLockDraft: null,
+        loadPointLockSelectionSnapshot: null,
+        selectedLoadPointIds,
+        selectedLoadPointId,
+        selectedCptId: null,
+      };
+    });
+  };
+
+  const renameProjectPilePlan = (pilePlanId: string, name: string) => {
+    commitProjectState((current) => {
+      const synchronized = synchronizeActivePilePlan(
+        current.pilePlans,
+        current.activePilePlanId,
+        current.selectedPileConfigurationsByLoadPoint,
+      );
+      const pilePlans = renamePilePlan(synchronized, pilePlanId, name);
+      if (pilePlans === synchronized || pilePlans.every((plan, index) => plan.name === synchronized[index]?.name)) {
+        return current;
+      }
+      return { ...current, pilePlans };
+    });
+  };
+
+  const duplicateProjectPilePlan = (pilePlanId: string) => {
+    commitProjectState((current) => {
+      return {
+        ...current,
+        ...duplicatePilePlan({
+          ...current,
+          sourcePilePlanId: pilePlanId,
+          language: pilePlanLanguage(),
+        }),
+      };
+    });
+  };
+
+  const deleteProjectPilePlan = (pilePlanId: string) => {
+    commitProjectState((current) => {
+      if (current.pilePlans.length <= 1) return current;
+      return { ...current, ...deletePilePlan({ ...current, pilePlanId }) };
+    });
+  };
+
+  const createFreshPilePlan = async () => {
+    if (creatingPilePlan) return;
+    const snapshot = projectState;
+    if (
+      technicalPileOptionsByLoadPointId.size !== snapshot.loadPoints.length
+      || snapshot.analysisError !== null
+      || !hasCompletedLoadPointGroups
+      || technicalAssignment.status !== "ready"
+    ) {
+      return;
+    }
+    const capturedTechnicalOptions = technicalPileOptionsByLoadPointId;
+    const capturedGroups = loadPointGroups.groups;
+    setCreatingPilePlan(true);
+    try {
+      const choices = capturedTechnicalOptions.size === 0
+        ? new Map()
+        : await chooseDefaultPileOptionsCore({
+            groups: capturedGroups,
+            optionsByLoadPointId: capturedTechnicalOptions,
+            pileHeadLevelM: snapshot.pileHeadLevelM ?? 0,
+            costSettings: snapshot.pileCostSettings,
+          });
+      commitProjectState((current) => {
+        if (
+          current.analysisRequest !== snapshot.analysisRequest
+          || current.pileOptionsByLoadPointId !== snapshot.pileOptionsByLoadPointId
+          || current.cptSelectionEditDraft !== snapshot.cptSelectionEditDraft
+          || current.cptSelectionPreview !== snapshot.cptSelectionPreview
+          || loadPointGroupsRef.current !== capturedGroups
+          || current.pileCostSettings !== snapshot.pileCostSettings
+          || current.pileHeadLevelM !== snapshot.pileHeadLevelM
+          || current.activePilePlanId !== snapshot.activePilePlanId
+        ) return current;
+        return {
+          ...current,
+          ...createPilePlan({
+            ...current,
+            choices,
+            activation: activationFromConfigurations(availablePileConfigurations),
+            kind: "variant",
+            language: pilePlanLanguage(),
+          }),
+        };
+      });
+    } catch (error) {
+      console.error("Failed to create pile plan", error);
+    } finally {
+      setCreatingPilePlan(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const store = await createPlatformUserSettingsStore({
+          isTauri: isDesktop,
+          indexedDb: window.indexedDB,
+        });
+        const settings = await loadUserSettings(
+          store,
+          (key, fallback) => getSetting(key, fallback),
+        );
+        if (cancelled) return;
+        if(document.documentElement.dataset.svModeExplicit === 'true')settings.preferences.theme=document.documentElement.dataset.svMode === 'light' ? 'light' : 'spanvision-mono';
+        applyTheme(settings.preferences.theme);
+        applyCanvasBackground(settings.preferences.canvasBackground, settings.preferences.theme);
+        await changeLanguage(settings.preferences.language);
+        if (isDesktop) {
+          await applyDesktopInterfaceScale(settings.preferences.interfaceScalePercent);
+          appliedInterfaceScaleRef.current = settings.preferences.interfaceScalePercent;
+        }
+        if (cancelled) return;
+        userSettingsStoreRef.current = store;
+        explorerWidthRef.current = settings.preferences.workspaceLayout.explorerWidth;
+        rightPanelWidthRef.current = settings.preferences.workspaceLayout.propertiesWidth;
+        setUserSettings(settings);
+        await saveUserSettings(store, settings);
+      } catch (error) {
+        console.error("Failed to initialize user settings", error);
+      } finally {
+        if (!cancelled) setUserSettingsReady(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [applyInterfaceScale, isDesktop]);
+
+  useEffect(() => {
+    if (!isDesktop) return;
+    if (appliedInterfaceScaleRef.current === interfaceScalePercent) return;
+    appliedInterfaceScaleRef.current = interfaceScalePercent;
+    void applyDesktopInterfaceScale(interfaceScalePercent);
+  }, [interfaceScalePercent, isDesktop]);
+
+  useEffect(() => {
+    let cancelled = false;
+    writeProjectDocumentCore(persistedProjectDraft).then((text) => {
+      if (!cancelled) {
+        preparedProjectRef.current = {
+          signature: persistedProjectSignature,
+          blob: new Blob([text], { type: "application/json" }),
+        };
+      }
+    });
+    return () => { cancelled = true; };
+  }, [persistedProjectSignature]);
+
+  useEffect(() => {
+    const previewInput = getCptSelectionPreviewInput(projectState);
+    if (!previewInput) return;
+    const { draft } = previewInput;
+    let cancelled = false;
+    setProjectState((current) => beginCptSelectionPreview(current, draft));
+
+    calculatePileOptionAnalysisCore({
+      bearingCapacities: projectState.bearingCapacities,
+      cpts: projectState.cpts,
+      globalSettings: projectState.globalCptSelectionSettings,
+      loadPoints: previewInput.loadPoints,
+      manualCptIdsByLoadPoint: previewInput.manualCptIdsByLoadPoint,
+      settingsByLoadPoint: projectState.cptSelectionSettingsByLoadPoint,
+      includeCptFrdRows: false,
+    }).then((analysis) => {
+      if (!cancelled) {
+        setProjectState((current) => applyCptSelectionPreviewResult(current, draft, analysis));
+      }
+    }).catch((error: unknown) => {
+      console.error("Failed to preview CPT selection", error);
+      if (!cancelled) {
+        setProjectState((current) => failCptSelectionPreview(
+          current,
+          draft,
+          error instanceof Error ? error.message : String(error),
+        ));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectState.cptSelectionEditDraft]);
+
+  useEffect(() => {
+    const analysisRequest = projectState.analysisRequest;
+    const requestedIds = analysisRequest.loadPointIds;
+    const analysisLoadPoints = requestedIds === null
+      ? projectState.loadPoints
+      : projectState.loadPoints.filter((loadPoint) => requestedIds.includes(loadPoint.id));
+
+    void analysisPipeline.run({
+      bearingCapacities: projectState.bearingCapacities,
+      cpts: projectState.cpts,
+      globalSettings: projectState.globalCptSelectionSettings,
+      loadPoints: analysisLoadPoints,
+      manualCptIdsByLoadPoint: projectState.manualCptIdsByLoadPoint,
+      settingsByLoadPoint: projectState.cptSelectionSettingsByLoadPoint,
+      includeCptFrdRows: projectState.cptFrdRowsByCptId.size === 0,
+    }).then((outcome) => {
+      if (outcome.status === "applied") {
+        const analysis = outcome.result;
+        setProjectState((current) => current.analysisRequest !== analysisRequest ? current : ({
+          ...current,
+          pileOptionsByLoadPointId: new Map([
+            ...current.pileOptionsByLoadPointId,
+            ...analysis.pileOptionsByLoadPointId,
+          ]),
+          selectedCptsByLoadPointId: new Map([
+            ...current.selectedCptsByLoadPointId,
+            ...analysis.selectedCptsByLoadPointId,
+          ]),
+          cptFrdRowsByCptId: analysis.cptFrdRowsByCptId ?? current.cptFrdRowsByCptId,
+          analysisError: null,
+        }));
+        return;
+      }
+      if (outcome.status === "failed") {
+        console.error("Failed to load pile option analysis", outcome.error);
+        setProjectState((current) => current.analysisRequest !== analysisRequest ? current : ({
+          ...current,
+          analysisError: outcome.error instanceof Error
+            ? outcome.error.message
+            : String(outcome.error),
+        }));
+      }
+    });
+
+    return () => {
+      analysisPipeline.invalidate();
+    };
+  }, [analysisPipeline, projectState.analysisRequest]);
+
+  useEffect(() => {
+    if (
+      !projectState.defaultPileSelectionPending
+      || projectState.pileOptionsByLoadPointId.size !== projectState.loadPoints.length
+      || !hasCompletedLoadPointGroups
+    ) {
+      return;
+    }
+    const analysisRequest = projectState.analysisRequest;
+    if (defaultSelectionRequestRef.current === analysisRequest) {
+      return;
+    }
+    defaultSelectionRequestRef.current = analysisRequest;
+
+    chooseDefaultPileOptionsCore({
+      groups: loadPointGroups.groups,
+      optionsByLoadPointId: projectState.pileOptionsByLoadPointId,
+      pileHeadLevelM: projectState.pileHeadLevelM ?? 0,
+      costSettings: projectState.pileCostSettings,
+    }).then((choices) => {
+      const applyChoices = (current: ProjectState) => {
+        if (current.analysisRequest !== analysisRequest) return current;
+        const next = {
+          ...current,
+          selectedPileConfigurationsByLoadPoint: mergeDefaultPileChoices(
+            current.selectedPileConfigurationsByLoadPoint,
+            choices,
+          ),
+          defaultPileSelectionPending: false,
+          analysisError: null,
+        };
+        if (savedProjectSignatureRef.current !== "" && !defaultSelectionKeepsDirtyRef.current) {
+          updateSavedProjectSignature(projectStateSignature(next));
+          setIsDirty(false);
+        }
+        return next;
+      };
+      if (defaultSelectionKeepsDirtyRef.current) {
+        amendProjectState(applyChoices);
+      } else {
+        setProjectState(applyChoices);
+      }
+    }).catch((error: unknown) => {
+      console.error("Failed to choose default pile options", error);
+      setProjectState((current) => current.analysisRequest !== analysisRequest ? current : ({
+        ...current,
+        defaultPileSelectionPending: false,
+        analysisError: error instanceof Error ? error.message : String(error),
+      }));
+    }).finally(() => {
+      defaultSelectionKeepsDirtyRef.current = false;
+      if (defaultSelectionRequestRef.current === analysisRequest) {
+        defaultSelectionRequestRef.current = null;
+      }
+    });
+  }, [
+    projectState.analysisRequest,
+    projectState.defaultPileSelectionPending,
+    projectState.loadPoints.length,
+    hasCompletedLoadPointGroups,
+    loadPointGroups.groups,
+    projectState.pileCostSettings,
+    projectState.pileOptionsByLoadPointId,
+  ]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const uniqueOptions = [
+      ...new Map(
+        [...projectState.pileOptionsByLoadPointId.values()]
+          .flat()
+          .map((option) => [optionKey(option), option]),
+      ).values(),
+    ];
+
+    Promise.all(uniqueOptions.map(async (option) => [
+      optionKey(option),
+      await calculatePileCostCore({
+        pileSizeMm: option.pile_size_mm,
+        pileTipLevelM: option.pile_tip_level_m,
+        pileHeadLevelM: projectState.pileHeadLevelM ?? 0,
+        settings: projectState.pileCostSettings,
+      }),
+    ] as const)).then((entries) => {
+      if (!cancelled) {
+        setProjectState((current) => ({ ...current, pileCostByOptionKey: new Map(entries) }));
+      }
+    }).catch((error: unknown) => {
+      console.error("Failed to calculate pile costs", error);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectState.pileCostSettings, projectState.pileHeadLevelM, projectState.pileOptionsByLoadPointId]);
+
+  const ilp = useIlpOptimization(projectState, loadPointGroups.groups,
+    hasCompletedLoadPointGroups && projectState.analysisError === null
+      && !projectState.defaultPileSelectionPending && projectState.cptSelectionEditDraft === null
+      && projectState.loadPointLockDraft === null && projectState.loadPoints.length > 0
+      && projectState.pileOptionsByLoadPointId.size === projectState.loadPoints.length,
+    commitProjectState, pilePlanLanguage(),userSettings.preferences.optimizationTimeLimitSeconds);
+  const mcpOptimizationRef=useRef(ilp);
+  mcpOptimizationRef.current=ilp;
+  const mcpGroupGateRef = useRef<DerivedSnapshotGate<typeof loadPointGroups> | null>(null);
+  const mcpTechnicalGateRef = useRef<DerivedSnapshotGate<typeof technicalAssignment> | null>(null);
+  const mcpConflictGateRef = useRef<DerivedSnapshotGate<typeof groupAssignmentAssessment> | null>(null);
+  const groupSignature = buildLoadPointGroupSignature(projectState.loadPoints, projectState.loadPointGroupingSettings);
+  const technicalSignature = technicalAssignmentInput ? buildTechnicalAssignmentSignature(technicalAssignmentInput) : "unavailable";
+  const conflictSignature = groupAssignmentAssessmentInput ? buildGroupAssignmentAssessmentSignature(groupAssignmentAssessmentInput) : "unavailable";
+  mcpGroupGateRef.current ??= createDerivedSnapshotGate(groupSignature, loadPointGroups);
+  mcpTechnicalGateRef.current ??= createDerivedSnapshotGate(technicalSignature, technicalAssignment);
+  mcpConflictGateRef.current ??= createDerivedSnapshotGate(conflictSignature, groupAssignmentAssessment);
+  const mcpGroups = mcpGroupGateRef.current.observe(groupSignature, loadPointGroups)
+    ? { ...loadPointGroups, pending: true } : loadPointGroups;
+  const mcpTechnical = mcpTechnicalGateRef.current.observe(technicalSignature, technicalAssignment)
+    ? { ...technicalAssignment, status: "loading" as const } : technicalAssignment;
+  const mcpConflicts = mcpConflictGateRef.current.observe(conflictSignature, groupAssignmentAssessment)
+    ? { ...groupAssignmentAssessment, pending: true } : groupAssignmentAssessment;
+  const mcpDerivedRef = useRef({
+    analysisReady: mcpAnalysisReady,
+    groups: mcpGroups,
+    technicalAssignment: mcpTechnical,
+    groupAssignmentAssessment: mcpConflicts,
+    currentOptimization: { run: ilp.currentRun, runState: ilp.runState, valid: ilp.currentRunValid,
+      runId:ilp.currentRunId,timeLimitSeconds:ilp.currentRunTimeLimitSeconds,
+      targetLoadPointIds:ilp.currentRunTargetLoadPointIds },
+  });
+  mcpDerivedRef.current = {
+    analysisReady: mcpAnalysisReady,
+    groups: mcpGroups,
+    technicalAssignment: mcpTechnical,
+    groupAssignmentAssessment: mcpConflicts,
+    currentOptimization: { run: ilp.currentRun, runState: ilp.runState, valid: ilp.currentRunValid,
+      runId:ilp.currentRunId,timeLimitSeconds:ilp.currentRunTimeLimitSeconds,
+      targetLoadPointIds:ilp.currentRunTargetLoadPointIds },
+  };
+  const setMcpEnabled = async (enabled: boolean) => {
+    const run = ++mcpLifecycleRef.current;
+    if (!enabled) {
+      mcpImportSessionRef.current?.dispose();
+      mcpImportSessionRef.current = null;
+      mcpFileOperationSessionRef.current?.invalidate();
+      mcpFileOperationSessionRef.current = null;
+      mcpPilePlanImportSessionRef.current?.dispose();
+      mcpPilePlanImportSessionRef.current = null;
+      mcpWriteEnabledRef.current = false;
+      setMcpWriteEnabled(false);
+      setMcpStatus("stopping");
+      setMcpConnection(null);
+      const bridge = mcpBridgeRef.current;
+      mcpBridgeRef.current = null;
+      try { await bridge?.stop(); }
+      finally { if (run === mcpLifecycleRef.current) setMcpStatus("off"); }
+      return;
+    }
+    if (!isDesktop || mcpBridgeRef.current) return;
+    setMcpError(null);
+    setMcpStatus("starting");
+    try {
+      const [{ invoke }, { listen, emit }] = await Promise.all([
+        import("@tauri-apps/api/core"), import("@tauri-apps/api/event"),
+      ]);
+      if (run !== mcpLifecycleRef.current) return;
+      const bridge = createDesktopMcpBridge({ invoke, listen, emit });
+      mcpBridgeRef.current = bridge;
+      const importSession = createSourceImportSession({
+        requirements: () => invokeDesktop<Record<string, unknown>>("get_standard_csv_requirements", {}),
+        validate: async ({ mode, projectName, pileHeadLevelM, currencyCode, sources, marker }) => {
+          const current = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+          if (current.project_instance_id !== marker.project_instance_id
+            || current.project_revision !== marker.project_revision) throw new McpReadError("project_changed");
+          const previews = await Promise.all(sources.map(previewImportSourceCore));
+          const sourceErrors = previews.flatMap((preview) => preview.diagnostics
+            .filter((diagnostic) => diagnostic.severity === "error"));
+          if (sourceErrors.length) throw new SourceImportValidationError(
+            "One or more CSV sources contain invalid rows; inspect diagnostics and restage the affected role.", sourceErrors);
+          const before = mode === "refresh" ? requireValidProjectDocument(
+            await readProjectDocumentCore(await writeProjectDocumentCore(projectDraftFromState(projectStateRef.current))),
+          ).project : null;
+          const outcome = mode === "refresh"
+            ? await refreshProjectFromFilesCore({ currentProject: before!, sources })
+            : await importProjectFromFilesCore({ projectName: projectName!, pileHeadLevelM: pileHeadLevelM!,
+              currencyCode: currencyCode!, sources });
+          const after = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+          if (after.project_instance_id !== marker.project_instance_id
+            || after.project_revision !== marker.project_revision) throw new McpReadError("project_changed");
+          const summary = getImportSummary(outcome.project);
+          return { outcome, data: {
+            project_name: outcome.project.metadata.name,
+            load_point_count: summary.loadPointCount, cpt_count: summary.cptCount,
+            bearing_capacity_count: summary.bearingCapacityCount, warnings: summary.warnings.slice(0, 100),
+            warning_count: summary.warnings.length,
+            source_counts: previews.map((preview) => ({ role: preview.role, item_count: preview.itemCount,
+              warning_count: preview.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length })),
+            pile_plan_count: (outcome.project.user_state.pile_plans ?? []).length,
+            ...(before ? { reconciliation: summarizeImportReconciliation(before, outcome.project) } : {}),
+          } };
+        },
+        apply: async ({ mode, validated, marker }) => {
+          if (run !== mcpLifecycleRef.current || !mcpWriteEnabledRef.current) throw new McpReadError("write_access_disabled");
+          const current = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+          if (current.project_instance_id !== marker.project_instance_id
+            || current.project_revision !== marker.project_revision) throw new McpReadError("project_changed");
+          if (mode === "new_project" && isDirtyRef.current) throw new McpReadError("unsaved_project_changes");
+          const imported = validated.outcome as Extract<ProjectDocumentOutcome, { status: "valid" }>;
+          if (mode === "refresh") {
+            defaultSelectionKeepsDirtyRef.current = true;
+            flushSync(() => commitProjectState(createInitialProjectState(imported.project, {
+              initializeDefaultPiles: true,
+            }, imported.keys)));
+            isDirtyRef.current = true;
+            setIsDirty(true);
+          } else {
+            const project = imported.project;
+            const usedPileSizes = new Set(project.inputs.bearing_capacities.map((capacity) => capacity.pile_size_mm));
+            const costs = mergePileCostCatalog(project.settings.pile_costs,
+              userSettingsRef.current.defaults.pileCostCatalog, BUILT_IN_PILE_COST_DEFAULTS, usedPileSizes).catalog;
+            const withCosts = { ...project, settings: { ...project.settings, pile_costs: costs } };
+            defaultSelectionKeepsDirtyRef.current = false;
+            flushSync(() => replaceProjectState(createInitialProjectState(withCosts, {
+              initializeDefaultPiles: true,
+              defaultPilePlanName: pilePlanLanguage() === "nl" ? "Basisplan" : "Base plan",
+            }, imported.keys)));
+            setProjectPath(null);
+            updateSavedProjectSignature("");
+            isDirtyRef.current = true;
+            setIsDirty(true);
+          }
+          return { applied: true, mode, ...mcpProjectMarkerRef.current!.observe(projectStateRef.current) };
+        },
+      });
+      mcpImportSessionRef.current = importSession;
+      const fileSession = createMcpFileOperationSession({
+        run: (request, marker, isValid) => runProjectFileOperation(request, marker,
+          () => isValid() && run === mcpLifecycleRef.current && mcpWriteEnabledRef.current, {
+            currentMarker: () => mcpProjectMarkerRef.current!.observe(projectStateRef.current),
+            currentPath: () => projectPathRef.current,
+            chooseOpen: async () => {
+              const { open } = await import("@tauri-apps/plugin-dialog");
+              const path = await open({ multiple: false, filters: [{ name: "IFCPP project", extensions: ["ifcpp"] }] });
+              return typeof path === "string" ? path : null;
+            },
+            chooseSave: async (suggestedPath) => {
+              const { save } = await import("@tauri-apps/plugin-dialog");
+              return await save({ defaultPath: suggestedPath,
+                filters: [{ name: "IFCPP project", extensions: ["ifcpp"] }] });
+            },
+            suggestedName: () => projectFileName(projectStateRef.current.name),
+            openProject: async (path, isCurrent) => {
+              if (!await confirmProjectReplacement()) return false;
+              if (!isCurrent()) throw new McpReadError("project_changed");
+              const text = await invokeDesktop<string>("read_project_file", { path });
+              const project = await prepareOpenedProject(text, { initializeDefaultPiles: false },
+                { readProjectDocument: readProjectDocumentCore });
+              if (!isCurrent()) throw new McpReadError("project_changed");
+              flushSync(() => installOpenedProject(project, path));
+              projectPathRef.current = path;
+              return true;
+            },
+            serialize: () => writeProjectDocumentCore(projectDraftFromState(projectStateRef.current)),
+            writeProject: (path, contents) => invokeDesktop("write_project_file", { path, contents }),
+            didSave: (path) => {
+              projectPathRef.current = path;
+              setProjectPath(path);
+              updateSavedProjectSignature(projectStateSignature(projectStateRef.current));
+              isDirtyRef.current = false;
+              setIsDirty(false);
+            },
+            exportPlan: async (planId, format) => {
+              const state = projectStateRef.current;
+              const plan = state.pilePlans.find((candidate) => candidate.id === planId);
+              if (!plan) throw new McpReadError("unknown_plan");
+              const input = buildPilePlanExportInputForPlan(state, planId);
+              const bytes = format === "csv" ? await exportPilePlanCsvCore(input) : await exportPilePlanXlsxCore(input);
+              return { basename: pilePlanExportFileName(plan.name, format), bytes };
+            },
+            chooseExport: async (suggestedName, format) => {
+              const { save } = await import("@tauri-apps/plugin-dialog");
+              return await save({ defaultPath: suggestedName,
+                filters: [{ name: suggestedName, extensions: [format] }] });
+            },
+            writeExport: (path, bytes) => invokeDesktop<void>("write_binary_file", { path, contents: [...bytes] }),
+          }),
+      });
+      mcpFileOperationSessionRef.current = fileSession;
+      const pilePlanImportSession = createPilePlanImportSession({
+        requirements: () => invokeDesktop<Record<string, unknown>>("get_pile_plan_import_requirements", {}),
+        validate: async ({ bytes, fileName, options, marker }) => {
+          const before = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+          if (before.project_instance_id !== marker.project_instance_id
+            || before.project_revision !== marker.project_revision) throw new McpReadError("project_changed");
+          const state = projectStateRef.current;
+          const preview = await previewPilePlanImportCore({ fileName, format: "csv", bytes,
+            profile: "standard-table", options, loadPoints: state.loadPoints, cpts: state.cpts,
+            availablePileConfigurations: getAvailablePileConfigurationCatalog(state.pileOptionsByLoadPointId) });
+          const after = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+          if (after.project_instance_id !== marker.project_instance_id
+            || after.project_revision !== marker.project_revision) throw new McpReadError("project_changed");
+          return preview;
+        },
+        apply: async ({ preview, planName, marker }) => {
+          if (run !== mcpLifecycleRef.current || !mcpWriteEnabledRef.current) {
+            throw new McpReadError("write_access_disabled");
+          }
+          const currentMarker = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+          if (currentMarker.project_instance_id !== marker.project_instance_id
+            || currentMarker.project_revision !== marker.project_revision) throw new McpReadError("project_changed");
+          const before = projectStateRef.current;
+          const pileChanges = preview.patch.changes.flatMap((change) => change.pile.action === "preserve" ? [] : [{
+            load_point_id: change.load_point_id,
+            configuration: change.pile.action === "set" ? change.pile.value : null,
+          }]);
+          if (pileChanges.length > 0) {
+            const result = await applyLoadPointGroupAssignmentBatchCore({ changes: pileChanges,
+              groups: requireCurrentGroups(mcpDerivedRef.current.groups),
+              currentAssignments: before.selectedPileConfigurationsByLoadPoint,
+              lockedLoadPointIds: getActiveLockedLoadPointIds(before.pilePlans, before.activePilePlanId) });
+            if (result.status === "blocked") throw new McpReadError(result.reason, result.load_point_ids);
+            const requested = new Map(pileChanges.map((change) => [change.load_point_id, change.configuration]));
+            if (result.changes.some((change) => !requested.has(change.load_point_id)
+              || !samePileConfiguration(requested.get(change.load_point_id) ?? undefined,
+                change.configuration ?? undefined))) {
+              throw new McpReadError("group_assignment_expansion_required");
+            }
+          }
+          const beforeSignature = projectStateSignature(before);
+          const next = applyPilePlanImportAsNewPlan(before, preview.patch, planName);
+          if (run !== mcpLifecycleRef.current || !mcpWriteEnabledRef.current) {
+            throw new McpReadError("write_access_disabled");
+          }
+          const latestMarker = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+          if (latestMarker.project_instance_id !== marker.project_instance_id
+            || latestMarker.project_revision !== marker.project_revision) throw new McpReadError("project_changed");
+          flushSync(() => commitProjectState((current) =>
+            projectStateSignature(current) === beforeSignature ? next : current));
+          if (projectStateSignature(projectStateRef.current) !== projectStateSignature(next)) {
+            throw new McpReadError("project_changed");
+          }
+          return { plan_id: next.activePilePlanId, plan_name: next.pilePlans[next.pilePlans.length - 1]?.name,
+            matched_rows: preview.summary.matchedRows, skipped_rows: preview.summary.skippedRows,
+            conflicts: preview.summary.conflicts };
+        },
+      });
+      mcpPilePlanImportSessionRef.current = pilePlanImportSession;
+      const dispatch = createMcpDispatcher((): McpSnapshot => {
+        const state = projectStateRef.current;
+        const marker = mcpProjectMarkerRef.current!.observe(state);
+        return {
+          state, marker,
+          defaultOptimizationTimeLimitSeconds:userSettingsRef.current.preferences.optimizationTimeLimitSeconds,
+          ...mcpDerivedRef.current,
+          calculateCost: calculatePileCostCore,
+          assessGroupAssignments: assessLoadPointGroupAssignmentsCore,
+          isCurrent: () => {
+            const current = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+            return current.project_instance_id === marker.project_instance_id
+              && current.project_revision === marker.project_revision;
+          },
+        };
+      }, async (snapshot, name, args) => {
+        const prepared = await prepareMcpWrite(snapshot, name, args, {
+          applyAssignment: applyLoadPointGroupAssignmentCore,
+          language: i18n.language.startsWith("nl") ? "nl" : "en",
+        });
+        if (run !== mcpLifecycleRef.current || !mcpWriteEnabledRef.current) throw new McpReadError("write_access_disabled");
+        if (snapshot.isCurrent && !snapshot.isCurrent()) throw new McpReadError("project_changed");
+        const beforeSignature = projectStateSignature(snapshot.state);
+        const afterSignature = prepared.changed ? projectStateSignature(prepared.update(snapshot.state)) : beforeSignature;
+        if (prepared.changed) {
+          if (prepared.mode === "navigation") {
+            setActiveSourceKind(null);
+            invalidatePileAssignmentRequests();
+            flushSync(() => setProjectState((current) => (
+              projectStateSignature(current) === beforeSignature ? prepared.update(current) : current
+            )));
+          } else {
+            const historyAction = name === "pile_group_load_points"
+              ? getLoadPointGroupEditHistoryAction("group")
+              : name === "pile_ungroup_load_points"
+                ? getLoadPointGroupEditHistoryAction("ungroup") : undefined;
+            flushSync(() => commitProjectState((current) => (
+              projectStateSignature(current) === beforeSignature ? prepared.update(current) : current
+            ), historyAction));
+          }
+        }
+        const marker = mcpProjectMarkerRef.current!.observe(projectStateRef.current);
+        if (prepared.changed && projectStateSignature(projectStateRef.current) !== afterSignature) {
+          throw new McpReadError("project_changed");
+        }
+        return { ...marker, data: prepared.data };
+      }, () => mcpWriteEnabledRef.current, async (snapshot,name,args) => {
+        if(run!==mcpLifecycleRef.current||!mcpWriteEnabledRef.current)throw new McpReadError("write_access_disabled");
+        const optimization=mcpOptimizationRef.current;
+        if(name==="pile_start_optimization"){
+          if(snapshot.isCurrent&&!snapshot.isCurrent())throw new McpReadError("project_changed");
+          if(optimization.running)throw new McpReadError("optimization_already_running");
+          const options=prepareOptimizationStart(snapshot,args,userSettingsRef.current.preferences.optimizationTimeLimitSeconds);
+          try {
+            const receipt=optimization.startWithOptions(options);
+            return {...snapshot.marker,data:{run_id:receipt.runId,source_plan_id:receipt.sourcePlanId,
+              destination_plan_id:receipt.destinationPlanId,destination_plan_name:receipt.destinationPlanName,
+              target_count:receipt.targetCount,time_limit_seconds:receipt.timeLimitSeconds,status:"running"}};
+          }catch(error){throw new McpReadError(error instanceof Error?error.message:"optimization_not_ready");}
+        }
+        const runId=args.run_id as string;
+        requireMatchingRunId(runId,optimization.getCurrentRunId());
+        const accepted=name==="pile_stop_optimization"?optimization.stopRun(runId):optimization.cancelRun(runId);
+        if(!accepted)throw new McpReadError("run_not_current");
+        return {...mcpProjectMarkerRef.current!.observe(projectStateRef.current),data:{run_id:runId,status:"stopping"}};
+      }, async (snapshot, name, args) => {
+        if (run !== mcpLifecycleRef.current) throw new McpReadError("unavailable");
+        const result = await importSession.call(name, args, snapshot.marker);
+        if (name === "pile_apply_source_import") {
+          return { ...mcpProjectMarkerRef.current!.observe(projectStateRef.current), data: result.data };
+        }
+        return result;
+      }, async (snapshot, name, args) => {
+        if (run !== mcpLifecycleRef.current) throw new McpReadError("unavailable");
+        if (name === "pile_get_file_operation_status") return fileSession.status(args.operation_id as string);
+        if (name === "pile_export_plan") return fileSession.start({ kind: "export",
+          planId: args.plan_id as string, format: args.format as "csv" | "xlsx" }, snapshot.marker);
+        const kind = name === "pile_open_project" ? "open"
+          : name === "pile_save_project_as" ? "save-as" : "save";
+        return fileSession.start({ kind }, snapshot.marker);
+      }, async (snapshot, name, args) => {
+        if (run !== mcpLifecycleRef.current) throw new McpReadError("unavailable");
+        const result = await pilePlanImportSession.call(name, args, snapshot.marker);
+        if (name === "pile_apply_pile_plan_import") {
+          return { ...mcpProjectMarkerRef.current!.observe(projectStateRef.current), data: result.data };
+        }
+        return result;
+      });
+      const connection = await bridge.start(dispatch);
+      if (run !== mcpLifecycleRef.current) { await bridge.stop(); return; }
+      setMcpConnection(connection);
+      setMcpStatus("on");
+    } catch (error) {
+      mcpImportSessionRef.current?.dispose();
+      mcpImportSessionRef.current = null;
+      mcpFileOperationSessionRef.current?.invalidate();
+      mcpFileOperationSessionRef.current = null;
+      mcpPilePlanImportSessionRef.current?.dispose();
+      mcpPilePlanImportSessionRef.current = null;
+      if (run !== mcpLifecycleRef.current) return;
+      const bridge = mcpBridgeRef.current;
+      mcpBridgeRef.current = null;
+      await bridge?.stop().catch(() => undefined);
+      setMcpError(error instanceof Error ? error.message : String(error));
+      setMcpStatus("error");
+    }
+  };
+  useEffect(() => () => {
+    mcpImportSessionRef.current?.dispose();
+    mcpImportSessionRef.current = null;
+    mcpFileOperationSessionRef.current?.invalidate();
+    mcpFileOperationSessionRef.current = null;
+    mcpPilePlanImportSessionRef.current?.dispose();
+    mcpPilePlanImportSessionRef.current = null;
+    mcpLifecycleRef.current += 1;
+    mcpWriteEnabledRef.current = false;
+    void mcpBridgeRef.current?.stop();
+    mcpBridgeRef.current = null;
+  }, []);
+  const pilePlanCostSummaries = useMemo(() => summarizePilePlanCosts(
+    synchronizeActivePilePlan(
+      ilp.displayState.pilePlans,
+      ilp.displayState.activePilePlanId,
+      ilp.displayState.selectedPileConfigurationsByLoadPoint,
+    ),
+    ilp.displayState.pileCostByOptionKey,
+  ), [
+    ilp.displayState.activePilePlanId,
+    ilp.displayState.pilePlans,
+    ilp.displayState.selectedPileConfigurationsByLoadPoint,
+    ilp.displayState.pileCostByOptionKey,
+  ]);
+  const handleDisplayedStateChange = (next: ProjectState) => {
+    const actual = ilp.previewPlanId
+      ? applyIlpPreviewInteraction(projectState, ilp.displayState, next) : next;
+    if (actual) handleProjectStateChange(actual);
+  };
+
+  const installOpenedProject = (project: ProjectState, path: string | null) => {
+    const lifecycle = openedProjectLifecycleState(project, path);
+    setLassoSelectionActive((active) => transitionLassoSelectionMode(active, { type: "dismiss" }));
+    replaceProjectState(project);
+    setProjectPath(lifecycle.projectPath);
+    updateSavedProjectSignature(lifecycle.savedSignature);
+    setIsDirty(lifecycle.isDirty);
+    if (project.legendImportWarnings.length > 0) {
+      showStatusMessage(t("legend.importWarnings", { count: project.legendImportWarnings.length }));
+    }
+  };
+
+  const openSampleProject = async () => {
+    if (!await confirmProjectReplacement()) return;
+    const sample = requireValidProjectDocument(
+      await readProjectDocumentCore(sampleProjectText),
+    );
+    installOpenedProject(createInitialProjectState(sample.project, {
+      initializeDefaultPiles: true,
+      defaultPilePlanName: pilePlanLanguage() === "nl" ? "Basisplan" : "Base plan",
+    }, sample.keys), null);
+    showStatusMessage(t("recovery.sampleOpened"));
+  };
+
+  const openDesktopProjectPath = async (path: string) => {
+    if (!await confirmProjectReplacement()) return;
+    try {
+      const text = await invokeDesktop<string>("read_project_file", { path });
+      const project = await prepareOpenedProject(
+        text,
+        { initializeDefaultPiles: false },
+        {
+          readProjectDocument: readProjectDocumentCore,
+        },
+      );
+      installOpenedProject(project, path);
+    } catch (error) {
+      showActionNotice(describeProjectOpenError(error, t), "error");
+    }
+  };
+  openDesktopProjectPathRef.current = openDesktopProjectPath;
+
+  const chooseDesktopProject = async () => {
+    const { open } = await import("@tauri-apps/plugin-dialog");
+    const path = await open({ multiple: false, filters: [{ name: "IFCPP project", extensions: ["ifcpp"] }] });
+    if (typeof path === "string") await openDesktopProjectPath(path);
+  };
+
+  openProjectActionRef.current = chooseDesktopProject;
+
+  useEffect(() => {
+    if (!isDesktop || !userSettingsReady) return;
+    let disposed = false;
+    let stopListening: (() => void) | null = null;
+    let pendingDrain = Promise.resolve();
+
+    const reportOpenFailure = (error: unknown) => {
+      if (!disposed) showActionNotice(describeProjectOpenError(error, t), "error");
+    };
+    const drainPendingProjectPaths = () => {
+      pendingDrain = pendingDrain.then(async () => {
+        const paths = await invokeDesktop<string[]>("take_pending_project_paths", {});
+        for (const path of paths) {
+          if (disposed) return;
+          await openDesktopProjectPathRef.current?.(path);
+        }
+      }).catch(reportOpenFailure);
+      return pendingDrain;
+    };
+
+    void listenDesktop("project-open-requested", () => {
+      void drainPendingProjectPaths();
+    })
+      .then(async (unlisten) => {
+        if (disposed) {
+          unlisten();
+          return;
+        }
+        stopListening = unlisten;
+        await drainPendingProjectPaths();
+      })
+      .catch(reportOpenFailure);
+
+    return () => {
+      disposed = true;
+      stopListening?.();
+    };
+  }, [isDesktop, showActionNotice, t, userSettingsReady]);
+
+  if (!userSettingsReady) {
+    return <div className="app-startup-surface" role="status" />;
+  }
+
+  return (
+    <>
+      <div className="app-shell"
+        data-testid="spanvision-shell"
+        data-drawer={responsive.drawer || "none"}
+        data-commands={responsive.commands ? "open" : "closed"}
+        onPointerUpCapture={releasePointerActivatedControlFocus}
+      >
+        <TitleBar
+          projectAction={() => void (isDesktop ? saveProject() : downloadProject())}
+          projectActionKind={isDesktop ? "save" : "download"}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          undoLabel={undoLabel}
+          redoLabel={redoLabel}
+          onUndo={() => dispatchProject({ type: "undo" })}
+          onRedo={() => dispatchProject({ type: "redo" })}
+          onSettingsClick={() => setSettingsOpen(true)}
+          onFeedbackClick={() => setFeedbackOpen(true)}
+          interfaceScaleControl={isDesktop ? (
+            <InterfaceScaleNotice
+              notice={interfaceScaleNotice}
+              onExpire={expireInterfaceScaleNotice}
+              onDecrease={() => applyInterfaceScale(stepInterfaceScale(
+                userSettingsRef.current.preferences.interfaceScalePercent,
+                -1,
+              ))}
+              onIncrease={() => applyInterfaceScale(stepInterfaceScale(
+                userSettingsRef.current.preferences.interfaceScalePercent,
+                1,
+              ))}
+              onReset={() => applyInterfaceScale(DEFAULT_INTERFACE_SCALE)}
+            />
+          ) : undefined}
+        />
+        <Ribbon
+          onFileTabClick={() => setBackstageOpen(true)}
+          onOpenProjectInformation={() => setProjectInformationOpen(true)}
+          onOpenRightPanel={(mode) => {
+            if (responsive.phone) { responsive.setDrawer("properties"); responsive.setCommands(false); }
+            updateWorkspaceLayout({ propertiesVisible: true });
+            setRightTaskPanel(null);
+            setProjectState((current) => ({ ...current, ...switchRightPanelMode(current, mode) }));
+          }}
+          onOpenTaskPanel={(panel) => {
+            if (responsive.phone) { responsive.setDrawer("properties"); responsive.setCommands(false); }
+            updateWorkspaceLayout({ propertiesVisible: true });
+            setRightTaskPanel(panel);
+          }}
+          isLassoSelectionActive={lassoSelectionActive}
+          lassoSelectionDisabled={!lassoSelectionAvailable}
+          onToggleLassoSelection={() => setLassoSelectionActive((active) => (
+            transitionLassoSelectionMode(active, { type: "toggle" })
+          ))}
+          isLockEditing={projectState.loadPointLockDraft !== null}
+          onStartLockEditing={startLockEditing}
+          onApplyLockEditing={applyLockEditing}
+          onCancelLockEditing={cancelLockEditing}
+          onUnlockAll={unlockAllInDraft}
+          symbolScalePercent={projectState.symbolScalePercent}
+          viewerUtilizationMinimum={projectState.viewerUtilizationSettings.minimum}
+          viewerUtilizationMaximum={projectState.viewerUtilizationSettings.maximum}
+          foregroundLayer={projectState.foregroundLayer}
+          showGrid={projectState.showGrid}
+          showTipLevelRegions={projectState.showTipLevelRegions}
+          showLoadPointGroups={projectState.showLoadPointGroups}
+          explorerVisible={workspaceLayout.explorerVisible}
+          propertiesVisible={workspaceLayout.propertiesVisible}
+          onSymbolScaleChangeStart={beginSymbolScaleChange}
+          onSymbolScaleChange={commitSymbolScaleChange}
+          onSymbolScaleChangeEnd={endSymbolScaleChange}
+          onViewerUtilizationRangeChange={(minimum, maximum) => handleProjectStateChange({
+            ...projectState,
+            viewerUtilizationSettings: { minimum, maximum },
+          })}
+          onForegroundLayerChange={(foregroundLayer) => handleProjectStateChange({
+            ...projectState,
+            foregroundLayer,
+          })}
+          onGridVisibilityChange={(showGrid) => handleProjectStateChange({
+            ...projectState,
+            showGrid,
+          })}
+          onTipLevelRegionVisibilityChange={(showTipLevelRegions) => handleProjectStateChange({
+            ...projectState,
+            showTipLevelRegions,
+          })}
+          onLoadPointGroupVisibilityChange={(showLoadPointGroups) => handleProjectStateChange({
+            ...projectState,
+            showLoadPointGroups,
+          })}
+          onExplorerVisibilityChange={(explorerVisible) => updateWorkspaceLayout({ explorerVisible })}
+          onPropertiesVisibilityChange={(propertiesVisible) => updateWorkspaceLayout({ propertiesVisible })}
+        />
+        <WorkspaceNavigation controller={responsive} />
+        <div
+          className="app-content"
+          ref={appContentRef}
+          style={{
+            "--explorer-width": `${workspaceLayout.explorerVisible ? workspaceLayout.explorerWidth : 0}px`,
+            "--explorer-splitter-width": workspaceLayout.explorerVisible ? "5px" : "0px",
+            "--right-panel-width": `${workspaceLayout.propertiesVisible ? workspaceLayout.propertiesWidth : 0}px`,
+            "--right-panel-splitter-width": workspaceLayout.propertiesVisible ? "5px" : "0px",
+          } as CSSProperties}
+        >
+          {(workspaceLayout.explorerVisible || responsive.narrow) && <PilePlanExplorer
+            activePilePlanId={ilp.displayState.activePilePlanId}
+            activeSourceKind={activeSourceKind}
+            costSummaries={pilePlanCostSummaries}
+            currencyCode={projectState.currencyCode}
+            optimizingPlanId={ilp.previewPlanId}
+            managementDisabled={ilp.running}
+            createDisabled={ilp.running ||
+              projectState.pileOptionsByLoadPointId.size !== projectState.loadPoints.length
+              || projectState.analysisError !== null
+            }
+            creating={creatingPilePlan}
+            isDirty={isDirty}
+            inputSources={projectState.inputSources}
+            inputSourcesExpanded={workspaceLayout.inputSourcesExpanded}
+            pilePlans={ilp.displayState.pilePlans}
+            pilePlansExpanded={workspaceLayout.pilePlansExpanded}
+            projectName={projectState.name}
+            onActivate={id => { if (ilp.viewPlan(id)) setActiveSourceKind(null); else activatePilePlan(id); }}
+            onCreate={() => void createFreshPilePlan()}
+            onDelete={deleteProjectPilePlan}
+            onDuplicate={duplicateProjectPilePlan}
+            onExpansionChange={(group, expanded) => updateWorkspaceLayout(
+              group === "inputSources"
+                ? { inputSourcesExpanded: expanded }
+                : { pilePlansExpanded: expanded },
+            )}
+            onRename={renameProjectPilePlan}
+            onSourceActivate={setActiveSourceKind}
+          />}
+          {workspaceLayout.explorerVisible && <div
+            aria-label={t("explorer")}
+            className="explorer-splitter"
+            role="separator"
+            onPointerDown={beginExplorerResize}
+          />}
+          <main className="workspace" aria-label={t("appName")}>
+            {responsive.drawer && <button className="workspace-drawer-dismiss" aria-label={t("close")} onClick={() => responsive.setDrawer(null)} />}
+            {activeSourceKind === null ? (
+              <PilePlanWorkspace
+                state={ilp.displayState}
+                readOnly={ilp.running}
+                loadPointGroups={loadPointGroups.groups}
+                loadPointGroupTopology={loadPointGroups.topology}
+                groupAssignmentAssessment={groupAssignmentAssessment}
+                technicalAssignment={technicalAssignment}
+                lassoSelectionActive={lassoSelectionActive}
+                onStateChange={handleDisplayedStateChange}
+                onLegendApply={applyLegendEditor}
+              />
+            ) : (
+              <SourceDataViewer
+                onClose={() => setActiveSourceKind(null)}
+                source={projectState.inputSources.find(({ kind }) => kind === activeSourceKind)!}
+                loadPoints={projectState.loadPoints}
+                cpts={projectState.cpts}
+                bearingCapacities={projectState.bearingCapacities}
+                selectedLoadPointId={projectState.selectedLoadPointId}
+                selectedLoadPointIds={projectState.selectedLoadPointIds}
+                selectedCptId={projectState.selectedCptId}
+                lockedLoadPointIds={activeLockedLoadPointIdSet}
+                selectionDisabled={projectState.loadPointLockDraft !== null || projectState.cptSelectionEditDraft !== null}
+                onSelectLoadPoints={handleSourceLoadPointSelection}
+                onSelectCpt={handleSourceCptSelection}
+                onClearSelection={clearSourceSelection}
+                onReplaceSource={(file) => {
+                  setInitialImportSource({ role: importRoleForSource(activeSourceKind), file });
+                  setBackstageOpen(true);
+                }}
+              />
+            )}
+            <ActionNotice
+              message={actionNotice.message}
+              noticeId={actionNotice.id}
+              tone={actionNotice.tone}
+            />
+          </main>
+          {workspaceLayout.propertiesVisible && <div
+            aria-label={t("properties")}
+            className="right-panel-splitter"
+            role="separator"
+            onPointerDown={beginRightPanelResize}
+          />}
+          {(workspaceLayout.propertiesVisible || responsive.phone) && <RightPanel
+            columnLayouts={userSettings.preferences.pileOptionColumns}
+            onColumnLayoutChange={(mode, layout) => {
+              const next = patchUserSettings(userSettingsRef.current, {
+                pileOptionColumns: { ...userSettingsRef.current.preferences.pileOptionColumns, [mode]: layout },
+              });
+              userSettingsRef.current = next;
+              commitUserSettings(next);
+            }}
+            splitRatio={workspaceLayout.propertiesSplitRatio}
+            onSplitRatioChange={propertiesSplitRatio => updateWorkspaceLayout({ propertiesSplitRatio })}
+            ilpResult={<IlpOptimizationSettingsPanel
+              newPlanName={ilp.newPlanName} onNewPlanNameChange={ilp.setNewPlanName}
+              sections={userSettings.preferences.ilpSections}
+              onToggleSection={section => commitUserSettings(patchUserSettings(userSettingsRef.current, {
+                ilpSections: { ...userSettingsRef.current.preferences.ilpSections, [section]: !userSettingsRef.current.preferences.ilpSections[section] },
+              }))}
+              state={projectState} onChange={handleProjectStateChange}
+              onRun={ilp.start} onRunLocal={ilp.startLocal} onStop={ilp.stop} onCancel={ilp.cancel}
+              timeLimitSeconds={userSettings.preferences.optimizationTimeLimitSeconds}
+              onTimeLimitChange={seconds=>commitUserSettings(patchUserSettings(userSettingsRef.current,{optimizationTimeLimitSeconds:seconds}))}
+              hasBestSolution={!!ilp.progress?.best_solution} onClose={() => setRightTaskPanel(null)}
+              running={ilp.running} stopping={ilp.stopping} cancelling={ilp.cancelling} disabled={ilp.disabled}
+              runningPlanName={ilp.runningPlanName} onViewRunningPlan={() => {
+                if (!ilp.runningPlanId) return;
+                if (ilp.viewPlan(ilp.runningPlanId)) setActiveSourceKind(null);
+                else activatePilePlan(ilp.runningPlanId);
+              }}>
+              {(ilp.running || ilp.notificationRun) && <IlpOptimizationResultPanel run={ilp.running?ilp:ilp.notificationRun!} currency={projectState.currencyCode}
+                detailsOpen={false} onToggleDetails={() => {}} actionsEnabled={ilp.actionsAvailable}
+                skipUnsolvableEnabled={projectState.ilpOptimizationSettings.skip_unsolvable_units}
+                onEnableSkipUnsolvable={ilp.enableSkipUnsolvable} onApplyProposal={ilp.applyProposal} />}
+              {(!ilp.running || !ilp.viewingRunPlan) && (!ilp.notificationRun || ilp.resultRun.outcome) &&
+              <IlpOptimizationResultPanel
+              detailsOpen={userSettings.preferences.ilpSections.result}
+              onToggleDetails={() => commitUserSettings(patchUserSettings(userSettingsRef.current, {
+                ilpSections: { ...userSettingsRef.current.preferences.ilpSections, result: !userSettingsRef.current.preferences.ilpSections.result },
+              }))}
+              run={ilp.resultRun} currency={ilp.resultCurrency} stale={ilp.resultStale} settings={ilp.resultSettings}
+              planName={ilp.displayState.pilePlans.find(p=>p.id===ilp.displayState.activePilePlanId)?.name}
+              actionsEnabled={ilp.actionsAvailable}
+              skipUnsolvableEnabled={projectState.ilpOptimizationSettings.skip_unsolvable_units}
+              onEnableSkipUnsolvable={ilp.enableSkipUnsolvable} onApplyProposal={ilp.applyProposal}
+              />}</IlpOptimizationSettingsPanel>}
+            state={ilp.displayState}
+            loadPointGroups={loadPointGroups.groups}
+            groupAssignmentAssessment={groupAssignmentAssessment}
+            groupEditPending={groupEditPending || loadPointGroups.pending}
+            onPreviewLoadPointGroupEdit={previewGroupEdit}
+            onApplyLoadPointGroupEdit={applyGroupEdit}
+            technicalAssignment={technicalAssignment}
+            onStateChange={handleDisplayedStateChange}
+            pileAssignmentPending={ilp.running || pileAssignmentPending
+              || !hasCompletedLoadPointGroups
+              || (projectState.loadPoints.length > 0 && loadPointGroups.groups.length === 0)}
+            onApplyPileConfiguration={applyGroupedPileConfiguration}
+            taskPanel={rightTaskPanel}
+            onCloseTaskPanel={() => setRightTaskPanel(null)}
+            hasPersonalCostDefault={userSettings.defaults.pileCostCatalog !== null}
+            onSaveCostDefault={(pileCostCatalog) => commitUserSettings(patchPileCostDefaults(userSettings, pileCostCatalog))}
+            onRemoveCostDefault={() => commitUserSettings(patchPileCostDefaults(userSettings, null))}
+            onLoadCostDefault={() => {
+              const catalog = userSettings.defaults.pileCostCatalog;
+              if (!catalog) return;
+              const usedPileSizes = new Set(projectState.bearingCapacities.map((capacity) => capacity.pile_size_mm));
+              handleProjectStateChange({
+                ...projectState,
+                pileCostSettings: applyPileCostCatalogDefault(
+                  projectState.pileCostSettings,
+                  catalog,
+                  usedPileSizes,
+                ).catalog,
+              });
+            }}
+            onLoadBuiltInCosts={() => {
+              const usedPileSizes = new Set(projectState.bearingCapacities.map((capacity) => capacity.pile_size_mm));
+              handleProjectStateChange({
+                ...projectState,
+                pileCostSettings: applyPileCostCatalogDefault(
+                  projectState.pileCostSettings,
+                  BUILT_IN_PILE_COST_DEFAULTS,
+                  usedPileSizes,
+                ).catalog,
+              });
+            }}
+          />}
+        </div>
+        <StatusBar
+          zoomPercent={projectState.viewport.scale * 100}
+          message={statusMessage}
+        />
+      </div>
+      <Backstage
+        open={backstageOpen}
+        onClose={() => {
+          setBackstageOpen(false);
+          setInitialImportSource(null);
+        }}
+        initialImportSource={initialImportSource}
+        onOpenSettings={() => setSettingsOpen(true)}
+        commands={projectFileCommands}
+        loadPoints={projectState.loadPoints}
+        cpts={projectState.cpts}
+        availablePileConfigurations={availablePileConfigurations}
+          activePilePlanName={activePilePlanName}
+          defaultCurrencyCode={userSettings.preferences.defaultCurrencyCode}
+        onImportPilePlan={importPilePlan}
+        onImportProject={async (mode, projectName: string | null, sources: ImportSourceInput[], properties: ProjectImportProperties | null) => {
+          if (mode === "refresh") {
+            const refreshed = await refreshProjectFromFilesCore({
+              currentProject: requireValidProjectDocument(
+                await readProjectDocumentCore(
+                  await writeProjectDocumentCore(projectDraftFromState(projectState)),
+                ),
+              ).project,
+              sources,
+            });
+            const refreshedProject = refreshed.project;
+            defaultSelectionKeepsDirtyRef.current = true;
+            commitProjectState(createInitialProjectState(refreshedProject, {
+              initializeDefaultPiles: true,
+            }, refreshed.keys));
+            setIsDirty(true);
+            return getImportSummary(refreshedProject);
+          }
+
+          if (!await confirmProjectReplacement()) return null;
+            const imported = await importProjectFromFilesCore({
+              projectName: projectName ?? projectState.name,
+              pileHeadLevelM: properties?.pileHeadLevelM ?? 0,
+              currencyCode: properties?.currencyCode ?? userSettings.preferences.defaultCurrencyCode,
+              sources,
+            });
+            const project = imported.project;
+            const usedPileSizes = new Set(project.inputs.bearing_capacities.map((capacity) => capacity.pile_size_mm));
+            const mergedCosts = mergePileCostCatalog(
+              project.settings.pile_costs,
+              userSettings.defaults.pileCostCatalog,
+              BUILT_IN_PILE_COST_DEFAULTS,
+              usedPileSizes,
+            ).catalog;
+            const withCosts = {
+              ...project,
+              settings: { ...project.settings, pile_costs: mergedCosts },
+            };
+          defaultSelectionKeepsDirtyRef.current = false;
+          replaceProjectState(createInitialProjectState(withCosts, {
+            initializeDefaultPiles: true,
+            defaultPilePlanName: pilePlanLanguage() === "nl" ? "Basisplan" : "Base plan",
+          }, imported.keys));
+          setProjectPath(null);
+          updateSavedProjectSignature("");
+          setIsDirty(true);
+          return getImportSummary(project);
+        }}
+        onOpenProjectFile={async (file: File) => {
+          if (!await confirmProjectReplacement()) return;
+          try {
+            const project = await prepareOpenedProject(
+              await file.text(),
+              { initializeDefaultPiles: false },
+              {
+                readProjectDocument: readProjectDocumentCore,
+              },
+            );
+            installOpenedProject(project, null);
+          } catch (error) {
+            showActionNotice(describeProjectOpenError(error, t), "error");
+          }
+        }}
+        onOpenSampleProject={openSampleProject}
+        onOpenFile={(path) => void openDesktopProjectPath(path)}
+        onChooseDesktopProject={chooseDesktopProject}
+        onDownloadProject={async () => { await downloadProject(); }}
+        onExportPilePlanXlsx={() => exportPilePlan("xlsx")}
+        onExportPilePlanCsv={() => exportPilePlan("csv")}
+        onSaveProject={async () => { await saveProject(); }}
+        onSaveProjectAs={async () => { await saveProjectAs(); }}
+      />
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        canvasBackground={userSettings.preferences.canvasBackground}
+        theme={userSettings.preferences.theme}
+        language={userSettings.preferences.language}
+        defaultCurrencyCode={userSettings.preferences.defaultCurrencyCode}
+        onPreferencesChange={(preferences) => commitUserSettings(patchUserSettings(userSettings, preferences))}
+        isDesktop={isDesktop}
+        interfaceScalePercent={interfaceScalePercent}
+        onInterfaceScalePreview={(scale) => { void applyDesktopInterfaceScale(scale); }}
+        mcpStatus={mcpStatus}
+        mcpConnection={mcpConnection}
+        mcpError={mcpError}
+        onMcpToggle={(enabled) => { void setMcpEnabled(enabled); }}
+        mcpWriteEnabled={mcpWriteEnabled}
+        onMcpWriteToggle={(enabled) => {
+          mcpWriteEnabledRef.current = enabled;
+          setMcpWriteEnabled(enabled);
+        }}
+      />
+        <ProjectInformationDialog
+          open={projectInformationOpen}
+          projectName={projectState.name}
+          pileHeadLevelM={projectState.pileHeadLevelM}
+          currencyCode={projectState.currencyCode}
+          onClose={() => setProjectInformationOpen(false)}
+          onSave={({ projectName, pileHeadLevelM, currencyCode }) => applyValidatedProjectEdit((state) =>
+            prepareProjectDocumentEdit(state, {
+              kind: "project_properties", name: projectName,
+              pile_head_level_m: pileHeadLevelM, currency_code: currencyCode,
+            }))}
+        />
+      <UnsavedChangesDialog
+        open={unsavedChangesOpen}
+        isDesktop={isDesktop}
+        onCancel={() => resolveProjectReplacement(false)}
+        onDiscard={() => resolveProjectReplacement(true)}
+        onSave={() => void (isDesktop ? saveProject() : downloadProject()).then((saved) => {
+          if (saved) resolveProjectReplacement(true);
+        })}
+      />
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+    </>
+  );
+
+  function beginExplorerResize(event: ReactPointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const startWidth = explorerWidthRef.current;
+    const layoutScale = appContentRef.current ? elementLayoutScale(appContentRef.current) : 1;
+    const startX = screenToLocal(event.clientX, layoutScale);
+    let currentWidth = startWidth;
+    document.body.classList.add("is-resizing-panel");
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      currentWidth = Math.max(0, startWidth + screenToLocal(moveEvent.clientX, layoutScale) - startX);
+      appContentRef.current?.style.setProperty("--explorer-width", `${currentWidth}px`);
+      dispatchViewerLayoutChange();
+    };
+    const handlePointerUp = () => {
+      const snapped = snapExplorerWidth(currentWidth);
+      explorerWidthRef.current = snapped.width;
+      appContentRef.current?.style.setProperty("--explorer-width", `${snapped.width}px`);
+      dispatchViewerLayoutChange();
+      updateWorkspaceLayout({ explorerVisible: snapped.visible, explorerWidth: snapped.width });
+      document.body.classList.remove("is-resizing-panel");
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+  }
+
+  function beginRightPanelResize(event: ReactPointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const startWidth = rightPanelWidthRef.current;
+    const layoutScale = appContentRef.current ? elementLayoutScale(appContentRef.current) : 1;
+    const startX = screenToLocal(event.clientX, layoutScale);
+    let currentWidth = startWidth;
+    document.body.classList.add("is-resizing-panel");
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      currentWidth = Math.max(0, startWidth + startX - screenToLocal(moveEvent.clientX, layoutScale));
+      appContentRef.current?.style.setProperty("--right-panel-width", `${currentWidth}px`);
+      dispatchViewerLayoutChange();
+    };
+    const handlePointerUp = () => {
+      const snapped = snapRightPanelWidth(currentWidth);
+      rightPanelWidthRef.current = snapped.width;
+      appContentRef.current?.style.setProperty("--right-panel-width", `${snapped.width}px`);
+      dispatchViewerLayoutChange();
+      updateWorkspaceLayout({ propertiesVisible: snapped.visible, propertiesWidth: snapped.width });
+      document.body.classList.remove("is-resizing-panel");
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+  }
+}
+
+function dispatchViewerLayoutChange() {
+  window.dispatchEvent(new Event(VIEWER_LAYOUT_CHANGE_EVENT));
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (
+    target.matches("input:not([type='range']), textarea, select") || target.isContentEditable
+  );
+}
+

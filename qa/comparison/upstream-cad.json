@@ -1,0 +1,90 @@
+{
+  "checkedAt": "2026-10-04T11:19:17.288Z",
+  "status": 200,
+  "releases": [
+    {
+      "tag": "v2026.39",
+      "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/tag/v2026.39",
+      "prerelease": false,
+      "publishedAt": "2026-09-27T16:42:40Z",
+      "assets": [
+        {
+          "name": "OpenCADStudio-v2026.39-linux-x86_64.AppImage",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.39/OpenCADStudio-v2026.39-linux-x86_64.AppImage"
+        },
+        {
+          "name": "OpenCADStudio-v2026.39-linux-x86_64.snap",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.39/OpenCADStudio-v2026.39-linux-x86_64.snap"
+        },
+        {
+          "name": "OpenCADStudio-v2026.39-macos-arm64.dmg",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.39/OpenCADStudio-v2026.39-macos-arm64.dmg"
+        },
+        {
+          "name": "OpenCADStudio-v2026.39-windows-x86_64-installer.msi",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.39/OpenCADStudio-v2026.39-windows-x86_64-installer.msi"
+        },
+        {
+          "name": "OpenCADStudio-v2026.39-windows-x86_64-portable.exe",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.39/OpenCADStudio-v2026.39-windows-x86_64-portable.exe"
+        }
+      ]
+    },
+    {
+      "tag": "v2026.38",
+      "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/tag/v2026.38",
+      "prerelease": false,
+      "publishedAt": "2026-09-20T15:45:34Z",
+      "assets": [
+        {
+          "name": "OpenCADStudio-v2026.38-linux-x86_64.AppImage",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.38/OpenCADStudio-v2026.38-linux-x86_64.AppImage"
+        },
+        {
+          "name": "OpenCADStudio-v2026.38-linux-x86_64.snap",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.38/OpenCADStudio-v2026.38-linux-x86_64.snap"
+        },
+        {
+          "name": "OpenCADStudio-v2026.38-macos-arm64.dmg",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.38/OpenCADStudio-v2026.38-macos-arm64.dmg"
+        },
+        {
+          "name": "OpenCADStudio-v2026.38-windows-x86_64-installer.msi",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.38/OpenCADStudio-v2026.38-windows-x86_64-installer.msi"
+        },
+        {
+          "name": "OpenCADStudio-v2026.38-windows-x86_64-portable.exe",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.38/OpenCADStudio-v2026.38-windows-x86_64-portable.exe"
+        }
+      ]
+    },
+    {
+      "tag": "v2026.37",
+      "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/tag/v2026.37",
+      "prerelease": false,
+      "publishedAt": "2026-09-13T15:55:02Z",
+      "assets": [
+        {
+          "name": "OpenCADStudio-v2026.37-linux-x86_64.AppImage",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.37/OpenCADStudio-v2026.37-linux-x86_64.AppImage"
+        },
+        {
+          "name": "OpenCADStudio-v2026.37-linux-x86_64.snap",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.37/OpenCADStudio-v2026.37-linux-x86_64.snap"
+        },
+        {
+          "name": "OpenCADStudio-v2026.37-macos-arm64.dmg",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.37/OpenCADStudio-v2026.37-macos-arm64.dmg"
+        },
+        {
+          "name": "OpenCADStudio-v2026.37-windows-x86_64-installer.msi",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.37/OpenCADStudio-v2026.37-windows-x86_64-installer.msi"
+        },
+        {
+          "name": "OpenCADStudio-v2026.37-windows-x86_64-portable.exe",
+          "url": "https://github.com/HakanSeven12/OpenCADStudio/releases/download/v2026.37/OpenCADStudio-v2026.37-windows-x86_64-portable.exe"
+        }
+      ]
+    }
+  ]
+}

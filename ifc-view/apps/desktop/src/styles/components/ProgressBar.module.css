@@ -1,0 +1,38 @@
+.progressSection {
+    margin-bottom: 14px;
+}
+
+.progressBar {
+    height: 7px;
+    background: var(--command-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.progressBar:hover {
+    border-color: var(--border-strong);
+    background: var(--command-hover);
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    width: 0%;
+    transition: width 0.3s ease-out;
+    border-radius: 4px;
+}
+
+.progressStats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.progressStats span {
+    font-family: 'JetBrains Mono', monospace;
+}

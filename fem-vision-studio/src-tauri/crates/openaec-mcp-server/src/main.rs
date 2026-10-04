@@ -1,0 +1,732 @@
+//! openaec-mcp-server — Model Context Protocol server exposing the
+//! OpenAEC check engines (EN 1993 steel, EN 1992 concrete, EN 1995 timber and
+//! cross-laminated timber) and the 2D FEM solver over stdio (JSON-RPC 2.0).
+//!
+//! Speaks newline-delimited JSON-RPC on stdin/stdout. stderr is reserved
+//! for human-readable tracing (so it never collides with protocol traffic).
+//!
+//! Implements the minimal subset of MCP needed for tool calls from
+//! Claude Desktop / Claude Code: `initialize`, `notifications/initialized`,
+//! `tools/list`, `tools/call`. Protocol version: 2025-06-18.
+//!
+//! Heavy work (PDF generation, steel checks) runs on
+//! `tokio::task::spawn_blocking` so the stdio reader never stalls.
+
+// De toolschema's zijn één grote `json!`-boom; met de velden `staafeinden` en
+// `staaf_notities` (september 2026) liep die tegen de standaardgrens van 128
+// macro-expansies aan.
+#![recursion_limit = "512"]
+
+use base64::Engine as _;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Map, Value};
+use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::sync::Mutex;
+
+/// De vijf FEM-tools. Ze rekenen niet hier maar in de Node-sidecar, op
+/// letterlijk dezelfde solver als de app. Zie `fem_tools.rs`.
+mod fem_tools;
+
+/// De acht betontools (NEN-EN 1992-1-1). Ze roepen dezelfde `concrete_check`
+/// aan als het Tauri-command en de toetsbrug — de derde weg naar één
+/// rekengang. Zie `concrete_tools.rs`.
+mod concrete_tools;
+
+/// De GUI-tools: bedienen de DRAAIENDE desktop-app over haar bedieningskanaal
+/// (`OPENAEC_GUI_CONTROL=1`). Geen rekenkern-opdrachten en dus buiten de
+/// drie-wegen-regel — zij zíjn de weg naar de GUI. Zie `gui_tools.rs`.
+mod gui_tools;
+
+/// De vier houttools (NEN-EN 1995-1-1), hout en kruislaaghout. Ze roepen
+/// dezelfde `timber_check` aan als het Tauri-command en de toetsbrug. Deze weg
+/// ontbrak, terwijl `generate_steel_report_pdf` hieronder wél
+/// `timber_check_results` accepteert — de rapportweg beloofde dus hout dat
+/// langs deze weg niet te maken was. Zie `timber_tools.rs`.
+mod timber_tools;
+
+/// De plaattoets (wandschijven, belast in het vlak): `check_plates`. Roept
+/// dezelfde `plaat_check::check_all_plates` aan als het Tauri-command en de
+/// toetsbrug. Zie `plate_tools.rs`.
+mod plate_tools;
+#[cfg(test)]
+mod report_tests;
+
+const PROTOCOL_VERSION: &str = "2025-06-18";
+const SERVER_NAME: &str = "openaec-fem";
+const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+// ── JSON-RPC types ───────────────────────────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+struct Request {
+    jsonrpc: String,
+    #[serde(default)]
+    id: Option<Value>,
+    method: String,
+    #[serde(default)]
+    params: Option<Value>,
+}
+
+#[derive(Debug, Serialize)]
+struct Response {
+    jsonrpc: &'static str,
+    id: Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    result: Option<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<RpcError>,
+}
+
+#[derive(Debug, Serialize)]
+struct RpcError {
+    code: i32,
+    message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    data: Option<Value>,
+}
+
+impl RpcError {
+    fn invalid_params(msg: impl Into<String>) -> Self {
+        Self { code: -32602, message: msg.into(), data: None }
+    }
+    fn tool_exec(msg: impl Into<String>) -> Self {
+        Self { code: -32000, message: msg.into(), data: None }
+    }
+    fn method_not_found(method: &str) -> Self {
+        Self { code: -32601, message: format!("Method not found: {method}"), data: None }
+    }
+
+    /// De fout als machineleesbaar object, voor `structuredContent` op het
+    /// toolfoutpad.
+    ///
+    /// Waarom dit bestaat: `tools/call` geeft een toolfout per MCP-spec terug
+    /// als een *geslaagd* resultaat met `isError: true`, zodat het model de fout
+    /// kan lezen. Daarbij verdampten tot nu toe de foutcode en `data`, en bleef
+    /// er alleen een tekstregel over. Voor een client leest "Node ontbreekt" dan
+    /// identiek aan "je raamwerk is een mechanisme" — de eerste is een
+    /// installatieprobleem, de tweede een constructieve bevinding. Bij
+    /// rekensoftware mag een ontbrekende runtime nooit op een rekenfout lijken,
+    /// dus gaan code, melding, remedie en detail hier mee terug.
+    ///
+    /// `data` is de bron zodra die er is: de FEM-tools vullen hem al met
+    /// `error_code`, `melding`, `remedie` en `detail`. Ontbreekt hij, dan wordt
+    /// er een code afgeleid uit de JSON-RPC-code, zodat een client ALTIJD iets
+    /// machineleesbaars krijgt en nooit op de meldingstekst hoeft te matchen.
+    fn gestructureerde_fout(&self) -> Value {
+        let mut velden = match &self.data {
+            Some(Value::Object(map)) => map.clone(),
+            // Een niet-object `data` (geen enkele tool doet dit vandaag) gaat
+            // ongewijzigd mee als detail in plaats van verloren te gaan.
+            Some(anders) => {
+                let mut m = Map::new();
+                m.insert("detail".to_owned(), anders.clone());
+                m
+            }
+            None => Map::new(),
+        };
+        velden
+            .entry("error_code")
+            .or_insert_with(|| json!(afgeleide_foutcode(self.code)));
+        velden
+            .entry("melding")
+            .or_insert_with(|| json!(self.message));
+        // De sleutel staat er altijd, desnoods op `null`: dan is zichtbaar dat
+        // er geen remedie bekend is, in plaats van dat het veld ontbreekt en de
+        // client moet raden of hij iets mist.
+        velden.entry("remedie").or_insert(Value::Null);
+        Value::Object(velden)
+    }
+}
+
+/// JSON-RPC-code → machineleesbare foutcode, als terugval voor tools die er zelf
+/// nog geen meegeven (de vijf staaltools).
+///
+/// Bewust grof en kort: dit is een terugvalwaarde, geen tweede codelijst naast
+/// die van de sidecar. `ARGUMENT_ONGELDIG` is dezelfde code die `fem_tools`
+/// gebruikt voor een ondeugdelijke aanroep, zodat een client één begrip heeft
+/// voor "jouw aanroep deugde niet".
+fn afgeleide_foutcode(code: i32) -> &'static str {
+    match code {
+        -32602 => "ARGUMENT_ONGELDIG",
+        -32601 => "TOOL_ONBEKEND",
+        _ => "TOOL_MISLUKT",
+    }
+}
+
+fn ok(id: Value, result: Value) -> Response {
+    Response { jsonrpc: "2.0", id, result: Some(result), error: None }
+}
+fn err(id: Value, error: RpcError) -> Response {
+    Response { jsonrpc: "2.0", id, result: None, error: Some(error) }
+}
+
+// ── Tool registry ────────────────────────────────────────────────────────────
+
+/// Schema van `forces_envelope` (`Vec<ForcePoint>`).
+///
+/// Geen `additionalProperties: false` op de punten zelf: `ForcePoint` en
+/// `InternalForces` kennen geen `#[serde(default)]`, dus daar levert een
+/// tikfout altijd al een "missing field"-fout op. Het schema belooft hier dus
+/// niet strenger te zijn dan de server werkelijk is.
+///
+/// Wordt gedeeld met `concrete_tools`: `ConcreteBeamCheckInput` draagt dezelfde
+/// `Vec<ForcePoint>` als `BeamCheckInput`, dus één schema en geen tweede
+/// beschrijving die kan afwijken.
+fn schema_krachtenomhullende() -> Value {
+    json!({
+        "type": "array",
+        "description": "Omhullende van de snedekrachten: per combinatie en per station een punt. Eenheden kN en kNm; N positief = trek.",
+        "items": {
+            "type": "object",
+            "required": ["combination_id", "position_mm", "forces"],
+            "properties": {
+                "combination_id": { "type": "integer", "minimum": 0 },
+                "position_mm": { "type": "number", "description": "Afstand vanaf het staafbegin in mm." },
+                "forces": {
+                    "type": "object",
+                    "required": ["n_ed", "vy_ed", "vz_ed", "mt_ed", "my_ed", "mz_ed"],
+                    "properties": {
+                        "n_ed":  { "type": "number", "description": "Normaalkracht kN, positief = trek." },
+                        "vy_ed": { "type": "number", "description": "Dwarskracht kN." },
+                        "vz_ed": { "type": "number", "description": "Dwarskracht kN." },
+                        "mt_ed": { "type": "number", "description": "Wringend moment kNm." },
+                        "my_ed": { "type": "number", "description": "Buigend moment kNm." },
+                        "mz_ed": { "type": "number", "description": "Buigend moment kNm." }
+                    }
+                }
+            }
+        }
+    })
+}
+
+/// Schema van `custom_section` (D4.3, inline opgegeven doorsnede).
+///
+/// Alle geneste objecten staan op `additionalProperties: false`, gelijk aan
+/// `#[serde(deny_unknown_fields)]` op `CustomSection`, `CustomLamella`,
+/// `CustomGeslotenCel` en `CustomPunt`. Uitzondering: `eigenschappen`
+/// (`SectionProperties`) blijft los — dat type staat in een andere crate en
+/// is hier niet aangepast.
+fn schema_custom_section() -> Value {
+    json!({
+        "type": ["object", "null"],
+        "additionalProperties": false,
+        "description": "Inline opgegeven doorsnede. Gevuld = de profielendatabase wordt niet geraadpleegd. Weglaten of null = het gewone pad via 'profile_name'.",
+        "required": ["naam"],
+        "properties": {
+            "naam": { "type": "string", "description": "Naam zoals hij in het rapport verschijnt." },
+            "lamellen": {
+                "type": "array",
+                "description": "Rechthoekige platen waaruit de doorsnede is opgebouwd.",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["b_mm", "t_mm", "y_mm", "z_mm"],
+                    "properties": {
+                        "b_mm": { "type": "number", "description": "Lengte in de lengterichting van de plaat." },
+                        "t_mm": { "type": "number", "description": "Dikte loodrecht daarop." },
+                        "y_mm": { "type": "number" },
+                        "z_mm": { "type": "number" },
+                        "alpha_rad": { "type": "number", "default": 0,
+                            "description": "Hoek van de lengterichting met de y-as; 0 = liggend, pi/2 = staand." }
+                    }
+                }
+            },
+            "gesloten_cellen": {
+                "type": "array",
+                "description": "Expliciet gedeclareerde gesloten cellen voor de Bredt-torsie. Ontbreken ze terwijl de lamellen wel een cel sluiten, dan wordt I_t met de open formule bepaald en verschijnt daarover een melding.",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["midlijn", "dikte_mm", "lamellen"],
+                    "properties": {
+                        "midlijn": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": ["y_mm", "z_mm"],
+                                "properties": {
+                                    "y_mm": { "type": "number" },
+                                    "z_mm": { "type": "number" }
+                                }
+                            }
+                        },
+                        "dikte_mm": { "type": "array", "items": { "type": "number" } },
+                        "lamellen": { "type": "array", "items": { "type": "integer", "minimum": 0 } }
+                    }
+                }
+            },
+            "eigenschappen": {
+                "type": ["object", "null"],
+                "description": "Kant-en-klare doorsnede-eigenschappen (SectionProperties); alleen gebruikt als 'lamellen' leeg is."
+            },
+            "vorm": {
+                "type": "string",
+                "enum": ["Onbekend", "GelasteIDubbelsymmetrisch", "GelasteIMonosymmetrisch", "Koker", "RondeBuis"],
+                "default": "Onbekend",
+                "description": "Vormaanduiding; alleen gebruikt als 'lamellen' leeg is. 'Onbekend' leidt tot weigering van de toetsing."
+            }
+        }
+    })
+}
+
+/// Levert de payload van `tools/list`.
+///
+/// `check_steel_beam` heeft een **volledig en strikt** schema: elk veld dat de
+/// Rust-kant kent staat erin, en `additionalProperties` staat op `false`. Dat
+/// spiegelt `#[serde(deny_unknown_fields)]` op `BeamCheckInput`, zodat een
+/// tikfout in een veldnaam een fout oplevert in plaats van een stille
+/// terugval op de standaardwaarde. Dat verschil is niet cosmetisch: de vijf
+/// `#[serde(default)]`-velden (onder andere `q_equiv_n_per_mm` en `z_a_mm`)
+/// maken de kiptoets **gunstiger** als ze op nul vallen — onveilig aan de
+/// verkeerde kant.
+///
+/// `generate_steel_report_pdf` staat nog wél op `additionalProperties: true`;
+/// dat is een rapportage-invoer zonder rekengevolg.
+///
+/// De vijf FEM-tools uit `fem_tools` staan er ALTIJD bij, ook wanneer er geen
+/// Node-runtime is. Verbergen zou de storing ondiagnosticeerbaar maken: de
+/// client meldt dan dat de functie niet bestaat, terwijl de gebruiker weet dat
+/// hij hem geïnstalleerd heeft. In plaats daarvan komt er bij de aanroep een
+/// Nederlandse melding met foutcode en remedie, en blijft `fem_solver_status`
+/// het eerste dat je vraagt.
+///
+/// De acht betontools uit `concrete_tools` volgen. Ze hebben, net als
+/// `check_steel_beam`, een volledig en strikt schema: `ConcreteBeamCheckInput`
+/// en `MnKappaRequest` staan op `#[serde(deny_unknown_fields)]`.
+///
+/// De vier houttools uit `timber_tools` sluiten de rij. Hún staafschema's
+/// noemen ook elk veld, maar houden `additionalProperties` op `true`:
+/// `TimberBeamCheckInput` en `CltBeamCheckInput` kennen géén
+/// `deny_unknown_fields`, en een schema dat strenger belooft dan de server is
+/// verplaatst de fout naar de client. De reden staat in `timber_tools.rs`.
+
+/// Het schema van het veld `bijlage` — de nationale bijlage waarmee getoetst
+/// wordt.
+///
+/// Eén functie voor alle gereedschappen die een nationaal bepaalde parameter
+/// gebruiken. De `enum` komt uit `nationale_bijlage::BIJLAGEN_GEVULD`, zodat
+/// het schema niet kan beweren dat een bijlage bestaat die geen rekenwaarden
+/// heeft — en zodat er bij een tweede rij niets met de hand hoeft te worden
+/// bijgewerkt.
+fn schema_bijlage() -> Value {
+    json!({
+        "type": "string",
+        "enum": nationale_bijlage::BIJLAGEN_GEVULD,
+        "default": "NL",
+        "description": "Nationale bijlage waarmee getoetst wordt. Zij bepaalt de nationaal bepaalde parameters (partiële factoren, doorbuigingsgrenzen, k_cr, dekkingseisen, de kipmethode). Alleen de bijlagen in deze lijst hebben rekenwaarden; een andere waarde wordt GEWEIGERD met reden en er wordt nooit stil op een andere bijlage teruggevallen. Weglaten = de enige gevulde bijlage."
+    })
+}
+
+fn tool_definitions() -> Value {
+    let mut tools = json!([
+        {
+            "name": "list_steel_profiles",
+            "description": "List all steel cross-section profiles in the OpenAEC database (HEA, HEB, IPE, HEM, UNP, RHS, SHS, CHS). Each profile includes geometry, section properties, and EN 1993-1-1 buckling curves.",
+            "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        {
+            "name": "list_steel_grades",
+            "description": "List supported EN 10025 structural-steel grades (S235, S275, S355, S420, S460) with yield strength, ultimate strength and partial factors gamma_M0/M1/M2.",
+            "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+        },
+        {
+            "name": "check_steel_beam",
+            "description": "Run the full EN 1993-1-1 steel check (cross-section resistance §6.2, member stability §6.3, deflection SLS) on a single beam. Input is a BeamCheckInput (profile name, grade, length, force envelope, lateral bracing, etc.). Returns BeamCheckResult with full derivation trace.",
+            "inputSchema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "bijlage": schema_bijlage(),
+                    "beam_id": { "type": "integer", "minimum": 0,
+                        "description": "Staafnummer; komt onveranderd terug in het resultaat." },
+                    "profile_name": { "type": "string",
+                        "description": "Profielnaam uit de catalogus, bijvoorbeeld 'HEA200' of 'IPE300'. Wordt genegeerd als 'custom_section' is ingevuld." },
+                    "steel_grade": { "type": "string", "enum": ["S235", "S275", "S355", "S420", "S460"],
+                        "description": "Staalsoort. Alleen deze vijf worden herkend; een andere waarde valt in de kern stilzwijgend terug op S235." },
+                    "length_m": { "type": "number",
+                        "description": "Staaflengte in m." },
+                    "forces_envelope": schema_krachtenomhullende(),
+                    "lateral_bracing": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "description": "Kipsteunen als fracties van de staaflengte (0..1). Beide arrays zijn verplicht; een leeg object wordt geweigerd omdat de Rust-kant hier geen standaardwaarden kent. Geen kipsteunen = twee lege arrays.",
+                        "required": ["top_flange_positions", "bottom_flange_positions"],
+                        "properties": {
+                            "top_flange_positions":    { "type": "array", "items": { "type": "number" } },
+                            "bottom_flange_positions": { "type": "array", "items": { "type": "number" } }
+                        }
+                    },
+                    "buckling_length_y_m": { "type": "number", "default": 0,
+                        "description": "Kniklengte om de sterke y-as in m: knik IN het vlak van het model. 0 (of weglaten) = niet opgegeven; de kern houdt dan de staaflengte aan en zet in de toets 6.3.1_buckling dat die lengte een terugval is. Een negatieve of niet-eindige waarde wordt genegeerd met een kanttekening." },
+                    "buckling_length_z_m": { "type": "number", "default": 0,
+                        "description": "Kniklengte om de zwakke z-as in m: knik UIT het vlak van het model, een richting die de raamwerkberekening nooit ziet. 0 (of weglaten) = niet opgegeven; de kern leidt L_cr,z dan af uit 'lateral_bracing', maar ALLEEN op plaatsen waar een kipsteun aan de boven- EN aan de onderflens zit (binnen 1 mm): de grootste afstand tussen zulke plaatsen, de staafeinden meegeteld. Een steun aan een flens verkort L_cr,z NIET (NEN-EN 1993-1-1 6.3.5.2(2) en 6.3.1.4(5)). Zonder zulke paren geldt de staaflengte. De gebruikte waarde en haar herkomst ('opgegeven', 'uit de kipsteunen', 'staaflengte (terugval)') staan in de toets." },
+                    "deflection_limit_class": { "type": "string",
+                        "enum": ["Floor", "FloorBrittlePartitions", "Roof", "Cantilever", "Custom"],
+                        "description": "Doorbuigingsklasse. Bepaalt de noemer voor w_fin, en de NB-categorie uit NEN-EN 1990:2002/NB:2019 A1.4.3(3) voor w_add: 'Floor' = 3/1000 van l_rep (overige vloeren en daken die intensief door personen worden gebruikt), 'FloorBrittlePartitions' = l_rep/500 (vloeren die scheurgevoelige scheidingswanden dragen), 'Roof' = l_rep/250 (overige daken), 'Cantilever' = dezelfde categorie als 'Floor' maar met l_rep = tweemaal de uitkraaglengte. De noemer uit 'deflection_limit_numerator' telt alleen bij 'Custom'." },
+                    "deflection_limit_numerator": { "type": "integer",
+                        "description": "Noemer x in de eis L/x; alleen gebruikt bij klasse 'Custom', en dan voor w_fin en w_add samen. Bij 'Custom' moet x groter dan nul zijn: 0 of negatief is een invoerfout, de staaf wordt dan niet getoetst en krijgt status NotApplicable met de reden in governing_check_id. Bij de andere klassen wordt het getal niet gelezen." },
+                    "deflection_actual_max_mm": { "type": "number",
+                        "description": "Gerekende veldzakking in mm, met teken (negatief = omlaag)." },
+                    "is_cantilever": { "type": "boolean" },
+                    "consequence_class": { "type": "string", "enum": ["CC1", "CC2", "CC3"],
+                        "description": "Gevolgklasse, ALLEEN TER VERMELDING: deze toetsing past K_FI niet toe en verandert geen enkele UC. Volgens NEN-EN 1990:2002/NB:2019 zit de gevolgklasse in de partiële belastingsfactoren (tabel NB.4 voor CC2, NB.5 voor CC1 en CC3); lever dus krachten in `forces_envelope` die met die factoren zijn bepaald. `solve_fem_model` en `check_fem_model` doen dat al met hun veld `gevolgklasse`." },
+                    "pre_camber_mm": { "type": "number", "default": 0,
+                        "description": "Zeeg in mm, POSITIEF = OMHOOG (een zeeg tegen een doorhangende ligger in is positief). De kern rekent w_fin = w_z + w_zeeg met w_z negatief omlaag (NEN-EN 1990 A1.4.3(2), figuur A1.1). De zeeg telt niet mee in w_add." },
+                    "deflection_permanent_mm": { "type": "number", "default": 0,
+                        "description": "Doorbuiging onder de permanente BGT-combinatie (mm), voor w_add. 0 betekent w_add = w_fin (veilig-zijdig)." },
+                    "deflection_add_limit_numerator": { "type": "number", "default": 0, "minimum": 0,
+                        "description": "Noemer n in de grenswaarde L/n voor de bijkomende zakking w_add. 0 (of weglaten) = de NB-waarde die bij 'deflection_limit_class' hoort volgens NEN-EN 1990:2002/NB:2019 A1.4.3(3). Een negatieve of niet-eindige waarde is een invoerfout: de staaf wordt dan niet getoetst en krijgt status NotApplicable met de reden in governing_check_id. Een waarde > 0 overschrijft die klassewaarde en wordt op de STAAFLENGTE toegepast, dus zonder de verdubbeling l_rep = 2*L bij een uitkraging. Gebruik dit alleen om een externe referentie-uitwerking met een vaste noemer na te rekenen; het rapport vermeldt dan dat de noemer is opgegeven en niet uit de norm volgt." },
+                    "q_equiv_n_per_mm": { "type": "number", "default": 0,
+                        "description": "Equivalente gelijkmatig verdeelde belasting in het kipveld (N/mm), voor B* volgens NB.4.3(3). 0 = alleen eindmomenten en dat is GUNSTIGER; laat dit veld niet per ongeluk weg." },
+                    "z_a_mm": { "type": "number", "default": 0,
+                        "description": "Afstand zwaartepunt tot aangrijpingspunt van de belasting (mm). Positief = boven het zwaartepunt, destabiliserend (last op de bovenflens: z_a = h/2). 0 is GUNSTIGER dan een last op de bovenflens." },
+                    "deflection_notes": { "type": "array", "items": { "type": "string" }, "default": [],
+                        "description": "Vrije toelichtingen bij de doorbuigingstoets; ze komen letterlijk in de 'notes' van de w_fin-regel van het resultaat. Bedoeld om zichtbaar te maken vanaf welke referentielijn en over welke lengte 'deflection_actual_max_mm' is gemeten, en welke aannames daarbij zijn gedaan." },
+                    "custom_section": schema_custom_section(),
+                    "staafstand": { "type": "string", "enum": ["Liggend", "Staand"], "default": "Liggend",
+                        "description": "Hoe de staaf in het model staat; rekent nergens mee. De krachtenomhullende hoort in de referentierichting te staan: 'Liggend' (minder dan 75 graden met de horizontaal) van links naar rechts, 'Staand' van voet naar kop. Bij 'Staand' zet de kiptoets erbij dat de BOVENflens de linkerflens en de ONDERflens de rechterflens is. Weglaten = 'Liggend'." },
+                    "staafstand_notities": { "type": "array", "items": { "type": "string" }, "default": [],
+                        "description": "Kanttekeningen bij de staafstand; rekenen nergens mee en komen letterlijk in de 'notes' van de kiptoets. De bouwer van `check_fem_model` en van de app zet hier een waarschuwing bij een naar links hellende staaf dicht bij de grens van 75 graden: daar keert om aan welke fysieke zijde de BOVENflens ligt (tot 75 graden het bovenvlak, daarboven de linkerzijde = het ondervlak). Weglaten = geen kanttekening." },
+                    "staafeinden": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["begin", "eind"],
+                        "description": "Wat er aan de twee staafeinden zit, in de referentierichting (begin = x = 0). 'Gaffel' = oplegging of aansluiting: zijdelings gesteund en torsievast, de aanname van vóór dit veld. 'Vrij' = geen oplegging en geen aansluitende staaf (uitkraging, vrijstaande kolom): de kniklengte-terugval wordt 2*L en de kiptoets rekent met de vervangende ligger van tabel NB.NB.1 geval 5 (L_g = L_st = L_kip = 2*L, C1 = 1,0, C2 = 0). 'Doorlopend' = de staaf loopt zonder oplegging door in een staaf met een andere doorsnede: kip (en 6.3.3) wordt geweigerd met reden, en de kniktoets alleen uitgevoerd als beide kniklengtes zijn opgegeven. Weglaten = beide 'Gaffel'. `check_fem_model` en de app vullen dit uit het model.",
+                        "properties": {
+                            "begin": { "type": "string", "enum": ["Gaffel", "Vrij", "Doorlopend"] },
+                            "eind":  { "type": "string", "enum": ["Gaffel", "Vrij", "Doorlopend"] }
+                        }
+                    },
+                    "staaf_notities": { "type": "array", "items": { "type": "string" }, "default": [],
+                        "description": "Toelichtingen bij de staaf als geheel; rekenen nergens mee en komen letterlijk in de 'notes' van de kniktoets (6.3.1), de kiptoets (6.3.2) en de eindzakking. `check_fem_model` en de app zetten hier dat een door tussenknopen geknipte staaf als één doorgaande lijn is getoetst, over welke lengte, en welke tussenknopen niet als steun tellen. Weglaten = niets te melden." },
+                    "profile_end": { "type": "string",
+                        "description": "Profiel aan het EIND van de staaf (x = L) van een VERLOPENDE staaf; 'profile_name' is dan het profiel aan het begin (x = 0). De maten h, b, t_w en t_f verlopen lineair en de doorsnede telt over de hele staaf als GELAST I-profiel zonder afrondingsstraal (knikkromme tabel 6.2 en kipkromme tabel 6.5 voor gelaste profielen). De kern toetst elke doorsnedetoets (6.2.x) op elk rekenpunt met de plaatselijke doorsnede en rekent de stabiliteitstoetsen (6.3.x) met de kleinste doorsnede in het veld; het resultaat krijgt dan een veld 'verloop' met de zes toetsdoorsneden en het maatgevende punt. Beide profielen moeten I/H-profielen uit de catalogus zijn; een koker, buis, hoeklijn, U-profiel, een I-profiel met toelopende flenzen of een eigen doorsnede wordt geweigerd met reden. Weglaten, leeg of gelijk aan 'profile_name' = prismatisch." }
+                },
+                "required": [
+                    "beam_id", "profile_name", "steel_grade", "length_m",
+                    "forces_envelope", "lateral_bracing",
+                    "deflection_limit_class", "deflection_limit_numerator",
+                    "deflection_actual_max_mm", "is_cantilever", "consequence_class"
+                ]
+            }
+        },
+        {
+            "name": "compute_section_properties",
+            "description": "Herberekent de doorsnedegrootheden (A, Iy, Iz, Wel, Wpl, Av, It, Iw, traagheidsstralen, zwaartepunt, schuifmiddelpunt, plastische neutrale lijn) van een catalogusprofiel uit zijn genormeerde maten met de exacte doorsnedemotor van section-properties: contourintegralen voor de meetkundige grootheden, een numerieke torsieoplossing (met insluiting van It) voor It en Iw. Dezelfde motor die de catalogus vult; flenshelling van UNP en INP, walsuitrondingen en de EN 10210-hoekstralen van kokers zitten erin. Het antwoord is plat (area_mm2, iy_mm4, ...) plus diagnostiek (a_mesh_afwijking, it_onzekerheid, meldingen, tijd_ms). Voor de opgeslagen cataloguswaarden zelf: list_steel_profiles.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profile_name": { "type": "string", "description": "e.g. 'HEA200'" }
+                },
+                "required": ["profile_name"],
+                "additionalProperties": false
+            }
+        },
+        {
+            "name": "generate_steel_report_pdf",
+            "description": "Generate a complete constructive-check PDF report. Material-neutral despite the name: EN 1993-1-1 steel, EN 1995-1-1 timber and cross-laminated timber, EN 1992-1-1 concrete, plus the norm-independent stress check (von Mises against an allowable stress). The cover and the page header name only the standards actually present. Optionally include concrete_stiffness_trace to add the chapter on physically non-linear second-order analysis: the per-combination assumptions, the segment stiffness tables and the four concrete figures. Returns the PDF as base64 plus byte_count. Heavy operation — runs on a blocking task.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "bijlage": schema_bijlage(),
+                    "project_name":        { "type": "string" },
+                    "project_number":      { "type": "string" },
+                    "engineer":            { "type": "string" },
+                    "company":             { "type": "string" },
+                    "date":                { "type": "string" },
+                    "taal": { "type": "string", "enum": ["nl", "en", "de", "fr"], "default": "nl", "description": "Language in which the report writes the project date, on the cover and in the header of every page: 'nl' 16 september 2026, 'en' September 16, 2026, 'de' 16. September 2026, 'fr' 16 septembre 2026. A date that is not a calendar date YYYY-MM-DD is printed verbatim. Omit = 'nl'; any other value is REJECTED." },
+                    "steel_check_results": { "type": "array" },
+                    "timber_check_results":   { "type": "array" },
+                    "clt_check_results":      { "type": "array" },
+                    "concrete_check_results": { "type": "array" },
+                    "stress_check_results":   { "type": "array" },
+                    "plate_inputs": { "type": "array", "items": plate_tools::schema_plaat(),
+                        "description": "Original plate inputs from the same check run, including all relevant ULS and SLS combinations and element stresses. Optional; the PDF lists every supplied combination and the stresses at its governing element. Does not rerun checks." },
+                    "plate_results": { "type": "array", "items": { "type": "object" },
+                        "description": "Complete PlateCheckResult objects returned by check_plates or check_fem_model: all combination results, governing element/combination, unperformed checks and refusal reasons. Results are printed without recalculation. Empty or absent with no plate inputs/skips omits the plate chapter." },
+                    "plate_skipped": { "type": "array", "items": {
+                        "type": "object", "additionalProperties": false,
+                        "required": ["plate_id", "reden"],
+                        "properties": { "plate_id": { "type": "integer", "minimum": 0 }, "reden": { "type": "string" } }
+                    }, "description": "Plates not sent to the check kernel, with their literal reason. Printed as not checked." },
+                    "concrete_stiffness_trace": { "type": "object" },
+                    "wind_toelichting": { "type": "string", "description": "Optional text block (one line per load case) describing generated wind loads: NEN-EN 1991-1-4 paragraph and table, roof pitch alpha, blockage phi and the coefficient used. Printed verbatim under 'Uitgangspunten' → 'Windbelasting'; empty or absent = the PDF says nothing about wind." }
+                },
+                "required": [
+                    "project_name", "project_number", "engineer",
+                    "company", "date", "steel_check_results"
+                ],
+                "additionalProperties": true
+            }
+        }
+    ]);
+    let lijst = tools
+        .as_array_mut()
+        .expect("de tooldefinities zijn een array");
+    lijst.extend(fem_tools::tool_definitions());
+    lijst.extend(concrete_tools::tool_definitions());
+    lijst.extend(timber_tools::tool_definitions());
+    lijst.extend(plate_tools::tool_definitions());
+    lijst.extend(gui_tools::tool_definitions());
+    tools
+}
+
+// ── Tool dispatch ────────────────────────────────────────────────────────────
+
+async fn dispatch_tool(name: &str, args: Value) -> Result<Value, RpcError> {
+    match name {
+        "list_steel_profiles" => {
+            let profiles = tokio::task::spawn_blocking(|| {
+                steel_profiles::db().all().to_vec()
+            })
+            .await
+            .map_err(|e| RpcError::tool_exec(format!("join error: {e}")))?;
+            Ok(json!({ "profiles": profiles }))
+        }
+        "list_steel_grades" => {
+            use nen_en_1993_1_1_section::{S235, S275, S355, S420, S460};
+            let grades = vec![S235, S275, S355, S420, S460];
+            Ok(json!({ "grades": grades }))
+        }
+        "check_steel_beam" => {
+            let input: steel_check::BeamCheckInput = serde_json::from_value(args)
+                .map_err(|e| RpcError::invalid_params(format!("BeamCheckInput: {e}")))?;
+            let result = tokio::task::spawn_blocking(move || {
+                steel_check::check_beam(input)
+            })
+            .await
+            .map_err(|e| RpcError::tool_exec(format!("join error: {e}")))?;
+            serde_json::to_value(result)
+                .map_err(|e| RpcError::tool_exec(format!("serialize result: {e}")))
+        }
+        "compute_section_properties" => {
+            let profile_name = args
+                .get("profile_name")
+                .and_then(Value::as_str)
+                .ok_or_else(|| RpcError::invalid_params("missing string field 'profile_name'"))?
+                .to_owned();
+            let result = tokio::task::spawn_blocking(move || compute_section_props(&profile_name))
+                .await
+                .map_err(|e| RpcError::tool_exec(format!("join error: {e}")))??;
+            serde_json::to_value(result)
+                .map_err(|e| RpcError::tool_exec(format!("serialize result: {e}")))
+        }
+        "generate_steel_report_pdf" => {
+            let input: report::ReportInput = serde_json::from_value(args)
+                .map_err(|e| RpcError::invalid_params(format!("ReportInput: {e}")))?;
+            let bytes = tokio::task::spawn_blocking(move || {
+                report::generate_report_pdf(input)
+            })
+            .await
+            .map_err(|e| RpcError::tool_exec(format!("join error: {e}")))?;
+            let byte_count = bytes.len();
+            let pdf_b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+            Ok(json!({ "pdf_base64": pdf_b64, "byte_count": byte_count }))
+        }
+        // De FEM-tools. Ze rekenen niet hier: `fem_tools` zet het verzoek klaar
+        // voor de Node-sidecar, die dezelfde solverfuncties uitvoert als de app.
+        // `check_fem_model` roept daarna `steel_check::check_all_beams` aan —
+        // dezelfde functie die `src-tauri/src/lib.rs` voor de app aanroept.
+        fem if fem_tools::is_fem_tool(fem) => fem_tools::dispatch(fem, args).await,
+        // De betontools. Ze roepen `concrete_check` aan — dezelfde functies die
+        // `src-tauri/src/lib.rs` en `crates/toetsbrug` aanroepen. Zie
+        // `concrete_tools.rs` en `tests/drie_wegen_beton.rs`.
+        beton if concrete_tools::is_concrete_tool(beton) => {
+            concrete_tools::dispatch(beton, args).await
+        }
+        // De houttools. Ze roepen `timber_check::check_all_timber_beams` en
+        // `timber_check::clt::check_all_clt_beams` aan — dezelfde
+        // batch-instappen die `src-tauri/src/lib.rs` en `crates/toetsbrug`
+        // aanroepen, zodat geen van de drie schillen een eigen lus over de
+        // staven houdt. Zie `timber_tools.rs` en
+        // `tests/drie_wegen_kruistabel.rs`.
+        hout if timber_tools::is_timber_tool(hout) => timber_tools::dispatch(hout, args).await,
+        // De plaattoets: `plaat_check::check_all_plates`, dezelfde functie als
+        // het Tauri-command en de toetsbrug. Zie `plate_tools.rs`.
+        plaat if plate_tools::is_plate_tool(plaat) => plate_tools::dispatch(plaat, args).await,
+        // De GUI-tools: geen rekenwerk, maar opdrachten aan de draaiende app
+        // over haar bedieningskanaal. Zie `gui_tools.rs`.
+        gui if gui_tools::is_gui_tool(gui) => gui_tools::dispatch(gui, args).await,
+        other => Err(RpcError::method_not_found(other)),
+    }
+}
+
+fn compute_section_props(profile_name: &str) -> Result<section_properties::opdracht::Uitvoer, RpcError> {
+    use steel_profiles::ProfileKind;
+    // Tot september 2026 rekende dit gereedschap met oude handboekformules
+    // (basisaudit nr 34): zonder flenshelling (UNP: I_z +15 %, W_pl,z −32 %),
+    // met een grove It en Iw. Nu gaat het door `section_properties::opdracht`,
+    // dezelfde ingang als het generatiescript dat de catalogus vult, zodat
+    // het antwoord de catalogus reproduceert in plaats van tegenspreekt.
+    let profile = steel_profiles::db()
+        .find(profile_name)
+        .ok_or_else(|| RpcError::invalid_params(format!("unknown profile: {profile_name}")))?;
+    let g = &profile.geometry;
+    let schuin = g.flange_slope > 0.0;
+    let soort = match profile.kind {
+        ProfileKind::ISection if schuin => "ISectionSchuin",
+        ProfileKind::ISection => "ISection",
+        ProfileKind::Channel if schuin => "ChannelSchuin",
+        ProfileKind::Channel => "Channel",
+        ProfileKind::Rhs => "Rhs",
+        ProfileKind::Shs => "Shs",
+        ProfileKind::Chs => "Chs",
+        ProfileKind::Angle => "Angle",
+    };
+    let invoer: section_properties::opdracht::Invoer = serde_json::from_value(json!({
+        "naam": profile.name,
+        "soort": soort,
+        "h": g.h, "b": g.b, "tw": g.tw, "tf": g.tf, "t": g.t, "r": g.r, "r2": g.r2,
+    }))
+    .map_err(|e| RpcError::tool_exec(format!("doorsnedemotor-invoer: {e}")))?;
+    section_properties::opdracht::reken(&invoer)
+        .map_err(|e| RpcError::tool_exec(format!("doorsnedemotor: {e}")))
+}
+
+// ── JSON-RPC method dispatch ────────────────────────────────────────────────
+
+/// Returns `None` for notifications (no response should be written).
+async fn handle_request(req: Request) -> Option<Response> {
+    if req.jsonrpc != "2.0" {
+        if let Some(id) = req.id {
+            return Some(err(id, RpcError {
+                code: -32600,
+                message: format!("Invalid Request: jsonrpc must be '2.0', got '{}'", req.jsonrpc),
+                data: None,
+            }));
+        }
+        return None;
+    }
+
+    let id = req.id.clone();
+    let is_notification = id.is_none();
+
+    let response_payload: Result<Value, RpcError> = match req.method.as_str() {
+        "initialize" => Ok(json!({
+            "protocolVersion": PROTOCOL_VERSION,
+            "capabilities": { "tools": { "listChanged": false } },
+            "serverInfo": { "name": SERVER_NAME, "version": SERVER_VERSION }
+        })),
+        "notifications/initialized" | "initialized" => {
+            tracing::info!("client initialized");
+            return None;
+        }
+        "tools/list" => Ok(json!({ "tools": tool_definitions() })),
+        "tools/call" => {
+            let params = req.params.unwrap_or_else(|| json!({}));
+            let name = match params.get("name").and_then(Value::as_str) {
+                Some(n) => n.to_owned(),
+                None => {
+                    let resp = err(
+                        id.unwrap_or(Value::Null),
+                        RpcError::invalid_params("tools/call requires 'name' string param"),
+                    );
+                    return Some(resp);
+                }
+            };
+            let arguments = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
+            match dispatch_tool(&name, arguments).await {
+                Ok(value) => {
+                    // Per MCP spec: tool result is wrapped as { content: [{type: "text", text: <json>}], isError: false }
+                    let text = serde_json::to_string(&value)
+                        .unwrap_or_else(|e| format!("{{\"error\":\"serialize: {e}\"}}"));
+                    Ok(json!({
+                        "content": [{ "type": "text", "text": text }],
+                        "isError": false,
+                        "structuredContent": value
+                    }))
+                }
+                Err(e) => {
+                    // Tool execution errors are reported in result, not as JSON-RPC errors,
+                    // per MCP spec for tools/call (so the model can see them).
+                    //
+                    // De tekstregel is voor een mens; `structuredContent` houdt
+                    // de foutcode, de Nederlandse remedie en het detail heel.
+                    // Zonder dat is een storing in de rekenketen voor een client
+                    // niet te onderscheiden van een constructieve bevinding —
+                    // zie `RpcError::gestructureerde_fout`.
+                    Ok(json!({
+                        "content": [{ "type": "text", "text": format!("Error: {}", e.message) }],
+                        "isError": true,
+                        "structuredContent": e.gestructureerde_fout()
+                    }))
+                }
+            }
+        }
+        "ping" => Ok(json!({})),
+        other => Err(RpcError::method_not_found(other)),
+    };
+
+    if is_notification {
+        return None;
+    }
+    let id = id.unwrap_or(Value::Null);
+    Some(match response_payload {
+        Ok(v) => ok(id, v),
+        Err(e) => err(id, e),
+    })
+}
+
+// ── Stdio loop ───────────────────────────────────────────────────────────────
+
+async fn run_stdio() -> std::io::Result<()> {
+    let stdin = tokio::io::stdin();
+    let stdout = tokio::io::stdout();
+    let stdout = Arc::new(Mutex::new(stdout));
+
+    let mut reader = BufReader::new(stdin).lines();
+    while let Some(line) = reader.next_line().await? {
+        let line = line.trim().to_string();
+        if line.is_empty() { continue; }
+
+        let stdout = stdout.clone();
+        tokio::spawn(async move {
+            let resp = match serde_json::from_str::<Request>(&line) {
+                Ok(req) => handle_request(req).await,
+                Err(e) => {
+                    tracing::warn!(error = %e, raw = %line, "failed to parse request");
+                    Some(err(Value::Null, RpcError {
+                        code: -32700,
+                        message: format!("Parse error: {e}"),
+                        data: None,
+                    }))
+                }
+            };
+            if let Some(resp) = resp {
+                match serde_json::to_string(&resp) {
+                    Ok(mut s) => {
+                        s.push('\n');
+                        let mut out = stdout.lock().await;
+                        if let Err(e) = out.write_all(s.as_bytes()).await {
+                            tracing::error!(error = %e, "stdout write failed");
+                        }
+                        if let Err(e) = out.flush().await {
+                            tracing::error!(error = %e, "stdout flush failed");
+                        }
+                    }
+                    Err(e) => tracing::error!(error = %e, "failed to serialize response"),
+                }
+            }
+        });
+    }
+    Ok(())
+}
+
+#[tokio::main(flavor = "multi_thread")]
+async fn main() -> std::io::Result<()> {
+    // Tracing → stderr only. stdout is exclusively for protocol traffic.
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_env("OPENAEC_MCP_LOG")
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+
+    tracing::info!(version = SERVER_VERSION, "openaec-mcp-server starting on stdio");
+    run_stdio().await?;
+    tracing::info!("openaec-mcp-server shutting down (stdin closed)");
+    Ok(())
+}

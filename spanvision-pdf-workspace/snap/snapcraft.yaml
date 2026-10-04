@@ -1,0 +1,125 @@
+name: open-pdf-studio
+base: core24
+version: '1.16.0'
+summary: Free, open-source PDF editor for drawings and documents
+description: |
+  pdf workspace is a free, open-source PDF editor and annotator for people
+  who work with drawings and documents every day: architects, engineers,
+  contractors, and anyone who needs solid tools without a subscription.
+
+  Drawings and CAD:
+
+  - Import DWG and DXF: choose layers, model space or a layout with viewports,
+    area, scale and paper; the drawing becomes a vector PDF with the CAD layers
+    as PDF layers and a measuring scale, so measurements are right straight away
+  - Place a drawing as an underlay on an existing page, to scale, as vector or image
+  - Export a page back to DXF or DWG, with layers, at real size, and optionally
+    in the original model coordinates
+  - Measure distance, area and perimeter with scale calibration, scale regions,
+    and measuring scales read from the PDF itself
+  - Parametric symbols, walls, beams and a construction palette that stay to scale
+  - Fill in a title block and compose sheets from your own frames
+
+  Reading, checking and editing:
+
+  - 22+ annotation tools: highlight, underline, strikethrough, shapes, freehand
+    drawing, text boxes, callouts, sticky notes, stamps and images
+  - Search text and annotations, with hits listed per page
+  - Verify digital signatures: validity, certificate chain, timestamp, and whether
+    the document changed after signing
+  - Recognise text (OCR) to make scanned drawings searchable
+  - Straighten and shift the content of scanned pages
+  - Edit existing PDF text, fill forms (AcroForms and XFA), redact permanently
+  - Page management: insert, delete, extract, reorder, replace and merge
+  - Watermarks, headers and footers with variables
+  - Copy a detail from one PDF into another as vector, not as a screenshot
+  - Reader mode that reopens a document where you left off
+
+  Printing and output:
+
+  - Print dialog with live preview, paper and orientation from the document,
+    printing to scale (1:1 on the sheet), and large or extended sheets (A1, A0, A3L-A0L)
+  - "Save as PDF" writes the print as vector, with the sheet in the chosen orientation
+  - Export pages as PNG, JPEG or raster PDF, and annotations as XFDF
+
+  AI connection:
+
+  - An optional local connection (MCP) lets an AI assistant operate the app:
+    open drawings, measure, place symbols, import or export CAD, print to a file.
+    Off by default on request, local clients only, and every action is visible on screen.
+
+  Also: multi-tab editing with session restore, navigation panels for thumbnails,
+  bookmarks, annotations, attachments, signatures, layers, form fields, destinations,
+  links and tags, five themes, 39 languages, undo/redo, a built-in auto-updater,
+  and no telemetry, no data collection and no subscriptions.
+
+  Built with Tauri and web technologies for a fast, lightweight, native desktop experience.
+title: pdf workspace
+icon: snap/gui/open-pdf-studio.png
+license: LGPL-3.0-or-later
+contact: https://impertio.nl/
+issues: https://github.com/Spanvision infra-Foundation/open-pdf-studio/issues
+source-code: https://github.com/Spanvision infra-Foundation/open-pdf-studio
+website: https://impertio.nl/
+grade: stable
+confinement: strict
+
+# The single-instance plugin claims this well-known DBus name on the session
+# bus at startup. Under strict confinement AppArmor denies the bind unless the
+# snap declares a matching dbus slot ("dbus_bind" DENIED in journalctl), and a
+# failed bind is treated as "another instance is already running": the app
+# forwards its arguments and silently exits — so the snap never launched (#218).
+# The name is `<identifier>.SingleInstance` (identifier from tauri.conf.json).
+slots:
+  single-instance:
+    interface: dbus
+    bus: session
+    name: org.openaec.openpdfstudio.SingleInstance
+
+apps:
+  open-pdf-studio:
+    command: usr/bin/open-pdf-studio
+    desktop: usr/share/applications/open-pdf-studio.desktop
+    extensions: [gnome]
+    plugs:
+      - home
+      - removable-media
+      - network
+      # Printing goes through the CUPS command line (lpstat to enumerate
+      # queues, lp to spool). Under strict confinement AppArmor blocks the
+      # CUPS socket without this plug, so the printer list stays empty and
+      # printing fails — see issue #326.
+      - cups
+    slots:
+      - single-instance
+
+layout:
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
+
+parts:
+  open-pdf-studio:
+    plugin: dump
+    source: open-pdf-studio.deb
+    source-type: deb
+    stage-packages:
+      - libwebkit2gtk-4.1-0
+      - libjavascriptcoregtk-4.1-0
+      # Provides lpstat and lp; without them the snap has no way to reach
+      # CUPS at all, however the interfaces are connected.
+      - cups-client
+    override-build: |
+      craftctl default
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
+      cat > $CRAFT_PART_INSTALL/usr/share/applications/open-pdf-studio.desktop << 'EOF'
+      [Desktop Entry]
+      Name=pdf workspace
+      Comment=Free, open-source PDF annotation editor
+      Exec=open-pdf-studio %F
+      Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/open-pdf-studio.png
+      Terminal=false
+      Type=Application
+      Categories=Office;Viewer;Graphics;
+      MimeType=application/pdf;
+      StartupWMClass=open-pdf-studio
+      EOF

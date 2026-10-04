@@ -1,0 +1,771 @@
+//! Input types for steel-check orchestrator.
+
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+use mechanics::{ForcePoint, Staafstand};
+use nen_en_1990::ConsequenceClass;
+use nen_en_1993_1_1_ltb::LateralBracing;
+use section_properties::SectionProperties;
+use section_properties::composite::{CompositeSection, GeslotenCel, Lamella};
+
+/// Doorbuigingsklasse van een staaf.
+///
+/// De klasse bepaalt twee dingen: de noemer voor de eindzakking `w_fin`
+/// ([`crate::deflection::default_numerator`]) en de noemer plus de
+/// referentielengte ℓ_rep voor de bijkomende zakking `w_add`
+/// ([`crate::deflection::w_add_grens`]).
+///
+/// De indeling volgt de vier gedachtestreepjes van NEN-EN 1990:2002/NB:2019
+/// A1.4.3(3), die de grenswaarden voor w2 + w3 (= de bijkomende doorbuiging)
+/// geven. Per variant staat hieronder welk gedachtestreepje erbij hoort; de
+/// bijbehorende getallen en belastingscombinaties staan in
+/// [`crate::deflection`], want daar worden ze gebruikt.
+///
+/// Wat hier bewust GEEN variant is: het vierde gedachtestreepje
+/// (vloerafscheidingen ter plaatse van een hoogteverschil, ℓ_rep/150). Dat is
+/// geen vloer- of dakligger maar de bovenrand/bovenregel van een balustrade, en
+/// de NB geeft daar geen w_max-eis bij; een w_fin-noemer zou dus verzonnen
+/// moeten worden. Wie L/150 nodig heeft — bijvoorbeeld om een externe
+/// referentie-uitwerking na te bootsen — geeft dat op via
+/// [`BeamCheckInput::deflection_add_limit_numerator`], of via `Custom`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub enum DeflectionClass {
+    /// Overige vloeren en daken die intensief door personen worden gebruikt —
+    /// A1.4.3(3), **tweede** gedachtestreepje. Standaardkeuze van de app.
+    Floor,
+    /// Vloeren die scheurgevoelige scheidingswanden dragen — A1.4.3(3),
+    /// **eerste** gedachtestreepje. Toegevoegd omdat `Floor` deze categorie
+    /// niet kon uitdrukken: hij is met ℓ_rep/500 anderhalf keer zo streng.
+    FloorBrittlePartitions,
+    /// Overige daken — A1.4.3(3), **derde** gedachtestreepje.
+    Roof,
+    /// Uitkraging. Zegt niets over het gebruik van het vlak, alleen over de
+    /// referentielengte: ℓ_rep is tweemaal de uitkraaglengte (A1.4.3(3),
+    /// definitie van ℓ_rep). Voor de categorie zelf wordt `Floor` aangehouden;
+    /// zie [`crate::deflection::w_add_grens`].
+    Cantilever,
+    /// Noemer volledig door de aanroeper opgegeven; geen NB-categorie.
+    Custom,
+}
+
+/// Wat er aan één staafeind zit, voor zover de stabiliteitstoetsen ervan
+/// afhangen.
+///
+/// De kiptoets (NB.NB.4.3) en de terugval van de kniklengte nemen een
+/// staafeind als GAFFEL: torsie verhinderd, zijdelings gesteund. Dat is de
+/// aanname van de hele keten, en zij is verdedigbaar bij een oplegging of een
+/// aansluiting op een andere staaf. Twee soorten staafeinden zijn het NIET, en
+/// tot september 2026 werden ze wél zo behandeld (basisaudit, kipgedrag):
+///
+///  * een **vrij** eind — geen oplegging en geen aansluitende staaf: een
+///    uitkraging of een vrijstaande kolom. Een IPE 300 van 3 m als uitkraging
+///    kreeg L_st = 3000 mm (UC_kip 0,406) waar tabel NB.NB.1 geval 5 de
+///    vervangende ligger van 2·L = 6000 mm voorschrijft (UC_kip 0,720);
+///  * een **doorlopend** eind — de staaf loopt zonder oplegging in het
+///    verlengde door in een staaf met een ándere doorsnede of een ander
+///    materiaal. Delen met dezelfde doorsnede voegt de invoerbouwer al samen
+///    tot één staaf; bij een wisselende doorsnede kan dat niet, en dan kan de
+///    kern de kipvelden en de kniklengte niet per deel bepalen. Hij weigert
+///    dan met reden in plaats van het eind stil als gaffel te nemen.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub enum Staafeind {
+    /// Oplegging of aansluiting: zijdelings gesteund, torsie verhinderd.
+    Gaffel,
+    /// Geen oplegging en geen aansluitende staaf.
+    Vrij,
+    /// Loopt zonder oplegging door in een staaf met een andere doorsnede.
+    Doorlopend,
+}
+
+/// De twee staafeinden, in de referentierichting van de staaf (begin = x = 0).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct Staafeinden {
+    pub begin: Staafeind,
+    pub eind: Staafeind,
+}
+
+/// Invoer van één staaltoetsing.
+///
+/// `deny_unknown_fields`: een onbekend veld is een **fout**, geen ruis. Zeven
+/// velden hieronder hebben `#[serde(default)]`, en een tikfout in zo'n
+/// veldnaam zou anders stilzwijgend op 0 uitkomen. Bij `q_equiv_n_per_mm` en
+/// `z_a_mm` valt de kiptoets daarmee *gunstiger* uit dan hij hoort te zijn —
+/// onveilig aan de verkeerde kant, en onzichtbaar in het resultaat.
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[serde(deny_unknown_fields)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct BeamCheckInput {
+    /// De nationale bijlage waarmee getoetst wordt.
+    ///
+    /// Zij bepaalt de nationaal bepaalde parameters van deze toetsing (zie de
+    /// crate `nationale-bijlage`). Een bijlage die deze uitgave niet kent, wordt
+    /// bij het lezen van de invoer GEWEIGERD met reden; er wordt nooit stil op
+    /// de Nederlandse waarden teruggevallen.
+    ///
+    /// `#[serde(default)]` — en waarom dat hier geen stille keuze is: er is
+    /// precies één gevulde rij, dus "veld weggelaten" kan niet iets anders
+    /// betekenen dan die rij. Het houdt oude projectbestanden en oude
+    /// MCP-cliënten aan de praat. Zodra er een tweede rij gevuld is, MOET deze
+    /// regel weg; de test `zodra_er_een_tweede_bijlage_is_moet_de_serde_default_weg`
+    /// in `nationale-bijlage` valt dan om en zegt dat.
+    #[serde(default)]
+    pub bijlage: nationale_bijlage::NationaleBijlage,
+    pub beam_id: u32,
+    pub profile_name: String,
+    pub steel_grade: String,
+    pub length_m: f64,
+    pub forces_envelope: Vec<ForcePoint>,
+    pub lateral_bracing: LateralBracing,
+    /// Kniklengte om de sterke y-as, in m — knik IN het vlak van het model.
+    ///
+    /// `0` of weglaten = niet opgegeven: de kern houdt dan de staaflengte aan
+    /// en zegt dat in de afleiding ("staaflengte (terugval)"). Tot september
+    /// 2026 vulde de frontend die terugval zelf in, en kon de toets niet zien
+    /// dat het een terugval was. Een negatieve of niet-eindige waarde wordt
+    /// genegeerd mét een kanttekening; een kniklengte van nul zou χ = 1 geven.
+    ///
+    /// In het vlakke model van deze app is y altijd de sterke as in het vlak:
+    /// de oplosser rekent met I_y, en een staaf kent geen doorsnederotatie.
+    #[serde(default)]
+    pub buckling_length_y_m: f64,
+    /// Kniklengte om de zwakke z-as, in m — knik UIT het vlak van het model.
+    ///
+    /// `0` of weglaten = niet opgegeven. De kern leidt L_cr,z dan af uit
+    /// [`Self::lateral_bracing`], maar ALLEEN op plaatsen waar een kipsteun aan
+    /// de boven- én aan de onderflens zit: alleen daar wordt de doorsnede als
+    /// geheel zijdelings gehouden. Zonder zo'n paar geldt de staaflengte. Zie
+    /// `nen_en_1993_1_1_stability::kniklengte` voor de regel en de normgrond;
+    /// de gebruikte waarde en haar herkomst staan in de toets.
+    #[serde(default)]
+    pub buckling_length_z_m: f64,
+    pub deflection_limit_class: DeflectionClass,
+    /// Noemer n in de eis L/n; alleen gelezen bij klasse `Custom`.
+    ///
+    /// `i32` en niet `u32`: een negatieve noemer is een invoerfout die de kern
+    /// per staaf met reden weigert ([`crate::deflection::keur_noemers`]). Met
+    /// `u32` liep zo'n getal al vast bij het inlezen, en dan viel de hele
+    /// aanroep met alle staven weg in plaats van alleen deze staaf.
+    pub deflection_limit_numerator: i32,
+    pub deflection_actual_max_mm: f64,
+    /// Is deze staaf een uitkraging?
+    ///
+    /// Tot september 2026 werd dit veld door de kern NERGENS gelezen: alleen
+    /// [`DeflectionClass::Cantilever`] deed iets, en dan nog uitsluitend via de
+    /// w_fin-noemer 150 op de staaflengte. Nu bepaalt het samen met de klasse
+    /// de referentielengte ℓ_rep = 2·L voor de w_add-grens
+    /// ("ℓ_rep is de lengte van een overspanning of tweemaal de lengte van een
+    /// uitkraging", NEN-EN 1990:2002/NB:2019 A1.4.3(3)). Eén van beide volstaat;
+    /// de frontend zet ze allebei.
+    ///
+    /// Let op de asymmetrie met w_fin: die kant verdubbelt ℓ_rep NIET maar
+    /// gebruikt noemer 150 op de staaflengte, wat op ℓ_rep/300 neerkomt.
+    /// Strenger dan de ℓ_rep/250 uit A1.4.3(4), dus veilig — maar het is een
+    /// andere manier om hetzelfde uit te drukken, en dat staat als notitie in
+    /// het rapport.
+    pub is_cantilever: bool,
+    /// Gevolgklasse van het project — in deze kern ALLEEN ter vermelding.
+    /// NEN-EN 1990:2002/NB:2019 verwerkt K_FI in de partiële belastingsfactoren
+    /// zelf (tabel NB.4 voor CC2, NB.5 voor CC1 en CC3); de krachten in
+    /// `forces_envelope` dragen die factoren al. De kern vermenigvuldigt dus
+    /// niets met K_FI, want dan telde de klasse dubbel.
+    pub consequence_class: ConsequenceClass,
+    /// Zeeg (pre-camber) in mm, POSITIEF = OMHOOG: een zeeg die tegen een
+    /// doorhangende ligger in werkt is een positief getal. De zakking zelf
+    /// ([`Self::deflection_actual_max_mm`]) is negatief omlaag, dus de
+    /// eindzakking is w_fin = w_z + w_zeeg; zie
+    /// [`crate::deflection::w_fin_mm`] voor de grond in NEN-EN 1990 figuur A1.1.
+    #[serde(default)]
+    pub pre_camber_mm: f64,
+    /// Doorbuiging onder de permanente BGT-combinatie (mm), voor w_add.
+    #[serde(default)]
+    pub deflection_permanent_mm: f64,
+    /// Noemer n in de grenswaarde L/n voor de **bijkomende** zakking w_add.
+    ///
+    /// `0` of afwezig = de waarde die bij [`Self::deflection_limit_class`]
+    /// hoort volgens NEN-EN 1990:2002/NB:2019 A1.4.3(3); zie
+    /// [`crate::deflection::w_add_grens`]. Een waarde > 0 overschrijft die
+    /// klassewaarde en wordt op de **staaflengte** toegepast (dus zonder de
+    /// verdubbeling ℓ_rep = 2·L bij een uitkraging) — precies zoals een
+    /// externe referentie-uitwerking met een vaste noemer rekent. Het rapport
+    /// vermeldt dan dat de noemer is opgegeven en niet uit de norm volgt.
+    ///
+    /// `f64` en niet `u32`, omdat de NB-waarde 3/1000 een noemer van 333⅓
+    /// oplevert; met een geheel getal was die niet exact op te geven.
+    #[serde(default)]
+    pub deflection_add_limit_numerator: f64,
+    /// Vrije toelichtingen bij de doorbuigingstoets, die letterlijk in de
+    /// `notes` van de w_fin-regel van het rapport belanden.
+    ///
+    /// Waarom dit bestaat: [`Self::deflection_actual_max_mm`] is een kaal
+    /// getal. Waar het vandaan komt — vanaf welke referentielijn het is
+    /// gemeten, over welke lengte, en of de aanroeper daarbij iets heeft moeten
+    /// aannemen — weet alleen de bouwer die de invoer samenstelt. Zonder dit
+    /// kanaal zou zo'n aanname onzichtbaar zijn in het rapport.
+    #[serde(default)]
+    pub deflection_notes: Vec<String>,
+    /// Equivalente gelijkmatig verdeelde belasting in het kipveld (N/mm),
+    /// voor B* volgens NB.NB.4.3(3). 0 = alleen eindmomenten.
+    #[serde(default)]
+    pub q_equiv_n_per_mm: f64,
+    /// Afstand zwaartepunt → aangrijpingspunt van de belasting (mm).
+    /// Positief = boven het zwaartepunt (destabiliserend, bijvoorbeeld een
+    /// belasting op de bovenflens: z_a ≈ h/2).
+    #[serde(default)]
+    pub z_a_mm: f64,
+    /// Inline opgegeven doorsnede (D4.3). Is dit veld gevuld, dan wordt de
+    /// profielendatabase **niet** geraadpleegd en rekent de toetsing op deze
+    /// doorsnede. `None` (of ontbrekend in de JSON) = het bestaande pad via
+    /// [`BeamCheckInput::profile_name`], bit-identiek aan voorheen.
+    ///
+    /// `#[ts(optional)]`: in TypeScript is het veld weglaatbaar, zodat de
+    /// bestaande bouwers in de frontend ongewijzigd blijven compileren.
+    #[serde(default)]
+    #[ts(optional)]
+    pub custom_section: Option<CustomSection>,
+    /// Hoe de staaf in het model staat — alleen voor de benaming van de
+    /// flenzen in de afleiding van de kiptoets.
+    ///
+    /// De krachtenomhullende hoort in de referentierichting van de staaf te
+    /// staan: liggend van links naar rechts, staand van voet naar kop. "Boven-
+    /// flens" en "onderflens" zijn dan bij een liggende staaf letterlijk; bij
+    /// een staande staaf is de bovenflens de LINKERflens en de onderflens de
+    /// RECHTERflens, en dat zet de kern er dan bij. `None` of weglaten =
+    /// [`Staafstand::Liggend`], het gedrag van vóór dit veld.
+    #[serde(default)]
+    #[ts(optional)]
+    pub staafstand: Option<Staafstand>,
+    /// Kanttekeningen bij de staafstand die de BOUWER van de invoer opstelt. De
+    /// kern zet ze letterlijk bij de kiptoets, achter de flenzen in
+    /// wereldtermen, en rekent er nergens mee.
+    ///
+    /// WAAROM. Aan welke fysieke zijde "bovenflens" ligt, springt bij een naar
+    /// links hellende staaf op 75° van het bovenvlak naar het ondervlak (zie
+    /// `design-mockup/src/lib/referentierichting.ts`, DE SPRONG BIJ 75°). Of een
+    /// staaf dicht bij die sprong ligt, weet alleen wie de meetkunde kent; de
+    /// kern krijgt alleen de omhullende. Zonder dit kanaal zou de waarschuwing
+    /// niet in de afleiding en niet in het rapport komen. `None` of een lege
+    /// lijst = geen kanttekening.
+    #[serde(default)]
+    #[ts(optional)]
+    pub staafstand_notities: Option<Vec<String>>,
+    /// Wat er aan de twee staafeinden zit — zie [`Staafeinden`]. `None` of
+    /// weglaten = beide een gaffel, het gedrag van vóór dit veld.
+    #[serde(default)]
+    #[ts(optional)]
+    pub staafeinden: Option<Staafeinden>,
+    /// Toelichtingen bij de STAAF ALS GEHEEL, die de bouwer van de invoer
+    /// opstelt en die de kern letterlijk bij de kniktoets (6.3.1), de kiptoets
+    /// (6.3.2) en de eindzakking zet. Rekenen nergens mee.
+    ///
+    /// WAAROM. Een staaf die door tussenknopen in delen is geknipt, wordt door
+    /// de invoerbouwer als één doorgaande lijn getoetst; welke delen dat zijn,
+    /// hoe lang de lijn is en welke tussenknopen niet als steun tellen, weet
+    /// alleen de bouwer. Zonder dit kanaal zou de lezer van het rapport een
+    /// staaf van 12 m zien waar het model er twee van 6 m toont, zonder uitleg.
+    #[serde(default)]
+    #[ts(optional)]
+    pub staaf_notities: Option<Vec<String>>,
+    /// Profiel aan het EIND van de staaf (x = L) van een VERLOPENDE staaf;
+    /// [`Self::profile_name`] is dan het profiel aan het begin (x = 0). De
+    /// maten h, b, t_w en t_f verlopen lineair tussen de twee, en de doorsnede
+    /// telt over de hele staaf als GELAST I-profiel zonder afrondingsstraal
+    /// (ontwerpbesluit van 15 september 2026, §2): knikkromme en kipkromme voor
+    /// gelaste profielen, tabel 6.2 en 6.5.
+    ///
+    /// De KERN bepaalt per krachtpunt de plaatselijke doorsnede en toetst
+    /// elke doorsnedetoets op elk punt; de stabiliteitstoetsen rekenen met de
+    /// kleinste doorsnede in het betreffende veld. Zie `crate::verlopend`.
+    ///
+    /// Beide uiteinden moeten I/H-profielen zijn: uit de catalogus, of als
+    /// GELASTE dubbelsymmetrische I uit drie platen ([`Self::custom_section`]
+    /// voor het begin, [`Self::custom_section_end`] voor het eind). Dat laatste
+    /// is geen uitbreiding om de uitbreiding: het SPLITSEN van een verlopende
+    /// staaf laat op de splitsplaats precies zo'n doorsnede achter, en zonder
+    /// dit pad zou een gesplitste staaf niet meer te toetsen zijn. Een koker,
+    /// buis, hoeklijn, U-profiel, een I-profiel met toelopende flenzen of een
+    /// eigen doorsnede van een andere vorm wordt geweigerd met reden. `None`,
+    /// leeg of gelijk aan `profile_name` = prismatisch: dan verandert er
+    /// niets aan de bestaande toetsing, tot op het laatste getal.
+    #[serde(default)]
+    #[ts(optional)]
+    pub profile_end: Option<String>,
+    /// De doorsnede aan het EIND van een verlopende staaf, wanneer dat eind
+    /// geen catalogusprofiel is maar een gelaste dubbelsymmetrische I uit drie
+    /// platen. Alleen gelezen wanneer [`Self::profile_end`] gevuld is; de naam
+    /// erin is de naam die in het rapport komt.
+    ///
+    /// Waarom een apart veld en niet gewoon een naam: een gelaste doorsnede
+    /// staat in geen enkele catalogus, dus er is geen naam waaraan haar maten
+    /// te ontlenen zijn. Zou de kern ze uit de naam moeten raden, dan zou zij
+    /// rekenen met iets wat niemand heeft opgegeven.
+    #[serde(default)]
+    #[ts(optional)]
+    pub custom_section_end: Option<CustomSection>,
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  D4.3 — inline (samengestelde) doorsnede
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Een uit platen samengestelde doorsnede staat niet in de profielendatabase, en
+// hij kán daar ook niet in staan: hij is projectspecifiek. Daarom mag hij
+// rechtstreeks in de toetsingsinvoer mee. Wat er dan wél en niet gerekend mag
+// worden is hieronder **hard** vastgelegd; de redenen staan als leesbare tekst
+// in de constanten, zodat het rapport ze letterlijk kan overnemen.
+
+/// Toegestaan: doorsnedeweerstand N (6.2.4), V (6.2.6), M_y/M_z (6.2.5), de
+/// M+N-interactie (6.2.9), kolomknik 6.3.1 met de **gelaste** knikkromme en de
+/// BGT-doorbuigingstoets (puur EI, altijd geldig).
+///
+/// Geweigerd: kip 6.3.2 op alles behalve een dubbelsymmetrische gelaste I.
+/// `m_cr_i_section` en `m_cr_algemeen` veronderstellen dubbelsymmetrie: zij
+/// kennen geen monosymmetrieparameter `z_j`. Voor een doorsnede met ongelijke
+/// flenzen zou de uitkomst een verzonnen getal zijn.
+pub const REDEN_KIP_NIET_DUBBELSYMMETRISCH: &str =
+    "kip is voor deze samengestelde doorsnede niet geautomatiseerd (monosymmetrie z_j ontbreekt) \
+     — beoordeel handmatig of voorkom kip met kipsteunen";
+
+/// Geweigerd: alle weerstands- en stabiliteitstoetsen bij klasse 4. Er is geen
+/// effectieve-doorsnedeberekening volgens NEN-EN 1993-1-5; een W_el-benadering
+/// zou de plooireductie stilzwijgend weglaten.
+pub const REDEN_KLASSE_4: &str =
+    "doorsnede is klasse 4; effectieve breedtes zijn niet geïmplementeerd";
+
+/// Geweigerd: 6.3.3 zodra de kipcontrole is geweigerd — vergelijking 6.61/6.62
+/// deelt door `M_b,Rd`, en dat getal bestaat dan niet.
+pub const REDEN_INTERACTIE_ZONDER_KIP: &str =
+    "6.3.3 (6.61/6.62) deelt door M_b,Rd uit de kipcontrole; die is hierboven geweigerd";
+
+/// Melding bij een gesloten cel die niet expliciet is gedeclareerd.
+pub const REDEN_GESLOTEN_CEL_NIET_GEDECLAREERD: &str =
+    "de lamellen sluiten een cel, maar er is geen gesloten cel gedeclareerd: I_t is met de open \
+     formule ⅓·Σb·t³ bepaald en onderschat de torsiestijfheid daarmee sterk";
+
+/// Melding bij een inline doorsnede die alleen via `eigenschappen` bekend is:
+/// er is geen geometrie om de dubbelsymmetrie aan te controleren.
+pub const MELDING_VORM_NIET_CONTROLEERBAAR: &str =
+    "doorsnede is alleen via haar eigenschappen opgegeven; de gedeclareerde vorm is niet aan \
+     lamellen getoetst";
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Hoekprofielen — wat er wél en niet gerekend wordt, en waarom
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Een hoeklijn is de enige catalogusvorm zonder symmetrieas die met de
+// beschrijvingsassen samenvalt. NEN-EN 1993-1-1 par. 1.7(2) legt de y-as
+// evenwijdig aan het KLEINSTE been, en de OPMERKING erbij zegt dat alle regels
+// in de Eurocode op de HOOFDassen slaan — voor hoekprofielen u-u en v-v. Dat
+// heeft vier gevolgen, en alle vier horen ze in het rapport te staan en niet
+// alleen in de broncode.
+
+/// Geweigerd: kip 6.3.2 (en daarmee 6.3.3) op een hoekprofiel.
+///
+/// `m_cr_i_section` en `m_cr_algemeen` gaan uit van dubbelsymmetrie: zij
+/// werken met `I_z`, `I_t` en `I_w` om de eigen assen en kennen geen
+/// monosymmetrieparameter. Bij een hoeklijn is `I_yz ≠ 0` en valt de gedrukte
+/// vezel niet in een symmetrievlak; `M_cr` uit die formules is dan geen
+/// benadering maar een verkeerd getal.
+pub const REDEN_KIP_HOEKPROFIEL: &str =
+    "kip 6.3.2 is voor een hoekprofiel niet gerekend: M_cr veronderstelt dubbelsymmetrie, en bij \
+     een hoekprofiel zijn y-y en z-z geen hoofdassen (NEN-EN 1993-1-1 1.7(2), OPMERKING) — \
+     beoordeel de kipstabiliteit handmatig of voorkom kip met kipsteunen";
+
+/// Melding bij kolomknik 6.3.1 van een hoekprofiel: de slankheid wordt om de
+/// hoofdassen bepaald.
+pub const MELDING_KNIK_HOOFDASSEN: &str =
+    "Hoekprofiel: de slankheid is om de HOOFDassen u-u en v-v bepaald, met i_u en i_v in plaats \
+     van i_y en i_z (NEN-EN 1993-1-1 1.7(2), OPMERKING: de regels van deze Eurocode hebben \
+     betrekking op de eigenschappen van de hoofdassen, die voor hoekprofielen door u-u en v-v \
+     zijn gedefinieerd). De opgegeven kniklengtes gelden daarbij als L_cr;u respectievelijk \
+     L_cr;v. Omdat i_v < i_z is dat de ongunstige — en dus de veilige — kant.";
+
+/// Melding bij de buigingstoetsen 6.2.5 van een hoekprofiel.
+pub const MELDING_BUIGING_HOEKPROFIEL: &str =
+    "Hoekprofiel: y-y en z-z zijn geen hoofdassen (NEN-EN 1993-1-1 1.7(2), OPMERKING), dus een \
+     moment om y-y alleen geeft ook kromming om z-z. De toets is elastisch met W_el uitgevoerd — \
+     tabel 5.2, blad 3 van 3 geeft hoekprofielen alleen een klasse-3-regel en dus geen plastische \
+     momentcapaciteit. Voor buiging om de eigen assen geeft de norm voor hoekprofielen geen \
+     regel; beoordeel een op buiging belast hoekprofiel om de hoofdassen.";
+
+/// Melding bij de afschuiftoetsen 6.2.6 van een hoekprofiel.
+pub const MELDING_AFSCHUIVING_HOEKPROFIEL: &str =
+    "Hoekprofiel: NEN-EN 1993-1-1 6.2.6(3) geeft geen uitdrukking voor A_v van een hoekprofiel — \
+     de lijst (a) t/m (g) slaat die vorm over. A_v is daarom onder 6.2.6(2) zelf bepaald als het \
+     been dat evenwijdig aan de dwarskracht loopt, over zijn volle lengte (A_v;z = h·t, \
+     A_v;y = b·t).";
+
+/// Melding bij de normaalkrachttoets 6.2.4 van een hoekprofiel dat met één
+/// been kan zijn aangesloten (6.2.3(5)).
+/// Aanname die bij elke koker en buis uit de catalogus hoort: warmvervaardigd.
+///
+/// NEN-EN 1993-1-1 tabel 6.2, rij "Buisprofielen": warmvervaardigd → kromme a
+/// (S460: a0), koudgevormd → kromme c. De catalogus is opgebouwd volgens
+/// EN 10210-2 (buitenhoekstraal 1,5·t, binnenhoekstraal 1,0·t) en draagt
+/// daarom kromme a. Voor een koudgevormde koker volgens EN 10219 gelden een
+/// andere meetkunde (A en I 2–3 % kleiner) én kromme c; bij λ̄ ≈ 1 scheelt dat
+/// ruim 20 % in N_b,Rd. Die reeks staat niet in de catalogus.
+pub const MELDING_KOKER_WARMVERVAARDIGD: &str =
+    "Aanname: dit profiel is een WARMVERVAARDIGDE koker of buis volgens EN 10210 (hoekstraal \
+     1,5·t), zoals alle kokers en buizen in de catalogus; daarvoor geeft NEN-EN 1993-1-1 tabel \
+     6.2 knikkromme a (bij S460 a0; de kern houdt a aan, wat aan de veilige kant ligt). Is het \
+     werkelijke profiel KOUDGEVORMD volgens EN 10219, dan geldt kromme c (α = 0,49) en een iets \
+     kleinere doorsnede, en is deze knikweerstand tot circa 25 % te hoog; die reeks staat niet \
+     in de catalogus.";
+
+pub const MELDING_AANSLUITING_HOEKPROFIEL: &str =
+    "Hoekprofiel: is de staaf met slechts één been aangesloten, dan gelden voor de trek- en \
+     drukweerstand de aanvullende regels van NEN-EN 1993-1-8 3.10.3 (NEN-EN 1993-1-1 6.2.3(5)); \
+     die excentriciteit zit niet in deze toets. Wordt het hoekprofiel als wandstaaf van een \
+     vakwerk gebruikt, zie dan bijlage BB.1.2 voor de effectieve slankheid.";
+
+/// Weigering van de schuiftoets wegens lijfplooi (NEN-EN 1993-1-5 §5.1(2)).
+pub fn reden_lijfplooi(hw_over_tw: f64, grens: f64) -> String {
+    format!(
+        "lijfplooi onder schuifkracht: h_w/t_w = {hw_over_tw:.1} > 72ε/η = {grens:.1}; \
+         NEN-EN 1993-1-5 §5 (bijdrage van het lijf en de flenzen aan V_b,Rd) is niet \
+         geïmplementeerd"
+    )
+}
+
+/// Eén lamel (rechthoekige plaat) van een inline opgegeven doorsnede.
+///
+/// Zelfde afspraken als [`section_properties::composite::Lamella`]: `b_mm` is
+/// de lengte in de lengterichting van de plaat, `t_mm` de dikte daar loodrecht
+/// op, `(y_mm, z_mm)` het zwaartepunt van de plaat en `alpha_rad` de hoek van
+/// de lengterichting met de y-as (0 = liggend, π/2 = staand).
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, TS)]
+#[serde(deny_unknown_fields)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct CustomLamella {
+    pub b_mm: f64,
+    pub t_mm: f64,
+    pub y_mm: f64,
+    pub z_mm: f64,
+    #[serde(default)]
+    pub alpha_rad: f64,
+}
+
+/// Hoekpunt van een celwandmiddellijn.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, TS)]
+#[serde(deny_unknown_fields)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct CustomPunt {
+    pub y_mm: f64,
+    pub z_mm: f64,
+}
+
+/// Een **expliciet gedeclareerde** gesloten cel, voor de Bredt-torsie.
+///
+/// Zonder deze declaratie rekent de kern `I_t` met de open formule ⅓·Σb·t³;
+/// dat onderschat de torsiestijfheid van een koker met ordes van grootte, en
+/// daarom komt er dan een melding in het resultaat.
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[serde(deny_unknown_fields)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct CustomGeslotenCel {
+    /// Hoekpunten van de wandmiddellijn, in volgorde; de cel sluit vanzelf.
+    pub midlijn: Vec<CustomPunt>,
+    /// Wanddikte van de zijde van punt `i` naar punt `i+1`.
+    pub dikte_mm: Vec<f64>,
+    /// Indices van de lamellen die de celwanden vormen.
+    pub lamellen: Vec<usize>,
+}
+
+/// Vormaanduiding voor een doorsnede die **niet** uit lamellen is opgebouwd.
+///
+/// Alleen nodig als [`CustomSection::lamellen`] leeg is: dan is er geen
+/// geometrie om tabel 5.2 op los te laten en om de dubbelsymmetrie aan te
+/// controleren. Staan er wél lamellen, dan wordt alles uit de geometrie
+/// afgeleid en telt dit veld niet mee.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub enum CustomDoorsnedevorm {
+    /// Onbekend. Zonder lamellen is er dan niets te classificeren en wordt de
+    /// hele toetsing geweigerd — dat is veiliger dan een gok.
+    #[default]
+    Onbekend,
+    /// Dubbelsymmetrisch gelast I-profiel: lijf inwendig, flenzen uitkragend,
+    /// kip toegestaan.
+    GelasteIDubbelsymmetrisch,
+    /// Gelast I-profiel met ongelijke flenzen: kip geweigerd.
+    GelasteIMonosymmetrisch,
+    /// Gesloten koker: alle wanden inwendig, kip geweigerd.
+    Koker,
+    /// Ronde buis: blad 3 van tabel 5.2, kip geweigerd.
+    RondeBuis,
+}
+
+/// Een inline opgegeven doorsnede.
+///
+/// Twee manieren om hem te beschrijven, en precies één daarvan geldt:
+/// * **lamellen** — de doorsnede wordt door `section-properties` doorgerekend
+///   en door tabel 5.2 per plaatdeel geklasseerd. Alles (dubbelsymmetrie,
+///   h_w/t_w, gesloten cellen) volgt uit de geometrie.
+/// * **eigenschappen** — een kant-en-klare set doorsnede-eigenschappen, met
+///   `vorm` erbij zodat de classificatie weet welk blad van tabel 5.2 geldt.
+///   Hiermee laat een catalogusprofiel zich één-op-één inline meegeven.
+#[derive(Clone, Debug, Serialize, Deserialize, TS)]
+#[serde(deny_unknown_fields)]
+#[ts(export, export_to = "../../../../design-mockup/src/lib/types/steel/")]
+pub struct CustomSection {
+    /// Naam zoals hij in het rapport verschijnt.
+    pub naam: String,
+    #[serde(default)]
+    pub lamellen: Vec<CustomLamella>,
+    #[serde(default)]
+    pub gesloten_cellen: Vec<CustomGeslotenCel>,
+    /// Doorsnede-eigenschappen; alleen gebruikt als `lamellen` leeg is.
+    #[serde(default)]
+    pub eigenschappen: Option<SectionProperties>,
+    /// Vormaanduiding; alleen gebruikt als `lamellen` leeg is.
+    #[serde(default)]
+    pub vorm: CustomDoorsnedevorm,
+}
+
+impl CustomSection {
+    /// Vertaalt de invoer naar de rekenkern van `section-properties`.
+    pub fn naar_composite(&self) -> CompositeSection {
+        let mut sec = CompositeSection::nieuw();
+        sec.lamellen = self.lamellen.iter().map(|l| Lamella {
+            b_mm: l.b_mm,
+            t_mm: l.t_mm,
+            y_mm: l.y_mm,
+            z_mm: l.z_mm,
+            alpha_rad: l.alpha_rad,
+        }).collect();
+        sec.cellen = self.gesloten_cellen.iter().map(|c| GeslotenCel {
+            midlijn_mm: c.midlijn.iter().map(|p| (p.y_mm, p.z_mm)).collect(),
+            dikte_mm: c.dikte_mm.clone(),
+            lamellen: c.lamellen.clone(),
+        }).collect();
+        sec
+    }
+
+    /// Is dit een **dubbelsymmetrisch gelast I-profiel**, en mag de kipcontrole
+    /// dus draaien?
+    ///
+    /// Dit is bewust een witte lijst op de geometrie en geen declaratie die de
+    /// aanroeper mag doen: precies drie lamellen, één staand lijf en twee
+    /// gelijke liggende flenzen, alle op dezelfde y-hartlijn en de flenzen
+    /// spiegelsymmetrisch om het midden van het lijf. Alles daarbuiten — een
+    /// koker, een U, ongelijke flenzen, een versprongen flens — valt af.
+    pub fn is_dubbelsymmetrische_gelaste_i(&self) -> bool {
+        if !self.gesloten_cellen.is_empty() || self.lamellen.len() != 3 {
+            return false;
+        }
+        let schaal = self.lamellen.iter().fold(1.0_f64, |m, l| m.max(l.b_mm));
+        let tol = 1e-6 * schaal;
+
+        let liggend: Vec<&CustomLamella> =
+            self.lamellen.iter().filter(|l| l.alpha_rad.sin().abs() < 1e-9).collect();
+        let staand: Vec<&CustomLamella> =
+            self.lamellen.iter().filter(|l| l.alpha_rad.cos().abs() < 1e-9).collect();
+        if liggend.len() != 2 || staand.len() != 1 {
+            return false;
+        }
+        let (lijf, f1, f2) = (staand[0], liggend[0], liggend[1]);
+
+        // Gelijke flenzen.
+        if (f1.b_mm - f2.b_mm).abs() > tol || (f1.t_mm - f2.t_mm).abs() > tol {
+            return false;
+        }
+        // Alles op dezelfde y-hartlijn: geen versprongen flenzen.
+        if (f1.y_mm - lijf.y_mm).abs() > tol || (f2.y_mm - lijf.y_mm).abs() > tol {
+            return false;
+        }
+        // Flenzen aan weerszijden van het lijf, spiegelsymmetrisch om het hart.
+        if (0.5 * (f1.z_mm + f2.z_mm) - lijf.z_mm).abs() > tol {
+            return false;
+        }
+        if (f1.z_mm - f2.z_mm).abs() <= tol {
+            return false;
+        }
+        true
+    }
+
+    /// Grootste `h_w/t_w` over de lamellen die meer staand dan liggend zijn —
+    /// de platen die de dwarskracht `V_z` dragen.
+    ///
+    /// Zonder lamellen valt dit terug op `(h − 2·t_f)/t_w` uit de opgegeven
+    /// eigenschappen, en alleen voor de I-vormen: bij een koker of ronde buis
+    /// zegt dat quotiënt niets.
+    pub fn hw_over_tw(&self) -> Option<f64> {
+        if !self.lamellen.is_empty() {
+            return self
+                .lamellen
+                .iter()
+                .filter(|l| l.alpha_rad.sin().abs() > l.alpha_rad.cos().abs() && l.t_mm > 0.0)
+                .map(|l| l.b_mm / l.t_mm)
+                .fold(None, |m: Option<f64>, v| Some(m.map_or(v, |m| m.max(v))));
+        }
+        let p = self.eigenschappen?;
+        match self.vorm {
+            CustomDoorsnedevorm::GelasteIDubbelsymmetrisch
+            | CustomDoorsnedevorm::GelasteIMonosymmetrisch if p.tw_mm > 0.0 => {
+                Some((p.h_mm - 2.0 * p.tf_mm) / p.tw_mm)
+            }
+            _ => None,
+        }
+    }
+
+    /// Flensdikte voor de keuze van de knikkromme (tabel 6.2, gelaste I).
+    ///
+    /// Uit lamellen: de dikste plaat. Dat is veilig-zijdig, want een grotere
+    /// `t_f` schuift de kromme naar de ongunstiger c/d-regel.
+    pub fn flensdikte_mm(&self) -> f64 {
+        if !self.lamellen.is_empty() {
+            return self.lamellen.iter().fold(0.0_f64, |m, l| m.max(l.t_mm));
+        }
+        self.eigenschappen.map(|p| p.tf_mm).unwrap_or(0.0)
+    }
+
+    /// Sluiten de lamellen een cel zonder dat die gedeclareerd is?
+    pub fn heeft_ongedeclareerde_gesloten_cel(&self) -> bool {
+        self.gesloten_cellen.is_empty() && lussen_in_middellijnnet(&self.lamellen) > 0
+    }
+}
+
+// ── Lusdetectie op het middellijnennet ──────────────────────────────────────
+//
+// Twee lamellen "raken" elkaar volgens hetzelfde lasnaad-criterium dat de rest
+// van de kern gebruikt: een uiteinde van de een ligt binnen een halve
+// gezamenlijke wanddikte van de middellijn van de ander. Het **knooppunt** ligt
+// op het snijpunt van de doorgetrokken middellijnen — precies zoals D4.2 `c`
+// bepaalt. Elke lamel valt daarmee uiteen in stukken tussen opeenvolgende
+// punten op haar as; het aantal onafhankelijke lussen in dat net is
+// `E − V + C` (randen − knopen + samenhangende delen).
+//
+// Voor de gelaste I uit drie platen levert dat 0 lussen; voor een koker uit
+// vier platen 1. Drie platen die elkaar kruisen zónder dat hun uiteinden elkaar
+// raken (een open kruis) blijven op 0 — daar is geen cel.
+
+/// Aantal onafhankelijke lussen in het net van lamelmiddellijnen.
+fn lussen_in_middellijnnet(lamellen: &[CustomLamella]) -> usize {
+    let n = lamellen.len();
+    if n < 3 {
+        return 0; // met twee platen valt geen cel te sluiten
+    }
+    let schaal = lamellen.iter().fold(1.0_f64, |m, l| m.max(l.b_mm));
+    let tol_knoop = 1e-6 * schaal;
+
+    let richting = |l: &CustomLamella| {
+        let (s, c) = l.alpha_rad.sin_cos();
+        (c, s)
+    };
+    // Per lamel de parameters `u` (mm langs de as, vanaf het zwaartepunt) waar
+    // een knooppunt ligt: te beginnen met de twee fysieke uiteinden.
+    let mut u_op: Vec<Vec<f64>> =
+        lamellen.iter().map(|l| vec![-l.b_mm / 2.0, l.b_mm / 2.0]).collect();
+
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let (a, b) = (&lamellen[i], &lamellen[j]);
+            if !raken_elkaar(a, b) {
+                continue;
+            }
+            let (da, db) = (richting(a), richting(b));
+            // Snijpunt van de doorgetrokken middellijnen.
+            let noemer = da.0 * db.1 - da.1 * db.0;
+            if noemer.abs() < 1e-12 {
+                continue; // evenwijdig: geen knooppunt
+            }
+            let (dy, dz) = (b.y_mm - a.y_mm, b.z_mm - a.z_mm);
+            let ua = (dy * db.1 - dz * db.0) / noemer;
+            let p = (a.y_mm + ua * da.0, a.z_mm + ua * da.1);
+            let ub = (p.0 - b.y_mm) * db.0 + (p.1 - b.z_mm) * db.1;
+            u_op[i].push(ua);
+            u_op[j].push(ub);
+        }
+    }
+
+    // Knopen (punten in het vlak) en randen (stukken tussen opeenvolgende
+    // punten op één as) opbouwen.
+    let mut knopen: Vec<(f64, f64)> = Vec::new();
+    let knoop_id = |p: (f64, f64), knopen: &mut Vec<(f64, f64)>| -> usize {
+        for (idx, q) in knopen.iter().enumerate() {
+            if (p.0 - q.0).abs() <= tol_knoop && (p.1 - q.1).abs() <= tol_knoop {
+                return idx;
+            }
+        }
+        knopen.push(p);
+        knopen.len() - 1
+    };
+    let mut randen: Vec<(usize, usize)> = Vec::new();
+    for (i, l) in lamellen.iter().enumerate() {
+        let d = richting(l);
+        let mut us = u_op[i].clone();
+        us.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        us.dedup_by(|a, b| (*a - *b).abs() <= tol_knoop);
+        let ids: Vec<usize> = us
+            .iter()
+            .map(|&u| knoop_id((l.y_mm + u * d.0, l.z_mm + u * d.1), &mut knopen))
+            .collect();
+        for w in ids.windows(2) {
+            if w[0] != w[1] {
+                randen.push((w[0], w[1]));
+            }
+        }
+    }
+
+    // Samenhangende delen tellen met union-find.
+    let mut ouder: Vec<usize> = (0..knopen.len()).collect();
+    fn wortel(ouder: &mut Vec<usize>, mut x: usize) -> usize {
+        while ouder[x] != x {
+            ouder[x] = ouder[ouder[x]];
+            x = ouder[x];
+        }
+        x
+    }
+    for &(a, b) in &randen {
+        let (ra, rb) = (wortel(&mut ouder, a), wortel(&mut ouder, b));
+        if ra != rb {
+            ouder[ra] = rb;
+        }
+    }
+    let mut delen = 0usize;
+    for k in 0..knopen.len() {
+        if wortel(&mut ouder, k) == k {
+            delen += 1;
+        }
+    }
+
+    // E − V + C; nooit negatief.
+    (randen.len() + delen).saturating_sub(knopen.len())
+}
+
+/// Lasnaad-criterium: ligt een uiteinde van de een binnen een halve
+/// gezamenlijke wanddikte van de middellijn van de ander?
+fn raken_elkaar(a: &CustomLamella, b: &CustomLamella) -> bool {
+    let tol = 0.5 * (a.t_mm + b.t_mm) * 1.05 + 1e-9;
+    afstand_uiteinden_tot_as(a, b) <= tol || afstand_uiteinden_tot_as(b, a) <= tol
+}
+
+/// Kleinste afstand van de twee uiteinden van `a` tot het middellijn-lijnstuk
+/// van `b`.
+fn afstand_uiteinden_tot_as(a: &CustomLamella, b: &CustomLamella) -> f64 {
+    let uiteinden = |l: &CustomLamella| {
+        let (s, c) = l.alpha_rad.sin_cos();
+        let h = l.b_mm / 2.0;
+        [
+            (l.y_mm - h * c, l.z_mm - h * s),
+            (l.y_mm + h * c, l.z_mm + h * s),
+        ]
+    };
+    let [b0, b1] = uiteinden(b);
+    let ab = (b1.0 - b0.0, b1.1 - b0.1);
+    let l2 = ab.0 * ab.0 + ab.1 * ab.1;
+    uiteinden(a)
+        .iter()
+        .map(|&e| {
+            if l2 <= 0.0 {
+                return (e.0 - b0.0).hypot(e.1 - b0.1);
+            }
+            let s = (((e.0 - b0.0) * ab.0 + (e.1 - b0.1) * ab.1) / l2).clamp(0.0, 1.0);
+            let proj = (b0.0 + s * ab.0, b0.1 + s * ab.1);
+            (e.0 - proj.0).hypot(e.1 - proj.1)
+        })
+        .fold(f64::INFINITY, f64::min)
+}

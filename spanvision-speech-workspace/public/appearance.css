@@ -1,0 +1,98 @@
+/* Appearance tokens use semantic colors; drawing and model colors are never inverted. */
+:root[data-sv-mode="light"] {
+  --sv-page:#f5f6f8;--sv-surface:#ffffff;--sv-canvas:#eef1f5;--sv-raised:#e7ebf0;
+  --sv-text:#17202b;--sv-text-soft:#253244;--sv-muted:#586579;
+  --sv-border:rgba(23,32,43,.18);--sv-focus:#17202b;
+}
+:root[data-sv-mode="dark"] {
+  --sv-page:#000000;--sv-surface:#121212;--sv-canvas:#1B1B1B;--sv-raised:#202020;
+  --sv-text:#ffffff;--sv-text-soft:#eeeeee;--sv-muted:#999999;
+  --sv-border:rgba(255,255,255,.16);--sv-focus:rgba(255,255,255,.58);
+}
+.sv-appearance-control {display:inline-flex;align-items:center;gap:5px;flex-shrink:0;margin-inline:6px;color:var(--sv-text-soft);font:12px/1.2 system-ui,sans-serif;-webkit-app-region:no-drag;position:relative;z-index:1;}
+.sv-appearance-icon {font-size:17px;}
+.sv-appearance-control select {box-sizing:border-box;min-height:30px;max-width:82px;padding:4px 6px;border:1px solid var(--sv-border);border-radius:5px;background:var(--sv-surface);color:var(--sv-text-soft);font:inherit;cursor:pointer;color-scheme:inherit;}
+.sv-appearance-control select:focus-visible {outline:2px solid var(--sv-focus);outline-offset:2px;}
+[data-sv-tool="cad"] body > .sv-appearance-control {position:fixed;right:16px;top:8px;z-index:10;}
+[data-sv-tool="cad"] #loading {background:var(--sv-page);color:var(--sv-text-soft);}
+[data-sv-tool="cad"] #loading .title span {color:var(--sv-text);}
+[data-sv-tool="cad"] body {background:var(--sv-page);}
+[data-sv-tool="calculation"][data-sv-mode="light"] .titlebar-organization {color:var(--sv-muted);}
+[data-sv-tool="calculation"][data-sv-mode="light"] body {background:var(--sv-page);}
+@media(max-width:480px){.sv-appearance-control{margin-inline:3px;gap:2px;}.sv-appearance-icon{display:none;}.sv-appearance-control select{max-width:70px;min-height:30px;padding:3px;font-size:11px;}}
+/* Location controls share the tool's selected appearance. */
+:root[data-sv-tool] .sv-map-location {
+  position: absolute; z-index: 1000; left: 10px; bottom: 28px;
+  display: flex; flex-direction: column; gap: 5px;
+  max-width: min(330px, calc(100% - 20px)); padding: 8px;
+  background: var(--sv-surface, #121212); color: var(--sv-text, #fff);
+  border: 1px solid var(--sv-border, #343434); border-radius: 8px;
+  box-shadow: 0 2px 8px #0003; font: 12px/1.4 system-ui, sans-serif;
+}
+:root[data-sv-tool] .sv-map-location button {
+  width: fit-content; min-height: 30px; padding: 5px 10px;
+  border: 1px solid var(--sv-border, #343434); border-radius: 5px;
+  background: var(--sv-text, #fff); color: var(--sv-surface, #121212);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+:root[data-sv-tool] .sv-map-location button:disabled { opacity: .6; cursor: wait; }
+:root[data-sv-tool] .sv-map-location button:focus-visible { outline: 2px solid var(--sv-text); outline-offset: 2px; }
+:root[data-sv-tool] .sv-map-location span:empty { display: none; }
+.mini-map .sv-map-location { left: 5px; bottom: 18px; padding: 4px; font-size: 10px; }
+.mini-map .sv-map-location button { min-height: 24px; padding: 2px 5px; }
+:root[data-sv-tool] .leaflet-container .leaflet-control-attribution { background: var(--sv-surface, #121212); color: var(--sv-text, #fff); }
+:root[data-sv-tool] .leaflet-container .leaflet-control-attribution a { color: inherit; }
+@media print { .sv-map-location { display: none !important; } }
+
+/* Shared chrome roles. Engineering results and document colors remain data. */
+:root[data-sv-mode][data-sv-tool] {
+  --sv-accent:var(--sv-text);--sv-on-accent:var(--sv-surface);
+  --theme-accent:var(--sv-accent);--theme-accent-hover:var(--sv-text-soft);
+  --theme-accent-text:var(--sv-on-accent);--theme-on-accent:var(--sv-on-accent);
+  --theme-accent-soft:var(--sv-raised);--theme-accent-tint:var(--sv-text-soft);
+  --theme-focus-color:var(--sv-focus);--theme-focus:var(--sv-focus);
+  --theme-hover:var(--sv-raised);--theme-hover-strong:var(--sv-raised);
+  --theme-active:var(--sv-raised);--theme-active-border:var(--sv-border);
+  --theme-file-tab-bg:var(--sv-accent);--theme-file-tab-hover:var(--sv-text-soft);--theme-file-tab-text:var(--sv-on-accent);
+  --theme-ribbon-btn-hover:var(--sv-raised);--theme-ribbon-btn-hover-border:var(--sv-border);
+  --theme-ribbon-btn-active-bg:var(--sv-raised);--theme-ribbon-btn-active-border:var(--sv-focus);
+  --theme-ribbon-btn-active-text:var(--sv-text);--theme-ribbon-icon-active:var(--sv-text);--theme-ribbon-text-hover:var(--sv-text);
+  --theme-ribbon-tab-active-border:var(--sv-focus);--theme-ribbon-group-label:var(--sv-muted);
+  --theme-dialog-header-text:var(--sv-text);--theme-dialog-tab-hover:var(--sv-raised);--theme-dialog-tab-hover-text:var(--sv-text);
+  --theme-dialog-tab-active-bg:var(--sv-raised);--theme-dialog-tab-active-text:var(--sv-text);--theme-dialog-tab-active-accent:var(--sv-accent);
+  --theme-dialog-btn-bg:var(--sv-accent);--theme-dialog-btn-text:var(--sv-on-accent);--theme-dialog-btn-hover:var(--sv-text-soft);
+  --theme-btn-primary-bg:var(--sv-accent);--theme-btn-primary-text:var(--sv-on-accent);--theme-btn-primary-border:var(--sv-accent);
+  --theme-btn-primary-hover-bg:var(--sv-text-soft);--theme-btn-primary-hover-text:var(--sv-on-accent);
+  --theme-btn-secondary-hover-bg:var(--sv-raised);--theme-backstage-item-shortcut-hover:var(--sv-text-soft);
+  --theme-placeholder-icon:var(--sv-muted);--theme-selected:var(--sv-raised);--theme-selection:var(--sv-raised);
+  --theme-panel-accent:var(--sv-accent);--theme-tab-active-accent:var(--sv-accent);
+  --theme-primary-bg:var(--sv-accent);--theme-primary-text:var(--sv-on-accent);
+  --primary:var(--sv-accent);--primary-hover:var(--sv-text-soft);--primary-light:var(--sv-raised);
+  --accent:var(--sv-accent);--accent-hover:var(--sv-text-soft);--accent-color:var(--sv-accent);
+}
+:root[data-sv-tool="cad2d"][data-sv-mode] {--theme-canvas:var(--sv-canvas);--theme-grid:var(--sv-border);}
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="bg-blue-500"],
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="bg-blue-600"] {background-color:var(--sv-accent);color:var(--sv-on-accent);}
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="text-blue-400"],
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="text-blue-500"],
+:root[data-sv-tool="cad2d"][data-sv-mode] [class~="text-pink-500"] {color:var(--sv-accent);}
+
+/* Shared timings and subtle interaction feedback for the complete suite. */
+:root{--sv-motion-fast:160ms;--sv-motion-ease:cubic-bezier(.22,1,.36,1)}
+:root[data-sv-motion="full"] :is(button,a[role="button"],select,input:not([type="range"])){transition-property:background-color,border-color,color,box-shadow,opacity;transition-duration:var(--sv-motion-fast);transition-timing-function:ease-out}
+:root[data-sv-motion="full"] button:not(:disabled):active{opacity:.85}
+:root[data-sv-theme-changing="true"] :is(body,header,.titlebar,.title-bar,.ribbon,.toolbar,.statusbar,.status-bar,.module-card,.account-card,.scan-dialog){transition:background-color 240ms ease,color 240ms ease,border-color 240ms ease}
+:root[data-sv-tool="hub"][data-sv-motion="full"] .sv-reveal-waiting{opacity:0}
+:root[data-sv-tool="hub"][data-sv-motion="full"] :is(.module-card,.suggestion-card){transition:transform 260ms var(--sv-motion-ease),border-color 220ms ease,background-color 220ms ease,box-shadow 260ms ease}
+:root[data-sv-tool="hub"][data-sv-motion="full"] .button{transition:transform 220ms var(--sv-motion-ease),background-color 180ms ease,border-color 180ms ease,box-shadow 220ms ease}
+:root[data-sv-tool="hub"] .button>svg{transition:translate 220ms var(--sv-motion-ease)}
+@media(hover:hover) and (pointer:fine){
+  :root[data-sv-tool="hub"][data-sv-motion="full"] :is(.module-card,.suggestion-card):hover{transform:translateY(-4px);box-shadow:0 14px 28px #0000000d}
+  :root[data-sv-tool="hub"][data-sv-motion="full"] .button:hover>svg{translate:3px 0}
+}
+@media(prefers-reduced-motion:reduce){
+  :root .sv-reveal-waiting{opacity:1!important}
+  :root[data-sv-tool] :is(button,a[role="button"],select,input,.module-card,.suggestion-card,.button,.button>svg){transition:none!important}
+  :root[data-sv-tool="hub"] .module-card:hover,:root[data-sv-tool="hub"] .suggestion-card:hover{transform:none!important}
+}
+@media print{.sv-reveal-waiting{opacity:1!important}}

@@ -1,0 +1,18 @@
+[package]
+name = "ifc-view"
+version = "0.1.0"
+description = "geptechniek workspace · IFC by Spanvision infra"
+authors = ["Spanvision infra"]
+edition = "2021"
+
+[lib]
+name = "ifc_view_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["image-png"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,0 +1,9 @@
+{
+  "build": "passed",
+  "version": "0.4.2",
+  "signed": false,
+  "deliveryDirectory": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\delivery\\pile\\windows",
+  "installers": [
+    "Pile Plane Workspace_0.4.2_x64-setup.exe"
+  ]
+}

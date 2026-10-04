@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "2D CAD",
+  "version": "0.35.0",
+  "identifier": "com.spanvisioninfra.cad",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:3000",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "2D CAD — Spanvision Infra",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": false,
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "o2d"
+        ],
+        "description": "2D CAD project",
+        "mimeType": "application/x-open2dstudio"
+      },
+      {
+        "ext": [
+          "dxf"
+        ],
+        "description": "DXF Drawing Exchange Format",
+        "mimeType": "image/vnd.dxf"
+      }
+    ],
+    "resources": [
+      "icons/o2d-document.ico",
+      "icons/dxf-document.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "nsis": {
+        "template": "nsis/installer.nsi",
+        "installerHooks": "nsis/hooks.nsh",
+        "installerIcon": "icons/icon.ico"
+      }
+    },
+    "publisher": "Spanvision Infra"
+  },
+  "plugins": {}
+}

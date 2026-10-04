@@ -1,0 +1,15 @@
+{
+  "status": "unavailable",
+  "attempts": [
+    "retry",
+    "kernel reset and retry"
+  ],
+  "error": "failed to write kernel assets: The system cannot find the path specified. (os error 3)",
+  "nativeWindowScreenshots": false,
+  "checksCompletedSeparately": [
+    "compiled executable identity",
+    "GW icon files",
+    "NSIS resource paths",
+    "native backend report generation"
+  ]
+}

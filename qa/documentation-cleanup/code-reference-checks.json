@@ -1,0 +1,293 @@
+{
+  "checkedAt": "2026-10-04T14:53:43.460Z",
+  "checks": [
+    {
+      "file": "frame-vision-studio/ui/src/stores/profiles.js",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "frame-vision-studio/src-tauri/src/commands/kozijn.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/xerManifestLeveling.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/run.sh",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-workday-axis.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-web-save-fallback.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-relation-rules.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-recovery-integrity.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-profile-switch-dates.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-p6-verified-cases-engine.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-mutation-cost.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-ifc-roundtrip.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-header-compress.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "vision-calculation-studio/packages/desktop/src-tauri/src/lib.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-date-input-commit.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-conventions-registry.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-conventions-p6-flags.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/planning/check-axis-consolidation.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/mcp/cases-work-rule.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/src-tauri/crates/timber-check/tests/referentie_r20.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/src-tauri/crates/timber-check/tests/referentie_r19.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/tests/dev-server/lock-mutex.sh",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "frame-vision-studio/ofs-core/src/production.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "frame-vision-studio/ofs-core/src/import/dxf_profile.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "frame-vision-studio/ofs-core/src/import/catalog.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/test-doorbuiging-toets.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/src/utils/wbs.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/src/utils/helpManifest.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "vision-calculation-studio/packages/desktop/src/components/calc/PrintDocument.tsx",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/model-R13.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/bouw-R16.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R26.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R25.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R24.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R23.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R22.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R21.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R20.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R19.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R18.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R17.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R16.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R15.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R14.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R13.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R12.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R11.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R10.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R09.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R08.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R07.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R06.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R05.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R04.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R03.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/toets-R02.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/referentie/model-R18.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/design-mockup/scripts/meet-oplossers.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "spanvision-pdf-workspace/open-pdf-studio/src-tauri/src/handtekening/mod.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/src-tauri/crates/steel-check/tests/portal_beam1.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/src-tauri/crates/steel-check/tests/kip_ipe330_r16.rs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "spanvision-pdf-workspace/open-pdf-studio/scripts/verify-stavenreeks-roundtrip.py",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "spanvision-pdf-workspace/open-pdf-studio/scripts/test-stavenreeks.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "fem-vision-studio/scripts/genereer-profieldata.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/scripts/verify-examples.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/scripts/verify-conventions.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/scripts/tutorial-project.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/scripts/showcases.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/scripts/showcase-groot.ts",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/scripts/publish-wiki.mjs",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "open-vision-studio/docs/superpowers/workflows/triple-verify.js",
+      "kind": "Only archived-document paths changed; all other text identical"
+    },
+    {
+      "file": "spanvision-pdf-workspace/open-pdf-studio/js/drafting/tekeningtype.js",
+      "kind": "Only archived-document paths changed; all other text identical"
+    }
+  ]
+}

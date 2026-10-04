@@ -1,0 +1,3 @@
+[console_scripts]
+ifc-validate = ifc_validator.cli:app
+vision-bim-validate = ifc_validator.cli:app

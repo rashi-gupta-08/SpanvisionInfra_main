@@ -1,0 +1,12 @@
+__pycache__/
+.venv/
+target/
+node_modules/
+dist/
+apps/*/src-tauri/target/
+*.log
+OpenAEC-style-book-main/
+docs/superpowers/
+docs/plans/
+.superpowers/
+.worktrees/

@@ -1,0 +1,210 @@
+/**
+ * AppShell layout styles.
+ *
+ * Full-viewport layout with TitleBar (32px) + Ribbon (122px) + Panels + StatusBar (22px).
+ */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--theme-bg);
+}
+
+.app-shell__panels {
+  flex: 1;
+  overflow: hidden;
+  height: 0; /* forces flex child to respect flex: 1 and not overflow */
+}
+
+/* react-resizable-panels Group and Panel wrappers need full height */
+.app-shell__panels > div {
+  height: 100%;
+}
+
+.app-shell__panels [data-panel] {
+  height: 100%;
+}
+
+/* Resize handles between panels */
+.resize-handle {
+  background-color: var(--theme-border, #e0e0e0);
+  transition: background-color 150ms ease;
+}
+
+.resize-handle:hover,
+.resize-handle[data-resize-handle-active] {
+  background-color: var(--theme-accent, #D97706);
+}
+
+.resize-handle--horizontal {
+  width: 4px;
+  cursor: col-resize;
+}
+
+.resize-handle--vertical {
+  height: 4px;
+  cursor: row-resize;
+}
+
+/* Panel base styles */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--theme-bg-lighter, #44444C);
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--theme-border, #e0e0e0);
+  background-color: var(--theme-bg-lighter, #44444C);
+  flex-shrink: 0;
+}
+
+.panel__header--compact {
+  padding: 3px 8px;
+}
+
+.panel__header h2 {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--theme-text, #333);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.panel__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+/* Vertical section within a panel (used for left panel split) */
+.panel__section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Tab bar for right panel */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--theme-border, #e0e0e0);
+  background-color: var(--theme-bg-lighter, #44444C);
+  flex-shrink: 0;
+}
+
+.tab-bar__tab {
+  flex: 1;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--theme-text-secondary, #666);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 150ms ease;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tab-bar__tab:hover {
+  color: var(--theme-text, #333);
+  background-color: var(--theme-hover, rgba(0,0,0,0.05));
+}
+
+.tab-bar__tab--active {
+  color: var(--theme-accent, #D97706);
+  border-bottom-color: var(--theme-accent, #D97706);
+}
+
+.tab-bar__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Viewer canvas container */
+.viewer-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: var(--domain-viewer-bg, #1a1a2e);
+  overflow: hidden;
+}
+
+.viewer-container__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.viewer-container__status {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Empty state overlay inside viewer */
+.viewer-container .empty-state {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 16px;
+  color: var(--theme-text-secondary, #666);
+  text-align: center;
+}
+
+.empty-state--compact {
+  padding: 8px;
+}
+
+.empty-state__icon {
+  font-size: 2rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state__text {
+  font-size: 0.875rem;
+  margin: 0;
+}

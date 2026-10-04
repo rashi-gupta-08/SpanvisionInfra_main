@@ -1,0 +1,431 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import type { ComponentProps } from "react";
+import type RightPanel from "./RightPanel.tsx";
+import type { RightPanelProps } from "./RightPanel.tsx";
+
+const rightPanelFiles = ["RightPanel.tsx", "PanelControls.tsx", "CptPanel.tsx", "LoadPointPanel.tsx", "LoadPointGroupEditButton.tsx", "GroupingSettingsPanel.tsx", "CostSettingsPanel.tsx", "CptSettingsPanel.tsx"];
+function readRightPanelSource(): string {
+  return rightPanelFiles.map((file) => readFileSync(resolve(import.meta.dirname, file), "utf8")).join("\n");
+}
+
+type Assert<T extends true> = T;
+type SameProps = Assert<
+  [RightPanelProps] extends [ComponentProps<typeof RightPanel>]
+    ? [ComponentProps<typeof RightPanel>] extends [RightPanelProps]
+      ? true
+      : false
+    : false
+>;
+const publicPropsContract: SameProps = true;
+
+it("keeps the public right-panel props contract", () => {
+  assert.equal(publicPropsContract, true);
+});
+
+describe("missing CPT popover", () => {
+  it("opens from Missing without assigning the row and links identifier-only CPT buttons", () => {
+    const panel = readRightPanelSource();
+    const popover = readFileSync(resolve(import.meta.dirname, "MissingCptPopover.tsx"), "utf8");
+
+    assert.match(panel, /row\.missingCptIds\.length > 0/);
+    assert.match(panel, /<MissingCptPopover/);
+    assert.match(popover, /aria-haspopup="dialog"/);
+    assert.match(popover, /event\.stopPropagation\(\)/);
+    assert.match(popover, /event\.key !== "Escape"/);
+    assert.match(popover, /openCpt\(state, cptId\)/);
+    assert.match(popover, />\{cptId\}<\/button>/);
+  });
+
+  it("controls all Missing popovers with one active row key", () => {
+    const panel = readRightPanelSource();
+    const popover = readFileSync(resolve(import.meta.dirname, "MissingCptPopover.tsx"), "utf8");
+
+    assert.match(panel, /const \[openMissingCptKey, setOpenMissingCptKey\] = useState<string \| null>\(null\)/);
+    assert.match(panel, /open=\{openMissingCptKey === row\.key\}/);
+    assert.match(panel, /toggleMissingCptPopover\(current, row\.key\)/);
+    assert.doesNotMatch(panel, /export function toggleMissingCptPopover/);
+    assert.match(popover, /open: boolean/);
+    assert.match(popover, /onOpenChange: \(open: boolean\) => void/);
+    assert.doesNotMatch(popover, /useState\(false\)/);
+  });
+
+  it("uses the compact Not OK label in both languages", () => {
+    const english = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/en/rightPanel.json"), "utf8"));
+    const dutch = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/nl/rightPanel.json"), "utf8"));
+
+    assert.equal(english["status.insufficientCapacity"], "Not OK");
+    assert.equal(dutch["status.insufficientCapacity"], "Not OK");
+  });
+
+  it("describes Missing as a click action in both languages", () => {
+    const english = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/en/rightPanel.json"), "utf8"));
+    const dutch = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/nl/rightPanel.json"), "utf8"));
+
+    assert.equal(english["pileOptions.missingCptsTitle"], "Click to view CPTs with missing bearing-capacity data");
+    assert.equal(dutch["pileOptions.missingCptsTitle"], "Klik om sonderingen met ontbrekende draagvermogengegevens te bekijken");
+  });
+});
+
+describe("technical assignment availability", () => {
+  it("uses the unavailable explanation instead of a filter no-match message", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /technicalAssignment\.status === "unavailable"/);
+    assert.match(panel, /isUnavailable[\s\S]*?technicalNotice\.unavailableExplanation/);
+  });
+
+  it("shows one compact analysis error instead of a second pile-options error section", () => {
+    const panel = readRightPanelSource();
+    const notice = readFileSync(resolve(import.meta.dirname, "TechnicalAssignmentNotice.tsx"), "utf8");
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+
+    assert.match(panel, /technicalAssignment\.status !== "error"\s*\?\s*\(\s*<section className="pile-options-section">/s);
+    assert.match(notice, /getAnalysisFailureNotice/);
+    assert.match(notice, /technicalNotice\.analysisErrorExplanation/);
+    assert.match(styles, /\.load-point-panel\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s);
+    assert.match(styles, /\.pile-options-section\s*\{[^}]*flex:\s*1;/s);
+  });
+});
+
+describe("React optimization panel", () => {
+  it("delegates canonical pile choices and disables rows while assignment is pending", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /pileAssignmentPending\?: boolean/);
+    assert.match(panel, /onApplyPileConfiguration\?: \(/);
+    assert.match(panel, /selectedLoadPoints\.map\(\(\{ id \}\) => id\)/);
+    assert.match(panel, /onApplyPileConfiguration\([^;]+configuration/s);
+    assert.match(panel, /aria-disabled=\{pileAssignmentPending\}/);
+    assert.match(panel, /if \(pileAssignmentPending\) return/);
+    assert.doesNotMatch(panel, /new Map\(state\.selectedPileConfigurationsByLoadPoint\)/);
+  });
+
+  it("offers one group-aware action to clear the selected assignment", () => {
+    const panel = readRightPanelSource();
+    const english = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/en/rightPanel.json"), "utf8"));
+    const dutch = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/nl/rightPanel.json"), "utf8"));
+
+    assert.match(panel, /hasAssignedSelection/);
+    assert.match(panel, /group\.load_point_ids\.some\(\(loadPointId\) => selectedLoadPointIds\.has\(loadPointId\)\)/);
+    assert.match(panel, /group\.load_point_ids\.forEach\(\(loadPointId\) => involvedLoadPointIds\.add\(loadPointId\)\)/);
+    assert.match(panel, /onApplyPileConfiguration\(selectedLoadPoints\.map\(\(\{ id \}\) => id\), null\)/);
+    assert.match(panel, /disabled=\{pileAssignmentPending\}/);
+    assert.match(panel, /configuration: PileConfigurationKey \| null/);
+    assert.equal(english["pileOptions.clearAssignment"], "Clear assignment");
+    assert.equal(dutch["pileOptions.clearAssignment"], "Toewijzing wissen");
+  });
+
+  it("retains and labels an assigned option with inactive legend properties", () => {
+    const panel = readRightPanelSource();
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+    const english = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/en/rightPanel.json"), "utf8"));
+    const dutch = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/nl/rightPanel.json"), "utf8"));
+
+    assert.match(panel, /filterActivePileOptions\(aggregation\.result, active, retainedConfiguration\)/);
+    assert.match(panel, /!row\.sizeActive \? <InactiveLabel \/>/);
+    assert.match(panel, /!row\.tipActive \? <InactiveLabel \/>/);
+    assert.match(panel, /row\.smallDot \? "is-small-dot"/);
+    assert.match(styles, /\.pile-option-symbol-cell \.is-small-dot \.pile-symbol-svg/);
+    assert.equal(english["pileOptions.inactive"], "Off");
+    assert.equal(dutch["pileOptions.inactive"], "Uit");
+  });
+
+  it("does not mark a permanent panel tab active while the optimization task is open", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /active=\{taskPanel === null\}/);
+    assert.match(panel, /active && state\.rightPanelMode === mode/);
+  });
+
+  it("closes a task panel when a permanent inspection tab is activated", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /<PanelTab[\s\S]*?onActivate=\{onCloseTaskPanel\}/);
+    assert.match(panel, /onActivate\(\);[\s\S]*?switchRightPanelMode\(state, mode\)/);
+  });
+
+  it("keeps only inspection views as permanent tabs", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /mode="load-point"/);
+    assert.match(panel, /mode="cpts"/);
+    assert.doesNotMatch(panel, /mode="cpt-settings"/);
+    assert.doesNotMatch(panel, /mode="cost-settings"/);
+    assert.match(panel, /taskPanel === "cpt-settings"/);
+    assert.match(panel, /taskPanel === "cost-settings"/);
+  });
+});
+
+describe("React load point grouping settings panel", () => {
+  it("edits automatic grouping and preserves the disabled distance field", () => {
+    const panel = readRightPanelSource();
+    const english = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/en/rightPanel.json"), "utf8"));
+    const dutch = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/nl/rightPanel.json"), "utf8"));
+
+    assert.match(panel, /taskPanel === "grouping-settings"[\s\S]*?<GroupingSettingsPanel/);
+    assert.match(panel, /checked=\{settings\.automatic\}/);
+    assert.match(panel, /loadPointGroupingSettings:\s*\{[\s\S]*automatic:\s*event\.currentTarget\.checked/);
+    assert.match(panel, /ariaLabel=\{t\("groupingSettings\.maxDistance"\)\}[\s\S]*disabled=\{!settings\.automatic\}/);
+    assert.match(panel, /maxEdgeDistanceM:\s*value/);
+    assert.equal(english["groupingSettings.automatic"], "Automatically group load points");
+    assert.equal(dutch["groupingSettings.automatic"], "Belastinglocaties automatisch groeperen");
+  });
+});
+
+describe("React cost settings panel", () => {
+  it("keeps edited pile costs inside the current project", () => {
+    const panel = readRightPanelSource();
+    const costPanel = readFileSync(resolve(import.meta.dirname, "CostCatalogEditor.tsx"), "utf8");
+
+    assert.doesNotMatch(panel, /PILE_COST_DEFAULTS_KEY/);
+    assert.doesNotMatch(panel, /setSetting\(/);
+    assert.match(costPanel, /onSettingsChange/);
+  });
+});
+
+describe("React CPT settings panel", () => {
+  it("keeps settings available without a selection and exposes all or selected scope", () => {
+    const panel = readRightPanelSource();
+
+    assert.doesNotMatch(panel, /cptSettingsScope\s*(?:===|:)\s*"current"/);
+    assert.doesNotMatch(panel, /const loadPoint = state\.loadPoints\.find\(.*selectedLoadPointId/s);
+    assert.doesNotMatch(panel, /empty\.selectLoadPointForCpts/);
+    assert.match(panel, /settingsScope === "selected"/);
+    assert.match(panel, /selectedLoadPoints\.length === 0 \? "all" : state\.cptSettingsScope/);
+    assert.match(panel, /t\("cptSettings\.allLoadPoints"\)/);
+    assert.match(panel, /t\("cptSettings\.selectedLoadPoints"\)/);
+    assert.match(panel, /disabled=\{selectedLoadPoints\.length === 0\}/);
+    assert.match(panel, /t\("cptSettings\.selectedCount", \{ count: selectedLoadPoints\.length \}\)/);
+    assert.match(panel, /const settingsLoadPoints = selectedLoadPoints/);
+    assert.doesNotMatch(panel, /cptSettings\.thisLoadPoint/);
+  });
+
+  it("uses aggregate values, mixed placeholders, and field-level settings patches", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /getCptSelectionSettingsAggregate\(state\)/);
+    assert.match(panel, /value=\{settings\.maxDistanceM\}/);
+    assert.match(panel, /value=\{settings\.monopolyDistanceM\}/);
+    assert.match(panel, /value=\{settings\.maxAngleDegrees\}/);
+    assert.match(panel, /placeholder=\{settings\.maxDistanceM === null \? t\("cptSettings\.mixed"\) : undefined\}/);
+    assert.match(panel, /placeholder=\{settings\.monopolyDistanceM === null \? t\("cptSettings\.mixed"\) : undefined\}/);
+    assert.match(panel, /placeholder=\{settings\.maxAngleDegrees === null \? t\("cptSettings\.mixed"\) : undefined\}/);
+    assert.match(panel, /applyCptSelectionSettingsPatch\(state, \{ maxDistanceM:[\s\S]*?\}, overwriteManualSelections\)/);
+    assert.match(panel, /applyCptSelectionSettingsPatch\(state, \{ monopolyDistanceM:[\s\S]*?\}, overwriteManualSelections\)/);
+    assert.match(panel, /applyCptSelectionSettingsPatch\(state, \{ algorithm: "quadrants" \}, overwriteManualSelections\)/);
+    assert.match(panel, /applyCptSelectionSettingsPatch\(state, \{ algorithm: "maximum-angle" \}, overwriteManualSelections\)/);
+    assert.match(panel, /applyCptSelectionSettingsPatch\(state, \{\s*maxAngleDegrees:[\s\S]*?\}, overwriteManualSelections\)/);
+    assert.doesNotMatch(panel, /applyCptSelectionSettings\(/);
+  });
+
+  it("places monopoly distance and overwrite control in the settings flow", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /const \[overwriteManualSelections, setOverwriteManualSelections\] = useState\(false\)/);
+    assert.match(panel, /checked=\{overwriteManualSelections\}[\s\S]*type="checkbox"[\s\S]*setOverwriteManualSelections/);
+    assert.match(panel, /t\("cptSettings\.overwriteManualSelections"\)/);
+    assert.match(panel, /cptSettings\.maxDistance[\s\S]*cptSettings\.monopolyDistance/);
+    assert.match(panel, /ariaLabel=\{t\("cptSettings\.monopolyDistance"\)\}[\s\S]*min=\{0\}/);
+  });
+
+  it("defers CPT number changes until blur or Enter", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /function DraftNumberField/);
+    assert.match(panel, /const \[draft, setDraft\] = useState/);
+    assert.match(panel, /onBlur=\{commit\}/);
+    assert.match(panel, /if \(event\.key === "Enter"\) event\.currentTarget\.blur\(\)/);
+    assert.doesNotMatch(panel, /pileHeadLevelM: updatePileHeadLevel/);
+  });
+
+  it("groups CPT values into compact label-and-field rows", () => {
+    const panel = readRightPanelSource();
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+
+    assert.match(panel, /SettingsGroup title=\{t\("cptSettings\.distances"\)\}[\s\S]*ariaLabel=\{t\("cptSettings\.maxDistance"\)\}[\s\S]*ariaLabel=\{t\("cptSettings\.monopolyDistance"\)\}/);
+    assert.match(panel, /label=\{t\("cptSettings\.maxDistance"\)\}/);
+    assert.match(panel, /className=\{`settings-number-row/);
+    assert.match(styles, /\.settings-number-row\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)\s+68px\s+auto/);
+  });
+
+  it("draws the shared edge when the right settings segment is selected", () => {
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+
+    assert.match(styles, /\.segmented-control button:last-child\.is-selected\s*\{[\s\S]*?border-left:\s*1px solid var\(--theme-accent\)/);
+  });
+
+  it("highlights the permanent panel tabs on hover", () => {
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+
+    assert.match(styles, /\.right-panel-tab:hover:not\(:disabled\)\s*\{[\s\S]*?background:\s*var\(--theme-ribbon-btn-hover\)/);
+  });
+
+  it("keeps mixed algorithms unselected and maximum angle editable until a concrete alternative is common", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /active=\{settings\.algorithm === "quadrants"\}/);
+    assert.match(panel, /active=\{settings\.algorithm === "maximum-angle"\}/);
+    assert.match(panel, /disabled=\{settings\.algorithm !== null && settings\.algorithm !== "maximum-angle"\}/);
+  });
+
+  it("uses the themed focus treatment for algorithm options", () => {
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+
+    assert.match(styles, /\.algorithm-option:focus\s*\{[\s\S]*?outline:\s*none/);
+    assert.match(styles, /\.algorithm-option:focus-visible\s*\{[\s\S]*?box-shadow:\s*0 0 0 2px var\(--theme-focus-color\)/);
+  });
+
+  it("routes Modify selection into the shared CPT panel edit mode", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /startManualCptSelectionEdit\(state\)/);
+    assert.match(panel, /t\("actions\.modifySelection"\)/);
+    assert.match(panel, /className="settings-modify-button"[\s\S]*disabled=\{selectedLoadPoints\.length === 0\}/);
+    assert.doesNotMatch(panel, /draft\.cptIds/);
+  });
+});
+
+describe("React CPT panel edit mode", () => {
+  it("keeps Modify available, disables it without a selection, and presents draft controls", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /t\("actions\.modify"\)/);
+    assert.match(panel, /disabled=\{selectedLoadPoints\.length === 0\}/);
+    assert.match(panel, /selectOnlyNearestCpts\(state\)/);
+    assert.match(panel, /saveManualCptSelection\(state\)/);
+    assert.match(panel, /cancelManualCptSelection\(state\)/);
+    assert.match(panel, /draft\.loadPointIds\.includes\(loadPoint\.id\)/);
+  });
+
+  it("can restore algorithmic CPT selection directly from edit mode", () => {
+    const panel = readRightPanelSource();
+    const editActions = panel.match(/\{editing \? \([\s\S]*?<div className="cpt-table-wrap">/)?.[0] ?? "";
+
+    assert.match(editActions, /clearManualCptSelection\(state\)/);
+    assert.match(editActions, /t\("actions\.useAlgorithm"\)/);
+  });
+
+  it("saves the nearest-only selection immediately and closes edit mode", () => {
+    const panel = readRightPanelSource();
+    const editActions = panel.match(/\{editing \? \([\s\S]*?<div className="cpt-table-wrap">/)?.[0] ?? "";
+
+    assert.match(editActions, /saveManualCptSelection\(selectOnlyNearestCpts\(state\)\)/);
+  });
+
+  it("uses icon-only remove controls in edit mode and preserves normal CPT inspection links", () => {
+    const panel = readRightPanelSource();
+    const icons = readFileSync(resolve(import.meta.dirname, "../../template/ribbon/icons.ts"), "utf8");
+
+    assert.match(icons, /export const removeIcon = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">/);
+    assert.match(panel, /import \{[^}]*removeIcon[^}]*\} from "\.\.\/\.\.\/template\/ribbon\/icons\.ts"/);
+    assert.match(panel, /className="cpt-remove-button"/);
+    assert.match(panel, /aria-label=\{t\("actions\.removeCpt"/);
+    assert.match(panel, /dangerouslySetInnerHTML=\{\{ __html: removeIcon \}\}/);
+    assert.match(panel, /removeManualCpt\(state, row\.cpt\.id\)/);
+    assert.match(panel, /className="cpt-link"/);
+    assert.match(panel, /openCpt\(state, row\.cpt\.id\)/);
+  });
+
+  it("explains both CPT distance settings with information tooltips", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /helpText=\{t\("cptSettings\.maxDistanceHelp"\)\}/);
+    assert.match(panel, /helpText=\{t\("cptSettings\.monopolyDistanceHelp"\)\}/);
+    assert.match(panel, /className="settings-number-help"/);
+  });
+
+  it("keeps CPT names localized while edit mode disables their inspection links", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(
+      panel,
+      /overview\.columns\[index\] === "CPT"\s*\? localizeCptName\(value, t\)\s*:\s*localizeCptTableValue/,
+    );
+  });
+
+  it("localizes nearest and numbered manual selection labels", () => {
+    const panel = readRightPanelSource();
+    const nl = readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/nl/rightPanel.json"), "utf8");
+
+    assert.match(panel, /value\.toLowerCase\(\) === "nearest"[\s\S]*?t\("selection\.nearest"\)/);
+    assert.match(panel, /value\.match\(\/\^manual[\s\S]*?t\("selection\.manual"/);
+    assert.match(nl, /"selection\.nearest":\s*"dichtstbijzijnde"/);
+    assert.match(nl, /"selection\.manual":\s*"handmatig\{\{suffix\}\}"/);
+  });
+
+  it("shows live preview progress, failures, and governing CPT rows", () => {
+    const panel = readRightPanelSource();
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+    const en = readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/en/rightPanel.json"), "utf8");
+    const nl = readFileSync(resolve(import.meta.dirname, "../../../i18n/locales/nl/rightPanel.json"), "utf8");
+
+    assert.match(panel, /state\.cptSelectionPreview/);
+    assert.match(panel, /cpts\.previewCalculating/);
+    assert.match(panel, /cpts\.previewFailed/);
+    assert.match(panel, /row\.governingLoadPointCount > 0/);
+    assert.match(styles, /\.cpt-preview-status/);
+    assert.match(styles, /\.cpt-table tr\.is-governing/);
+    for (const translations of [en, nl]) {
+      assert.match(translations, /"cpts\.chosenPileFrd":/);
+      assert.match(translations, /"cpts\.governingFor":/);
+      assert.match(translations, /"cpts\.previewCalculating":/);
+      assert.match(translations, /"cpts\.previewFailed":/);
+    }
+  });
+});
+
+describe("React coordinate inspection", () => {
+  it("uses the shared two-column coordinate readout for CPTs and load points", () => {
+    const panel = readRightPanelSource();
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+
+    assert.match(panel, /import \{ CoordinateReadout \} from "\.\.\/shared\/CoordinateReadout\.ts"/);
+    assert.match(panel, /<CoordinateReadout points=\{\[selectedCpt\.cpt\]\} locale=\{i18n\.language\} \/>/);
+    assert.match(panel, /<CoordinateReadout points=\{selectedLoadPoints\} locale=\{i18n\.language\} \/>/);
+    assert.doesNotMatch(panel, /cpt-detail-grid/);
+    assert.match(styles, /\.load-point-panel > \.coordinate-readout,[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+    assert.match(styles, /\.load-point-panel > \.coordinate-readout div,[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*baseline/);
+    assert.match(panel, /className="load-point-force-label">F<sub>Ed<\/sub><\/span>/);
+    assert.match(panel, /selectedLoadPoints\.length > 1 \? <span>\{t\("loadPoints\.selection"\)\}<\/span> : null/);
+  });
+});
+
+describe("load-point group controls", () => {
+  it("discloses every selected member with its identity and FEd for single-member inspection", () => {
+    const panel = readRightPanelSource();
+    const styles = readFileSync(resolve(import.meta.dirname, "rightPanel.css"), "utf8");
+
+    assert.match(panel, /className="load-point-selection-disclosure"/);
+    assert.match(panel, /t\("loadPoints\.selectedCount"/);
+    assert.match(panel, /loadPoint\.design_load_kn\.toLocaleString/);
+    assert.match(panel, /selectLoadPoint\(state, loadPoint\.id\)/);
+    assert.match(styles, /\.load-point-selection-list/);
+  });
+
+  it("previews and applies group edits without changing assignments or locks", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /<LoadPointGroupEditButton/);
+    assert.match(panel, /onPreview\(action, selectedIds\)/);
+    assert.match(panel, /onApply\(action, selectedIds\)/);
+    assert.match(panel, /getSelectedGroupConflict\(groupAssignmentAssessment/);
+    assert.match(panel, /assessment\.conflictsByLoadPointId/);
+    assert.match(panel, /groupEditPending/);
+    assert.doesNotMatch(panel, /selectedPileConfigurationsByLoadPoint\.set/);
+  });
+
+  it("summarizes and resets stored overrides and mirrors group visibility", () => {
+    const panel = readRightPanelSource();
+
+    assert.match(panel, /settings\.manualGroups\.length/);
+    assert.match(panel, /settings\.ungroupedGroups\.length/);
+    assert.match(panel, /onApplyLoadPointGroupEdit\("reset_overrides"/);
+    assert.doesNotMatch(panel, /groupingSettings\.resetConfirm/);
+    assert.doesNotMatch(panel, /window\.confirm/);
+    assert.match(panel, /showLoadPointGroups/);
+    assert.match(panel, /groupingSettings\.viewHelp/);
+  });
+});

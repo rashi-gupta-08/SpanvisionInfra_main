@@ -1,0 +1,34 @@
+{
+  "persistedTheme": "blue",
+  "focusCheck": {
+    "outlineColor": "rgba(255, 255, 255, 0.65)",
+    "outlineWidth": "1.6px",
+    "visible": true
+  },
+  "preservedPanels": {
+    "collapsedLeft": true,
+    "rightWidth": 290,
+    "width": 1440
+  },
+  "initialGeometry": {
+    "transform": "translate(290.1320554293119, 50) scale(0.36012819730318507)",
+    "width": "900"
+  },
+  "committedGeometry": {
+    "status": "K01 Draaikiepraam 1200 x 1400 mm | meranti 1 cell(s)  1 cell(s) without hardware Uw 1.26 2 frame(s) | Zoom: 36%",
+    "transform": "translate(290.1320554293119, 50) scale(0.36012819730318507)",
+    "width": "1200"
+  },
+  "undoGeometry": {
+    "status": "K01 Draaikiepraam 900 x 1400 mm | meranti 1 cell(s)  1 cell(s) without hardware Uw 1.3 2 frame(s) | Zoom: 36%",
+    "width": "900"
+  },
+  "finalProductionMobile": {
+    "contentWidth": 390,
+    "documentWidth": 390,
+    "tabScroll": "auto",
+    "tableScroll": "auto",
+    "tableWidth": 920,
+    "width": 390
+  }
+}

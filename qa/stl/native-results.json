@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "checks": [
+    "Tk folder-dialog runtime",
+    "IFC native geometry runtime",
+    "FastAPI geometry and STL/3MF export",
+    "Branded export metadata",
+    "Mesh import",
+    "Branded API identity",
+    "Disabled update service",
+    "Bundled source/assets fingerprint"
+  ]
+}

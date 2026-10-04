@@ -1,0 +1,610 @@
+/**
+ * DoorsnedeTekening — de betondoorsnede met wapeningskorf als SVG.
+ *
+ * Toont wat de constructeur wil zien: de omtrek van de doorsnede — rechthoek,
+ * T of L — de beugel op de dekking, en de hoofdwapening als cirkels op ware
+ * schaal, zodat het aantal staven en hun diameter direct af te lezen zijn, met
+ * "3Ø16" / "2Ø12" als label. Maatlijnen voor b (boven), h (links) en de
+ * nuttige hoogte d (rechts), in de stijl van ProfielMiniatuur.
+ *
+ * DE VORM WORDT ECHT GETEKEND. De korfvalidatie kijkt naar de breedte op de
+ * hoogte van de rij; zou de tekening een T als rechthoek laten zien, dan zou
+ * een afgekeurde rij er in het beeld gewoon in passen en zou de melding
+ * onbegrijpelijk zijn. De banden en de omtrek komen daarom uit
+ * `wapeningskorf.ts`, dat dezelfde b(z) hanteert als `ConcreteSection` in de
+ * kern. Het enige wat de tekening zélf beslist, is waar de flens van een L
+ * ligt (links) — in de berekening is dat geen verschil, in het beeld wel.
+ *
+ * HET KADER VOLGT DE DOORSNEDE. Het tekenvlak was vierkant. Dat werkt voor een
+ * balk (300 × 500) maar niet voor een T met een meewerkende flens: bij
+ * b_eff = 2780 en h = 450 is de verhouding ruim 6 : 1, en op ware schaal werd
+ * dat een streep van een tiende van de kaderhoogte, met een flens van enkele
+ * pixels. De hoogte van het tekenvlak volgt daarom de verhouding h/b van de
+ * doorsnede zelf (zie [`tekenvlakHoogte`]); de schaal blijft daarmee waar en
+ * de doorsnede vult het beeld. Voor alles wat hoger is dan breed — de gewone
+ * balk, de kolom — verandert er niets: die zat al op de bovengrens.
+ *
+ * DE DEKKING WORDT PER ZIJDE GETEKEND. 4.4.1.1(1)P meet de dekking tot "het
+ * dichtstbijzijnde betonoppervlak", en die kan per zijde verschillen: bij een
+ * vloer met de bovenzijde binnen en de onderzijde buiten is de bovendekking
+ * kleiner dan de onderdekking. De beugel ligt dan niet meer overal even ver van
+ * de rand, en de tekening moet dat laten zien — anders klopt het beeld niet met
+ * de d waarmee gerekend wordt, en dat is precies de fout die op de bouwplaats
+ * pas opvalt. Zijn de drie dekkingen gelijk, dan komt er geen pixel anders te
+ * liggen dan voorheen. Het onderschrift zegt "dekking 30" bij één dekking en
+ * "dekking ↑25 ↓40 ↔30" zodra ze verschillen; één getal zou dan een onjuiste
+ * samenvatting van de tekening zijn.
+ *
+ * Kleuren komen standaard uit de theme-tokens, zodat de tekening in licht én
+ * donker leesbaar blijft. Het rapport geeft `RAPPORT_KLEUREN` mee: daar is de
+ * tekening papier en volgt hij het app-thema juist niet.
+ *
+ * DE HALVE KORF — waarom er een schakelaar [`Props.wapening`] is. In de
+ * profielkiezer wordt deze tekening bijgewerkt terwijl er nog getypt wordt, en
+ * dan is de korf onderweg onvermijdelijk incompleet: het aantal staat er al
+ * maar de diameter nog niet, de dekking is nog die van het vorige veld, de rij
+ * past nog niet in de breedte. `controleerKorf` in `wapeningskorf.ts` weigert
+ * zo'n korf, en terecht — een halve korf is een ánder wapeningsplan, geen
+ * benadering van het bedoelde.
+ *
+ * De tekening mag daar niet op omvallen, en mag al helemaal niet doen alsof de
+ * halve korf er zo ligt. `staafPosities` verdeelt namelijk óók een rij die niet
+ * past: hij smeert de staven uit over een binnenmaat die te klein is, zodat ze
+ * elkaar overlappen, en bij een dekking groter dan de halve breedte komen ze
+ * zelfs buiten het beton te liggen. Dat is een tekening van iets wat niet
+ * bestaat, en juist die is gevaarlijk — hij ziet er precies zo uit als een
+ * goede. `test-korftekening.mjs` legt allebei die uitkomsten vast.
+ *
+ * Daarom tekent deze component met `wapening={false}` ALLEEN het beton — de
+ * omtrek, met b, h en b_w. Niets verzonnen, niets weggelaten wat er wél is; de
+ * aanroeper zet de reden erbij, want die kent hem (in de profielkiezer is dat
+ * de melding van `controleerKorf`). Zodra de korf klopt komt de wapening
+ * terug, in dezelfde tekening op dezelfde plaats.
+ */
+import type { MouseEvent as ReactMouseEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { THEMA_KLEUREN, type BetonTekenKleuren } from "./tekenkleuren";
+import {
+  asAfstandMm,
+  banden,
+  dekkingIsRondomGelijk,
+  dekkingVanZijdeMm,
+  hartXMm,
+  heeftZijstaven,
+  maat,
+  nuttigeHoogteMm,
+  omtrekPunten,
+  rijLabel,
+  staafPosities,
+  zijstaafRij,
+  type KorfRij,
+  type Wapeningskorf,
+} from "./wapeningskorf";
+
+const KADER_W = 220;
+const MARGE_LINKS = 30;
+const MARGE_RECHTS = 34;
+const MARGE_BOVEN = 22;
+const MARGE_ONDER = 18;
+const TICK = 3;
+
+/** Breedte van het tekenvlak binnen het kader — vast, zodat figuren uitlijnen. */
+const TEKENVLAK_W = KADER_W - MARGE_LINKS - MARGE_RECHTS;
+
+/**
+ * Grenzen aan de hoogte van het tekenvlak.
+ *
+ * De bovengrens is precies de hoogte die het kader altijd had (220 − 22 − 18),
+ * zodat elke doorsnede die hoger is dan breed — een balk, een kolom — geen bit
+ * verschuift. De ondergrens houdt genoeg ruimte over voor de maatlijn boven,
+ * de d-maat rechts en het onderschrift.
+ */
+const TEKENVLAK_MIN_H = 40;
+const TEKENVLAK_MAX_H = 180;
+
+/**
+ * De hoogte van het tekenvlak voor een doorsnede b × h.
+ *
+ * De doorsnede wordt op ware schaal getekend en past dus altijd in
+ * `TEKENVLAK_W × hoogte`. Door de hoogte de verhouding h/b te laten volgen,
+ * vult de doorsnede het vlak in beide richtingen in plaats van als streep in
+ * een vierkant te blijven staan.
+ */
+function tekenvlakHoogte(bMm: number, hMm: number): number {
+  const gewenst = (TEKENVLAK_W * hMm) / bMm;
+  return Math.min(TEKENVLAK_MAX_H, Math.max(TEKENVLAK_MIN_H, gewenst));
+}
+
+interface Props {
+  korf: Wapeningskorf;
+  /**
+   * Teken de korf: beugel, staven, rijlabels, de d-maat en de dekking in het
+   * onderschrift. Uit = alleen het beton — zie "DE HALVE KORF" hierboven.
+   */
+  wapening?: boolean;
+  /** Toon de maatlijnen b, h en d (uit = alleen de doorsnede). */
+  maatvoering?: boolean;
+  /** Palet; standaard de theme-tokens, het rapport geeft RAPPORT_KLEUREN mee. */
+  kleuren?: BetonTekenKleuren;
+  /** Toegankelijke titel; standaard een omschrijving van de doorsnede. */
+  titel?: string;
+  className?: string;
+  /**
+   * Maak de rijlabels ("4Ø20", "2Ø12") klikbaar. De tekening bewerkt zelf
+   * niets: zij meldt welke rij is aangeklikt, en de eigenaar (het
+   * betonvenster) opent er een invoer voor. Zonder deze prop blijft de
+   * tekening een plaatje — zoals in het rapport.
+   */
+  onRij?: (zijde: KorfRij) => void;
+  geselecteerdeRij?: KorfRij | null;
+  /**
+   * Zet een "−" en "+" naast elk rijlabel om er in één klik een staaf af te
+   * halen of bij te leggen. De eigenaar begrenst het aantal; de tekening
+   * meldt alleen de richting.
+   */
+  onRijAantal?: (zijde: KorfRij, delta: 1 | -1) => void;
+  /**
+   * Dubbelklik op de tekening: de eigenaar opent er iets groters voor (de
+   * profielkiezer met doorsnede, korf en milieuklasse). Zonder deze prop
+   * doet dubbelklikken niets.
+   */
+  onDubbelklik?: () => void;
+}
+
+/**
+ * Het rijlabel ("4Ø20"), klikbaar als de eigenaar dat wil, met een "−" en
+ * "+" ernaast om er in één klik een staaf af te halen of bij te leggen.
+ * Dubbelklik wordt hier gestopt, zodat hij niet doorloopt naar de tekening
+ * (die er de profielkiezer voor opent).
+ */
+function RijLabel({
+  x, y, zijde, tekst, kleuren, onRij, onRijAantal,
+}: {
+  x: number;
+  y: number;
+  zijde: KorfRij;
+  tekst: string;
+  kleuren: BetonTekenKleuren;
+  onRij?: (zijde: KorfRij) => void;
+  onRijAantal?: (zijde: KorfRij, delta: 1 | -1) => void;
+}) {
+  const { t } = useTranslation("check");
+  // Halve labelbreedte, geschat op de tekenbreedte van de letters (7,5 px
+  // hoog, gemiddeld ruim de helft breed), zodat de knopjes net naast het
+  // label staan en er niet overheen vallen.
+  const halfBreedte = tekst.length * 7.5 * 0.56 / 2;
+  const stop = (e: ReactMouseEvent) => e.stopPropagation();
+  return (
+    <g onDoubleClick={stop}>
+      <text
+        x={x}
+        y={y}
+        fill={onRij ? kleuren.tekst : kleuren.tekstZwak}
+        fontSize="7.5"
+        textAnchor="middle"
+        className={onRij ? "beton-rijlabel-klikbaar" : undefined}
+        style={onRij ? { cursor: "pointer" } : undefined}
+        onClick={onRij ? () => onRij(zijde) : undefined}
+      >
+        {onRij && <title>{t(`concrete.sectionDrawing.editRow.${zijde}`)}</title>}
+        {tekst}
+      </text>
+      {onRijAantal && (
+        <>
+          <text
+            x={x - halfBreedte - 5}
+            y={y}
+            fill={kleuren.tekst}
+            fontSize="8.5"
+            fontWeight="700"
+            textAnchor="middle"
+            className="beton-rijknop"
+            style={{ cursor: "pointer" }}
+            onClick={() => onRijAantal(zijde, -1)}
+          >
+            <title>{t(`concrete.sectionDrawing.oneBarLess.${zijde}`)}</title>
+            −
+          </text>
+          <text
+            x={x + halfBreedte + 5}
+            y={y}
+            fill={kleuren.tekst}
+            fontSize="8.5"
+            fontWeight="700"
+            textAnchor="middle"
+            className="beton-rijknop"
+            style={{ cursor: "pointer" }}
+            onClick={() => onRijAantal(zijde, 1)}
+          >
+            <title>{t(`concrete.sectionDrawing.oneBarMore.${zijde}`)}</title>
+            +
+          </text>
+        </>
+      )}
+    </g>
+  );
+}
+
+function Pijl({ x, y, hoek, kleur }: { x: number; y: number; hoek: number; kleur: string }) {
+  return (
+    <polygon
+      points="0,0 5,-1.7 5,1.7"
+      fill={kleur}
+      transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${hoek})`}
+    />
+  );
+}
+
+export default function DoorsnedeTekening({
+  korf,
+  wapening = true,
+  maatvoering = true,
+  kleuren = THEMA_KLEUREN,
+  onRij,
+  geselecteerdeRij,
+  onRijAantal,
+  onDubbelklik,
+  titel,
+  className,
+}: Props) {
+  const { t } = useTranslation("check");
+  const d3 = korf.doorsnede;
+  const bMm = d3.b_mm;
+  const hMm = d3.h_mm;
+  if (!(bMm > 0) || !(hMm > 0)) return null;
+
+  const tekenW = TEKENVLAK_W;
+  const tekenH = tekenvlakHoogte(bMm, hMm);
+  const kaderH = MARGE_BOVEN + tekenH + MARGE_ONDER;
+  const s = Math.min(tekenW / bMm, tekenH / hMm);
+  const w = bMm * s;
+  const h = hMm * s;
+  const x0 = MARGE_LINKS + (tekenW - w) / 2;
+  const y0 = MARGE_BOVEN + (tekenH - h) / 2;
+
+  // z loopt in het model van onder naar boven; op het scherm van boven naar onder.
+  const sx = (xMm: number) => x0 + xMm * s;
+  const sy = (zMm: number) => y0 + (hMm - zMm) * s;
+
+  // De dekking is een maat PER BETONOPPERVLAK (4.4.1.1(1)P). De beugel ligt
+  // dus niet op één inzet rondom maar op drie: boven, onder en opzij. Zolang
+  // de drie gelijk zijn — de gewone balk — tekent dat precies wat er altijd
+  // stond; verschillen ze, dan is de beugel geen rechthoek meer die overal
+  // even ver van de rand ligt, en dát moet je kunnen zien.
+  const cBoven = dekkingVanZijdeMm(korf.korf, "Top");
+  const cOnder = dekkingVanZijdeMm(korf.korf, "Bottom");
+  const cZij = dekkingVanZijdeMm(korf.korf, "Sides");
+  const eenDekking = dekkingIsRondomGelijk(korf.korf);
+  const dBgl = korf.korf.stirrup_diameter_mm;
+  // Eén schakelaar, hier bovenaan: `wapening` uit betekent dat er geen staaf,
+  // geen beugel, geen rijlabel en geen d-maat is — d hangt immers aan de
+  // onderwapening, en zonder korf is er geen nuttige hoogte om te tonen.
+  const staven = wapening ? staafPosities(korf.korf, d3) : [];
+  const heeftOnder = wapening && korf.korf.bottom.count > 0 && korf.korf.bottom.diameter_mm > 0;
+  const heeftBoven = wapening && korf.korf.top.count > 0 && korf.korf.top.diameter_mm > 0;
+  // De zijstaven van een KOLOMkorf. Zij liggen tussen de hoekstaven in, en hun
+  // label komt daarom midden in de doorsnede te staan — daar is bij een kolom
+  // ruimte, en het wijst naar de twee kolommen staven links en rechts.
+  const zijstaven = staven.filter((st) => st.rij === "opzij");
+  const heeftZij = wapening && heeftZijstaven(korf.korf) && zijstaven.length > 0;
+  const d = nuttigeHoogteMm(korf.korf, hMm);
+
+  const omtrek = omtrekPunten(d3)
+    .map(([x, z]) => `${sx(x).toFixed(2)},${sy(z).toFixed(2)}`)
+    .join(" ");
+
+  // De beugel volgt het LIJF, niet de omhullende breedte: de hoofdbeugel van
+  // een T-ligger zit om het lijf, en de flens draagt daar zijn eigen
+  // dwarswapening. Bij een rechthoek is het lijf de hele doorsnede en staat
+  // er precies wat er altijd stond.
+  const inzetZij = cZij + dBgl / 2;
+  const inzetBoven = cBoven + dBgl / 2;
+  const inzetOnder = cOnder + dBgl / 2;
+  const lijf = banden(d3).reduce((a, b) => (b.bMm < a.bMm ? b : a));
+  const lijfHart = hartXMm(d3, 0.5 * (lijf.z0Mm + lijf.z1Mm));
+  const beugelBreedte = lijf.bMm - 2 * inzetZij;
+  const beugelHoogte = hMm - inzetBoven - inzetOnder;
+  const beugelPast = wapening && dBgl > 0 && beugelBreedte > 0 && beugelHoogte > 0;
+
+  const yMaatB = y0 - 9;
+  const xMaatH = x0 - 10;
+  const xMaatD = x0 + w + 10;
+
+  // Waar de rijlabels ("4Ø20", "2Ø12") komen te staan: in het beton naast de
+  // staven. Bij een lage doorsnede — een T met een brede meewerkende flens is
+  // maar een fractie zo hoog als breed — liggen de twee rijen zo dicht bij
+  // elkaar dat de labels over elkaar heen vallen. Twee onleesbare labels zijn
+  // erger dan geen: dan staan ze in het onderschrift, waar altijd ruimte is.
+  const yLabelOnder =
+    sy(asAfstandMm(korf.korf, korf.korf.bottom, "onder")) -
+    Math.max(3, (korf.korf.bottom.diameter_mm / 2) * s) -
+    2.5;
+  const yLabelBoven =
+    sy(hMm - asAfstandMm(korf.korf, korf.korf.top, "boven")) +
+    Math.max(3, (korf.korf.top.diameter_mm / 2) * s) +
+    8;
+  const LABEL_H = 9;
+  const labelsInDeDoorsnede =
+    !heeftOnder || !heeftBoven || yLabelOnder - yLabelBoven >= LABEL_H;
+
+  const vormLabel =
+    d3.shape === "Rectangle"
+      ? t("concrete.sectionDrawing.rectangleLabel", { b: maat(bMm), h: maat(hMm) })
+      : t(
+          d3.flange_at_bottom
+            ? "concrete.sectionDrawing.flangedLabelBottom"
+            : "concrete.sectionDrawing.flangedLabelTop",
+          {
+            vorm: d3.shape === "Tee" ? "T" : "L",
+            b: maat(bMm),
+            h: maat(hMm),
+            hf: maat(d3.h_f_mm ?? 0),
+            bw: maat(d3.b_w_mm ?? 0),
+          },
+        );
+  // De rijen in woorden, voor het onderschrift en het aria-label.
+  const rijenTekst = t("concrete.sectionDrawing.rowsCaption", {
+    onder: rijLabel(korf.korf.bottom),
+    boven: rijLabel(korf.korf.top),
+  });
+  const zijTekst = heeftZij
+    ? t("concrete.sectionDrawing.sidesCaption", { zij: rijLabel(zijstaafRij(korf.korf)) })
+    : "";
+
+  // Het onderschrift: alles wat er niet ín de tekening past. Dekking en beugel
+  // zijn korfgegevens en horen er dus niet te staan als de korf niet getekend
+  // is — dan is er in het beeld ook geen beugel om een maat bij te zetten.
+  // Het hart van de zijstaven: het midden van hun hoogtes, op de hartlijn van
+  // de doorsnede op die hoogte.
+  const zMiddenZij = heeftZij
+    ? zijstaven.reduce((a, st) => a + st.z, 0) / zijstaven.length
+    : 0;
+
+  const onderschrift = [
+    // De rijen komen alleen hier te staan als ze in de doorsnede zelf niet
+    // leesbaar passen; dan mogen ze niet wegvallen.
+    ...(wapening && !labelsInDeDoorsnede
+      ? [
+          `${rijenTekst}${heeftZij ? `, ${zijTekst}` : ""}`,
+        ]
+      : []),
+    ...(d3.shape === "Rectangle" ? [] : [`h_f ${maat(d3.h_f_mm ?? 0)}`]),
+    // Eén dekking rondom leest als "dekking 30"; verschillen de zijden, dan
+    // staan ze er alle drie, want dan is één getal een onjuiste samenvatting
+    // van de tekening.
+    ...(wapening
+      ? [
+          eenDekking
+            ? t("concrete.sectionDrawing.cover", { c: maat(cOnder) })
+            : t("concrete.sectionDrawing.coverPerSide", {
+                boven: maat(cBoven),
+                onder: maat(cOnder),
+                zij: maat(cZij),
+              }),
+        ]
+      : []),
+    ...(wapening && dBgl > 0 ? [t("concrete.sectionDrawing.stirrup", { d: maat(dBgl) })] : []),
+  ];
+
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${KADER_W} ${kaderH.toFixed(2)}`}
+      role={onRij ? "group" : "img"}
+      onDoubleClick={onDubbelklik}
+      style={onDubbelklik ? { cursor: "zoom-in" } : undefined}
+      aria-label={
+        // Wie de tekening niet ziet maar hoort, hoort hetzelfde als wat er
+        // staat: zonder korf in beeld ook geen staven in de omschrijving.
+        titel ??
+        (wapening
+          ? `${vormLabel}, ${rijenTekst}${heeftZij ? `, ${zijTekst}` : ""}`
+          : t("concrete.sectionDrawing.notDrawn", { vorm: vormLabel }))
+      }
+    >
+      {/* Beton — de werkelijke omtrek, dus ook de flens van een T of een L */}
+      <polygon points={omtrek} fill={kleuren.betonVlak} stroke={kleuren.betonLijn} strokeWidth="1" />
+
+      {/* Beugel om het lijf */}
+      {beugelPast && (
+        <rect
+          x={sx(lijfHart - lijf.bMm / 2 + inzetZij)}
+          y={sy(hMm - inzetBoven)}
+          width={beugelBreedte * s}
+          height={beugelHoogte * s}
+          rx={Math.max(1.5, 2 * dBgl * s)}
+          fill="none"
+          stroke={kleuren.beugel}
+          strokeWidth={Math.max(0.8, dBgl * s)}
+          strokeLinejoin="round"
+        />
+      )}
+      {/* Binnenbenen: bij meer dan twee beugelbenen (§9.2.2(8)) staan de
+          extra benen gelijkmatig tussen de twee buitenbenen — dezelfde
+          verdeling waarmee de dwarsafstand s_t is afgeleid. Zo is aan de
+          tekening te zien dat een vierbenige beugel geen gewone beugel is. */}
+      {beugelPast && (korf.korf.stirrup_legs ?? 2) > 2 && (() => {
+        const n = Math.round(korf.korf.stirrup_legs ?? 2);
+        const xLinks = lijfHart - lijf.bMm / 2 + inzetZij;
+        const stap = beugelBreedte / (n - 1);
+        const yTop = sy(hMm - inzetBoven);
+        const yOnder = sy(inzetOnder);
+        return Array.from({ length: n - 2 }, (_, k) => (
+          <line
+            key={`been${k}`}
+            x1={sx(xLinks + (k + 1) * stap)}
+            y1={yTop}
+            x2={sx(xLinks + (k + 1) * stap)}
+            y2={yOnder}
+            stroke={kleuren.beugel}
+            strokeWidth={Math.max(0.8, dBgl * s)}
+            strokeLinecap="round"
+          >
+            <title>{t("concrete.sectionDrawing.stirrupLeg", { k: k + 2, n })}</title>
+          </line>
+        ));
+      })()}
+
+      {/* Hoofdwapening op ware schaal. De ondergrens is er alleen zodat een
+          staaf bij een zeer brede doorsnede niet als onzichtbare stip
+          verdwijnt; zij is bewust klein gehouden, want een opgeblazen staaf
+          suggereert wapening die er niet ligt. */}
+      {staven.map((st, i) => (
+        <circle
+          key={i}
+          cx={sx(st.x)}
+          cy={sy(st.z)}
+          r={Math.max(0.6, (st.diameter / 2) * s)}
+          data-rij={st.rij === "onder" ? "bottom" : st.rij === "boven" ? "top" : "sides"}
+          role={onRij ? "button" : undefined}
+          tabIndex={onRij ? 0 : undefined}
+          aria-label={onRij ? t(`concrete.sectionDrawing.editRow.${st.rij === "onder" ? "bottom" : st.rij === "boven" ? "top" : "sides"}`) : undefined}
+          aria-pressed={onRij ? geselecteerdeRij === (st.rij === "onder" ? "bottom" : st.rij === "boven" ? "top" : "sides") : undefined}
+          fill={geselecteerdeRij === (st.rij === "onder" ? "bottom" : st.rij === "boven" ? "top" : "sides") ? "var(--theme-accent, #d97706)" : kleuren.betonLijn}
+          stroke={geselecteerdeRij === (st.rij === "onder" ? "bottom" : st.rij === "boven" ? "top" : "sides") ? "var(--theme-accent, #d97706)" : undefined}
+          strokeWidth={1.5}
+          style={onRij ? { cursor: "pointer" } : undefined}
+          onClick={onRij ? e => { e.stopPropagation(); onRij(st.rij === "onder" ? "bottom" : st.rij === "boven" ? "top" : "sides"); } : undefined}
+          onDoubleClick={onRij ? e => e.stopPropagation() : undefined}
+          onKeyDown={onRij ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onRij(st.rij === "onder" ? "bottom" : st.rij === "boven" ? "top" : "sides"); } } : undefined}
+        />
+      ))}
+
+      {/* Labels van de rijen: in het beton, naast de staven — maar alleen als
+          ze elkaar daar niet raken; anders staan ze in het onderschrift. */}
+      {labelsInDeDoorsnede && heeftOnder && (
+        <RijLabel
+          x={sx(hartXMm(d3, asAfstandMm(korf.korf, korf.korf.bottom, "onder")))}
+          y={yLabelOnder}
+          zijde="bottom"
+          tekst={rijLabel(korf.korf.bottom)}
+          kleuren={kleuren}
+          onRij={onRij}
+          onRijAantal={onRijAantal}
+        />
+      )}
+      {labelsInDeDoorsnede && heeftBoven && (
+        <RijLabel
+          x={sx(hartXMm(d3, hMm - asAfstandMm(korf.korf, korf.korf.top, "boven")))}
+          y={yLabelBoven}
+          zijde="top"
+          tekst={rijLabel(korf.korf.top)}
+          kleuren={kleuren}
+          onRij={onRij}
+          onRijAantal={onRijAantal}
+        />
+      )}
+      {/* De zijstaven: "2Ø16" met erachter "per zijde", want dat aantal is het
+          aantal op ÉÉN zijkant. Zonder die twee woorden leest de tekening als
+          twee staven in totaal terwijl er vier liggen. */}
+      {labelsInDeDoorsnede && heeftZij && (
+        <>
+          <RijLabel
+            x={sx(hartXMm(d3, zMiddenZij))}
+            y={sy(zMiddenZij) - 2}
+            zijde="sides"
+            tekst={rijLabel(zijstaafRij(korf.korf))}
+            kleuren={kleuren}
+            onRij={onRij}
+            onRijAantal={onRijAantal}
+          />
+          <text
+            x={sx(hartXMm(d3, zMiddenZij))}
+            y={sy(zMiddenZij) + 6}
+            fill={kleuren.tekstZwak}
+            fontSize="6"
+            textAnchor="middle"
+          >
+            {t("concrete.sectionDrawing.perSide")}
+          </text>
+        </>
+      )}
+
+      {maatvoering && (
+        <g stroke={kleuren.maatlijn} strokeWidth="0.6">
+          {/* b-maatlijn boven */}
+          <line x1={x0} y1={yMaatB} x2={x0 + w} y2={yMaatB} />
+          <line x1={x0} y1={yMaatB - TICK} x2={x0} y2={yMaatB + TICK} />
+          <line x1={x0 + w} y1={yMaatB - TICK} x2={x0 + w} y2={yMaatB + TICK} />
+          {/* h-maatlijn links */}
+          <line x1={xMaatH} y1={y0} x2={xMaatH} y2={y0 + h} />
+          <line x1={xMaatH - TICK} y1={y0} x2={xMaatH + TICK} y2={y0} />
+          <line x1={xMaatH - TICK} y1={y0 + h} x2={xMaatH + TICK} y2={y0 + h} />
+          {/* d-maatlijn rechts: van bovenrand tot as onderwapening */}
+          {heeftOnder && (
+            <>
+              <line x1={xMaatD} y1={y0} x2={xMaatD} y2={sy(hMm - d)} />
+              <line x1={xMaatD - TICK} y1={y0} x2={xMaatD + TICK} y2={y0} />
+              <line x1={xMaatD - TICK} y1={sy(hMm - d)} x2={xMaatD + TICK} y2={sy(hMm - d)} />
+              <line x1={x0 + w} y1={sy(hMm - d)} x2={xMaatD} y2={sy(hMm - d)} strokeDasharray="2 2" />
+            </>
+          )}
+          {/* Lijfbreedte: de maat die bij een T of L het verschil maakt */}
+          {d3.shape !== "Rectangle" && (
+            <>
+              <line
+                x1={sx(lijfHart - lijf.bMm / 2)}
+                y1={sy(0.5 * (lijf.z0Mm + lijf.z1Mm))}
+                x2={sx(lijfHart + lijf.bMm / 2)}
+                y2={sy(0.5 * (lijf.z0Mm + lijf.z1Mm))}
+              />
+            </>
+          )}
+        </g>
+      )}
+      {maatvoering && (
+        <>
+          <Pijl x={x0} y={yMaatB} hoek={0} kleur={kleuren.maatlijn} />
+          <Pijl x={x0 + w} y={yMaatB} hoek={180} kleur={kleuren.maatlijn} />
+          <Pijl x={xMaatH} y={y0} hoek={90} kleur={kleuren.maatlijn} />
+          <Pijl x={xMaatH} y={y0 + h} hoek={270} kleur={kleuren.maatlijn} />
+          <text x={x0 + w / 2} y={yMaatB - 3} fill={kleuren.tekstMaat} fontSize="7.5" textAnchor="middle">
+            {d3.shape === "Rectangle" ? "b" : "b_eff"} {maat(bMm)}
+          </text>
+          <text
+            x={xMaatH - 3}
+            y={y0 + h / 2}
+            fill={kleuren.tekstMaat}
+            fontSize="7.5"
+            textAnchor="middle"
+            transform={`rotate(-90 ${(xMaatH - 3).toFixed(2)} ${(y0 + h / 2).toFixed(2)})`}
+          >
+            h {maat(hMm)}
+          </text>
+          {d3.shape !== "Rectangle" && (
+            <text
+              x={sx(lijfHart)}
+              y={sy(0.5 * (lijf.z0Mm + lijf.z1Mm)) - 2.5}
+              fill={kleuren.tekstMaat}
+              fontSize="7"
+              textAnchor="middle"
+            >
+              b_w {maat(lijf.bMm)}
+            </text>
+          )}
+          {heeftOnder && (
+            <>
+              <Pijl x={xMaatD} y={y0} hoek={90} kleur={kleuren.maatlijn} />
+              <Pijl x={xMaatD} y={sy(hMm - d)} hoek={270} kleur={kleuren.maatlijn} />
+              <text
+                x={xMaatD + 3}
+                y={y0 + (h * d) / hMm / 2}
+                fill={kleuren.tekstMaat}
+                fontSize="7.5"
+                textAnchor="middle"
+                transform={`rotate(90 ${(xMaatD + 3).toFixed(2)} ${(y0 + (h * d) / hMm / 2).toFixed(2)})`}
+              >
+                d {maat(d)}
+              </text>
+            </>
+          )}
+          {onderschrift.length > 0 && (
+            <text x={x0 + w / 2} y={y0 + h + 12} fill={kleuren.tekstMaat} fontSize="7" textAnchor="middle">
+              {onderschrift.join(", ")}
+            </text>
+          )}
+        </>
+      )}
+    </svg>
+  );
+}

@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openaec-reports"
+version = "0.1.0"
+description = "Modulaire PDF report generator voor OpenAEC engineering rapporten"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Jochem Kolthof", email = "jochem25@gmail.com" },
+]
+keywords = ["pdf", "reports", "engineering", "construction", "bouwkunde"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+    "Topic :: Printing",
+]
+
+dependencies = [
+    "reportlab>=4.0",
+    "svglib>=0.9",
+    "PyYAML>=6.0",
+    "Pillow>=10.0",
+    "requests>=2.31",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "python-multipart>=0.0.9",
+    "jsonschema>=4.20.0",
+    "pymupdf>=1.24",
+    "numpy>=1.24",
+    "pdfrw>=0.4",
+    "pyproj>=3.6",
+    "PyJWT>=2.8",
+    "cryptography>=41.0",
+    "bcrypt>=4.0",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+    "mypy>=1.0",
+    "httpx>=0.27.0",
+]
+kadaster = [
+    "owslib>=0.31",
+]
+brand-tools = [
+    "pymupdf>=1.24",
+    "Pillow>=10.0",
+    "numpy>=1.24",
+]
+
+[project.scripts]
+openaec-report = "openaec_reports.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openaec_reports"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"schemas" = "openaec_reports/schemas"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true

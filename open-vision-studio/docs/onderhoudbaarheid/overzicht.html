@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Onderhoudbaarheidsonderzoek Open Planner Studio — elf kritieke bevindingen, wat goed is, en een gefaseerd plan.">
+<title>Onderhoudbaarheid — Open Planner Studio</title>
+<style>
+  :root {
+    --bg: #ECEDE9;
+    --surface: #FBFBF9;
+    --surface-2: #F2F3EF;
+    --ink: #1A1D22;
+    --ink-soft: #3A3F47;
+    --muted: #5C626C;
+    --line: #D8DAD4;
+    --line-soft: #E4E6E0;
+    --accent: #1B6E78;
+    --sev-kritiek: #B43024;
+    --sev-hoog: #B26516;
+    --sev-middel: #7C7A16;
+    --ok: #2C6E49;
+
+    --step--1: 0.8125rem;
+    --step-0: 1rem;
+    --step-1: 1.1875rem;
+    --step-2: 1.4375rem;
+    --step-3: 1.75rem;
+    --step-4: 2.25rem;
+
+    --display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --body: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181C; --surface: #1D2126; --surface-2: #23282E;
+      --ink: #E4E6E8; --ink-soft: #C3C7CC; --muted: #8A9099;
+      --line: #2E343B; --line-soft: #262B31; --accent: #46A9B4;
+      --sev-kritiek: #E5705F; --sev-hoog: #DFA054; --sev-middel: #BFB94F; --ok: #6FBF8E;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #15181C; --surface: #1D2126; --surface-2: #23282E;
+    --ink: #E4E6E8; --ink-soft: #C3C7CC; --muted: #8A9099;
+    --line: #2E343B; --line-soft: #262B31; --accent: #46A9B4;
+    --sev-kritiek: #E5705F; --sev-hoog: #DFA054; --sev-middel: #BFB94F; --ok: #6FBF8E;
+  }
+
+  :root[data-theme="light"] {
+    --bg: #ECEDE9; --surface: #FBFBF9; --surface-2: #F2F3EF;
+    --ink: #1A1D22; --ink-soft: #3A3F47; --muted: #5C626C;
+    --line: #D8DAD4; --line-soft: #E4E6E0; --accent: #1B6E78;
+    --sev-kritiek: #B43024; --sev-hoog: #B26516; --sev-middel: #7C7A16; --ok: #2C6E49;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: var(--step-0);
+    line-height: 1.62;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0 1.15rem 5rem;
+  }
+
+  /* theme toggle */
+  .theme-btn {
+    position: fixed;
+    top: max(0.65rem, env(safe-area-inset-top));
+    right: 0.7rem;
+    z-index: 10;
+    font-family: var(--display);
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.34rem 0.7rem;
+    cursor: pointer;
+  }
+  .theme-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .masthead { padding: 2.75rem 0 1.75rem; border-bottom: 2px solid var(--ink); }
+
+  .eyebrow {
+    font-family: var(--display); font-size: 0.6875rem; font-weight: 650;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.85rem;
+  }
+
+  h1 {
+    font-family: var(--display); font-size: var(--step-4); font-weight: 700;
+    letter-spacing: -0.022em; line-height: 1.08; text-wrap: balance; margin: 0 0 0.7rem;
+  }
+
+  .standfirst {
+    font-size: var(--step-1); line-height: 1.5; color: var(--ink-soft);
+    margin: 0 0 1.4rem; text-wrap: pretty;
+  }
+
+  .meta {
+    font-family: var(--display); font-size: var(--step--1); color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; margin: 0;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); margin: 2rem 0;
+  }
+  @media (min-width: 30rem) { .stats { grid-template-columns: repeat(3, 1fr); } }
+
+  .stat { background: var(--surface); padding: 0.9rem 0.85rem; }
+  .stat b {
+    display: block; font-family: var(--display); font-size: var(--step-2); font-weight: 700;
+    letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .stat span {
+    display: block; font-family: var(--display); font-size: 0.6875rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); margin-top: 0.3rem;
+  }
+
+  section { margin-top: 3.25rem; }
+
+  h2 {
+    font-family: var(--display); font-size: var(--step-3); font-weight: 700;
+    letter-spacing: -0.018em; line-height: 1.15; text-wrap: balance; margin: 0 0 0.35rem;
+  }
+
+  .section-note {
+    font-family: var(--display); font-size: var(--step--1); color: var(--muted);
+    margin: 0 0 1.4rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--line);
+  }
+
+  h3 {
+    font-family: var(--display); font-size: var(--step-1); font-weight: 650;
+    letter-spacing: -0.012em; margin: 2rem 0 0.6rem; text-wrap: balance;
+  }
+
+  p { margin: 0 0 1rem; text-wrap: pretty; }
+  p:last-child { margin-bottom: 0; }
+
+  code {
+    font-family: var(--mono); font-size: 0.855em; background: var(--surface-2);
+    border: 1px solid var(--line-soft); border-radius: 3px; padding: 0.06em 0.32em;
+    overflow-wrap: anywhere;
+  }
+
+  .verdict {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 4px solid var(--accent); padding: 1.25rem 1.15rem; margin: 2rem 0;
+  }
+  .verdict p { font-size: var(--step-0); }
+
+  .findings { display: flex; flex-direction: column; gap: 0.7rem; }
+
+  details.card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 5px solid var(--sev, var(--muted)); overflow: hidden;
+  }
+  details.card[data-sev="kritiek"] { --sev: var(--sev-kritiek); }
+  details.card[data-sev="hoog"] { --sev: var(--sev-hoog); }
+  details.card[data-sev="middel"] { --sev: var(--sev-middel); }
+
+  details.card > summary {
+    cursor: pointer; list-style: none; padding: 0.95rem 2.4rem 0.95rem 1rem; position: relative;
+  }
+  details.card > summary::-webkit-details-marker { display: none; }
+  summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+  .tagline { display: flex; align-items: baseline; gap: 0.55rem; margin-bottom: 0.3rem; }
+
+  .key { font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: var(--sev); letter-spacing: 0.02em; }
+
+  .sev-tag {
+    font-family: var(--display); font-size: 0.625rem; font-weight: 650; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--sev); border: 1px solid var(--sev);
+    border-radius: 2px; padding: 0.08rem 0.32rem; white-space: nowrap;
+  }
+
+  .headline {
+    font-family: var(--display); font-size: 1.0625rem; font-weight: 620; line-height: 1.32;
+    letter-spacing: -0.011em; display: block; text-wrap: pretty;
+  }
+
+  .chev {
+    position: absolute; right: 0.9rem; top: 1.15rem; width: 9px; height: 9px;
+    border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg); transition: transform 0.18s ease;
+  }
+  details[open] .chev { transform: rotate(-135deg); }
+  @media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
+
+  .card-body {
+    padding: 0.9rem 1rem 1.1rem; font-size: 0.9375rem; border-top: 1px solid var(--line-soft);
+  }
+  .card-body p { margin-bottom: 0.75rem; }
+
+  .evidence {
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.55;
+    background: var(--surface-2); border: 1px solid var(--line-soft);
+    padding: 0.6rem 0.7rem; margin: 0 0 0.8rem; overflow-x: auto; white-space: pre;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fix { font-size: 0.9375rem; border-top: 1px dashed var(--line); padding-top: 0.7rem; margin: 0; }
+  .fix b {
+    font-family: var(--display); font-size: 0.6875rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent); display: block;
+    margin-bottom: 0.22rem; font-weight: 650;
+  }
+
+  .phase { border: 1px solid var(--line); background: var(--surface); padding: 1.05rem 1rem; margin-bottom: 0.85rem; }
+  .phase-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem;
+    margin-bottom: 0.75rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line-soft);
+  }
+  .phase-head h3 { margin: 0; font-size: var(--step-1); }
+  .phase-when {
+    font-family: var(--mono); font-size: 0.72rem; color: var(--muted);
+    white-space: nowrap; font-variant-numeric: tabular-nums;
+  }
+
+  ul.items { margin: 0; padding: 0; list-style: none; }
+  ul.items li { font-size: 0.9375rem; padding: 0.32rem 0 0.32rem 1.05rem; position: relative; text-wrap: pretty; }
+  ul.items li::before {
+    content: ""; position: absolute; left: 0; top: 0.82em;
+    width: 0.5rem; height: 2px; background: var(--accent);
+  }
+
+  .gate { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .gate-row {
+    background: var(--surface); padding: 0.6rem 0.8rem; display: flex;
+    align-items: baseline; justify-content: space-between; gap: 0.8rem; font-size: 0.9375rem;
+  }
+  .gate-row span:first-child { font-family: var(--display); }
+  .gate-row em {
+    font-family: var(--display); font-style: normal; font-size: 0.6875rem; font-weight: 650;
+    letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+  }
+  .g-ja em { color: var(--ok); }
+  .g-mits em { color: var(--sev-hoog); }
+  .g-nee em { color: var(--sev-kritiek); }
+
+  .good { border: 1px solid var(--line); border-left: 4px solid var(--ok); background: var(--surface); padding: 1.05rem 1rem; }
+  .good ul { margin: 0; padding-left: 1.1rem; }
+  .good li { margin-bottom: 0.45rem; font-size: 0.9375rem; text-wrap: pretty; }
+  .good li:last-child { margin-bottom: 0; }
+
+  .docs { display: flex; flex-direction: column; gap: 0.55rem; }
+  .doc { border-bottom: 1px solid var(--line-soft); padding-bottom: 0.55rem; }
+  .doc:last-child { border-bottom: none; }
+  .doc b {
+    font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--accent);
+    display: block; overflow-wrap: anywhere;
+  }
+  .doc span { font-size: 0.9rem; color: var(--ink-soft); }
+
+  footer {
+    margin-top: 3.5rem; padding-top: 1.2rem; border-top: 2px solid var(--ink);
+    font-family: var(--display); font-size: var(--step--1); color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-btn" id="themeBtn" type="button" aria-label="Wissel tussen licht en donker thema">Thema</button>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Onderhoudbaarheidsonderzoek</p>
+    <h1>Open Planner Studio</h1>
+    <p class="standfirst">Een codebase die op de plekken die ertoe doen ongewoon goed in elkaar zit — en elf gaten waar aannames stilletjes één laag te ver reiken.</p>
+    <p class="meta"><span>25 juli 2026</span><span>10 deelonderzoeken</span><span>10 hyperkritische reviews</span></p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><b>49.860</b><span>regels TypeScript</span></div>
+    <div class="stat"><b>431</b><span>gedragstests</span></div>
+    <div class="stat"><b>0</b><span>any-types</span></div>
+    <div class="stat"><b>11</b><span>kritieke gaten</span></div>
+    <div class="stat"><b>83</b><span>regels Rust</span></div>
+    <div class="stat"><b>14</b><span>talen</span></div>
+  </div>
+
+  <div class="verdict">
+    <p><strong>Het eerlijke oordeel.</strong> Dit is bovengemiddeld onderhouden code. Nul <code>any</code>-types en nul TODO-markers over bijna 50.000 regels, een documentcontract dat de compiler laat meekijken, een testsuite van 431 gevallen die de échte store draait, en een engine-laag die aantoonbaar niets van de state weet.</p>
+    <p>De problemen zitten niet in slordigheid. Ze zitten in <strong>drie herhalende patronen</strong>: aannames die één laag te ver reiken, vangnetten die niet vangen, en het volledig ontbreken van een manier om de gebruiker te vertellen dat er iets misging.</p>
+  </div>
+
+  <section>
+    <h2>De drie patronen</h2>
+    <p class="section-note">Waarom losse bugs hier steeds dezelfde vorm hebben</p>
+
+    <h3>Aannames die één laag te ver reiken</h3>
+    <p>De datumparser, de IFC-tokenizer en de herstel-lezer zijn alle drie correct op het gebaande pad en stil kapot daarbuiten. Geen van de drie gooit een fout; ze geven een plausibel ogend maar verkeerd antwoord terug.</p>
+
+    <h3>Vangnetten die niet vangen</h3>
+    <p>De round-triptest vergelijkt via een handgeschreven veldlijst, dus een nieuw veld glipt erdoor. Een testgeval met een typefout in de verwachting is gewoon groen. De testmap wordt niet getypecheckt. En vóór een release of een productie-deploy draait er geen enkele test.</p>
+
+    <h3>Geen zichtbaar foutkanaal</h3>
+    <p>Mislukte opslag, corrupte invoer en een kapotte updateketen hebben alle drie precies hetzelfde symptoom: niets. Er is één toast in de hele applicatie, en die zit vast in een canvas-component.</p>
+  </section>
+
+  <section>
+    <h2>De elf kritieke bevindingen</h2>
+    <p class="section-note">Tik een kaart aan voor bewijs en de voorgestelde ingreep</p>
+
+    <div class="findings">
+
+      <details class="card" data-sev="kritiek">
+        <summary>
+          <span class="tagline"><span class="key">K1</span><span class="sev-tag">Kritiek</span></span>
+          <span class="headline">De hele planning schuift een dag op ten westen van Greenwich</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p><code>parseDate</code> maakt een UTC-tijdstip aan en leest het vervolgens uit met <em>lokale</em> getters. Bij elke negatieve tijdzone-offset valt de datum een dag terug. Honderd aanroepen in tweeëntwintig bestanden hangen hieraan — solver, kalender, renderer, exports.</p>
+          <p class="evidence">TZ=Europe/Amsterdam   431/431  groen
+TZ=Asia/Tokyo        431/431  groen
+TZ=America/New_York  311/431  ← 120 falen
+TZ=Pacific/Midway    311/431</p>
+          <p>Drie keer onafhankelijk gemeten. De browserversie staat productie-live, dus dit raakt vandaag elke gebruiker in Noord- en Zuid-Amerika. De zomertijd-variant is nog gemener: in de Azoren schuift de winterhelft van een project wel en de zomerhelft niet, waardoor een taak die eind maart kruist van lengte verandert.</p>
+          <p class="fix"><b>Ingreep</b> Parse de datumkop tekstueel in plaats van via <code>Date</code>. De fix is bewezen compleet: alle zeven geteste zones weer groen, inclusief alle losse controlescripts. Voeg daarna een tijdzone-matrix toe aan de testrun, anders sluipt het terug.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="kritiek">
+        <summary>
+          <span class="tagline"><span class="key">K2</span><span class="sev-tag">Kritiek</span></span>
+          <span class="headline">Een taaknaam met een puntkomma verandert stil de duur bij opslaan</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>De STEP-parser is op <em>drie</em> lagen niet tekst-bewust: de sectiesplitsing, het wegknippen van commentaar, en de entiteit-regex. En de schrijfkant zet de projectnaam ongeëscapet in de bestandskop.</p>
+          <p class="evidence">"Levering (beton); wk 12"  duur 7
+   ↓ opslaan + heropenen
+"'Levering (beton"        duur 5   ← wbs-code weg
+notitie met ");"          → verdwenen
+"ENDSEC;" in projectnaam  → bestand onleesbaar</p>
+          <p>Dit is normale Nederlandse plantekst. En het is óók het pad waarlangs de automatische back-up elke tien seconden schrijft. Een bedrijfsnaam als <em>Van 't Hof BV</em> levert bovendien een bestand op dat andere IFC-programma's mogen weigeren.</p>
+          <p class="fix"><b>Ingreep</b> Eerst een regressiebatterij met de bewezen gevallen, dan alle drie de lagen tekst-bewust maken, dan de bestandskop escapen. Niet in één keer: dit zijn drie call-sites, geen dertig regels.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K3</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">Na een crash zijn je baselines weg — en de volgende opslag maakt dat definitief</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>De hele keten draagt baselines: de back-up schrijft ze weg, de lezer geeft ze terug, het documentcontract kent ze. Eén functie in het herstelpad laat de twee velden weg. Ze zijn optioneel getypeerd, dus de compiler zwijgt.</p>
+          <p>Na herstel staat het document als gewijzigd gemarkeerd. De eerstvolgende Ctrl+S schrijft de baseline-loze versie over het origineel heen.</p>
+          <p class="fix"><b>Ingreep</b> Twee regels toevoegen is de directe fix; de velden verplicht maken in het contract voorkomt de volgende. Elders in de code staat een commentaar over precies deze bugklasse — daar is hij wél opgelost.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K4</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">Een half weggeschreven back-up herstelt als compleet plan zonder verbanden</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>De back-up wordt niet atomair geschreven, en de IFC-lezer gooit nooit een fout. Een snapshot die tijdens een crash halverwege bleef steken, wordt dus doodleuk ingelezen.</p>
+          <p class="evidence">snapshot 70% →  8 taken,  0 relaties
+snapshot 80% → 10 taken,  0 relaties  ← compleet ogend
+snapshot 90% → 10 taken,  7 relaties</p>
+          <p>Bij tachtig procent krijg je al je taken terug en geen enkele afhankelijkheid. De gebruiker ziet een intacte takenlijst en heeft geen aanleiding om te twijfelen. Daarna wist het herstelproces de snapshot.</p>
+          <p class="fix"><b>Ingreep</b> Schrijf naar een tijdelijk bestand en hernoem; laat de lezer een fout gooien bij een ontbrekende afsluiting. Ruim de back-up pas op ná een geslaagd herstel.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K5</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">Twee open vensters wissen continu elkaars vangnet</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>Er is niets dat een tweede instantie tegenhoudt, en beide gebruiken dezelfde map en hetzelfde voorvoegsel. De opruimlus verwijdert elk herstelbestand dat niet in de <em>eigen</em> documentenlijst staat — dus elke tien seconden vaagt instantie B de snapshots van A weg.</p>
+          <p>Dezelfde lus is eenzijdig: één keer de productieversie starten wist ook alle herstelbestanden van elke ontwikkel-worktree.</p>
+          <p class="fix"><b>Ingreep</b> Voeg de single-instance-plugin toe, en beperk de opruimlus tot wat in het eigen vorige manifest stond in plaats van tot alles wat op het voorvoegsel matcht.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K6</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">Een uitgeschakelde extensie kan nog steeds code uitvoeren</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>Het icoonveld uit een extensiemanifest wordt als rauwe HTML gerenderd. Manifesten worden in de winkel gezet <em>voordat</em> de versiecontrole draait en ongeacht of de extensie aan staat.</p>
+          <p>Gevolg: een <code>&lt;img src=x onerror=…&gt;</code> in het manifest vuurt zodra je het extensiescherm opent — ook bij een extensie die je hebt uitgezet, en ook bij een die geweigerd wordt. De uit-schakelaar is dus geen grens.</p>
+          <p>De catalogus-kaart doet het wél goed, met een commentaar dat precies dit gevaar benoemt. Dezelfde data wordt ná installatie alsnog als HTML gerenderd.</p>
+          <p class="fix"><b>Ingreep</b> Vervang het HTML-icoon door een emoji- of icoonnaamveld. Van de drie plekken is dit de enige echte kwetsbaarheid — de andere twee zitten achter een grens die toch al open ligt.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K7</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">Exports sturen verouderde datums naar derden</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>Herberekenen is handmatig en staat standaard uit. De exportknoppen — P6, MS Project, CSV, PDF — controleren niet of de planning nog actueel is en herberekenen niet zelf. Ze schrijven gewoon de laatst berekende datums weg.</p>
+          <p>Dit is de enige bevinding waarvan de schade buiten de applicatie terechtkomt: bij een hoofdaannemer die die datums contractueel leest. Opvallend genoeg waarschuwt het baseline-scherm wél.</p>
+          <p class="fix"><b>Ingreep</b> Herbereken in de exportfunctie zelf. Let op: bij een cyclische afhankelijkheid stopt de solver vroegtijdig terwijl de verouderd-vlag al gewist is — die tak moet de export blokkeren.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K8</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">Als opslaan mislukt, gebeurt er zichtbaar niets</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>Er zijn tientallen catch-blokken en precies één toast, die vastzit in een canvas-component. Openen, recente bestanden, automatische back-up en herstel loggen alleen naar de console.</p>
+          <p>De opslaanfunctie heeft helemaal geen foutafhandeling. Faalt het schrijven, dan blijft de afsluitdialoog permanent staan zonder uitleg. Realistisch scenario: opslaan op een netwerkschijf, herstarten, en Ctrl+S doet vanaf dan letterlijk niets.</p>
+          <p class="fix"><b>Ingreep</b> Til de bestaande toast naar de globale state en sluit de vijf bestandspaden erop aan. Bouw geen tweede implementatie — dat is precies de duplicatiefout die het onderzoek elders aanwijst.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K9</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">Er draait geen enkele test vóór een release of een productie-deploy</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>De CI reageert op branches en pull requests — niet op tags. De release-workflow heeft geen enkele teststap. En de productie-deploy naar de live website draait onafhankelijk van de CI: beide starten los op dezelfde push, dus een rode testsuite houdt de deploy niet tegen.</p>
+          <p>Daar bovenop faalt de testrun zelf volledig stil bij een compilatiefout: alle output wordt onderdrukt, dus je krijgt een rode job met een lege log.</p>
+          <p class="fix"><b>Ingreep</b> Een testpoort vooraan in de release-workflow, de deploy koppelen aan een geslaagde CI, en de foutuitvoer van de bundelstap niet meer wegwerpen.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K10</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">Een nieuw veld passeert twee compilercontroles en 431 tests zonder ooit opgeslagen te worden</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>De round-triptest belooft in zijn eigen kop dat hij zichzelf uitbreidt. Dat klopt half: een nieuw veld geeft inderdaad compilatiefouten. Maar de vergelijking loopt over een handgeschreven veldlijst, dus een veld dat daar niet in staat wordt nooit vergeleken.</p>
+          <p>Twee keer onafhankelijk uitgevoerd: veld toegevoegd, beide compilatiefouten opgelost zoals een ontwikkelaar dat zou doen, lezer en schrijver niet aangeraakt — alles groen. Geen van de andere batterijen vangt het.</p>
+          <p>De onderliggende oorzaak: de testmap valt buiten de typecontrole. Daardoor kon de assertie-parameter ongetypeerd blijven, en is een testgeval met een typefout in de verwachting gewoon groen.</p>
+          <p class="fix"><b>Ingreep</b> Maak de vergelijking sleutel-gedreven, zodat een nieuw veld een compilatiefout geeft in de test zelf. En zet een typecontrole op de testmap — dat lost beide problemen in één keer op.</p>
+        </div>
+      </details>
+
+      <details class="card" data-sev="hoog">
+        <summary>
+          <span class="tagline"><span class="key">K11</span><span class="sev-tag">Hoog</span></span>
+          <span class="headline">De huidige release mist zijn Snap-pakket en de tag wijst naar de verkeerde commit</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="card-body">
+          <p>Geen enkele controle vergelijkt de tag met het versienummer in de code. Vergeet je de versie te verhogen, dan publiceert de release een updatebestand met de oude versie — en biedt de ingebouwde updater bestaande installaties nooit iets aan. De release "slaagt", groen en al, en bereikt niemand.</p>
+          <p>Dat is niet hypothetisch. De laatste release is via een handmatige workflow-start uitgebracht, en tags die door het CI-token worden aangemaakt triggeren geen workflows. Resultaat: geen Snap-pakket, en de tag staat op een andere commit dan de versieverhoging. De release-notities in het updatebestand zijn bovendien twee releases op rij leeg gebleven.</p>
+          <p class="fix"><b>Ingreep</b> Vijf regels die de tag tegen beide versiebestanden controleren, en de Snap-workflow ophangen aan de voltooiing van de release in plaats van aan een tag-push.</p>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Wat er wél goed is</h2>
+    <p class="section-note">De standaard waaraan de rest gemeten is</p>
+    <div class="good">
+      <ul>
+        <li><b>Het documentcontract.</b> Eén canonieke veldlijst voedt de opslag, het herstel, het ongedaan maken en de reset — met twee controles die de build laten falen als een veld ontbreekt. Zeldzaam goed.</li>
+        <li><b>De testsuite.</b> 431 gevallen die de echte store en solver draaien, met verwachtingen uit het leerboek in plaats van uit de code zelf, en expliciet gemarkeerde bekende gaten die falen zodra iemand ze dicht.</li>
+        <li><b>De engine-grens.</b> Nul store-imports in de reken- en tekenlaag. Dat is precies waarom die suite überhaupt kan bestaan.</li>
+        <li><b>De platformsplitsing.</b> Geen enkele Tauri-import op het hoogste niveau; alles achter één runtimecontrole, geconcentreerd in vier diensten.</li>
+        <li><b>Zichtbare refactordiscipline.</b> Nul <code>any</code>-types, nul losse TODO's, en commentaren die uitleggen wáárom iets zo staat — inclusief de bugs die eraan voorafgingen.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Wat er moet gebeuren</h2>
+    <p class="section-note">De volgorde is niet willekeurig: eerst wat stil dataverlies stopt, dan wat de rest goedkoper maakt</p>
+
+    <div class="phase">
+      <div class="phase-head"><h3>Nu</h3><span class="phase-when">12 items · 1–2 dagen</span></div>
+      <ul class="items">
+        <li>De datumparser repareren en een tijdzone-matrix aan de testrun toevoegen</li>
+        <li>Baselines meenemen in het herstelpad, en de velden verplicht maken</li>
+        <li>De drie HTML-icoonplekken dichten en de ongebruikte bestandscommando's uit de Rust-schil halen</li>
+        <li>Versiecontrole en een testpoort vooraan in de release-workflow</li>
+        <li>De Snap-workflow ophangen aan een geslaagde release</li>
+        <li>Herberekenen afdwingen in de exportfunctie</li>
+        <li>De foutuitvoer van de testrun niet meer onderdrukken</li>
+        <li>Een limiet op de ongedaan-maken-stapel</li>
+        <li>Een licentiebestand toevoegen — het ontbreekt, terwijl vier plekken LGPL claimen</li>
+      </ul>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head"><h3>Deze maand</h3><span class="phase-when">13 items</span></div>
+      <ul class="items">
+        <li>De STEP-parser: eerst de regressiebatterij, dan de drie lagen, dan de bestandskop</li>
+        <li>De round-tripvergelijking sleutel-gedreven maken — vóór de parserverbouwing, niet erna</li>
+        <li>Typecontrole op de test- en scriptmap</li>
+        <li>Back-ups atomair schrijven en de lezer een fout laten gooien</li>
+        <li>Single-instance-plugin en een veilige opruimlus</li>
+        <li>Eén foutkanaal naar de gebruiker</li>
+        <li>Reproduceerbare installaties in CI, plus caching</li>
+        <li>De injectieklasse in de workflows en de losse externe workflow-referentie vastzetten</li>
+        <li>De agent-instructies actualiseren — ze beschrijven een dev-server, een testaantal en een sandbox die niet meer kloppen</li>
+        <li>Bijdrage- en beveiligingsrichtlijnen, en een draaiboek voor de signeersleutel</li>
+      </ul>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head"><h3>Structureel</h3><span class="phase-when">16 items</span></div>
+      <ul class="items">
+        <li>De state-controle omdraaien zodat een nieuw veld een bewuste keuze afdwingt</li>
+        <li>De drie importcycli in de kern van de store breken</li>
+        <li>Een minimale linter: importcycli, hooks-regels, dode exports</li>
+        <li>De drie prestatiehotspots: werkdagberekening, WBS-nummering, momentopnames</li>
+        <li>Het canvas-component en de renderer opsplitsen</li>
+        <li>Eén actieregister voor ribbon, sneltoetsen en contextmenu</li>
+        <li>Een versiecontract voor de extensie-API, en extensies in een worker draaien</li>
+      </ul>
+    </div>
+
+    <p style="margin-top:1.4rem"><strong>Twee dingen die je juist níét moet doen.</strong> De reviews hebben twee voorstellen uit de deelrapporten onderuitgehaald: het samenvoegen van de scherm- en printrenderer via de bestaande tekenabstractie (die mist negen primitieven en een transformatiestack in twee backends — het is een ander project), en het schrappen van de brede bestandsrechten (dat breekt de complete recente-bestandenlijst).</p>
+  </section>
+
+  <section>
+    <h2>Hoe betrouwbaar is dit</h2>
+    <p class="section-note">Elk deelrapport is door een tweede onderzoeker tegen de code nagerekend</p>
+    <p>Tien onderzoeken draaiden parallel, elk gevolgd door een hyperkritische review die de claims zelf natrok — code lezen, tests draaien, metingen herhalen. Vier rapporten kwamen daar niet ongeschonden uit. Dat is precies waarom die laag erin zat: dit overzicht bevat de gecorrigeerde werkelijkheid, niet de eerste indruk.</p>
+    <div class="gate">
+      <div class="gate-row g-ja"><span>Edgecases</span><em>Ja</em></div>
+      <div class="gate-row g-ja"><span>IFC-laag</span><em>Ja</em></div>
+      <div class="gate-row g-ja"><span>Architectuur &amp; state</span><em>Ja, na correcties</em></div>
+      <div class="gate-row g-ja"><span>Systemische ketens</span><em>Ja, na correcties</em></div>
+      <div class="gate-row g-ja"><span>Testbaarheid</span><em>Ja, na correcties</em></div>
+      <div class="gate-row g-mits"><span>Codemetrieken</span><em>Voorwaardelijk</em></div>
+      <div class="gate-row g-mits"><span>UI &amp; i18n</span><em>Voorwaardelijk</em></div>
+      <div class="gate-row g-nee"><span>Docs &amp; proces</span><em>Afgekeurd</em></div>
+      <div class="gate-row g-nee"><span>Workflows</span><em>Afgekeurd</em></div>
+      <div class="gate-row g-nee"><span>Strategisch</span><em>Afgekeurd</em></div>
+    </div>
+    <p style="margin-top:1.1rem">De afgekeurde rapporten waren niet waardeloos — het workflow-rapport vond juist de echte releasefout. Ze hadden alleen hun eigen prioriteiten verkeerd, of misten het grootste gat in hun eigen onderwerp. Dat is in dit overzicht rechtgezet.</p>
+  </section>
+
+  <section>
+    <h2>Waar staat wat</h2>
+    <p class="section-note">Alles in <code>docs/onderhoudbaarheid/</code> — 21 documenten</p>
+    <div class="docs">
+      <div class="doc"><b>README.md</b><span>Het hoofdrapport: bevindingen, bewijs en fasering in detail.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-edgecases.md</b><span>Randgevallen: tijdzones, extreme invoer, NaN, multi-document.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-ifc.md</b><span>Het bestandsformaat: round-trip, parser, adapters.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-architectuur.md</b><span>State, slices, ongedaan maken, het herberekencontract.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-testbaarheid.md</b><span>Testsuite, dekkingsgaten, CI-koppeling.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-metrieken.md</b><span>Omvang, hotspots, duplicatie, afhankelijkheden.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-ui-i18n.md</b><span>Componenten, ribbon, veertien talen, platformsplitsing.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-docs-proces.md</b><span>Documentatie, release-keten, extensies, governance.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-workflows.md</b><span>Alle CI-workflows regel voor regel.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-big-picture-systemisch.md</b><span>Faalketens die subsysteemgrenzen kruisen.</span></div>
+      <div class="doc"><b>deelrapporten/rapport-big-picture-strategisch.md</b><span>Houdbaarheid van de fundamentele keuzes.</span></div>
+      <div class="doc"><b>reviews/ (10 stuks)</b><span>Per deelrapport de narekening, met bevestigd/vermoed-scheiding en poortoordeel.</span></div>
+    </div>
+  </section>
+
+  <footer>
+    Onderzoek uitgevoerd op commit-stand 25 juli 2026 · branch <code>claude/opus-5-orchestrator-1mkltc</code>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('themeBtn');
+    var root = document.documentElement;
+    var saved = null;
+    try { saved = localStorage.getItem('ops-theme'); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    btn.addEventListener('click', function () {
+      var current = root.getAttribute('data-theme');
+      if (!current) {
+        current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      var next = current === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('ops-theme', next); } catch (e) {}
+    });
+  })();
+</script>
+
+</body>
+</html>

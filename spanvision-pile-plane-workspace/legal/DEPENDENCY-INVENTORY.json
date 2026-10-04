@@ -1,0 +1,5954 @@
+{
+  "application": "Pile Plane Workspace",
+  "organization": "Spanvision infra",
+  "version": "0.4.2",
+  "dependencies": [
+    {
+      "ecosystem": "npm",
+      "name": "@babel/runtime",
+      "version": "7.29.7",
+      "license": "MIT",
+      "authors": "The Babel Team (https://babel.dev/team)",
+      "repository": "https://github.com/babel/babel.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_babel_runtime-7.29.7/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@oxc-project/types",
+      "version": "0.150.0",
+      "license": "MIT",
+      "authors": "Boshen and oxc contributors",
+      "repository": "git+https://github.com/oxc-project/oxc.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_oxc-project_types-0.150.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-win32-x64-msvc",
+      "version": "1.2.9",
+      "license": "MIT",
+      "authors": "",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/pluginutils",
+      "version": "1.0.1",
+      "license": "MIT",
+      "authors": "",
+      "repository": "git+https://github.com/rolldown/plugins.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_rolldown_pluginutils-1.0.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@tauri-apps/api",
+      "version": "2.11.1",
+      "license": "Apache-2.0 OR MIT",
+      "authors": "",
+      "repository": "git+https://github.com/tauri-apps/tauri.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_tauri-apps_api-2.11.1/LICENSE_APACHE-2.0",
+        "dependency-licenses/npm-_tauri-apps_api-2.11.1/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@tauri-apps/cli",
+      "version": "2.11.4",
+      "license": "Apache-2.0 OR MIT",
+      "authors": "",
+      "repository": "git+https://github.com/tauri-apps/tauri.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_tauri-apps_cli-2.11.4/LICENSE_APACHE-2.0",
+        "dependency-licenses/npm-_tauri-apps_cli-2.11.4/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@tauri-apps/cli-win32-x64-msvc",
+      "version": "2.11.4",
+      "license": "Apache-2.0 OR MIT",
+      "authors": "",
+      "repository": "git+https://github.com/tauri-apps/tauri.git",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@tauri-apps/plugin-dialog",
+      "version": "2.7.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/plugins-workspace",
+      "licenseFiles": [
+        "dependency-licenses/npm-_tauri-apps_plugin-dialog-2.7.3/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@tauri-apps/plugin-opener",
+      "version": "2.5.5",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/plugins-workspace",
+      "licenseFiles": [
+        "dependency-licenses/npm-_tauri-apps_plugin-opener-2.5.5/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@tauri-apps/plugin-os",
+      "version": "2.3.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/plugins-workspace",
+      "licenseFiles": [
+        "dependency-licenses/npm-_tauri-apps_plugin-os-2.3.2/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@tauri-apps/plugin-store",
+      "version": "2.4.5",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/plugins-workspace",
+      "licenseFiles": [
+        "dependency-licenses/npm-_tauri-apps_plugin-store-2.4.5/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@types/react",
+      "version": "19.3.0",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_types_react-19.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@types/react-dom",
+      "version": "19.3.0",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_types_react-dom-19.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-win32-x64",
+      "version": "7.0.2",
+      "license": "Apache-2.0",
+      "authors": "Microsoft Corp.",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_typescript_typescript-win32-x64-7.0.2/LICENSE",
+        "dependency-licenses/npm-_typescript_typescript-win32-x64-7.0.2/NOTICE.txt"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@vitejs/plugin-react",
+      "version": "6.1.1",
+      "license": "MIT",
+      "authors": "Evan You",
+      "repository": "git+https://github.com/vitejs/vite-plugin-react.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-_vitejs_plugin-react-6.1.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "base64-arraybuffer",
+      "version": "1.0.2",
+      "license": "MIT",
+      "authors": {
+        "name": "Niklas von Hertzen",
+        "email": "niklasvh@gmail.com",
+        "url": "https://hertzen.com"
+      },
+      "repository": "https://github.com/niklasvh/base64-arraybuffer",
+      "licenseFiles": [
+        "dependency-licenses/npm-base64-arraybuffer-1.0.2/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "css-line-break",
+      "version": "2.1.0",
+      "license": "MIT",
+      "authors": {
+        "name": "Niklas von Hertzen",
+        "email": "niklasvh@gmail.com",
+        "url": "https://hertzen.com"
+      },
+      "repository": "git+ssh://git@github.com/niklasvh/css-line-break.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-css-line-break-2.1.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "csstype",
+      "version": "3.2.3",
+      "license": "MIT",
+      "authors": "Fredrik Nicol <fredrik.nicol@gmail.com>",
+      "repository": "https://github.com/frenic/csstype",
+      "licenseFiles": [
+        "dependency-licenses/npm-csstype-3.2.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "detect-libc",
+      "version": "2.1.2",
+      "license": "Apache-2.0",
+      "authors": "Lovell Fuller <npm@lovell.info>",
+      "repository": "git://github.com/lovell/detect-libc.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-detect-libc-2.1.2/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "fdir",
+      "version": "6.5.0",
+      "license": "MIT",
+      "authors": "thecodrr <thecodrr@protonmail.com>",
+      "repository": "git+https://github.com/thecodrr/fdir.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-fdir-6.5.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "highs",
+      "version": "1.15.3",
+      "license": "MIT",
+      "authors": "Ophir LOJKINE",
+      "repository": "git+https://github.com/lovasoa/highs-js.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-highs-1.15.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "html-parse-stringify",
+      "version": "4.0.1",
+      "license": "MIT",
+      "authors": "Henrik Joreteg <henrik@joreteg.com>",
+      "repository": "git+https://github.com/i18next/html-parse-stringify.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-html-parse-stringify-4.0.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "html2canvas",
+      "version": "1.4.1",
+      "license": "MIT",
+      "authors": {
+        "name": "Niklas von Hertzen",
+        "email": "niklasvh@gmail.com",
+        "url": "https://hertzen.com"
+      },
+      "repository": "git@github.com:niklasvh/html2canvas.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-html2canvas-1.4.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "i18next",
+      "version": "26.4.2",
+      "license": "MIT",
+      "authors": "Jan M\u00fchlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)",
+      "repository": "https://github.com/i18next/i18next.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-i18next-26.4.2/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "i18next-browser-languagedetector",
+      "version": "8.2.1",
+      "license": "MIT",
+      "authors": "Jan M\u00fchlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)",
+      "repository": "https://github.com/i18next/i18next-browser-languageDetector.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-i18next-browser-languagedetector-8.2.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss",
+      "version": "1.33.0",
+      "license": "MPL-2.0",
+      "authors": "",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-lightningcss-1.33.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-win32-x64-msvc",
+      "version": "1.33.0",
+      "license": "MPL-2.0",
+      "authors": "",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-lightningcss-win32-x64-msvc-1.33.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "nanoid",
+      "version": "3.3.19",
+      "license": "MIT",
+      "authors": "Andrey Sitnik <andrey@sitnik.ru>",
+      "repository": "ai/nanoid",
+      "licenseFiles": [
+        "dependency-licenses/npm-nanoid-3.3.19/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "picocolors",
+      "version": "1.1.1",
+      "license": "ISC",
+      "authors": "Alexey Raspopov",
+      "repository": "alexeyraspopov/picocolors",
+      "licenseFiles": [
+        "dependency-licenses/npm-picocolors-1.1.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "picomatch",
+      "version": "4.0.7",
+      "license": "MIT",
+      "authors": "Jon Schlinkert (https://github.com/jonschlinkert)",
+      "repository": "micromatch/picomatch",
+      "licenseFiles": [
+        "dependency-licenses/npm-picomatch-4.0.7/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "postcss",
+      "version": "8.5.28",
+      "license": "MIT",
+      "authors": "Andrey Sitnik <andrey@sitnik.es>",
+      "repository": "postcss/postcss",
+      "licenseFiles": [
+        "dependency-licenses/npm-postcss-8.5.28/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "react",
+      "version": "19.3.0",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/react/react.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-react-19.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "react-dom",
+      "version": "19.3.0",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/react/react.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-react-dom-19.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "react-i18next",
+      "version": "17.0.14",
+      "license": "MIT",
+      "authors": "Jan M\u00fchlemann <jan.muehlemann@gmail.com> (https://github.com/jamuhl)",
+      "repository": "https://github.com/i18next/react-i18next.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-react-i18next-17.0.14/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "rolldown",
+      "version": "1.2.9",
+      "license": "MIT",
+      "authors": "",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-rolldown-1.2.9/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "scheduler",
+      "version": "0.28.0",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/react/react.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-scheduler-0.28.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "source-map-js",
+      "version": "1.2.1",
+      "license": "BSD-3-Clause",
+      "authors": "Valentin 7rulnik Semirulnik <v7rulnik@gmail.com>",
+      "repository": "7rulnik/source-map-js",
+      "licenseFiles": [
+        "dependency-licenses/npm-source-map-js-1.2.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "text-segmentation",
+      "version": "1.0.3",
+      "license": "MIT",
+      "authors": {
+        "name": "Niklas von Hertzen",
+        "email": "niklasvh@gmail.com",
+        "url": "https://hertzen.com"
+      },
+      "repository": "git+ssh://git@github.com/niklasvh/text-segmentation.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-text-segmentation-1.0.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "tinyglobby",
+      "version": "0.2.17",
+      "license": "MIT",
+      "authors": "Superchupu",
+      "repository": "git+https://github.com/SuperchupuDev/tinyglobby.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-tinyglobby-0.2.17/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "typescript",
+      "version": "7.0.2",
+      "license": "Apache-2.0",
+      "authors": "Microsoft Corp.",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-typescript-7.0.2/LICENSE",
+        "dependency-licenses/npm-typescript-7.0.2/NOTICE.txt"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "use-sync-external-store",
+      "version": "1.6.0",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/facebook/react.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-use-sync-external-store-1.6.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "utrie",
+      "version": "1.0.2",
+      "license": "MIT",
+      "authors": {
+        "name": "Niklas von Hertzen",
+        "email": "niklasvh@gmail.com",
+        "url": "https://hertzen.com"
+      },
+      "repository": "git+ssh://git@github.com/niklasvh/utrie.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-utrie-1.0.2/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "vite",
+      "version": "8.3.0",
+      "license": "MIT",
+      "authors": "Evan You",
+      "repository": "git+https://github.com/vitejs/vite.git",
+      "licenseFiles": [
+        "dependency-licenses/npm-vite-8.3.0/LICENSE.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "adler2",
+      "version": "2.0.1",
+      "license": "0BSD OR MIT OR Apache-2.0",
+      "authors": [
+        "Jonas Schievink <jonasschievink@gmail.com>",
+        "oyvindln <oyvindln@users.noreply.github.com>"
+      ],
+      "repository": "https://github.com/oyvindln/adler2",
+      "licenseFiles": [
+        "dependency-licenses/cargo-adler2-2.0.1/LICENSE-0BSD",
+        "dependency-licenses/cargo-adler2-2.0.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-adler2-2.0.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "aho-corasick",
+      "version": "1.1.5",
+      "license": "Unlicense OR MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/aho-corasick",
+      "licenseFiles": [
+        "dependency-licenses/cargo-aho-corasick-1.1.5/COPYING",
+        "dependency-licenses/cargo-aho-corasick-1.1.5/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "alloc-no-stdlib",
+      "version": "2.0.4",
+      "license": "BSD-3-Clause",
+      "authors": [
+        "Daniel Reiter Horn <danielrh@dropbox.com>"
+      ],
+      "repository": "https://github.com/dropbox/rust-alloc-no-stdlib",
+      "licenseFiles": [
+        "dependency-licenses/cargo-alloc-no-stdlib-2.0.4/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "alloc-stdlib",
+      "version": "0.2.4",
+      "license": "BSD-3-Clause",
+      "authors": [
+        "Daniel Reiter Horn <danielrh@dropbox.com>"
+      ],
+      "repository": "https://github.com/dropbox/rust-alloc-no-stdlib",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "anyhow",
+      "version": "1.0.104",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/anyhow",
+      "licenseFiles": [
+        "dependency-licenses/cargo-anyhow-1.0.104/LICENSE-APACHE",
+        "dependency-licenses/cargo-anyhow-1.0.104/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "atoi_simd",
+      "version": "0.18.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Dmitry Rodionov <gh@rdmtr.com>"
+      ],
+      "repository": "https://github.com/RoDmitry/atoi_simd",
+      "licenseFiles": [
+        "dependency-licenses/cargo-atoi_simd-0.18.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-atoi_simd-0.18.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "atomic-waker",
+      "version": "1.1.2",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Stjepan Glavina <stjepang@gmail.com>",
+        "Contributors to futures-rs"
+      ],
+      "repository": "https://github.com/smol-rs/atomic-waker",
+      "licenseFiles": [
+        "dependency-licenses/cargo-atomic-waker-1.1.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-atomic-waker-1.1.2/LICENSE-MIT",
+        "dependency-licenses/cargo-atomic-waker-1.1.2/LICENSE-THIRD-PARTY"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "autocfg",
+      "version": "1.5.1",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Josh Stone <cuviper@gmail.com>"
+      ],
+      "repository": "https://github.com/cuviper/autocfg",
+      "licenseFiles": [
+        "dependency-licenses/cargo-autocfg-1.5.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-autocfg-1.5.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "base64",
+      "version": "0.22.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Marshall Pierce <marshall@mpierce.org>"
+      ],
+      "repository": "https://github.com/marshallpierce/rust-base64",
+      "licenseFiles": [
+        "dependency-licenses/cargo-base64-0.22.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-base64-0.22.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "base64",
+      "version": "0.23.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Marshall Pierce <marshall@mpierce.org>"
+      ],
+      "repository": "https://github.com/marshallpierce/rust-base64",
+      "licenseFiles": [
+        "dependency-licenses/cargo-base64-0.23.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-base64-0.23.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "bindgen",
+      "version": "0.72.1",
+      "license": "BSD-3-Clause",
+      "authors": [
+        "Jyun-Yan You <jyyou.tw@gmail.com>",
+        "Emilio Cobos \u00c1lvarez <emilio@crisal.io>",
+        "Nick Fitzgerald <fitzgen@gmail.com>",
+        "The Servo project developers"
+      ],
+      "repository": "https://github.com/rust-lang/rust-bindgen",
+      "licenseFiles": [
+        "dependency-licenses/cargo-bindgen-0.72.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "bit-set",
+      "version": "0.8.0",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Alexis Beingessner <a.beingessner@gmail.com>"
+      ],
+      "repository": "https://github.com/contain-rs/bit-set",
+      "licenseFiles": [
+        "dependency-licenses/cargo-bit-set-0.8.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-bit-set-0.8.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "bit-vec",
+      "version": "0.8.0",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Alexis Beingessner <a.beingessner@gmail.com>"
+      ],
+      "repository": "https://github.com/contain-rs/bit-vec",
+      "licenseFiles": [
+        "dependency-licenses/cargo-bit-vec-0.8.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-bit-vec-0.8.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "bitflags",
+      "version": "1.3.2",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "repository": "https://github.com/bitflags/bitflags",
+      "licenseFiles": [
+        "dependency-licenses/cargo-bitflags-1.3.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-bitflags-1.3.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "bitflags",
+      "version": "2.13.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "repository": "https://github.com/bitflags/bitflags",
+      "licenseFiles": [
+        "dependency-licenses/cargo-bitflags-2.13.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-bitflags-2.13.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "block-buffer",
+      "version": "0.10.4",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "RustCrypto Developers"
+      ],
+      "repository": "https://github.com/RustCrypto/utils",
+      "licenseFiles": [
+        "dependency-licenses/cargo-block-buffer-0.10.4/LICENSE-APACHE",
+        "dependency-licenses/cargo-block-buffer-0.10.4/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "brotli",
+      "version": "8.0.4",
+      "license": "BSD-3-Clause AND MIT",
+      "authors": [
+        "Daniel Reiter Horn <danielrh@dropbox.com>",
+        "The Brotli Authors"
+      ],
+      "repository": "https://github.com/dropbox/rust-brotli",
+      "licenseFiles": [
+        "dependency-licenses/cargo-brotli-8.0.4/LICENSE.BSD-3-Clause",
+        "dependency-licenses/cargo-brotli-8.0.4/LICENSE.MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "brotli-decompressor",
+      "version": "5.0.3",
+      "license": "BSD-3-Clause/MIT",
+      "authors": [
+        "Daniel Reiter Horn <danielrh@dropbox.com>",
+        "The Brotli Authors"
+      ],
+      "repository": "https://github.com/dropbox/rust-brotli-decompressor",
+      "licenseFiles": [
+        "dependency-licenses/cargo-brotli-decompressor-5.0.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "bs58",
+      "version": "0.5.1",
+      "license": "MIT/Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/Nullus157/bs58-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-bs58-0.5.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-bs58-0.5.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "bumpalo",
+      "version": "3.20.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Nick Fitzgerald <fitzgen@gmail.com>"
+      ],
+      "repository": "https://github.com/fitzgen/bumpalo",
+      "licenseFiles": [
+        "dependency-licenses/cargo-bumpalo-3.20.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-bumpalo-3.20.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "byteorder",
+      "version": "1.5.0",
+      "license": "Unlicense OR MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/byteorder",
+      "licenseFiles": [
+        "dependency-licenses/cargo-byteorder-1.5.0/COPYING",
+        "dependency-licenses/cargo-byteorder-1.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "bytes",
+      "version": "1.12.1",
+      "license": "MIT",
+      "authors": [
+        "Carl Lerche <me@carllerche.com>",
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "repository": "https://github.com/tokio-rs/bytes",
+      "licenseFiles": [
+        "dependency-licenses/cargo-bytes-1.12.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "calamine",
+      "version": "0.36.1",
+      "license": "MIT",
+      "authors": [
+        "Johann Tuffe <tafia973@gmail.com>"
+      ],
+      "repository": "https://github.com/tafia/calamine",
+      "licenseFiles": [
+        "dependency-licenses/cargo-calamine-0.36.1/LICENSE-MIT.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "camino",
+      "version": "1.2.6",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Without Boats <saoirse@without.boats>",
+        "Ashley Williams <ashley666ashley@gmail.com>",
+        "Steve Klabnik <steve@steveklabnik.com>",
+        "Rain <rain@sunshowers.io>"
+      ],
+      "repository": "https://github.com/camino-rs/camino",
+      "licenseFiles": [
+        "dependency-licenses/cargo-camino-1.2.6/LICENSE-APACHE",
+        "dependency-licenses/cargo-camino-1.2.6/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cargo-platform",
+      "version": "0.1.9",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/cargo",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cargo-platform-0.1.9/LICENSE-APACHE",
+        "dependency-licenses/cargo-cargo-platform-0.1.9/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cargo_metadata",
+      "version": "0.19.2",
+      "license": "MIT",
+      "authors": [
+        "Oliver Schneider <git-spam-no-reply9815368754983@oli-obk.de>"
+      ],
+      "repository": "https://github.com/oli-obk/cargo_metadata",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cargo_metadata-0.19.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cargo_toml",
+      "version": "0.22.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Kornel <kornel@geekhood.net>"
+      ],
+      "repository": "https://gitlab.com/lib.rs/cargo_toml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cargo_toml-0.22.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cc",
+      "version": "1.4.6",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/cc-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cc-1.4.6/LICENSE-APACHE",
+        "dependency-licenses/cargo-cc-1.4.6/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cexpr",
+      "version": "0.6.0",
+      "license": "Apache-2.0/MIT",
+      "authors": [
+        "Jethro Beekman <jethro@jbeekman.nl>"
+      ],
+      "repository": "https://github.com/jethrogb/rust-cexpr",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cexpr-0.6.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-cexpr-0.6.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cfb",
+      "version": "0.7.3",
+      "license": "MIT",
+      "authors": [
+        "Matthew D. Steele <mdsteele@alum.mit.edu>"
+      ],
+      "repository": "https://github.com/mdsteele/rust-cfb",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cfb-0.7.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cfg-if",
+      "version": "1.0.5",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "repository": "https://github.com/rust-lang/cfg-if",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cfg-if-1.0.5/LICENSE-APACHE",
+        "dependency-licenses/cargo-cfg-if-1.0.5/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "chrono",
+      "version": "0.4.45",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/chronotope/chrono",
+      "licenseFiles": [
+        "dependency-licenses/cargo-chrono-0.4.45/LICENSE.txt"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "clang-sys",
+      "version": "1.9.1",
+      "license": "Apache-2.0",
+      "authors": [
+        "Kyle Mayes <kyle@mayeses.com>"
+      ],
+      "repository": "https://github.com/KyleMayes/clang-sys",
+      "licenseFiles": [
+        "dependency-licenses/cargo-clang-sys-1.9.1/LICENSE.txt"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cmake",
+      "version": "0.1.58",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "repository": "https://github.com/rust-lang/cmake-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cmake-0.1.58/LICENSE-APACHE",
+        "dependency-licenses/cargo-cmake-0.1.58/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "codepage",
+      "version": "0.1.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Henri Sivonen <hsivonen@hsivonen.fi>"
+      ],
+      "repository": "https://github.com/hsivonen/codepage",
+      "licenseFiles": [
+        "dependency-licenses/cargo-codepage-0.1.3/COPYRIGHT",
+        "dependency-licenses/cargo-codepage-0.1.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-codepage-0.1.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cookie",
+      "version": "0.18.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Sergio Benitez <sb@sergio.bz>",
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "repository": "https://github.com/SergioBenitez/cookie-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cookie-0.18.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-cookie-0.18.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "core_detect",
+      "version": "1.0.0",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "Thom Chiovoloni <chiovolonit@gmail.com>"
+      ],
+      "repository": "https://github.com/thomcc/core_detect",
+      "licenseFiles": [
+        "dependency-licenses/cargo-core_detect-1.0.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-core_detect-1.0.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cpufeatures",
+      "version": "0.2.17",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "RustCrypto Developers"
+      ],
+      "repository": "https://github.com/RustCrypto/utils",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cpufeatures-0.2.17/LICENSE-APACHE",
+        "dependency-licenses/cargo-cpufeatures-0.2.17/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "crc32fast",
+      "version": "1.5.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Sam Rijs <srijs@airpost.net>",
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "repository": "https://github.com/srijs/rust-crc32fast",
+      "licenseFiles": [
+        "dependency-licenses/cargo-crc32fast-1.5.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-crc32fast-1.5.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "crossbeam-channel",
+      "version": "0.5.17",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/crossbeam-rs/crossbeam",
+      "licenseFiles": [
+        "dependency-licenses/cargo-crossbeam-channel-0.5.17/LICENSE-APACHE",
+        "dependency-licenses/cargo-crossbeam-channel-0.5.17/LICENSE-MIT",
+        "dependency-licenses/cargo-crossbeam-channel-0.5.17/LICENSE-THIRD-PARTY"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "crossbeam-utils",
+      "version": "0.8.23",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/crossbeam-rs/crossbeam",
+      "licenseFiles": [
+        "dependency-licenses/cargo-crossbeam-utils-0.8.23/LICENSE-APACHE",
+        "dependency-licenses/cargo-crossbeam-utils-0.8.23/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "crypto-common",
+      "version": "0.1.7",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "RustCrypto Developers"
+      ],
+      "repository": "https://github.com/RustCrypto/traits",
+      "licenseFiles": [
+        "dependency-licenses/cargo-crypto-common-0.1.7/LICENSE-APACHE",
+        "dependency-licenses/cargo-crypto-common-0.1.7/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cssparser",
+      "version": "0.36.0",
+      "license": "MPL-2.0",
+      "authors": [
+        "Simon Sapin <simon.sapin@exyr.org>"
+      ],
+      "repository": "https://github.com/servo/rust-cssparser",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cssparser-0.36.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "cssparser-macros",
+      "version": "0.6.1",
+      "license": "MPL-2.0",
+      "authors": [
+        "Simon Sapin <simon.sapin@exyr.org>"
+      ],
+      "repository": "https://github.com/servo/rust-cssparser",
+      "licenseFiles": [
+        "dependency-licenses/cargo-cssparser-macros-0.6.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "csv",
+      "version": "1.4.0",
+      "license": "Unlicense/MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/rust-csv",
+      "licenseFiles": [
+        "dependency-licenses/cargo-csv-1.4.0/COPYING",
+        "dependency-licenses/cargo-csv-1.4.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "csv-core",
+      "version": "0.1.13",
+      "license": "Unlicense/MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/rust-csv",
+      "licenseFiles": [
+        "dependency-licenses/cargo-csv-core-0.1.13/COPYING",
+        "dependency-licenses/cargo-csv-core-0.1.13/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "ctor",
+      "version": "0.8.0",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Matt Mastracci <matthew@mastracci.com>"
+      ],
+      "repository": "https://github.com/mmastrac/rust-ctor",
+      "licenseFiles": [
+        "dependency-licenses/cargo-ctor-0.8.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-ctor-0.8.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "ctor-proc-macro",
+      "version": "0.0.7",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Matt Mastracci <matthew@mastracci.com>"
+      ],
+      "repository": "https://github.com/mmastrac/rust-ctor",
+      "licenseFiles": [
+        "dependency-licenses/cargo-ctor-proc-macro-0.0.7/LICENSE-APACHE",
+        "dependency-licenses/cargo-ctor-proc-macro-0.0.7/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "darling",
+      "version": "0.24.1",
+      "license": "MIT",
+      "authors": [
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "repository": "https://github.com/TedDriggs/darling",
+      "licenseFiles": [
+        "dependency-licenses/cargo-darling-0.24.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "darling_core",
+      "version": "0.24.1",
+      "license": "MIT",
+      "authors": [
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "repository": "https://github.com/TedDriggs/darling",
+      "licenseFiles": [
+        "dependency-licenses/cargo-darling_core-0.24.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "darling_macro",
+      "version": "0.24.1",
+      "license": "MIT",
+      "authors": [
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "repository": "https://github.com/TedDriggs/darling",
+      "licenseFiles": [
+        "dependency-licenses/cargo-darling_macro-0.24.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "debug_unsafe",
+      "version": "0.1.4",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Dmitry Rodionov <gh@rdmtr.com>"
+      ],
+      "repository": "https://github.com/RoDmitry/debug_unsafe",
+      "licenseFiles": [
+        "dependency-licenses/cargo-debug_unsafe-0.1.4/LICENSE-APACHE",
+        "dependency-licenses/cargo-debug_unsafe-0.1.4/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "defmt",
+      "version": "1.1.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Knurling-rs developers"
+      ],
+      "repository": "https://github.com/knurling-rs/defmt",
+      "licenseFiles": [
+        "dependency-licenses/cargo-defmt-1.1.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-defmt-1.1.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "defmt-macros",
+      "version": "1.1.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Knurling-rs developers"
+      ],
+      "repository": "https://github.com/knurling-rs/defmt",
+      "licenseFiles": [
+        "dependency-licenses/cargo-defmt-macros-1.1.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-defmt-macros-1.1.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "defmt-parser",
+      "version": "1.0.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Knurling-rs developers"
+      ],
+      "repository": "https://github.com/knurling-rs/defmt",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "deranged",
+      "version": "0.5.8",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jacob Pratt <jacob@jhpratt.dev>"
+      ],
+      "repository": "https://github.com/jhpratt/deranged",
+      "licenseFiles": [
+        "dependency-licenses/cargo-deranged-0.5.8/LICENSE-Apache",
+        "dependency-licenses/cargo-deranged-0.5.8/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "derive_more",
+      "version": "2.1.1",
+      "license": "MIT",
+      "authors": [
+        "Jelte Fennema <github-tech@jeltef.nl>"
+      ],
+      "repository": "https://github.com/JelteF/derive_more",
+      "licenseFiles": [
+        "dependency-licenses/cargo-derive_more-2.1.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "derive_more-impl",
+      "version": "2.1.1",
+      "license": "MIT",
+      "authors": [
+        "Jelte Fennema <github-tech@jeltef.nl>"
+      ],
+      "repository": "https://github.com/JelteF/derive_more",
+      "licenseFiles": [
+        "dependency-licenses/cargo-derive_more-impl-2.1.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "digest",
+      "version": "0.10.7",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "RustCrypto Developers"
+      ],
+      "repository": "https://github.com/RustCrypto/traits",
+      "licenseFiles": [
+        "dependency-licenses/cargo-digest-0.10.7/LICENSE-APACHE",
+        "dependency-licenses/cargo-digest-0.10.7/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dirs",
+      "version": "6.0.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Simon Ochsenreither <simon@ochsenreither.de>"
+      ],
+      "repository": "https://github.com/soc/dirs-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dirs-6.0.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-dirs-6.0.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dirs-sys",
+      "version": "0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Simon Ochsenreither <simon@ochsenreither.de>"
+      ],
+      "repository": "https://github.com/dirs-dev/dirs-sys-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dirs-sys-0.5.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-dirs-sys-0.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "displaydoc",
+      "version": "0.2.7",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jane Lusby <jlusby@yaah.dev>"
+      ],
+      "repository": "https://github.com/yaahc/displaydoc",
+      "licenseFiles": [
+        "dependency-licenses/cargo-displaydoc-0.2.7/LICENSE-APACHE",
+        "dependency-licenses/cargo-displaydoc-0.2.7/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dom_query",
+      "version": "0.27.0",
+      "license": "MIT",
+      "authors": [
+        "niklak <morgenpurple@gmail.com>",
+        "importcjj <importcjj@gmail.com>"
+      ],
+      "repository": "https://github.com/niklak/dom_query",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dom_query-0.27.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dpi",
+      "version": "0.1.2",
+      "license": "Apache-2.0 AND MIT",
+      "authors": "",
+      "repository": "https://github.com/rust-windowing/winit",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dpi-0.1.2/LICENSE",
+        "dependency-licenses/cargo-dpi-0.1.2/LICENSE-LIBM-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dtoa",
+      "version": "1.0.11",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/dtoa",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dtoa-1.0.11/LICENSE-APACHE",
+        "dependency-licenses/cargo-dtoa-1.0.11/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dtoa-short",
+      "version": "0.3.5",
+      "license": "MPL-2.0",
+      "authors": [
+        "Xidorn Quan <me@upsuper.org>"
+      ],
+      "repository": "https://github.com/upsuper/dtoa-short",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dtoa-short-0.3.5/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dtor",
+      "version": "0.3.0",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Matt Mastracci <matthew@mastracci.com>"
+      ],
+      "repository": "https://github.com/mmastrac/rust-ctor",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dtor-0.3.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-dtor-0.3.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dtor-proc-macro",
+      "version": "0.0.6",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Matt Mastracci <matthew@mastracci.com>"
+      ],
+      "repository": "https://github.com/mmastrac/rust-ctor",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dtor-proc-macro-0.0.6/LICENSE-APACHE",
+        "dependency-licenses/cargo-dtor-proc-macro-0.0.6/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dunce",
+      "version": "1.0.5",
+      "license": "CC0-1.0 OR MIT-0 OR Apache-2.0",
+      "authors": [
+        "Kornel <kornel@geekhood.net>"
+      ],
+      "repository": "https://gitlab.com/kornelski/dunce",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dunce-1.0.5/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "dyn-clone",
+      "version": "1.0.20",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/dyn-clone",
+      "licenseFiles": [
+        "dependency-licenses/cargo-dyn-clone-1.0.20/LICENSE-APACHE",
+        "dependency-licenses/cargo-dyn-clone-1.0.20/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "either",
+      "version": "1.18.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rayon-rs/either",
+      "licenseFiles": [
+        "dependency-licenses/cargo-either-1.18.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-either-1.18.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "embed-resource",
+      "version": "3.0.11",
+      "license": "MIT",
+      "authors": [
+        "\u043d\u0430\u0431 <nabijaczleweli@nabijaczleweli.xyz>",
+        "Cat Plus Plus <piotrlegnica@piotrl.pl>",
+        "Liigo <liigo@qq.com>",
+        "azyobuzin <azyobuzin@users.sourceforge.jp>",
+        "Peter Atashian <retep998@gmail.com>",
+        "pravic <ehysta@gmail.com>",
+        "Gabriel Majeri <gabriel.majeri6@gmail.com>",
+        "SonnyX",
+        "Johan Andersson <repi@repi.se>",
+        "Jordan Poles <jpdev.noreply@gmail.com>",
+        "MSxDOS <melcodos@gmail.com>",
+        "Jim McGrath <jimmc2@gmail.com>",
+        "roblabla <unfiltered@roblab.la>",
+        "Jasper Bekkers <jasper@traverseresearch.nl>",
+        "Richard Markiewicz <rmarkiewicz@devolutions.net>",
+        "Emerson de Freitas Barcelos <emersonfxbx@gmail.com>",
+        "Li Keqing <me@kaze.ai>",
+        "Alexis Bourget <alexis.bourget@gmail.com>",
+        "Michael Farrell <micolous+git@gmail.com>",
+        "Jacob Okamoto <oko@oko.io>",
+        "Marijn Suijten <marijn@traverseresearch.nl>",
+        "Lucas Nogueira <lucas@tauri.app>",
+        "CharlesChen0823 <yongchen0823@gmail.com>",
+        "Daniel Schaefer <dhs@frame.work>",
+        "Rene Leonhardt",
+        "ssrlive",
+        "Kan-Ru Chen <kanru@kanru.info>",
+        "Tony <legendmastertony@gmail.com>",
+        "Berrysoft <Strawberry_Str@hotmail.com>",
+        "Marcus Ahlberg <marcus.ahlberg@kvaser.com>"
+      ],
+      "repository": "https://github.com/nabijaczleweli/rust-embed-resource",
+      "licenseFiles": [
+        "dependency-licenses/cargo-embed-resource-3.0.11/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "encoding_rs",
+      "version": "0.8.41",
+      "license": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+      "authors": [
+        "Henri Sivonen <hsivonen@hsivonen.fi>"
+      ],
+      "repository": "https://github.com/hsivonen/encoding_rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-encoding_rs-0.8.41/COPYRIGHT",
+        "dependency-licenses/cargo-encoding_rs-0.8.41/LICENSE-APACHE",
+        "dependency-licenses/cargo-encoding_rs-0.8.41/LICENSE-MIT",
+        "dependency-licenses/cargo-encoding_rs-0.8.41/LICENSE-WHATWG"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "equivalent",
+      "version": "1.0.2",
+      "license": "Apache-2.0 OR MIT",
+      "authors": "",
+      "repository": "https://github.com/indexmap-rs/equivalent",
+      "licenseFiles": [
+        "dependency-licenses/cargo-equivalent-1.0.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-equivalent-1.0.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "erased-serde",
+      "version": "0.4.10",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/erased-serde",
+      "licenseFiles": [
+        "dependency-licenses/cargo-erased-serde-0.4.10/LICENSE-APACHE",
+        "dependency-licenses/cargo-erased-serde-0.4.10/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "fast-float2",
+      "version": "0.2.4",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Ivan Smirnov <i.s.smirnov@gmail.com>",
+        "Alex Huszagh <ahuszagh@gmail.com>"
+      ],
+      "repository": "https://github.com/Alexhuszagh/fast-float-rust",
+      "licenseFiles": [
+        "dependency-licenses/cargo-fast-float2-0.2.4/LICENSE-APACHE",
+        "dependency-licenses/cargo-fast-float2-0.2.4/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "fastrand",
+      "version": "2.5.0",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Stjepan Glavina <stjepang@gmail.com>"
+      ],
+      "repository": "https://github.com/smol-rs/fastrand",
+      "licenseFiles": [
+        "dependency-licenses/cargo-fastrand-2.5.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-fastrand-2.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "fdeflate",
+      "version": "0.3.7",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The image-rs Developers"
+      ],
+      "repository": "https://github.com/image-rs/fdeflate",
+      "licenseFiles": [
+        "dependency-licenses/cargo-fdeflate-0.3.7/LICENSE-APACHE",
+        "dependency-licenses/cargo-fdeflate-0.3.7/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "find-msvc-tools",
+      "version": "0.1.12",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/cc-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-find-msvc-tools-0.1.12/LICENSE-APACHE",
+        "dependency-licenses/cargo-find-msvc-tools-0.1.12/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "flate2",
+      "version": "1.1.10",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>",
+        "Josh Triplett <josh@joshtriplett.org>"
+      ],
+      "repository": "https://github.com/rust-lang/flate2-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-flate2-1.1.10/LICENSE-APACHE",
+        "dependency-licenses/cargo-flate2-1.1.10/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "fnv",
+      "version": "1.0.7",
+      "license": "Apache-2.0 / MIT",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "repository": "https://github.com/servo/rust-fnv",
+      "licenseFiles": [
+        "dependency-licenses/cargo-fnv-1.0.7/LICENSE-APACHE",
+        "dependency-licenses/cargo-fnv-1.0.7/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "foldhash",
+      "version": "0.2.0",
+      "license": "Zlib",
+      "authors": [
+        "Orson Peters <orsonpeters@gmail.com>"
+      ],
+      "repository": "https://github.com/orlp/foldhash",
+      "licenseFiles": [
+        "dependency-licenses/cargo-foldhash-0.2.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "form_urlencoded",
+      "version": "1.2.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The rust-url developers"
+      ],
+      "repository": "https://github.com/servo/rust-url",
+      "licenseFiles": [
+        "dependency-licenses/cargo-form_urlencoded-1.2.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-form_urlencoded-1.2.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "futures-core",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-futures-core-0.3.34/LICENSE-APACHE",
+        "dependency-licenses/cargo-futures-core-0.3.34/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "futures-io",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-futures-io-0.3.34/LICENSE-APACHE",
+        "dependency-licenses/cargo-futures-io-0.3.34/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "futures-macro",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-futures-macro-0.3.34/LICENSE-APACHE",
+        "dependency-licenses/cargo-futures-macro-0.3.34/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "futures-sink",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-futures-sink-0.3.34/LICENSE-APACHE",
+        "dependency-licenses/cargo-futures-sink-0.3.34/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "futures-task",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-futures-task-0.3.34/LICENSE-APACHE",
+        "dependency-licenses/cargo-futures-task-0.3.34/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "futures-util",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-futures-util-0.3.34/LICENSE-APACHE",
+        "dependency-licenses/cargo-futures-util-0.3.34/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "generic-array",
+      "version": "0.14.7",
+      "license": "MIT",
+      "authors": [
+        "Bart\u0142omiej Kami\u0144ski <fizyk20@gmail.com>",
+        "Aaron Trent <novacrazy@gmail.com>"
+      ],
+      "repository": "https://github.com/fizyk20/generic-array.git",
+      "licenseFiles": [
+        "dependency-licenses/cargo-generic-array-0.14.7/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "getrandom",
+      "version": "0.3.4",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rand Project Developers"
+      ],
+      "repository": "https://github.com/rust-random/getrandom",
+      "licenseFiles": [
+        "dependency-licenses/cargo-getrandom-0.3.4/LICENSE-APACHE",
+        "dependency-licenses/cargo-getrandom-0.3.4/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "getrandom",
+      "version": "0.4.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rand Project Developers"
+      ],
+      "repository": "https://github.com/rust-random/getrandom",
+      "licenseFiles": [
+        "dependency-licenses/cargo-getrandom-0.4.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-getrandom-0.4.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "glob",
+      "version": "0.3.4",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "repository": "https://github.com/rust-lang/glob",
+      "licenseFiles": [
+        "dependency-licenses/cargo-glob-0.3.4/LICENSE-APACHE",
+        "dependency-licenses/cargo-glob-0.3.4/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "hashbrown",
+      "version": "0.12.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Amanieu d'Antras <amanieu@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-lang/hashbrown",
+      "licenseFiles": [
+        "dependency-licenses/cargo-hashbrown-0.12.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-hashbrown-0.12.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "hashbrown",
+      "version": "0.17.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/hashbrown",
+      "licenseFiles": [
+        "dependency-licenses/cargo-hashbrown-0.17.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-hashbrown-0.17.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "heck",
+      "version": "0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/withoutboats/heck",
+      "licenseFiles": [
+        "dependency-licenses/cargo-heck-0.5.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-heck-0.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "hex",
+      "version": "0.4.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "KokaKiwi <kokakiwi@kokakiwi.net>"
+      ],
+      "repository": "https://github.com/KokaKiwi/rust-hex",
+      "licenseFiles": [
+        "dependency-licenses/cargo-hex-0.4.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-hex-0.4.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "highs",
+      "version": "2.4.0",
+      "license": "MIT",
+      "authors": [
+        "Ophir LOJKINE",
+        "rust-or"
+      ],
+      "repository": "https://github.com/rust-or/highs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-highs-2.4.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "highs-sys",
+      "version": "1.15.0",
+      "license": "MIT",
+      "authors": [
+        "Ophir LOJKINE"
+      ],
+      "repository": "https://github.com/rust-or/highs-sys",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "html5ever",
+      "version": "0.38.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The html5ever Project Developers"
+      ],
+      "repository": "https://github.com/servo/html5ever",
+      "licenseFiles": [
+        "dependency-licenses/cargo-html5ever-0.38.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-html5ever-0.38.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "http",
+      "version": "1.5.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>",
+        "Carl Lerche <me@carllerche.com>",
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "repository": "https://github.com/hyperium/http",
+      "licenseFiles": [
+        "dependency-licenses/cargo-http-1.5.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-http-1.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "httparse",
+      "version": "1.10.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "repository": "https://github.com/seanmonstar/httparse",
+      "licenseFiles": [
+        "dependency-licenses/cargo-httparse-1.10.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-httparse-1.10.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "hyper-util",
+      "version": "0.1.20",
+      "license": "MIT",
+      "authors": [
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "repository": "https://github.com/hyperium/hyper-util",
+      "licenseFiles": [
+        "dependency-licenses/cargo-hyper-util-0.1.20/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "ico",
+      "version": "0.5.0",
+      "license": "MIT",
+      "authors": [
+        "Matthew D. Steele <mdsteele@alum.mit.edu>"
+      ],
+      "repository": "https://github.com/mdsteele/rust-ico",
+      "licenseFiles": [
+        "dependency-licenses/cargo-ico-0.5.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "icu_collections",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-icu_collections-2.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "icu_locale_core",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-icu_locale_core-2.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "icu_normalizer",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-icu_normalizer-2.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "icu_normalizer_data",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-icu_normalizer_data-2.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "icu_properties",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-icu_properties-2.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "icu_properties_data",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-icu_properties_data-2.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "icu_provider",
+      "version": "2.3.1",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-icu_provider-2.3.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "ident_case",
+      "version": "1.0.1",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "Ted Driggs <ted.driggs@outlook.com>"
+      ],
+      "repository": "https://github.com/TedDriggs/ident_case",
+      "licenseFiles": [
+        "dependency-licenses/cargo-ident_case-1.0.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "idna",
+      "version": "1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The rust-url developers"
+      ],
+      "repository": "https://github.com/servo/rust-url/",
+      "licenseFiles": [
+        "dependency-licenses/cargo-idna-1.1.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-idna-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "idna_adapter",
+      "version": "1.2.2",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "The rust-url developers"
+      ],
+      "repository": "https://github.com/hsivonen/idna_adapter",
+      "licenseFiles": [
+        "dependency-licenses/cargo-idna_adapter-1.2.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-idna_adapter-1.2.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "indexmap",
+      "version": "1.9.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": "",
+      "repository": "https://github.com/bluss/indexmap",
+      "licenseFiles": [
+        "dependency-licenses/cargo-indexmap-1.9.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-indexmap-1.9.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "indexmap",
+      "version": "2.14.2",
+      "license": "Apache-2.0 OR MIT",
+      "authors": "",
+      "repository": "https://github.com/indexmap-rs/indexmap",
+      "licenseFiles": [
+        "dependency-licenses/cargo-indexmap-2.14.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-indexmap-2.14.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "infer",
+      "version": "0.19.0",
+      "license": "MIT",
+      "authors": [
+        "Bojan <dbojan@gmail.com>"
+      ],
+      "repository": "https://github.com/bojand/infer",
+      "licenseFiles": [
+        "dependency-licenses/cargo-infer-0.19.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "itertools",
+      "version": "0.13.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "bluss"
+      ],
+      "repository": "https://github.com/rust-itertools/itertools",
+      "licenseFiles": [
+        "dependency-licenses/cargo-itertools-0.13.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-itertools-0.13.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "itoa",
+      "version": "1.0.18",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/itoa",
+      "licenseFiles": [
+        "dependency-licenses/cargo-itoa-1.0.18/LICENSE-APACHE",
+        "dependency-licenses/cargo-itoa-1.0.18/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "jiff",
+      "version": "0.2.37",
+      "license": "Unlicense OR MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/jiff",
+      "licenseFiles": [
+        "dependency-licenses/cargo-jiff-0.2.37/COPYING",
+        "dependency-licenses/cargo-jiff-0.2.37/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "jiff-core",
+      "version": "0.1.1",
+      "license": "Unlicense OR MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/jiff",
+      "licenseFiles": [
+        "dependency-licenses/cargo-jiff-core-0.1.1/COPYING",
+        "dependency-licenses/cargo-jiff-core-0.1.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "jiff-tzdb",
+      "version": "0.1.8",
+      "license": "Unlicense OR MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/jiff",
+      "licenseFiles": [
+        "dependency-licenses/cargo-jiff-tzdb-0.1.8/COPYING",
+        "dependency-licenses/cargo-jiff-tzdb-0.1.8/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "jiff-tzdb-platform",
+      "version": "0.1.3",
+      "license": "Unlicense OR MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/jiff",
+      "licenseFiles": [
+        "dependency-licenses/cargo-jiff-tzdb-platform-0.1.3/COPYING",
+        "dependency-licenses/cargo-jiff-tzdb-platform-0.1.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "js-sys",
+      "version": "0.3.105",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The wasm-bindgen Developers"
+      ],
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/js-sys",
+      "licenseFiles": [
+        "dependency-licenses/cargo-js-sys-0.3.105/LICENSE-APACHE",
+        "dependency-licenses/cargo-js-sys-0.3.105/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "json-patch",
+      "version": "3.0.1",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "Ivan Dubrov <dubrov.ivan@gmail.com>"
+      ],
+      "repository": "https://github.com/idubrov/json-patch",
+      "licenseFiles": [
+        "dependency-licenses/cargo-json-patch-3.0.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-json-patch-3.0.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "jsonptr",
+      "version": "0.6.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "chance dinkins",
+        "Andr\u00e9 S\u00e1 de Mello <codasm@pm.me>"
+      ],
+      "repository": "https://github.com/chanced/jsonptr",
+      "licenseFiles": [
+        "dependency-licenses/cargo-jsonptr-0.6.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-jsonptr-0.6.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "keyboard-types",
+      "version": "0.7.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Pyfisch <pyfisch@posteo.org>"
+      ],
+      "repository": "https://github.com/pyfisch/keyboard-types",
+      "licenseFiles": [
+        "dependency-licenses/cargo-keyboard-types-0.7.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-keyboard-types-0.7.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "libc",
+      "version": "0.2.189",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-lang/libc",
+      "licenseFiles": [
+        "dependency-licenses/cargo-libc-0.2.189/LICENSE-APACHE",
+        "dependency-licenses/cargo-libc-0.2.189/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "libloading",
+      "version": "0.8.9",
+      "license": "ISC",
+      "authors": [
+        "Simonas Kazlauskas <libloading@kazlauskas.me>"
+      ],
+      "repository": "https://github.com/nagisa/rust_libloading/",
+      "licenseFiles": [
+        "dependency-licenses/cargo-libloading-0.8.9/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "litemap",
+      "version": "0.8.3",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-litemap-0.8.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "lock_api",
+      "version": "0.4.14",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Amanieu d'Antras <amanieu@gmail.com>"
+      ],
+      "repository": "https://github.com/Amanieu/parking_lot",
+      "licenseFiles": [
+        "dependency-licenses/cargo-lock_api-0.4.14/LICENSE-APACHE",
+        "dependency-licenses/cargo-lock_api-0.4.14/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "log",
+      "version": "0.4.34",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "repository": "https://github.com/rust-lang/log",
+      "licenseFiles": [
+        "dependency-licenses/cargo-log-0.4.34/LICENSE-APACHE",
+        "dependency-licenses/cargo-log-0.4.34/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "markup5ever",
+      "version": "0.38.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The html5ever Project Developers"
+      ],
+      "repository": "https://github.com/servo/html5ever",
+      "licenseFiles": [
+        "dependency-licenses/cargo-markup5ever-0.38.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-markup5ever-0.38.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "memchr",
+      "version": "2.8.3",
+      "license": "Unlicense OR MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>",
+        "bluss"
+      ],
+      "repository": "https://github.com/BurntSushi/memchr",
+      "licenseFiles": [
+        "dependency-licenses/cargo-memchr-2.8.3/COPYING",
+        "dependency-licenses/cargo-memchr-2.8.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "mime",
+      "version": "0.3.17",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "repository": "https://github.com/hyperium/mime",
+      "licenseFiles": [
+        "dependency-licenses/cargo-mime-0.3.17/LICENSE-APACHE",
+        "dependency-licenses/cargo-mime-0.3.17/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "minimal-lexical",
+      "version": "0.2.1",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "Alex Huszagh <ahuszagh@gmail.com>"
+      ],
+      "repository": "https://github.com/Alexhuszagh/minimal-lexical",
+      "licenseFiles": [
+        "dependency-licenses/cargo-minimal-lexical-0.2.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-minimal-lexical-0.2.1/LICENSE-MIT",
+        "dependency-licenses/cargo-minimal-lexical-0.2.1/LICENSE.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "miniz_oxide",
+      "version": "0.8.9",
+      "license": "MIT OR Zlib OR Apache-2.0",
+      "authors": [
+        "Frommi <daniil.liferenko@gmail.com>",
+        "oyvindln <oyvindln@users.noreply.github.com>",
+        "Rich Geldreich richgel99@gmail.com"
+      ],
+      "repository": "https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide",
+      "licenseFiles": [
+        "dependency-licenses/cargo-miniz_oxide-0.8.9/LICENSE",
+        "dependency-licenses/cargo-miniz_oxide-0.8.9/LICENSE-APACHE.md",
+        "dependency-licenses/cargo-miniz_oxide-0.8.9/LICENSE-MIT.md",
+        "dependency-licenses/cargo-miniz_oxide-0.8.9/LICENSE-ZLIB.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "miniz_oxide",
+      "version": "0.9.1",
+      "license": "MIT OR Zlib OR Apache-2.0",
+      "authors": [
+        "Frommi <daniil.liferenko@gmail.com>",
+        "oyvindln <oyvindln@users.noreply.github.com>",
+        "Rich Geldreich richgel99@gmail.com"
+      ],
+      "repository": "https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide",
+      "licenseFiles": [
+        "dependency-licenses/cargo-miniz_oxide-0.9.1/LICENSE",
+        "dependency-licenses/cargo-miniz_oxide-0.9.1/LICENSE-APACHE.md",
+        "dependency-licenses/cargo-miniz_oxide-0.9.1/LICENSE-MIT.md",
+        "dependency-licenses/cargo-miniz_oxide-0.9.1/LICENSE-ZLIB.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "mio",
+      "version": "1.2.3",
+      "license": "MIT",
+      "authors": [
+        "Carl Lerche <me@carllerche.com>",
+        "Thomas de Zeeuw <thomasdezeeuw@gmail.com>",
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "repository": "https://github.com/tokio-rs/mio",
+      "licenseFiles": [
+        "dependency-licenses/cargo-mio-1.2.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "muda",
+      "version": "0.19.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": "",
+      "repository": "https://github.com/tauri-apps/muda",
+      "licenseFiles": [
+        "dependency-licenses/cargo-muda-0.19.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-muda-0.19.3/LICENSE-MIT",
+        "dependency-licenses/cargo-muda-0.19.3/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "multiversion",
+      "version": "0.9.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Caleb Zulawski <caleb.zulawski@gmail.com>"
+      ],
+      "repository": "https://github.com/calebzulawski/multiversion",
+      "licenseFiles": [
+        "dependency-licenses/cargo-multiversion-0.9.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-multiversion-0.9.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "multiversion-macros",
+      "version": "0.9.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Caleb Zulawski <caleb.zulawski@gmail.com>"
+      ],
+      "repository": "https://github.com/calebzulawski/multiversion",
+      "licenseFiles": [
+        "dependency-licenses/cargo-multiversion-macros-0.9.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-multiversion-macros-0.9.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "multiversion_no_op",
+      "version": "1.0.0",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Henri Sivonen <hsivonen@hsivonen.fi>"
+      ],
+      "repository": "https://github.com/hsivonen/multiversion_no_op",
+      "licenseFiles": [
+        "dependency-licenses/cargo-multiversion_no_op-1.0.0/COPYRIGHT",
+        "dependency-licenses/cargo-multiversion_no_op-1.0.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-multiversion_no_op-1.0.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "new_debug_unreachable",
+      "version": "1.0.6",
+      "license": "MIT",
+      "authors": [
+        "Matt Brubeck <mbrubeck@limpet.net>",
+        "Jonathan Reem <jonathan.reem@gmail.com>"
+      ],
+      "repository": "https://github.com/mbrubeck/rust-debug-unreachable",
+      "licenseFiles": [
+        "dependency-licenses/cargo-new_debug_unreachable-1.0.6/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "nom",
+      "version": "7.1.3",
+      "license": "MIT",
+      "authors": [
+        "contact@geoffroycouprie.com"
+      ],
+      "repository": "https://github.com/Geal/nom",
+      "licenseFiles": [
+        "dependency-licenses/cargo-nom-7.1.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "num-conv",
+      "version": "0.2.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jacob Pratt <jacob@jhpratt.dev>"
+      ],
+      "repository": "https://github.com/jhpratt/num-conv",
+      "licenseFiles": [
+        "dependency-licenses/cargo-num-conv-0.2.2/LICENSE-Apache",
+        "dependency-licenses/cargo-num-conv-0.2.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "num-traits",
+      "version": "0.2.19",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "repository": "https://github.com/rust-num/num-traits",
+      "licenseFiles": [
+        "dependency-licenses/cargo-num-traits-0.2.19/LICENSE-APACHE",
+        "dependency-licenses/cargo-num-traits-0.2.19/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "once_cell",
+      "version": "1.21.4",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Aleksey Kladov <aleksey.kladov@gmail.com>"
+      ],
+      "repository": "https://github.com/matklad/once_cell",
+      "licenseFiles": [
+        "dependency-licenses/cargo-once_cell-1.21.4/LICENSE-APACHE",
+        "dependency-licenses/cargo-once_cell-1.21.4/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "option-ext",
+      "version": "0.2.0",
+      "license": "MPL-2.0",
+      "authors": [
+        "Simon Ochsenreither <simon@ochsenreither.de>"
+      ],
+      "repository": "https://github.com/soc/option-ext.git",
+      "licenseFiles": [
+        "dependency-licenses/cargo-option-ext-0.2.0/LICENSE.txt"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "parking_lot",
+      "version": "0.12.5",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Amanieu d'Antras <amanieu@gmail.com>"
+      ],
+      "repository": "https://github.com/Amanieu/parking_lot",
+      "licenseFiles": [
+        "dependency-licenses/cargo-parking_lot-0.12.5/LICENSE-APACHE",
+        "dependency-licenses/cargo-parking_lot-0.12.5/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "parking_lot_core",
+      "version": "0.9.12",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Amanieu d'Antras <amanieu@gmail.com>"
+      ],
+      "repository": "https://github.com/Amanieu/parking_lot",
+      "licenseFiles": [
+        "dependency-licenses/cargo-parking_lot_core-0.9.12/LICENSE-APACHE",
+        "dependency-licenses/cargo-parking_lot_core-0.9.12/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "percent-encoding",
+      "version": "2.3.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The rust-url developers"
+      ],
+      "repository": "https://github.com/servo/rust-url/",
+      "licenseFiles": [
+        "dependency-licenses/cargo-percent-encoding-2.3.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-percent-encoding-2.3.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "phf",
+      "version": "0.13.1",
+      "license": "MIT",
+      "authors": [
+        "Steven Fackler <sfackler@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-phf/rust-phf",
+      "licenseFiles": [
+        "dependency-licenses/cargo-phf-0.13.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "phf_codegen",
+      "version": "0.13.1",
+      "license": "MIT",
+      "authors": [
+        "Steven Fackler <sfackler@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-phf/rust-phf",
+      "licenseFiles": [
+        "dependency-licenses/cargo-phf_codegen-0.13.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "phf_generator",
+      "version": "0.13.1",
+      "license": "MIT",
+      "authors": [
+        "Steven Fackler <sfackler@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-phf/rust-phf",
+      "licenseFiles": [
+        "dependency-licenses/cargo-phf_generator-0.13.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "phf_macros",
+      "version": "0.13.1",
+      "license": "MIT",
+      "authors": [
+        "Steven Fackler <sfackler@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-phf/rust-phf",
+      "licenseFiles": [
+        "dependency-licenses/cargo-phf_macros-0.13.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "phf_shared",
+      "version": "0.13.1",
+      "license": "MIT",
+      "authors": [
+        "Steven Fackler <sfackler@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-phf/rust-phf",
+      "licenseFiles": [
+        "dependency-licenses/cargo-phf_shared-0.13.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "pin-project-lite",
+      "version": "0.2.17",
+      "license": "Apache-2.0 OR MIT",
+      "authors": "",
+      "repository": "https://github.com/taiki-e/pin-project-lite",
+      "licenseFiles": [
+        "dependency-licenses/cargo-pin-project-lite-0.2.17/LICENSE-APACHE",
+        "dependency-licenses/cargo-pin-project-lite-0.2.17/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "plist",
+      "version": "1.10.1",
+      "license": "MIT",
+      "authors": [
+        "Ed Barnard <eabarnard@gmail.com>"
+      ],
+      "repository": "https://github.com/ebarnard/rust-plist/",
+      "licenseFiles": [
+        "dependency-licenses/cargo-plist-1.10.1/LICENCE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "png",
+      "version": "0.17.16",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The image-rs Developers"
+      ],
+      "repository": "https://github.com/image-rs/image-png",
+      "licenseFiles": [
+        "dependency-licenses/cargo-png-0.17.16/LICENSE-APACHE",
+        "dependency-licenses/cargo-png-0.17.16/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "png",
+      "version": "0.18.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The image-rs Developers"
+      ],
+      "repository": "https://github.com/image-rs/image-png",
+      "licenseFiles": [
+        "dependency-licenses/cargo-png-0.18.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-png-0.18.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "potential_utf",
+      "version": "0.1.6",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-potential_utf-0.1.6/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "powerfmt",
+      "version": "0.2.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jacob Pratt <jacob@jhpratt.dev>"
+      ],
+      "repository": "https://github.com/jhpratt/powerfmt",
+      "licenseFiles": [
+        "dependency-licenses/cargo-powerfmt-0.2.0/LICENSE-Apache",
+        "dependency-licenses/cargo-powerfmt-0.2.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "precomputed-hash",
+      "version": "0.1.1",
+      "license": "MIT",
+      "authors": [
+        "Emilio Cobos \u00c1lvarez <emilio@crisal.io>"
+      ],
+      "repository": "https://github.com/emilio/precomputed-hash",
+      "licenseFiles": [
+        "dependency-licenses/cargo-precomputed-hash-0.1.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "prettyplease",
+      "version": "0.2.37",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/prettyplease",
+      "licenseFiles": [
+        "dependency-licenses/cargo-prettyplease-0.2.37/LICENSE-APACHE",
+        "dependency-licenses/cargo-prettyplease-0.2.37/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "proc-macro-crate",
+      "version": "3.5.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Bastian K\u00f6cher <git@kchr.de>"
+      ],
+      "repository": "https://github.com/bkchr/proc-macro-crate",
+      "licenseFiles": [
+        "dependency-licenses/cargo-proc-macro-crate-3.5.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-proc-macro-crate-3.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "proc-macro2",
+      "version": "1.0.107",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>",
+        "Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "repository": "https://github.com/dtolnay/proc-macro2",
+      "licenseFiles": [
+        "dependency-licenses/cargo-proc-macro2-1.0.107/LICENSE-APACHE",
+        "dependency-licenses/cargo-proc-macro2-1.0.107/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "quick-xml",
+      "version": "0.41.0",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/tafia/quick-xml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-quick-xml-0.41.0/LICENSE-MIT.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "quick-xml",
+      "version": "0.42.0",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/tafia/quick-xml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-quick-xml-0.42.0/LICENSE-MIT.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "quote",
+      "version": "1.0.47",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/quote",
+      "licenseFiles": [
+        "dependency-licenses/cargo-quote-1.0.47/LICENSE-APACHE",
+        "dependency-licenses/cargo-quote-1.0.47/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "raw-window-handle",
+      "version": "0.6.2",
+      "license": "MIT OR Apache-2.0 OR Zlib",
+      "authors": [
+        "Osspial <osspial@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-windowing/raw-window-handle",
+      "licenseFiles": [
+        "dependency-licenses/cargo-raw-window-handle-0.6.2/LICENSE-APACHE.md",
+        "dependency-licenses/cargo-raw-window-handle-0.6.2/LICENSE-MIT.md",
+        "dependency-licenses/cargo-raw-window-handle-0.6.2/LICENSE-ZLIB.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "ref-cast",
+      "version": "1.0.27",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/ref-cast",
+      "licenseFiles": [
+        "dependency-licenses/cargo-ref-cast-1.0.27/LICENSE-APACHE",
+        "dependency-licenses/cargo-ref-cast-1.0.27/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "ref-cast-impl",
+      "version": "1.0.27",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/ref-cast",
+      "licenseFiles": [
+        "dependency-licenses/cargo-ref-cast-impl-1.0.27/LICENSE-APACHE",
+        "dependency-licenses/cargo-ref-cast-impl-1.0.27/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "regex",
+      "version": "1.13.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rust Project Developers",
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-lang/regex",
+      "licenseFiles": [
+        "dependency-licenses/cargo-regex-1.13.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-regex-1.13.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "regex-automata",
+      "version": "0.4.18",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rust Project Developers",
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-lang/regex",
+      "licenseFiles": [
+        "dependency-licenses/cargo-regex-automata-0.4.18/LICENSE-APACHE",
+        "dependency-licenses/cargo-regex-automata-0.4.18/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "regex-syntax",
+      "version": "0.8.11",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Rust Project Developers",
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-lang/regex",
+      "licenseFiles": [
+        "dependency-licenses/cargo-regex-syntax-0.8.11/LICENSE-APACHE",
+        "dependency-licenses/cargo-regex-syntax-0.8.11/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "rfd",
+      "version": "0.16.0",
+      "license": "MIT",
+      "authors": [
+        "Poly <marynczak.bartlomiej@gmail.com>"
+      ],
+      "repository": "https://github.com/PolyMeilex/rfd",
+      "licenseFiles": [
+        "dependency-licenses/cargo-rfd-0.16.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "rust_xlsxwriter",
+      "version": "0.99.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "John McNamara <jmcnamara@cpan.org>"
+      ],
+      "repository": "https://github.com/jmcnamara/rust_xlsxwriter",
+      "licenseFiles": [
+        "dependency-licenses/cargo-rust_xlsxwriter-0.99.1/LICENSE_Apache2.0",
+        "dependency-licenses/cargo-rust_xlsxwriter-0.99.1/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "rustc-hash",
+      "version": "2.1.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "The Rust Project Developers"
+      ],
+      "repository": "https://github.com/rust-lang/rustc-hash",
+      "licenseFiles": [
+        "dependency-licenses/cargo-rustc-hash-2.1.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-rustc-hash-2.1.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "rustc_version",
+      "version": "0.4.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/djc/rustc-version-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-rustc_version-0.4.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-rustc_version-0.4.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "rustversion",
+      "version": "1.0.23",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/rustversion",
+      "licenseFiles": [
+        "dependency-licenses/cargo-rustversion-1.0.23/LICENSE-APACHE",
+        "dependency-licenses/cargo-rustversion-1.0.23/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "ryu",
+      "version": "1.0.23",
+      "license": "Apache-2.0 OR BSL-1.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/ryu",
+      "licenseFiles": [
+        "dependency-licenses/cargo-ryu-1.0.23/LICENSE-APACHE",
+        "dependency-licenses/cargo-ryu-1.0.23/LICENSE-BOOST"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "same-file",
+      "version": "1.0.6",
+      "license": "Unlicense/MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/same-file",
+      "licenseFiles": [
+        "dependency-licenses/cargo-same-file-1.0.6/COPYING",
+        "dependency-licenses/cargo-same-file-1.0.6/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "schemars",
+      "version": "0.8.22",
+      "license": "MIT",
+      "authors": [
+        "Graham Esau <gesau@hotmail.co.uk>"
+      ],
+      "repository": "https://github.com/GREsau/schemars",
+      "licenseFiles": [
+        "dependency-licenses/cargo-schemars-0.8.22/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "schemars",
+      "version": "0.9.0",
+      "license": "MIT",
+      "authors": [
+        "Graham Esau <gesau@hotmail.co.uk>"
+      ],
+      "repository": "https://github.com/GREsau/schemars",
+      "licenseFiles": [
+        "dependency-licenses/cargo-schemars-0.9.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "schemars",
+      "version": "1.2.2",
+      "license": "MIT",
+      "authors": [
+        "Graham Esau <gesau@hotmail.co.uk>"
+      ],
+      "repository": "https://github.com/GREsau/schemars",
+      "licenseFiles": [
+        "dependency-licenses/cargo-schemars-1.2.2/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "schemars_derive",
+      "version": "0.8.22",
+      "license": "MIT",
+      "authors": [
+        "Graham Esau <gesau@hotmail.co.uk>"
+      ],
+      "repository": "https://github.com/GREsau/schemars",
+      "licenseFiles": [
+        "dependency-licenses/cargo-schemars_derive-0.8.22/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "scopeguard",
+      "version": "1.2.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "bluss"
+      ],
+      "repository": "https://github.com/bluss/scopeguard",
+      "licenseFiles": [
+        "dependency-licenses/cargo-scopeguard-1.2.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-scopeguard-1.2.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "selectors",
+      "version": "0.36.1",
+      "license": "MPL-2.0",
+      "authors": [
+        "The Servo Project Developers"
+      ],
+      "repository": "https://github.com/servo/stylo",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "semver",
+      "version": "1.0.28",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/semver",
+      "licenseFiles": [
+        "dependency-licenses/cargo-semver-1.0.28/LICENSE-APACHE",
+        "dependency-licenses/cargo-semver-1.0.28/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/serde-rs/serde",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde-1.0.229/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde-1.0.229/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde-untagged",
+      "version": "0.1.9",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/serde-untagged",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde-untagged-0.1.9/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde-untagged-0.1.9/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde-wasm-bindgen",
+      "version": "0.6.5",
+      "license": "MIT",
+      "authors": [
+        "Ingvar Stepanyan <me@rreverser.com>"
+      ],
+      "repository": "https://github.com/RReverser/serde-wasm-bindgen",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde-wasm-bindgen-0.6.5/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde_core",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/serde-rs/serde",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde_core-1.0.229/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde_core-1.0.229/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde_derive",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/serde-rs/serde",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde_derive-1.0.229/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde_derive-1.0.229/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde_derive_internals",
+      "version": "0.29.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/serde-rs/serde",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde_derive_internals-0.29.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde_derive_internals-0.29.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde_json",
+      "version": "1.0.151",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/serde-rs/json",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde_json-1.0.151/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde_json-1.0.151/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde_repr",
+      "version": "0.1.21",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/serde-repr",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde_repr-0.1.21/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde_repr-0.1.21/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde_spanned",
+      "version": "1.1.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/toml-rs/toml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde_spanned-1.1.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde_spanned-1.1.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde_with",
+      "version": "3.23.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jonas Bushart",
+        "Marcin Ka\u017amierczak"
+      ],
+      "repository": "https://github.com/jonasbb/serde_with/",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde_with-3.23.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde_with-3.23.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serde_with_macros",
+      "version": "3.23.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jonas Bushart"
+      ],
+      "repository": "https://github.com/jonasbb/serde_with/",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serde_with_macros-3.23.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-serde_with_macros-3.23.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serialize-to-javascript",
+      "version": "0.1.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Chip Reed <chip@chip.sh>"
+      ],
+      "repository": "https://github.com/chippers/serialize-to-javascript",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serialize-to-javascript-0.1.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-serialize-to-javascript-0.1.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "serialize-to-javascript-impl",
+      "version": "0.1.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Chip Reed <chip@chip.sh>"
+      ],
+      "repository": "https://github.com/chippers/serialize-to-javascript",
+      "licenseFiles": [
+        "dependency-licenses/cargo-serialize-to-javascript-impl-0.1.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-serialize-to-javascript-impl-0.1.2/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "servo_arc",
+      "version": "0.4.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Servo Project Developers"
+      ],
+      "repository": "https://github.com/servo/stylo",
+      "licenseFiles": [
+        "dependency-licenses/cargo-servo_arc-0.4.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-servo_arc-0.4.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "sha2",
+      "version": "0.10.9",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "RustCrypto Developers"
+      ],
+      "repository": "https://github.com/RustCrypto/hashes",
+      "licenseFiles": [
+        "dependency-licenses/cargo-sha2-0.10.9/LICENSE-APACHE",
+        "dependency-licenses/cargo-sha2-0.10.9/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "shlex",
+      "version": "1.3.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "comex <comexk@gmail.com>",
+        "Fenhl <fenhl@fenhl.net>",
+        "Adrian Taylor <adetaylor@chromium.org>",
+        "Alex Touchet <alextouchet@outlook.com>",
+        "Daniel Parks <dp+git@oxidized.org>",
+        "Garrett Berg <googberg@gmail.com>"
+      ],
+      "repository": "https://github.com/comex/rust-shlex",
+      "licenseFiles": [
+        "dependency-licenses/cargo-shlex-1.3.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-shlex-1.3.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "shlex",
+      "version": "2.0.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "comex <comexk@gmail.com>",
+        "Fenhl <fenhl@fenhl.net>",
+        "Adrian Taylor <adetaylor@chromium.org>",
+        "Alex Touchet <alextouchet@outlook.com>",
+        "Daniel Parks <dp+git@oxidized.org>",
+        "Garrett Berg <googberg@gmail.com>"
+      ],
+      "repository": "https://github.com/comex/rust-shlex",
+      "licenseFiles": [
+        "dependency-licenses/cargo-shlex-2.0.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-shlex-2.0.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "simd-adler32",
+      "version": "0.3.10",
+      "license": "MIT",
+      "authors": [
+        "Marvin Countryman <me@maar.vin>"
+      ],
+      "repository": "https://github.com/mcountryman/simd-adler32",
+      "licenseFiles": [
+        "dependency-licenses/cargo-simd-adler32-0.3.10/LICENSE.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "simdutf8",
+      "version": "0.1.5",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Hans Kratz <hans@appfour.com>"
+      ],
+      "repository": "https://github.com/rusticstuff/simdutf8",
+      "licenseFiles": [
+        "dependency-licenses/cargo-simdutf8-0.1.5/LICENSE-Apache",
+        "dependency-licenses/cargo-simdutf8-0.1.5/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "siphasher",
+      "version": "1.0.3",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "Frank Denis <github@pureftpd.org>"
+      ],
+      "repository": "https://github.com/jedisct1/rust-siphash",
+      "licenseFiles": [
+        "dependency-licenses/cargo-siphasher-1.0.3/COPYING"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "slab",
+      "version": "0.4.12",
+      "license": "MIT",
+      "authors": [
+        "Carl Lerche <me@carllerche.com>"
+      ],
+      "repository": "https://github.com/tokio-rs/slab",
+      "licenseFiles": [
+        "dependency-licenses/cargo-slab-0.4.12/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "smallvec",
+      "version": "1.16.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Servo Project Developers"
+      ],
+      "repository": "https://github.com/servo/rust-smallvec",
+      "licenseFiles": [
+        "dependency-licenses/cargo-smallvec-1.16.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-smallvec-1.16.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "socket2",
+      "version": "0.6.5",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Alex Crichton <alex@alexcrichton.com>",
+        "Thomas de Zeeuw <thomasdezeeuw@gmail.com>"
+      ],
+      "repository": "https://github.com/rust-lang/socket2",
+      "licenseFiles": [
+        "dependency-licenses/cargo-socket2-0.6.5/LICENSE-APACHE",
+        "dependency-licenses/cargo-socket2-0.6.5/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "softbuffer",
+      "version": "0.4.8",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/rust-windowing/softbuffer",
+      "licenseFiles": [
+        "dependency-licenses/cargo-softbuffer-0.4.8/LICENSE-APACHE",
+        "dependency-licenses/cargo-softbuffer-0.4.8/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "stable_deref_trait",
+      "version": "1.2.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Robert Grosse <n210241048576@gmail.com>"
+      ],
+      "repository": "https://github.com/storyyeller/stable_deref_trait",
+      "licenseFiles": [
+        "dependency-licenses/cargo-stable_deref_trait-1.2.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-stable_deref_trait-1.2.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "string_cache",
+      "version": "0.9.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Servo Project Developers"
+      ],
+      "repository": "https://github.com/servo/string-cache",
+      "licenseFiles": [
+        "dependency-licenses/cargo-string_cache-0.9.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-string_cache-0.9.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "string_cache_codegen",
+      "version": "0.6.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The Servo Project Developers"
+      ],
+      "repository": "https://github.com/servo/string-cache",
+      "licenseFiles": [
+        "dependency-licenses/cargo-string_cache_codegen-0.6.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-string_cache_codegen-0.6.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "strsim",
+      "version": "0.11.1",
+      "license": "MIT",
+      "authors": [
+        "Danny Guo <danny@dannyguo.com>",
+        "maxbachmann <oss@maxbachmann.de>"
+      ],
+      "repository": "https://github.com/rapidfuzz/strsim-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-strsim-0.11.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "syn",
+      "version": "1.0.109",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/syn",
+      "licenseFiles": [
+        "dependency-licenses/cargo-syn-1.0.109/LICENSE-APACHE",
+        "dependency-licenses/cargo-syn-1.0.109/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "syn",
+      "version": "2.0.119",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/syn",
+      "licenseFiles": [
+        "dependency-licenses/cargo-syn-2.0.119/LICENSE-APACHE",
+        "dependency-licenses/cargo-syn-2.0.119/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "syn",
+      "version": "3.0.6",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/syn",
+      "licenseFiles": [
+        "dependency-licenses/cargo-syn-3.0.6/LICENSE-APACHE",
+        "dependency-licenses/cargo-syn-3.0.6/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "sync_wrapper",
+      "version": "1.0.2",
+      "license": "Apache-2.0",
+      "authors": [
+        "Actyx AG <developer@actyx.io>"
+      ],
+      "repository": "https://github.com/Actyx/sync_wrapper",
+      "licenseFiles": [
+        "dependency-licenses/cargo-sync_wrapper-1.0.2/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "synstructure",
+      "version": "0.14.0",
+      "license": "MIT",
+      "authors": [
+        "Nika Layzell <nika@thelayzells.com>"
+      ],
+      "repository": "https://github.com/mystor/synstructure",
+      "licenseFiles": [
+        "dependency-licenses/cargo-synstructure-0.14.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tao",
+      "version": "0.35.3",
+      "license": "Apache-2.0",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy",
+        "The winit contributors"
+      ],
+      "repository": "https://github.com/tauri-apps/tao",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tao-0.35.3/LICENSE",
+        "dependency-licenses/cargo-tao-0.35.3/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri",
+      "version": "2.11.5",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-2.11.5/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-2.11.5/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-build",
+      "version": "2.6.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-build-2.6.3/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-build-2.6.3/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-codegen",
+      "version": "2.6.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-codegen-2.6.3/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-codegen-2.6.3/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-macros",
+      "version": "2.6.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-macros-2.6.3/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-macros-2.6.3/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-plugin",
+      "version": "2.6.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-plugin-dialog",
+      "version": "2.7.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/plugins-workspace",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-plugin-dialog-2.7.3/LICENSE.spdx",
+        "dependency-licenses/cargo-tauri-plugin-dialog-2.7.3/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-plugin-dialog-2.7.3/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-plugin-fs",
+      "version": "2.5.2",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/plugins-workspace",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-plugin-fs-2.5.2/LICENSE.spdx",
+        "dependency-licenses/cargo-tauri-plugin-fs-2.5.2/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-plugin-fs-2.5.2/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-plugin-single-instance",
+      "version": "2.4.4",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/plugins-workspace",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-plugin-single-instance-2.4.4/LICENSE.spdx",
+        "dependency-licenses/cargo-tauri-plugin-single-instance-2.4.4/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-plugin-single-instance-2.4.4/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-plugin-store",
+      "version": "2.4.5",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/plugins-workspace",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-plugin-store-2.4.5/LICENSE.spdx",
+        "dependency-licenses/cargo-tauri-plugin-store-2.4.5/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-plugin-store-2.4.5/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-runtime",
+      "version": "2.11.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-runtime-2.11.3/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-runtime-2.11.3/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-runtime-wry",
+      "version": "2.11.4",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-runtime-wry-2.11.4/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-runtime-wry-2.11.4/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-utils",
+      "version": "2.9.3",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-utils-2.9.3/LICENSE_APACHE-2.0",
+        "dependency-licenses/cargo-tauri-utils-2.9.3/LICENSE_MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tauri-winres",
+      "version": "0.3.6",
+      "license": "MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy",
+        "Max Resch <resch.max@gmail.com>"
+      ],
+      "repository": "https://github.com/tauri-apps/winres",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tauri-winres-0.3.6/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tendril",
+      "version": "0.5.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Keegan McAllister <mcallister.keegan@gmail.com>",
+        "Simon Sapin <simon.sapin@exyr.org>",
+        "Chris Morgan <me@chrismorgan.info>"
+      ],
+      "repository": "https://github.com/servo/html5ever",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tendril-0.5.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-tendril-0.5.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "thiserror",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/thiserror",
+      "licenseFiles": [
+        "dependency-licenses/cargo-thiserror-1.0.69/LICENSE-APACHE",
+        "dependency-licenses/cargo-thiserror-1.0.69/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "thiserror",
+      "version": "2.0.20",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/thiserror",
+      "licenseFiles": [
+        "dependency-licenses/cargo-thiserror-2.0.20/LICENSE-APACHE",
+        "dependency-licenses/cargo-thiserror-2.0.20/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "thiserror-impl",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/thiserror",
+      "licenseFiles": [
+        "dependency-licenses/cargo-thiserror-impl-1.0.69/LICENSE-APACHE",
+        "dependency-licenses/cargo-thiserror-impl-1.0.69/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "thiserror-impl",
+      "version": "2.0.20",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/thiserror",
+      "licenseFiles": [
+        "dependency-licenses/cargo-thiserror-impl-2.0.20/LICENSE-APACHE",
+        "dependency-licenses/cargo-thiserror-impl-2.0.20/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "time",
+      "version": "0.3.55",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jacob Pratt <open-source@jhpratt.dev>",
+        "Time contributors"
+      ],
+      "repository": "https://github.com/time-rs/time",
+      "licenseFiles": [
+        "dependency-licenses/cargo-time-0.3.55/LICENSE-Apache",
+        "dependency-licenses/cargo-time-0.3.55/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "time-core",
+      "version": "0.1.9",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jacob Pratt <open-source@jhpratt.dev>",
+        "Time contributors"
+      ],
+      "repository": "https://github.com/time-rs/time",
+      "licenseFiles": [
+        "dependency-licenses/cargo-time-core-0.1.9/LICENSE-Apache",
+        "dependency-licenses/cargo-time-core-0.1.9/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "time-macros",
+      "version": "0.2.32",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Jacob Pratt <open-source@jhpratt.dev>",
+        "Time contributors"
+      ],
+      "repository": "https://github.com/time-rs/time",
+      "licenseFiles": [
+        "dependency-licenses/cargo-time-macros-0.2.32/LICENSE-Apache",
+        "dependency-licenses/cargo-time-macros-0.2.32/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tinystr",
+      "version": "0.8.4",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tinystr-0.8.4/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tinyvec",
+      "version": "1.13.3",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "authors": [
+        "Lokathor <zefria@gmail.com>"
+      ],
+      "repository": "https://github.com/Lokathor/tinyvec",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tinyvec-1.13.3/LICENSE-APACHE.md",
+        "dependency-licenses/cargo-tinyvec-1.13.3/LICENSE-MIT.md",
+        "dependency-licenses/cargo-tinyvec-1.13.3/LICENSE-ZLIB.md"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tokio",
+      "version": "1.53.1",
+      "license": "MIT",
+      "authors": [
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "repository": "https://github.com/tokio-rs/tokio",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tokio-1.53.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tokio-macros",
+      "version": "2.7.2",
+      "license": "MIT",
+      "authors": [
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "repository": "https://github.com/tokio-rs/tokio",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tokio-macros-2.7.2/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "toml",
+      "version": "0.9.12+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/toml-rs/toml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-toml-0.9.12_spec-1.1.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-toml-0.9.12_spec-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "toml",
+      "version": "1.1.6+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/toml-rs/toml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-toml-1.1.6_spec-1.1.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-toml-1.1.6_spec-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "toml_datetime",
+      "version": "0.7.5+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/toml-rs/toml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-toml_datetime-0.7.5_spec-1.1.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-toml_datetime-0.7.5_spec-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "toml_datetime",
+      "version": "1.1.1+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/toml-rs/toml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-toml_datetime-1.1.1_spec-1.1.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-toml_datetime-1.1.1_spec-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "toml_parser",
+      "version": "1.1.3+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/toml-rs/toml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-toml_parser-1.1.3_spec-1.1.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-toml_parser-1.1.3_spec-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "toml_writer",
+      "version": "1.1.2+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/toml-rs/toml",
+      "licenseFiles": [
+        "dependency-licenses/cargo-toml_writer-1.1.2_spec-1.1.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-toml_writer-1.1.2_spec-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tower",
+      "version": "0.5.3",
+      "license": "MIT",
+      "authors": [
+        "Tower Maintainers <team@tower-rs.com>"
+      ],
+      "repository": "https://github.com/tower-rs/tower",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tower-0.5.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tower-layer",
+      "version": "0.3.3",
+      "license": "MIT",
+      "authors": [
+        "Tower Maintainers <team@tower-rs.com>"
+      ],
+      "repository": "https://github.com/tower-rs/tower",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tower-layer-0.3.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tower-service",
+      "version": "0.3.3",
+      "license": "MIT",
+      "authors": [
+        "Tower Maintainers <team@tower-rs.com>"
+      ],
+      "repository": "https://github.com/tower-rs/tower",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tower-service-0.3.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tracing",
+      "version": "0.1.44",
+      "license": "MIT",
+      "authors": [
+        "Eliza Weisman <eliza@buoyant.io>",
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "repository": "https://github.com/tokio-rs/tracing",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tracing-0.1.44/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "license": "MIT",
+      "authors": [
+        "Tokio Contributors <team@tokio.rs>",
+        "Eliza Weisman <eliza@buoyant.io>",
+        "David Barsky <dbarsky@amazon.com>"
+      ],
+      "repository": "https://github.com/tokio-rs/tracing",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tracing-attributes-0.1.31/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tracing-core",
+      "version": "0.1.36",
+      "license": "MIT",
+      "authors": [
+        "Tokio Contributors <team@tokio.rs>"
+      ],
+      "repository": "https://github.com/tokio-rs/tracing",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tracing-core-0.1.36/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "tray-icon",
+      "version": "0.24.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/tauri-apps/tray-icon",
+      "licenseFiles": [
+        "dependency-licenses/cargo-tray-icon-0.24.2/LICENSE-APACHE",
+        "dependency-licenses/cargo-tray-icon-0.24.2/LICENSE-MIT",
+        "dependency-licenses/cargo-tray-icon-0.24.2/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "try-lock",
+      "version": "0.2.5",
+      "license": "MIT",
+      "authors": [
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "repository": "https://github.com/seanmonstar/try-lock",
+      "licenseFiles": [
+        "dependency-licenses/cargo-try-lock-0.2.5/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "typed-path",
+      "version": "0.12.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Chip Senkbeil <chip@senkbeil.org>"
+      ],
+      "repository": "https://github.com/chipsenkbeil/typed-path",
+      "licenseFiles": [
+        "dependency-licenses/cargo-typed-path-0.12.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-typed-path-0.12.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "typeid",
+      "version": "1.0.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/typeid",
+      "licenseFiles": [
+        "dependency-licenses/cargo-typeid-1.0.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-typeid-1.0.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "typenum",
+      "version": "1.20.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/paholg/typenum",
+      "licenseFiles": [
+        "dependency-licenses/cargo-typenum-1.20.1/LICENSE",
+        "dependency-licenses/cargo-typenum-1.20.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-typenum-1.20.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "unic-char-property",
+      "version": "0.9.0",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "The UNIC Project Developers"
+      ],
+      "repository": "https://github.com/open-i18n/rust-unic/",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "unic-char-range",
+      "version": "0.9.0",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "The UNIC Project Developers"
+      ],
+      "repository": "https://github.com/open-i18n/rust-unic/",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "unic-common",
+      "version": "0.9.0",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "The UNIC Project Developers"
+      ],
+      "repository": "https://github.com/open-i18n/rust-unic/",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "unic-ucd-ident",
+      "version": "0.9.0",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "The UNIC Project Developers"
+      ],
+      "repository": "https://github.com/open-i18n/rust-unic/",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "unic-ucd-version",
+      "version": "0.9.0",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "The UNIC Project Developers"
+      ],
+      "repository": "https://github.com/open-i18n/rust-unic/",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "unicode-ident",
+      "version": "1.0.26",
+      "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/unicode-ident",
+      "licenseFiles": [
+        "dependency-licenses/cargo-unicode-ident-1.0.26/LICENSE-APACHE",
+        "dependency-licenses/cargo-unicode-ident-1.0.26/LICENSE-MIT",
+        "dependency-licenses/cargo-unicode-ident-1.0.26/LICENSE-UNICODE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "unicode-segmentation",
+      "version": "1.13.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "kwantam <kwantam@gmail.com>",
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "repository": "https://github.com/unicode-rs/unicode-segmentation",
+      "licenseFiles": [
+        "dependency-licenses/cargo-unicode-segmentation-1.13.3/COPYRIGHT",
+        "dependency-licenses/cargo-unicode-segmentation-1.13.3/LICENSE-APACHE",
+        "dependency-licenses/cargo-unicode-segmentation-1.13.3/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "url",
+      "version": "2.5.8",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The rust-url developers"
+      ],
+      "repository": "https://github.com/servo/rust-url",
+      "licenseFiles": [
+        "dependency-licenses/cargo-url-2.5.8/LICENSE-APACHE",
+        "dependency-licenses/cargo-url-2.5.8/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "urlpattern",
+      "version": "0.3.0",
+      "license": "MIT",
+      "authors": [
+        "the Deno authors",
+        "crowlKats <crowlkats@toaxl.com>"
+      ],
+      "repository": "https://github.com/denoland/rust-urlpattern",
+      "licenseFiles": [
+        "dependency-licenses/cargo-urlpattern-0.3.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "utf8_iter",
+      "version": "1.0.4",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Henri Sivonen <hsivonen@hsivonen.fi>"
+      ],
+      "repository": "https://github.com/hsivonen/utf8_iter",
+      "licenseFiles": [
+        "dependency-licenses/cargo-utf8_iter-1.0.4/COPYRIGHT",
+        "dependency-licenses/cargo-utf8_iter-1.0.4/LICENSE-APACHE",
+        "dependency-licenses/cargo-utf8_iter-1.0.4/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "uuid",
+      "version": "1.26.1",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Ashley Mannix<ashleymannix@live.com.au>",
+        "Dylan DPC<dylan.dpc@gmail.com>",
+        "Hunar Roop Kahlon<hunar.roop@gmail.com>"
+      ],
+      "repository": "https://github.com/uuid-rs/uuid",
+      "licenseFiles": [
+        "dependency-licenses/cargo-uuid-1.26.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-uuid-1.26.1/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "version_check",
+      "version": "0.9.5",
+      "license": "MIT/Apache-2.0",
+      "authors": [
+        "Sergio Benitez <sb@sergio.bz>"
+      ],
+      "repository": "https://github.com/SergioBenitez/version_check",
+      "licenseFiles": [
+        "dependency-licenses/cargo-version_check-0.9.5/LICENSE-APACHE",
+        "dependency-licenses/cargo-version_check-0.9.5/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "vswhom",
+      "version": "0.1.0",
+      "license": "MIT",
+      "authors": [
+        "nabijaczleweli <nabijaczleweli@gmail.com>"
+      ],
+      "repository": "https://github.com/nabijaczleweli/vswhom.rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-vswhom-0.1.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "vswhom-sys",
+      "version": "0.1.3",
+      "license": "MIT",
+      "authors": [
+        "\u043d\u0430\u0431 <nabijaczleweli@nabijaczleweli.xyz>",
+        "forrestsmithfb <forrest.smith@fb.com>"
+      ],
+      "repository": "https://github.com/nabijaczleweli/vswhom-sys.rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-vswhom-sys-0.1.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "walkdir",
+      "version": "2.5.0",
+      "license": "Unlicense/MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/walkdir",
+      "licenseFiles": [
+        "dependency-licenses/cargo-walkdir-2.5.0/COPYING",
+        "dependency-licenses/cargo-walkdir-2.5.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "want",
+      "version": "0.3.1",
+      "license": "MIT",
+      "authors": [
+        "Sean McArthur <sean@seanmonstar.com>"
+      ],
+      "repository": "https://github.com/seanmonstar/want",
+      "licenseFiles": [
+        "dependency-licenses/cargo-want-0.3.1/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "wasm-bindgen",
+      "version": "0.2.128",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The wasm-bindgen Developers"
+      ],
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen",
+      "licenseFiles": [
+        "dependency-licenses/cargo-wasm-bindgen-0.2.128/LICENSE-APACHE",
+        "dependency-licenses/cargo-wasm-bindgen-0.2.128/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "wasm-bindgen-macro",
+      "version": "0.2.128",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The wasm-bindgen Developers"
+      ],
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/macro",
+      "licenseFiles": [
+        "dependency-licenses/cargo-wasm-bindgen-macro-0.2.128/LICENSE-APACHE",
+        "dependency-licenses/cargo-wasm-bindgen-macro-0.2.128/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "wasm-bindgen-macro-support",
+      "version": "0.2.128",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The wasm-bindgen Developers"
+      ],
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/main/crates/macro-support",
+      "licenseFiles": [
+        "dependency-licenses/cargo-wasm-bindgen-macro-support-0.2.128/LICENSE-APACHE",
+        "dependency-licenses/cargo-wasm-bindgen-macro-support-0.2.128/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "wasm-bindgen-shared",
+      "version": "0.2.128",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The wasm-bindgen Developers"
+      ],
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/shared",
+      "licenseFiles": [
+        "dependency-licenses/cargo-wasm-bindgen-shared-0.2.128/LICENSE-APACHE",
+        "dependency-licenses/cargo-wasm-bindgen-shared-0.2.128/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "web-time",
+      "version": "1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/daxpedda/web-time",
+      "licenseFiles": [
+        "dependency-licenses/cargo-web-time-1.1.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-web-time-1.1.0/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "web_atoms",
+      "version": "0.2.6",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "The html5ever Project Developers"
+      ],
+      "repository": "https://github.com/servo/html5ever",
+      "licenseFiles": [
+        "dependency-licenses/cargo-web_atoms-0.2.6/LICENSE-APACHE",
+        "dependency-licenses/cargo-web_atoms-0.2.6/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "webview2-com",
+      "version": "0.38.2",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/wravery/webview2-rs",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "webview2-com-macros",
+      "version": "0.8.1",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/wravery/webview2-rs",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "webview2-com-sys",
+      "version": "0.38.2",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/wravery/webview2-rs",
+      "licenseFiles": []
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "winapi-util",
+      "version": "0.1.11",
+      "license": "Unlicense OR MIT",
+      "authors": [
+        "Andrew Gallant <jamslam@gmail.com>"
+      ],
+      "repository": "https://github.com/BurntSushi/winapi-util",
+      "licenseFiles": [
+        "dependency-licenses/cargo-winapi-util-0.1.11/COPYING",
+        "dependency-licenses/cargo-winapi-util-0.1.11/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "window-vibrancy",
+      "version": "0.6.0",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/tauri-plugin-vibrancy",
+      "licenseFiles": [
+        "dependency-licenses/cargo-window-vibrancy-0.6.0/LICENSE-APACHE",
+        "dependency-licenses/cargo-window-vibrancy-0.6.0/LICENSE-MIT",
+        "dependency-licenses/cargo-window-vibrancy-0.6.0/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows",
+      "version": "0.61.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-0.61.3/license-apache-2.0",
+        "dependency-licenses/cargo-windows-0.61.3/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-collections",
+      "version": "0.2.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-collections-0.2.0/license-apache-2.0",
+        "dependency-licenses/cargo-windows-collections-0.2.0/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-core",
+      "version": "0.61.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-core-0.61.2/license-apache-2.0",
+        "dependency-licenses/cargo-windows-core-0.61.2/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-future",
+      "version": "0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-future-0.2.1/license-apache-2.0",
+        "dependency-licenses/cargo-windows-future-0.2.1/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-implement",
+      "version": "0.60.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-implement-0.60.2/license-apache-2.0",
+        "dependency-licenses/cargo-windows-implement-0.60.2/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-interface",
+      "version": "0.59.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-interface-0.59.3/license-apache-2.0",
+        "dependency-licenses/cargo-windows-interface-0.59.3/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-link",
+      "version": "0.1.3",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-link-0.1.3/license-apache-2.0",
+        "dependency-licenses/cargo-windows-link-0.1.3/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-link",
+      "version": "0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-link-0.2.1/license-apache-2.0",
+        "dependency-licenses/cargo-windows-link-0.2.1/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-numerics",
+      "version": "0.2.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-numerics-0.2.0/license-apache-2.0",
+        "dependency-licenses/cargo-windows-numerics-0.2.0/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-result",
+      "version": "0.3.4",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-result-0.3.4/license-apache-2.0",
+        "dependency-licenses/cargo-windows-result-0.3.4/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-result",
+      "version": "0.4.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-result-0.4.1/license-apache-2.0",
+        "dependency-licenses/cargo-windows-result-0.4.1/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-strings",
+      "version": "0.4.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-strings-0.4.2/license-apache-2.0",
+        "dependency-licenses/cargo-windows-strings-0.4.2/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-strings",
+      "version": "0.5.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-strings-0.5.1/license-apache-2.0",
+        "dependency-licenses/cargo-windows-strings-0.5.1/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-sys",
+      "version": "0.59.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-sys-0.59.0/license-apache-2.0",
+        "dependency-licenses/cargo-windows-sys-0.59.0/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-sys",
+      "version": "0.60.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-sys-0.60.2/license-apache-2.0",
+        "dependency-licenses/cargo-windows-sys-0.60.2/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-sys",
+      "version": "0.61.2",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-sys-0.61.2/license-apache-2.0",
+        "dependency-licenses/cargo-windows-sys-0.61.2/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-targets",
+      "version": "0.52.6",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-targets-0.52.6/license-apache-2.0",
+        "dependency-licenses/cargo-windows-targets-0.52.6/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-targets",
+      "version": "0.53.5",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-targets-0.53.5/license-apache-2.0",
+        "dependency-licenses/cargo-windows-targets-0.53.5/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-threading",
+      "version": "0.1.0",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-threading-0.1.0/license-apache-2.0",
+        "dependency-licenses/cargo-windows-threading-0.1.0/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows-version",
+      "version": "0.1.7",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows-version-0.1.7/license-apache-2.0",
+        "dependency-licenses/cargo-windows-version-0.1.7/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows_x86_64_msvc",
+      "version": "0.52.6",
+      "license": "MIT OR Apache-2.0",
+      "authors": [
+        "Microsoft"
+      ],
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows_x86_64_msvc-0.52.6/license-apache-2.0",
+        "dependency-licenses/cargo-windows_x86_64_msvc-0.52.6/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "windows_x86_64_msvc",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-windows_x86_64_msvc-0.53.1/license-apache-2.0",
+        "dependency-licenses/cargo-windows_x86_64_msvc-0.53.1/license-mit"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "winnow",
+      "version": "0.7.15",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/winnow-rs/winnow",
+      "licenseFiles": [
+        "dependency-licenses/cargo-winnow-0.7.15/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "winnow",
+      "version": "1.0.4",
+      "license": "MIT",
+      "authors": "",
+      "repository": "https://github.com/winnow-rs/winnow",
+      "licenseFiles": [
+        "dependency-licenses/cargo-winnow-1.0.4/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "winreg",
+      "version": "0.55.0",
+      "license": "MIT",
+      "authors": [
+        "Igor Shaula <gentoo90@gmail.com>"
+      ],
+      "repository": "https://github.com/gentoo90/winreg-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-winreg-0.55.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "writeable",
+      "version": "0.6.4",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-writeable-0.6.4/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "wry",
+      "version": "0.55.1",
+      "license": "Apache-2.0 OR MIT",
+      "authors": [
+        "Tauri Programme within The Commons Conservancy"
+      ],
+      "repository": "https://github.com/tauri-apps/wry",
+      "licenseFiles": [
+        "dependency-licenses/cargo-wry-0.55.1/LICENSE-APACHE",
+        "dependency-licenses/cargo-wry-0.55.1/LICENSE-MIT",
+        "dependency-licenses/cargo-wry-0.55.1/LICENSE.spdx"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "yoke",
+      "version": "0.8.3",
+      "license": "Unicode-3.0",
+      "authors": [
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-yoke-0.8.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "yoke-derive",
+      "version": "0.8.3",
+      "license": "Unicode-3.0",
+      "authors": [
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-yoke-derive-0.8.3/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zerofrom",
+      "version": "0.1.8",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zerofrom-0.1.8/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zerofrom-derive",
+      "version": "0.1.8",
+      "license": "Unicode-3.0",
+      "authors": [
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zerofrom-derive-0.1.8/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zerotrie",
+      "version": "0.2.5",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zerotrie-0.2.5/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zerovec",
+      "version": "0.11.8",
+      "license": "Unicode-3.0",
+      "authors": [
+        "The ICU4X Project Developers"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zerovec-0.11.8/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zerovec-derive",
+      "version": "0.11.6",
+      "license": "Unicode-3.0",
+      "authors": [
+        "Manish Goregaokar <manishsmail@gmail.com>"
+      ],
+      "repository": "https://github.com/unicode-org/icu4x",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zerovec-derive-0.11.6/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zip",
+      "version": "8.6.0",
+      "license": "MIT",
+      "authors": [
+        "Mathijs van de Nes <git@mathijs.vd-nes.nl>",
+        "Marli Frost <marli@frost.red>",
+        "Ryan Levick <ryan.levick@gmail.com>",
+        "Chris Hennick <hennickc@amazon.com>"
+      ],
+      "repository": "https://github.com/zip-rs/zip2",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zip-8.6.0/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zlib-rs",
+      "version": "0.6.8",
+      "license": "Zlib",
+      "authors": "",
+      "repository": "https://github.com/trifectatechfoundation/zlib-rs",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zlib-rs-0.6.8/LICENSE"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zmij",
+      "version": "1.0.23",
+      "license": "MIT",
+      "authors": [
+        "David Tolnay <dtolnay@gmail.com>"
+      ],
+      "repository": "https://github.com/dtolnay/zmij",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zmij-1.0.23/LICENSE-MIT"
+      ]
+    },
+    {
+      "ecosystem": "cargo",
+      "name": "zopfli",
+      "version": "0.8.3",
+      "license": "Apache-2.0",
+      "authors": "",
+      "repository": "https://github.com/zopfli-rs/zopfli",
+      "licenseFiles": [
+        "dependency-licenses/cargo-zopfli-0.8.3/COPYING"
+      ]
+    }
+  ],
+  "otherLockedPlatformPackages": [
+    {
+      "name": "android_system_properties",
+      "version": "0.1.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-broadcast",
+      "version": "0.7.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-channel",
+      "version": "2.5.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-executor",
+      "version": "1.14.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-io",
+      "version": "2.6.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-lock",
+      "version": "3.4.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-process",
+      "version": "2.5.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-recursion",
+      "version": "1.1.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-signal",
+      "version": "0.2.14",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-task",
+      "version": "4.7.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "async-trait",
+      "version": "0.1.92",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "atk",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "atk-sys",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "base64",
+      "version": "0.21.7",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "block2",
+      "version": "0.6.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "blocking",
+      "version": "1.7.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "bytemuck",
+      "version": "1.25.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "cairo-rs",
+      "version": "0.18.5",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "cairo-sys-rs",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "cesu8",
+      "version": "1.1.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "cfg-expr",
+      "version": "0.15.8",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "combine",
+      "version": "4.6.8",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "concurrent-queue",
+      "version": "2.5.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.10.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "core-foundation-sys",
+      "version": "0.8.7",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "core-graphics",
+      "version": "0.25.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "core-graphics-types",
+      "version": "0.2.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "dbus",
+      "version": "0.9.12",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "dispatch2",
+      "version": "0.3.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "dlopen2",
+      "version": "0.8.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "dlopen2_derive",
+      "version": "0.4.3",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "embed_plist",
+      "version": "1.2.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "endi",
+      "version": "1.1.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "enumflags2",
+      "version": "0.7.12",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "enumflags2_derive",
+      "version": "0.7.12",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "errno",
+      "version": "0.3.14",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "event-listener",
+      "version": "5.4.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "event-listener-strategy",
+      "version": "0.5.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "field-offset",
+      "version": "0.3.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "foreign-types",
+      "version": "0.5.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "foreign-types-macros",
+      "version": "0.2.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "foreign-types-shared",
+      "version": "0.3.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "futures-channel",
+      "version": "0.3.34",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "futures-executor",
+      "version": "0.3.34",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "futures-lite",
+      "version": "2.6.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gdk",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gdk-pixbuf",
+      "version": "0.18.5",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gdk-pixbuf-sys",
+      "version": "0.18.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gdk-sys",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gdkwayland-sys",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gdkx11",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gdkx11-sys",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gio",
+      "version": "0.18.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gio-sys",
+      "version": "0.18.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "glib",
+      "version": "0.18.5",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "glib-macros",
+      "version": "0.18.5",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "glib-sys",
+      "version": "0.18.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gobject-sys",
+      "version": "0.18.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gtk",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gtk-sys",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "gtk3-macros",
+      "version": "0.18.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "heck",
+      "version": "0.4.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "hermit-abi",
+      "version": "0.5.3",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "http-body",
+      "version": "1.1.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "http-body-util",
+      "version": "0.1.5",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "hyper",
+      "version": "1.11.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "iana-time-zone",
+      "version": "0.1.65",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "iana-time-zone-haiku",
+      "version": "0.1.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "ipnet",
+      "version": "2.12.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "javascriptcore-rs",
+      "version": "1.1.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "javascriptcore-rs-sys",
+      "version": "1.1.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "jiff-static",
+      "version": "0.2.37",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "jni",
+      "version": "0.21.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "jni-sys",
+      "version": "0.3.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "jni-sys",
+      "version": "0.4.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "jni-sys-macros",
+      "version": "0.4.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "libappindicator",
+      "version": "0.9.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "libappindicator-sys",
+      "version": "0.9.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "libdbus-sys",
+      "version": "0.2.7",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "libloading",
+      "version": "0.7.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "libredox",
+      "version": "0.1.24",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "linux-raw-sys",
+      "version": "0.12.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "memoffset",
+      "version": "0.9.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "ndk",
+      "version": "0.9.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "ndk-sys",
+      "version": "0.6.0+11769913",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "num_enum",
+      "version": "0.7.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "num_enum_derive",
+      "version": "0.7.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2",
+      "version": "0.6.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-app-kit",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-cloud-kit",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-core-data",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-core-foundation",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-core-graphics",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-core-image",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-core-location",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-core-text",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-encode",
+      "version": "4.1.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-exception-helper",
+      "version": "0.1.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-foundation",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-io-surface",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-quartz-core",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-ui-kit",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-user-notifications",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "objc2-web-kit",
+      "version": "0.3.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "ordered-stream",
+      "version": "0.2.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "pango",
+      "version": "0.18.3",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "pango-sys",
+      "version": "0.18.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "parking",
+      "version": "2.2.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "piper",
+      "version": "0.2.5",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "pkg-config",
+      "version": "0.3.34",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "polling",
+      "version": "3.11.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "portable-atomic",
+      "version": "1.15.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "portable-atomic-util",
+      "version": "0.2.8",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "proc-macro-crate",
+      "version": "1.3.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "proc-macro-crate",
+      "version": "2.0.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "proc-macro-error",
+      "version": "1.0.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "proc-macro-error-attr",
+      "version": "1.0.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "r-efi",
+      "version": "5.3.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "r-efi",
+      "version": "6.0.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "redox_syscall",
+      "version": "0.5.18",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "redox_users",
+      "version": "0.5.3",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "reqwest",
+      "version": "0.13.5",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "rustix",
+      "version": "1.1.5",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "serde_spanned",
+      "version": "0.6.9",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "signal-hook-registry",
+      "version": "1.4.8",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "soup3",
+      "version": "0.5.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "soup3-sys",
+      "version": "0.5.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "swift-rs",
+      "version": "1.0.8",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "system-deps",
+      "version": "6.2.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "tao-macros",
+      "version": "0.1.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "target-lexicon",
+      "version": "0.12.16",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "tempfile",
+      "version": "3.27.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "tokio-util",
+      "version": "0.7.19",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "toml",
+      "version": "0.8.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "toml_datetime",
+      "version": "0.6.3",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "toml_edit",
+      "version": "0.19.15",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "toml_edit",
+      "version": "0.20.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "toml_edit",
+      "version": "0.25.15+spec-1.1.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "tower-http",
+      "version": "0.6.11",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "uds_windows",
+      "version": "1.2.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "version-compare",
+      "version": "0.2.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "wasi",
+      "version": "0.11.1+wasi-snapshot-preview1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "wasip2",
+      "version": "1.0.4+wasi-0.2.12",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "wasm-bindgen-futures",
+      "version": "0.4.78",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "wasm-streams",
+      "version": "0.5.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "web-sys",
+      "version": "0.3.105",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "webkit2gtk",
+      "version": "2.0.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "webkit2gtk-sys",
+      "version": "2.0.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "winapi",
+      "version": "0.3.9",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "winapi-i686-pc-windows-gnu",
+      "version": "0.4.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "winapi-x86_64-pc-windows-gnu",
+      "version": "0.4.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows-core",
+      "version": "0.62.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.45.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows-targets",
+      "version": "0.42.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.42.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.52.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.53.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.42.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.52.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.53.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.42.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.52.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.53.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_i686_gnullvm",
+      "version": "0.52.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_i686_gnullvm",
+      "version": "0.53.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.42.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.52.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.53.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.42.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.52.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.53.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.42.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.52.6",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.53.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "windows_x86_64_msvc",
+      "version": "0.42.2",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "winnow",
+      "version": "0.5.40",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "wit-bindgen",
+      "version": "0.57.1",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "x11",
+      "version": "2.21.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "x11-dl",
+      "version": "2.21.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "zbus",
+      "version": "5.19.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "zbus_macros",
+      "version": "5.19.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "zbus_names",
+      "version": "4.3.4",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "zcheapstr",
+      "version": "1.1.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "zvariant",
+      "version": "5.15.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "zvariant_derive",
+      "version": "5.15.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    },
+    {
+      "name": "zvariant_utils",
+      "version": "4.2.0",
+      "reason": "Other platform locked package not fetched or linked in this build."
+    }
+  ]
+}

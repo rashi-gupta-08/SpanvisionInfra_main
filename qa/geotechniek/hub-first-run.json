@@ -1,0 +1,124 @@
+{
+  "results": [
+    {
+      "scenario": "hub-layout",
+      "route": "landing",
+      "width": 390
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "modules",
+      "width": 390
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "suggestions",
+      "width": 390
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "login",
+      "width": 390
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "signup",
+      "width": 390
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "account",
+      "width": 390
+    },
+    {
+      "scenario": "scan-focus-cancel-complete",
+      "width": 390
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 390
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "landing",
+      "width": 820
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "modules",
+      "width": 820
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "suggestions",
+      "width": 820
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "login",
+      "width": 820
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "signup",
+      "width": 820
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "account",
+      "width": 820
+    },
+    {
+      "scenario": "scan-focus-cancel-complete",
+      "width": 820
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 820
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "landing",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "modules",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "suggestions",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "login",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "signup",
+      "width": 1440
+    },
+    {
+      "scenario": "hub-layout",
+      "route": "account",
+      "width": 1440
+    },
+    {
+      "scenario": "scan-focus-cancel-complete",
+      "width": 1440
+    },
+    {
+      "scenario": "account-validation-memory-only",
+      "width": 1440
+    }
+  ],
+  "errors": [
+    {
+      "message": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('main') to be visible\u001b[22m\n"
+    }
+  ],
+  "requests": []
+}

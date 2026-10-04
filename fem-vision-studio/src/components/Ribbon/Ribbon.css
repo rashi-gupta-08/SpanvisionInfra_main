@@ -1,0 +1,200 @@
+﻿/* src/components/Ribbon/Ribbon.css
+ *
+ * Phase 2.3 â€” local styles only for button JSX still rendered inside
+ * @openaec/ribbon RibbonGroup children. Tab/group/container styling
+ * comes from @openaec/ribbon/css (loaded in main.tsx).
+ */
+
+/* Local button-row wrapper inside a RibbonGroup */
+.ribbon-button-row {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+  flex-wrap: wrap;
+  max-width: 220px;
+}
+
+/* Ribbon buttons (FEM Studio's compact button style) */
+.ribbon-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 4px;
+  min-width: 38px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--theme-fg, var(--theme-fg));
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  gap: 0px;
+}
+
+.ribbon-button:hover {
+  background: var(--theme-bg-subtle, var(--theme-bg-subtle));
+  border-color: var(--theme-border, var(--theme-border));
+}
+
+.ribbon-button.active {
+  background: var(--theme-accent, var(--theme-accent));
+  border-color: var(--theme-accent, var(--theme-accent));
+  color: var(--theme-accent-text, #fff);
+}
+
+.ribbon-button.small {
+  min-width: 38px;
+  width: 38px;
+  padding: 3px 3px;
+  font-size: 9px;
+}
+
+.ribbon-button.medium {
+  min-width: 52px;
+  padding: 6px 10px;
+  font-size: 10px;
+}
+
+.ribbon-button.large {
+  min-width: 64px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+
+.ribbon-button.large span:not(.ribbon-icon) {
+  font-size: 10px;
+}
+
+.ribbon-button.accent {
+  background: var(--theme-accent, var(--theme-accent));
+  border-color: var(--theme-accent, var(--theme-accent));
+  color: var(--theme-accent-text, #fff);
+}
+
+.ribbon-button.accent:hover {
+  background: var(--theme-accent-hover, var(--theme-accent-hover));
+  border-color: var(--theme-accent-hover, var(--theme-accent-hover));
+}
+
+.ribbon-button.has-selection {
+  background: var(--theme-accent-subtle, rgba(217, 119, 6, 0.15));
+  border-color: var(--theme-accent, var(--theme-accent));
+}
+
+.ribbon-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.ribbon-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Theme toggle button */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--theme-bg-subtle, var(--theme-bg-subtle));
+  border: 1px solid var(--theme-border, var(--theme-border));
+  border-radius: 6px;
+  color: var(--theme-fg, var(--theme-fg));
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--theme-bg-elevated, var(--theme-bg-elevated));
+  border-color: var(--theme-accent, var(--theme-accent));
+}
+
+.theme-toggle-btn svg {
+  flex-shrink: 0;
+}
+
+/* Ribbon checkbox label */
+.ribbon-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--theme-fg, var(--theme-fg));
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.ribbon-checkbox input[type="checkbox"] {
+  accent-color: var(--theme-accent, var(--theme-accent));
+  cursor: pointer;
+}
+
+/* Filter dropdown */
+.filter-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 180px;
+  background: var(--theme-bg-elevated, var(--theme-bg));
+  border: 1px solid var(--theme-border, var(--theme-border));
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.filter-dropdown-header {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--theme-fg-muted, var(--theme-fg-subtle));
+  background: var(--theme-bg-subtle, var(--theme-bg-subtle));
+  border-bottom: 1px solid var(--theme-border, var(--theme-border));
+}
+
+.filter-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: var(--theme-fg, var(--theme-fg));
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.filter-dropdown-item:hover {
+  background: var(--theme-bg-subtle, var(--theme-bg-elevated));
+}
+
+.filter-dropdown-item:hover .remove-icon {
+  color: var(--theme-danger, #e94560);
+}
+
+.filter-dropdown-item span {
+  flex: 1;
+}
+
+.filter-dropdown-item .remove-icon {
+  color: var(--theme-fg-muted, var(--theme-fg-subtle));
+  transition: color 0.15s;
+}
+
+.filter-dropdown-empty {
+  padding: 16px 12px;
+  font-size: 11px;
+  color: var(--theme-fg-muted, var(--theme-fg-subtle));
+  text-align: center;
+}

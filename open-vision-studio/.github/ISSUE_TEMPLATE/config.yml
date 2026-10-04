@@ -1,0 +1,17 @@
+# NOTE: blank_issues_enabled MUST stay true.
+#
+# The feedback button in the app builds a direct URL to /issues/new with a
+# pre-filled title, labels and body (see src/services/feedback/feedbackService.ts).
+# If you set this to false, GitHub redirects that URL to the template chooser
+# instead, and everything the app had filled in — including the version, OS
+# and language — gets lost. The templates below are a convenience for anyone
+# opening an issue by hand, not a mandatory route.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Report a security issue (not public)
+    url: https://github.com/OpenAEC-Foundation/open-planner-studio/security/advisories/new
+    about: Report vulnerabilities privately via GitHub Security Advisories — not via an issue.
+  - name: Question or discussion
+    url: https://github.com/OpenAEC-Foundation/open-planner-studio/discussions
+    about: For usage questions and ideas that aren't a concrete request yet.

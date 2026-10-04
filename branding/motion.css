@@ -1,0 +1,19 @@
+/* Shared timings and subtle interaction feedback for the complete suite. */
+:root{--sv-motion-fast:160ms;--sv-motion-ease:cubic-bezier(.22,1,.36,1)}
+:root[data-sv-motion="full"] :is(button,a[role="button"],select,input:not([type="range"])){transition-property:background-color,border-color,color,box-shadow,opacity;transition-duration:var(--sv-motion-fast);transition-timing-function:ease-out}
+:root[data-sv-motion="full"] button:not(:disabled):active{opacity:.85}
+:root[data-sv-theme-changing="true"] :is(body,header,.titlebar,.title-bar,.ribbon,.toolbar,.statusbar,.status-bar,.module-card,.account-card,.scan-dialog){transition:background-color 240ms ease,color 240ms ease,border-color 240ms ease}
+:root[data-sv-tool="hub"][data-sv-motion="full"] .sv-reveal-waiting{opacity:0}
+:root[data-sv-tool="hub"][data-sv-motion="full"] :is(.module-card,.suggestion-card){transition:transform 260ms var(--sv-motion-ease),border-color 220ms ease,background-color 220ms ease,box-shadow 260ms ease}
+:root[data-sv-tool="hub"][data-sv-motion="full"] .button{transition:transform 220ms var(--sv-motion-ease),background-color 180ms ease,border-color 180ms ease,box-shadow 220ms ease}
+:root[data-sv-tool="hub"] .button>svg{transition:translate 220ms var(--sv-motion-ease)}
+@media(hover:hover) and (pointer:fine){
+  :root[data-sv-tool="hub"][data-sv-motion="full"] :is(.module-card,.suggestion-card):hover{transform:translateY(-4px);box-shadow:0 14px 28px #0000000d}
+  :root[data-sv-tool="hub"][data-sv-motion="full"] .button:hover>svg{translate:3px 0}
+}
+@media(prefers-reduced-motion:reduce){
+  :root .sv-reveal-waiting{opacity:1!important}
+  :root[data-sv-tool] :is(button,a[role="button"],select,input,.module-card,.suggestion-card,.button,.button>svg){transition:none!important}
+  :root[data-sv-tool="hub"] .module-card:hover,:root[data-sv-tool="hub"] .suggestion-card:hover{transform:none!important}
+}
+@media print{.sv-reveal-waiting{opacity:1!important}}

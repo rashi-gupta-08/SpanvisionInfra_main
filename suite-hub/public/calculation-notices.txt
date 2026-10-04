@@ -1,0 +1,15 @@
+Open-source provenance
+
+This distribution adapts Open Calculations Studio from the OpenAEC Foundation.
+Original source: the supplied Open-Calculations-Studio-main.zip archive.
+The upstream README is preserved in docs/UPSTREAM-README.md.
+
+The upstream About screen states:
+© 2026 OpenAEC Foundation. Code: MIT. Content: CC BY-SA 4.0.
+
+The supplied archive references a LICENSE file but does not include that file.
+This provenance notice preserves the supplied information; it does not replace
+the complete license terms. Third-party dependencies retain their licenses.
+The optional Rust report engine remains an upstream dependency.
+
+Spanvision Infra branding and UI adaptations: 2026.

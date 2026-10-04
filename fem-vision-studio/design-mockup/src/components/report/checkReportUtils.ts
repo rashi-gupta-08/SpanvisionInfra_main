@@ -1,0 +1,976 @@
+/**
+ * checkReportUtils — gedeelde hulpjes voor de toetsingssecties van het
+ * live rapport (CheckTableSection + CheckDetailSection).
+ *
+ * Materiaal-neutraal: staal (EN 1993) en hout (EN 1995) lopen door hetzelfde
+ * NamedCheck-contract; alleen de kopregels verschillen. KaTeX rendert hier
+ * naar een HTML-string (renderToString is puur — geen refs/effects nodig),
+ * en de CSS voor beide secties staat als string klaar zodat de secties hem
+ * zelf injecteren zonder aan report.css (eigendom van het raamwerk) te komen.
+ */
+import katex from "katex";
+import type { TFunction } from "i18next";
+import type { CheckSoort, MemberCheckResult } from "../../lib/checkTypes";
+import { checkSoort } from "../../lib/checkTypes";
+import { aanduidingen, bijlageUitBestand, STANDAARD_BIJLAGE, type NormAanduidingen } from "../../lib/normAanduidingen";
+import type { Deelstap } from "../../lib/types/steel/Deelstap";
+import type { NamedValue } from "../../lib/types/steel/NamedValue";
+import type { ResistanceCalc } from "../../lib/types/steel/ResistanceCalc";
+import type { StabilityCalc } from "../../lib/types/steel/StabilityCalc";
+import type { CrossSectionClass } from "../../lib/types/steel/CrossSectionClass";
+import type { CheckStatus } from "../../lib/types/steel/CheckStatus";
+import type { ServiceClass } from "../../lib/types/timber/ServiceClass";
+import type { LoadDurationClass } from "../../lib/types/timber/LoadDurationClass";
+
+/** Eén toetsberekening — weerstand of stabiliteit, staal of hout. */
+export type CheckCalc = ResistanceCalc | StabilityCalc;
+
+/** Stabiliteitstoetsen dragen tussenwaarden (kniklengtes, chi, kip, …). */
+export function isStabilityCalc(c: CheckCalc): c is StabilityCalc {
+  return "intermediate_values" in c;
+}
+
+/**
+ * Normaanduidingen — uit de normnaad, niet meer als losse tekst hier.
+ *
+ * Ze horen bij de gekozen nationale bijlage: "NEN-EN 1993-1-1+C2+A1/NB:2016" is
+ * de Nederlandse uitgave MET bijlage. Tot september 2026 stonden ze hier als
+ * drie constanten naast drie andere in `report/src/lib.rs`, en hout en beton
+ * waren al uiteengelopen — hier stond nog de houtaanduiding van vóór A2:2014.
+ * `lib/normAanduidingen.ts` is nu de enige TS-plaats, en
+ * `test-rapportnormen.mjs` legt hem naast de Rust-rij.
+ *
+ * De aanduidingen komen uit de rij van de bijlage VAN HET PROJECT
+ * (`projectInfo.uitgangspunten.nationaleBijlage`), niet uit een vaste
+ * standaardbijlage: een rapport dat een andere bijlage noemt dan de uitgaven
+ * die het toont, spreekt zichzelf tegen. Staat er geen bijlage in het project
+ * (bestand van vóór de naad), dan de enige gevulde. Een bijlage die deze
+ * uitgave niet kent, GOOIT — de aanroeper zet dan de reden in het rapport.
+ */
+export function normAanduidingenVoor(bijlage: unknown): NormAanduidingen {
+  return aanduidingen(bijlageUitBestand(bijlage) ?? STANDAARD_BIJLAGE);
+}
+
+/** KaTeX → HTML-string; faalt zacht naar <code> zodat het rapport nooit breekt. */
+export function renderLatexHtml(latex: string, displayMode: boolean): string {
+  try {
+    return katex.renderToString(latex, { displayMode, throwOnError: false });
+  } catch {
+    return `<code>${latex}</code>`;
+  }
+}
+
+/** MAX is de eindige kernrepresentatie van nulweerstand bij positieve belasting. */
+function rapportGetal(v: number, opties: Intl.NumberFormatOptions): string {
+  return (v === Number.MAX_VALUE ? Infinity : v).toLocaleString("nl-NL", {
+    notation: Math.abs(v) >= 1e6 ? "scientific" : "standard",
+    ...opties,
+  });
+}
+
+/** nl-NL, max. 3 decimalen; grote waarden compact, onbegrensd als taalneutraal ∞. */
+export function fmtValue(v: number, maxDigits = 3): string {
+  return rapportGetal(v, { maximumFractionDigits: maxDigits });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Afleidingen zetten zoals het referentie-rapport
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Het referentie-rapport zet elke toets in drie stappen onder elkaar, met
+// de is-gelijktekens onder elkaar uitgelijnd:
+//
+//     M_y,c,Rd = W_pl,y · f_y / γ_M0
+//              = 354113 · 235 / 1,00
+//              = 83,217 kNm                                        (6.13)
+//
+// en sluit af met de unity check als échte breuk, gevolgd door de
+// vergelijking met 1,0:
+//
+//     M_y,Ed / M_y,c,Rd = 66,036 / 83,217 = 0,79 ≤ 1,0             (6.12)
+//
+// Onze rekenkernen leveren de formule symbolisch (`formula_latex`) plus de
+// variabelen met hun waarden. De middelste regel — "de formule met getallen"
+// — bestaat dus nog niet en wordt hier gemaakt door de symbolen in de
+// formule te vervangen door hun waarde. Dat is de kern van deze hulpjes.
+
+/** Getal in mathmodus: decimaalkomma zonder de spatie die LaTeX er van maakt. */
+export function latexGetal(v: number, maxDigits = 3): string {
+  if (v === Number.MAX_VALUE || v === Infinity) return "\\infty";
+  if (v === -Infinity) return "-\\infty";
+  const s = rapportGetal(v, {
+    maximumFractionDigits: maxDigits,
+    useGrouping: false,
+  }).replace("−", "-");
+  const [mantisse, exponent] = s.split("E");
+  if (exponent !== undefined) {
+    return `${mantisse.replace(",", "{,}")} \\times 10^{${exponent}}`;
+  }
+  // Een grootheid die numeriek nul is maar een spoortje negatief (β komt op
+  // een vrij opgelegde ligger uit op −2,4·10⁻¹⁶) rondt af naar "-0". Dat leest
+  // als een richting die er niet is; het minteken hoort dan weg.
+  const zonderTeken = s.startsWith("-") ? s.slice(1) : s;
+  const isNul = /^0(,0*)?$/.test(zonderTeken);
+  return (isNul ? zonderTeken : s).replace(",", "{,}");
+}
+
+const MACHTEN: Record<string, string> = {
+  "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+};
+
+/** Eenheid rechtop achter een getal ("kNm", "mm²" → \mathrm{mm}^{2}). */
+export function latexEenheid(unit: string): string {
+  if (!unit || unit === "-") return "";
+  let uit = "";
+  let rest = "";
+  for (const ch of unit) {
+    if (MACHTEN[ch]) {
+      if (rest) uit += `\\mathrm{${rest}}`;
+      uit += `^{${MACHTEN[ch]}}`;
+      rest = "";
+    } else {
+      rest += ch;
+    }
+  }
+  if (rest) uit += `\\mathrm{${rest}}`;
+  return uit ? `\\;${uit}` : "";
+}
+
+/** Regex-veilige versie van een symbool. */
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Splits een formule op de is-gelijktekens op TOPNIVEAU (dus niet binnen
+ * accolades). `V_{c,z,Rd} = V_{pl,z,Rd} = \frac{…}{…}` wordt zo drie delen.
+ */
+export function splitsOpIsgelijk(latex: string): string[] {
+  const delen: string[] = [];
+  let diepte = 0;
+  let huidig = "";
+  for (let i = 0; i < latex.length; i++) {
+    const c = latex[i];
+    if (c === "{") diepte++;
+    else if (c === "}") diepte--;
+    const isSplits =
+      c === "=" &&
+      diepte === 0 &&
+      latex[i - 1] !== "\\" &&
+      latex[i - 1] !== "<" &&
+      latex[i - 1] !== ">" &&
+      latex[i - 1] !== "!" &&
+      latex[i + 1] !== "=";
+    if (isSplits) {
+      delen.push(huidig.trim());
+      huidig = "";
+      continue;
+    }
+    huidig += c;
+  }
+  delen.push(huidig.trim());
+  return delen.filter((d) => d.length > 0);
+}
+
+/**
+ * Vervang de symbolen in een formule door hun getalswaarde — "de formule met
+ * ingevulde getallen" uit het referentie-rapport.
+ *
+ * Langste symbolen eerst (anders eet `A` de `A` van `A_v` op) en alleen waar
+ * het symbool op zichzelf staat: niet midden in een ander symbool en niet
+ * achter een backslash (dan is het een LaTeX-commando). Staat er een getal
+ * vóór het symbool, dan komt er een maalteken tussen — `0,5a` wordt
+ * `0,5 · 0,23`, net als in het referentie-rapport.
+ */
+export function vulGetallenIn(
+  latex: string,
+  vars: NamedValue[],
+): { latex: string; gebruikt: Set<string> } {
+  const gebruikt = new Set<string>();
+  let uit = latex;
+  const opLengte = [...vars].sort((a, b) => b.symbol.length - a.symbol.length);
+  for (const v of opLengte) {
+    if (!v.symbol || gebruikt.has(v.symbol)) continue;
+    let re: RegExp;
+    try {
+      re = new RegExp(`(^|[^A-Za-z_\\\\])(${escapeRe(v.symbol)})(?![A-Za-z0-9_])`, "g");
+    } catch {
+      continue;
+    }
+    if (!re.test(uit)) continue;
+    re.lastIndex = 0;
+    gebruikt.add(v.symbol);
+    uit = uit.replace(re, (_m, voor: string) => {
+      const maal = /[0-9)]$/.test(voor) ? "\\cdot " : "";
+      const getal = latexGetal(v.value);
+      // Een wetenschappelijke notatie is een product: groepeer bij invullen,
+      // zodat een volgende macht of deling op de hele waarde blijft werken.
+      const factor = getal.includes("\\times") ? `\\left(${getal}\\right)` : getal;
+      return `${voor}${maal}${factor}`;
+    });
+  }
+  if (gebruikt.size > 0) {
+    // Symbolen die naast elkaar stonden ("χ_y N_Rk") worden na invullen twee
+    // getallen naast elkaar — dat leest als één getal. Zet er een maalteken
+    // tussen, zoals het referentie-rapport doet.
+    uit = uit.replace(/([0-9])\s+(?=[0-9]|\\frac|\\sqrt)/g, "$1 \\cdot ");
+  }
+  return { latex: uit, gebruikt };
+}
+
+/** `A / B` → `\frac{A}{B}`; samengestelde uitdrukkingen blijven zoals ze zijn. */
+export function alsBreuk(latex: string): string {
+  const s = latex.trim();
+  if (s.includes("\\frac") || s.includes("+")) return s;
+  const delen = s.split("/");
+  if (delen.length !== 2) return s;
+  return `\\frac{${delen[0].trim()}}{${delen[1].trim()}}`;
+}
+
+/** "art. 6.2.4 (6.10)" → artikel + het vergelijkingsnummer los. */
+export function splitsArtikel(article: string): {
+  artikel: string;
+  vergelijking: string | null;
+} {
+  const m = article.match(/^\s*(.*?)\s*\(([^()]*)\)\s*$/);
+  if (!m) return { artikel: article.trim(), vergelijking: null };
+  return { artikel: m[1].trim(), vergelijking: m[2].trim() };
+}
+
+/**
+ * De afleiding van één toets als uitgelijnd LaTeX-blok: symbolisch, dan met
+ * ingevulde getallen, dan de uitkomst met eenheid. Retourneert daarnaast de
+ * variabelen die NIET in de formule voorkwamen — die krijgen een eigen
+ * waardenlijstje, zodat er niets stilzwijgend wegvalt.
+ */
+export function afleidingLatex(check: CheckCalc): {
+  latex: string;
+  ongebruikt: NamedValue[];
+} {
+  const resultaat = `${latexGetal(check.value)}${latexEenheid(check.unit)}`;
+  const delen = splitsOpIsgelijk(check.formula_latex ?? "");
+
+  if (delen.length === 0) {
+    return { latex: `\\begin{aligned}&= ${resultaat}\\end{aligned}`, ongebruikt: check.variables };
+  }
+
+  const heeftLinkerlid = delen.length > 1;
+  const linkerlid = heeftLinkerlid ? delen[0] : "";
+  const rechts = heeftLinkerlid ? delen.slice(1) : delen;
+  const laatste = rechts[rechts.length - 1];
+  // Bij een stabiliteitstoets staan de reductiefactoren (chi, k_yy, …) in de
+  // tussenwaarden en niet in `variables` — zonder die erbij zou de ingevulde
+  // regel half symbolisch blijven. Ze krijgen daarnaast hun eigen lijstje.
+  const invulbaar = isStabilityCalc(check)
+    ? [...check.variables, ...check.intermediate_values]
+    : check.variables;
+  const { latex: ingevuld, gebruikt } = vulGetallenIn(laatste, invulbaar);
+
+  const regels: string[] = [];
+  regels.push(heeftLinkerlid ? `${linkerlid} &= ${rechts[0]}` : `&${rechts[0]}`);
+  for (let i = 1; i < rechts.length; i++) regels.push(`&= ${rechts[i]}`);
+  if (ingevuld !== laatste) regels.push(`&= ${ingevuld}`);
+  regels.push(`&= ${resultaat}`);
+
+  return {
+    latex: `\\begin{aligned}${regels.join(" \\\\[1mm] ")}\\end{aligned}`,
+    ongebruikt: check.variables.filter((v) => !gebruikt.has(v.symbol)),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// De afleiding vóór de toets: de deelstappen
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Een toets is zelden één formule. Een kiptoets loopt van de uitgangspunten
+// van het kipveld via B*, β, C₁, C₂, L_kip, S, C en k_red naar M_cr, en pas
+// daarna naar λ̄_LT en χ_LT. Een betonnen doorsnedetoets loopt van f_cd en
+// f_yd via de nuttige hoogte en het krachtenevenwicht naar de drukzonehoogte,
+// de rekverdeling, de hefboomsarm en het momentenevenwicht. Het
+// referentie-rapport schrijft zulke ketens voluit; wij deden dat niet — er
+// stond alleen een rij uitkomsten zonder formule of vindplaats.
+//
+// De rekenkern levert die keten nu als `deelstappen`, en dat doen ZOWEL de
+// stabiliteitstoetsen (`StabilityCalc`) ALS de weerstandstoetsen
+// (`ResistanceCalc`). Het veld staat daarom op allebei; bij toetsen die één
+// formule zijn — het staal- en houtwerk — blijft hij leeg en verandert er niets
+// aan de weergave.
+//
+// Anders dan bij een gewone toets wordt de INGEVULDE regel in de kern gemaakt
+// en niet hier: zie de docstring van `Deelstap`. `vulGetallenIn` mag dus NIET
+// op een deelstap worden losgelaten — die zou stukbreken op
+// `\sqrt{E I_z/(G I_t)}`, op sommaties over wapeningslagen, en op de
+// eenheidsomrekeningen (kNm → N·mm) die helemaal geen symbool hebben.
+
+/** De keten die aan deze toets voorafgaat; leeg als er geen keten is. */
+export function deelstappenVan(check: CheckCalc): Deelstap[] {
+  // `?? []` en niet alleen het veld: een resultaat dat uit een ouder
+  // opgeslagen bestand komt, kent het veld nog niet. De Rust-kant leest zulke
+  // bestanden met `#[serde(default)]`; hier is dit dezelfde voorziening.
+  return check.deelstappen ?? [];
+}
+
+/**
+ * Waar de keten van deze toets vandaan komt, voor de kop erboven.
+ *
+ * "Afleiding volgens de nationale bijlage" hoort alleen boven een keten die
+ * WERKELIJK uit de bijlage komt. Tot issue #17 stond die kop boven elke
+ * stabiliteitstoets — ook boven de monosymmetrische kiproute, waar M_cr uit de
+ * algemene elastische formule komt en uitdrukkelijk NIET uit bijlage NB.NB, en
+ * boven toetsen (houtstabiliteit) waar geen bijlage in de afleiding zit. Een
+ * rapport dat een verkeerde bron noemt, is niet na te rekenen.
+ *
+ * Herkend op het toets-id van de kipkern (`nen-en-1993-1-1-ltb`), dat
+ * `test-rapportnormen.mjs` naast die bron legt:
+ *  - `6.3.2_ltb` — M_cr, C₁, C₂ en L_kip volgens bijlage NB.NB: "nb";
+ *  - `6.3.2_ltb_channel` — dezelfde NB.NB-route, maar M_cr maal een
+ *    benaderingsfactor die NIET uit de norm komt: "nb-benadering";
+ *  - `6.3.2_ltb_monosymmetrisch` — M_cr volgens de algemene elastische formule
+ *    met z_g en z_j, buiten NB.NB om: "elastisch";
+ *  - elke andere keten (beton volgens EN 1992 zelf, en wat er verder komt):
+ *    "algemeen", zonder bron in de kop.
+ */
+export type KetenHerkomst = "nb" | "nb-benadering" | "elastisch" | "algemeen";
+
+export function ketenHerkomst(check: CheckCalc): KetenHerkomst {
+  if (!isStabilityCalc(check)) return "algemeen";
+  switch (check.id) {
+    case "6.3.2_ltb":
+      return "nb";
+    case "6.3.2_ltb_channel":
+      return "nb-benadering";
+    case "6.3.2_ltb_monosymmetrisch":
+      return "elastisch";
+    default:
+      return "algemeen";
+  }
+}
+
+/**
+ * De twee formuleregels van één deelstap: de formule symbolisch, en dezelfde
+ * formule met getallen én de uitkomst erachter.
+ *
+ * De uitkomst wordt áchter de ingevulde regel gezet — `S = h/2·√(…) = 1406,40
+ * mm` op één regel, zoals het referentie-rapport het doet. Twee gevallen
+ * wijken af:
+ *
+ *  - Een stap die zichzelf al afsluit met een toekenning aan het eigen
+ *    symbool (`h/t_w = 44 ≤ 75 ⇒ k_red = 1,0`) krijgt er niets achter; daar
+ *    zou `= 1` de derde keer hetzelfde getal zijn.
+ *  - Een stap zonder ingevulde regel (de gaffeltak `L_kip = L_st`, of β dat
+ *    onbepaald is) krijgt de uitkomst als eigen regel `L_kip = 5700 mm`.
+ *
+ * De uitgangspuntenstap heeft geen formule en geen uitkomst; die levert twee
+ * lege regels op en toont alleen haar grootheden.
+ */
+export function deelstapRegels(d: Deelstap): {
+  formule: string | null;
+  uitkomst: string | null;
+} {
+  const formule = d.formula_latex.trim() ? d.formula_latex : null;
+  const heeftWaarde = d.value !== null && Number.isFinite(d.value);
+  // Dimensieloze factoren met vier decimalen, grootheden mét eenheid met drie.
+  // Een keten moet narekenbaar zijn, en χ_LT = 0,4845 afgerond op 0,485 geeft
+  // in M_b,Rd al een zichtbaar ander getal; een lengte tot op een tienduizendste
+  // millimeter is daarentegen schijnnauwkeurigheid. Drie decimalen bij een
+  // eenheid is ook wat het referentie-rapport aanhoudt (650,886 kNm).
+  const dimensieloos = !d.unit || d.unit === "-";
+  const waarde = heeftWaarde
+    ? `${latexGetal(d.value as number, dimensieloos ? 4 : 3)}${latexEenheid(d.unit)}`
+    : null;
+
+  if (d.ingevuld_latex.trim()) {
+    // Sluit de ingevulde regel zelf al af met "<symbool> = …"? Dan niet nog
+    // eens. Positie > 0, want een regel die MET het symbool begint (`S = …`)
+    // is juist een regel die om zijn uitkomst vraagt.
+    const alAfgesloten =
+      d.symbol.length > 0 &&
+      new RegExp(`.${escapeRe(d.symbol)}\\s*=`).test(d.ingevuld_latex);
+    return {
+      formule,
+      uitkomst:
+        alAfgesloten || !waarde ? d.ingevuld_latex : `${d.ingevuld_latex} = ${waarde}`,
+    };
+  }
+
+  if (!waarde || !d.symbol) return { formule, uitkomst: null };
+  return { formule, uitkomst: `${d.symbol} = ${waarde}` };
+}
+
+/**
+ * De unity check als afsluitende regel: de breuk symbolisch, dan met
+ * getallen, dan de waarde en de vergelijking met 1,0 — zoals het
+ * referentie-rapport elke toets afsluit.
+ */
+export function unityCheckLatex(uc: {
+  formula_latex: string;
+  ed: number;
+  rd: number;
+  uc: number;
+}): string {
+  const symbolisch = alsBreuk(uc.formula_latex);
+  // Een samengestelde toets (interactie) heeft geen echte noemer: de UC is
+  // dan de som zelf, met 1,0 als grens. Dan geen schijnbreuk tonen — en ook
+  // geen tussenstap die precies hetzelfde getal herhaalt.
+  const echteBreuk = Math.abs(uc.rd - 1) > 1e-9;
+  const vergelijking = uc.uc <= 1 ? "\\le" : ">";
+  const uitkomst = `${latexGetal(uc.uc, 2)} ${vergelijking} 1{,}0`;
+  if (!echteBreuk) return `${symbolisch} = ${uitkomst}`;
+  return `${symbolisch} = \\frac{${latexGetal(uc.ed)}}{${latexGetal(uc.rd)}} = ${uitkomst}`;
+}
+
+/** Unity check als "0,79", grote waarden wetenschappelijk, onbegrensd als ∞. */
+export function fmtUc(v: number): string {
+  return rapportGetal(v, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Tijdstip van de laatste toetsrun, zelfde notatie als de samenvatting van R1. */
+export function fmtCheckedAt(lastRunAt: number | null): string | null {
+  if (!lastRunAt) return null;
+  return new Date(lastRunAt).toLocaleString("nl-NL", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+export interface GoverningInfo {
+  title: string;
+  article: string;
+  ucFormulaLatex: string | null;
+}
+
+/** Maatgevende toets van een staaf: titel, artikel en de UC-formule (LaTeX). */
+export function governingInfo(r: MemberCheckResult): GoverningInfo {
+  const named = r.checks.find((c) => c.id === r.governing_check_id);
+  if (!named) return { title: r.governing_check_id, article: "", ucFormulaLatex: null };
+  const d = named.kind.data;
+  return { title: d.title, article: d.article, ucFormulaLatex: d.uc?.formula_latex ?? null };
+}
+
+/**
+ * Welke toetsingskaders daadwerkelijk in de resultaten voorkomen — dezelfde
+ * indeling als de rapportkern hanteert.
+ *
+ * `vrij` staat er los in en niet bij `timber`: de vrije spanningstoets is wél
+ * gedraaid maar tegen géén norm. Zonder eigen vlag heeft die soort geen plek
+ * om naartoe te gaan en valt hij vroeg of laat weer bij een norm die niet is
+ * toegepast — precies de fout die dit bestand had.
+ */
+export interface GebruikteKaders {
+  steel: boolean;
+  timber: boolean;
+  concrete: boolean;
+  /** Wél getoetst, maar tegen géén norm: de vrije spanningstoets. */
+  vrij: boolean;
+}
+
+/**
+ * Welke vlag een soort zet. Kruislaaghout deelt de vlag met massief hout: het
+ * is dezelfde norm (EN 1995), alleen per lamel getoetst.
+ *
+ * Een tabel en geen if/else-keten: er is geen tak die "de rest" opvangt, en
+ * een nieuwe soort in `CheckSoort` moet hier expliciet een vlag krijgen —
+ * anders weigert `tsc` deze `Record`.
+ */
+const VLAG_PER_SOORT: Record<CheckSoort, keyof GebruikteKaders> = {
+  staal: "steel",
+  hout: "timber",
+  clt: "timber",
+  beton: "concrete",
+  spanning: "vrij",
+};
+
+/** Welke normen daadwerkelijk in de resultaten voorkomen. */
+export function usedNorms(results: MemberCheckResult[]): GebruikteKaders {
+  const uit: GebruikteKaders = {
+    steel: false, timber: false, concrete: false, vrij: false,
+  };
+  for (const r of results) {
+    const soort = checkSoort(r);
+    // Een vorm die `checkSoort` niet herkent zet geen enkele vlag: liever geen
+    // norm noemen dan de verkeerde.
+    if (soort !== null) uit[VLAG_PER_SOORT[soort]] = true;
+  }
+  return uit;
+}
+
+/**
+ * Voetregel met de toetsbasis — alleen de normen die echt gebruikt zijn.
+ * `t` hoort bij de "ribbon"-namespace (report.*-sleutels).
+ *
+ * `vrij` levert hier bewust niets op: bij die staven is geen norm toegepast,
+ * dus is er ook geen toetsbasis om te noemen. Wat er wél over die staaf te
+ * zeggen valt, staat per regel in de kolom "Norm" ("geen norm") en in de
+ * kopregel van haar afleiding. Een model dat alleen op vergelijkspanning is
+ * getoetst, krijgt hier dus geen voetregel — in plaats van de onware
+ * "hout: NEN-EN 1995-1-1…" die er stond.
+ */
+export function basisText(
+  t: TFunction,
+  results: MemberCheckResult[],
+  /** De nationale bijlage uit de projectgegevens, zoals gelezen; weglaten = niet ingesteld. */
+  bijlage?: unknown,
+): string | null {
+  const { steel, timber, concrete } = usedNorms(results);
+  if (!steel && !timber && !concrete) return null;
+  let a: NormAanduidingen;
+  try {
+    a = normAanduidingenVoor(bijlage);
+  } catch (e) {
+    // Een bijlage die deze uitgave niet kent: dan staat de REDEN in de
+    // toetsbasis, niet stil de Nederlandse uitgaven.
+    return t("report.bijlageOnbekend", { code: String(bijlage), fout: (e as Error).message });
+  }
+  const STEEL_NORM_FULL = a.staalVol;
+  const TIMBER_NORM_FULL = a.houtVol;
+  const CONCRETE_NORM_FULL = a.betonVol;
+  const parts: string[] = [];
+  // De aanduiding gaat als variabele de vertaling in. Tot september 2026 stond
+  // ze VOLUIT in alle vier de i18n-bestanden (nl/en/de/fr), en die vier
+  // kopieën droegen nog de houtaanduiding van vóór A2:2014. Wat vertaald moet
+  // worden is het woord "staal", niet het normnummer.
+  if (steel) parts.push(t("report.basisSteel", `staal: ${STEEL_NORM_FULL}`, { norm: STEEL_NORM_FULL }));
+  if (timber) parts.push(t("report.basisTimber", `hout: ${TIMBER_NORM_FULL}`, { norm: TIMBER_NORM_FULL }));
+  if (concrete) parts.push(t("report.basisConcrete", `beton: ${CONCRETE_NORM_FULL}`, { norm: CONCRETE_NORM_FULL }));
+  if (parts.length === 0) return null;
+  const label = t("report.basisLabel", "Toetsbasis");
+  // De zin over de bijlage is PROZA en staat per taal in i18n; hij is niet
+  // uit de naad te halen zonder voor elke taal een vertaling van de
+  // bijlagenaam te verzinnen. Zolang er één bijlage gevuld is, klopt hij.
+  // Komt er een tweede rij bij, dan moet deze regel mee: `BIJLAGEN_GEVULD`
+  // in `lib/normAanduidingen.ts` is dan langer dan één.
+  const annex = t("report.basisAnnex", `inclusief ${a.bijlageNaam}`);
+  return `${label}: ${parts.join("; ")} — ${annex}.`;
+}
+
+/** "Class1" → "1" (doorsnedeklasse, staal). */
+export function crossSectionClassLabel(c: CrossSectionClass): string {
+  return c.replace("Class", "");
+}
+
+/** "Sc2" → "2" (klimaatklasse, hout). */
+export function serviceClassLabel(sc: ServiceClass): string {
+  return sc.replace("Sc", "");
+}
+
+/** Belastingduurklasse → bestaande sleutel in de "check"-namespace + fallback. */
+export const LOAD_DURATION_LABELS: Record<LoadDurationClass, { key: string; fallback: string }> = {
+  Permanent: { key: "cfg.durPermanent", fallback: "Blijvend" },
+  LongTerm: { key: "cfg.durLong", fallback: "Lang" },
+  MediumTerm: { key: "cfg.durMedium", fallback: "Middellang" },
+  ShortTerm: { key: "cfg.durShort", fallback: "Kort" },
+  Instantaneous: { key: "cfg.durInstantaneous", fallback: "Zeer kort" },
+};
+
+/**
+ * De belastingduur in de kop van een hout- of CLT-staaf.
+ *
+ * Met k_mod per belastingduurklasse (EN 1995-1-1 3.1.3(2): de kortstdurende
+ * belasting in een combinatie bepaalt k_mod) per klasse de k_mod en de
+ * combinaties, plus de maatgevende klasse en combinatie. Zonder die lijst de
+ * ene klasse uit de invoer, zoals voorheen — dan heeft de kern ook maar met
+ * één klasse gerekend.
+ */
+export function belastingduurTekst(
+  r: {
+    load_duration: LoadDurationClass;
+    k_mod_per_load_duration?: { load_duration: LoadDurationClass; k_mod: number; combination_ids: number[] }[];
+    governing_combination_id?: number | null;
+  },
+  t: TFunction,
+  tCheck: TFunction,
+): string {
+  const naam = (d: LoadDurationClass) =>
+    tCheck(LOAD_DURATION_LABELS[d].key, LOAD_DURATION_LABELS[d].fallback).toLowerCase();
+  const lijst = r.k_mod_per_load_duration ?? [];
+  if (lijst.length === 0) return `${t("report.loadDuration", "belastingduur")} ${naam(r.load_duration)}`;
+  const comb = t("report.combinationShort", "comb.");
+  const delen = lijst.map(
+    (k) => `${naam(k.load_duration)} (k_mod ${k.k_mod.toFixed(2).replace(".", ",")}) ${comb} ${k.combination_ids.join(", ")}`,
+  );
+  const maatgevend =
+    r.governing_combination_id !== undefined && r.governing_combination_id !== null
+      ? ` · ${t("report.governingLoadDuration", "maatgevend")}: ${naam(r.load_duration)}, ${comb} ${r.governing_combination_id}`
+      : "";
+  return `${t("report.loadDurationPerCombination", "belastingduur per combinatie")}: ${delen.join("; ")}${maatgevend}`;
+}
+
+/** Statuslabel via de bestaande report.*-sleutels. */
+export function statusLabel(t: TFunction, status: CheckStatus): string {
+  switch (status) {
+    case "Ok": return t("report.statusOk", "Voldoet");
+    case "NotOk": return t("report.statusNotOk", "Voldoet niet");
+    default: return t("report.statusNa", "N.v.t.");
+  }
+}
+
+/** CSS-modifierklasse per status (kleuren in CHECK_REPORT_CSS). */
+export function statusClass(status: CheckStatus): string {
+  switch (status) {
+    case "Ok": return "rpt-chk-ok";
+    case "NotOk": return "rpt-chk-notok";
+    default: return "rpt-chk-na";
+  }
+}
+
+/**
+ * Stijlen voor beide toetsingssecties. Elke sectie rendert deze string in een
+ * eigen <style>-element (idempotent — dubbel injecteren is onschadelijk),
+ * zodat report.css onaangeroerd blijft. Alles is vaste zwart-op-wit-opmaak:
+ * het rapport volgt bewust NIET het app-thema.
+ *
+ * OPMAAK VAN DE AFLEIDINGEN
+ * -------------------------
+ * Getypeerd naar het referentie-rapport: géén kaders, géén gekleurde balkjes,
+ * géén badges — dat is schermgereedschap. Wat een rekenrapport doet is:
+ * kopregel met het artikel rechts, daaronder de krachtstoestand, dan de
+ * ingesprongen afleiding met uitgelijnde is-gelijktekens en het
+ * vergelijkingsnummer in de rechtermarge, en tot slot de unity check.
+ * Rustige witruimte tussen de stappen doet het werk dat kaders eerst deden.
+ *
+ * Alle tekstmaten zijn afgeleid van --rpt-basis, zodat de lettergrootte-
+ * slider van het rapport ook de toetsing meeschaalt.
+ */
+export const CHECK_REPORT_CSS = `
+/* ─── Toetsingsoverzicht (tabellarisch) ─── */
+.rpt-gov-title { font-weight: 500; }
+
+.rpt-gov-formula {
+  font-size: calc(var(--rpt-basis) * 0.8);
+  color: #444;
+  margin-top: 0.5mm;
+}
+
+.rpt-gov-formula .katex { font-size: 1.05em; }
+
+/* Combinatie en positie van de maatgevende toets (issue #41). */
+.rpt-gov-herkomst {
+  font-size: calc(var(--rpt-basis) * 0.8);
+  color: #444;
+  margin-top: 0.5mm;
+  font-variant-numeric: tabular-nums;
+}
+
+.rpt-status-na { color: #555; }
+
+.rpt-check-basis { margin-top: 3mm; }
+
+/* Gedetailleerd overzicht: alle toetsen per staaf, gegroepeerd. De eerste
+   regel van een groep krijgt een zwaardere bovenlijn, zodat de staven ook
+   over een velgrens heen herkenbaar blijven. */
+.rpt-chk-groep-start > td { border-top: 0.4mm solid #666 !important; }
+.rpt-chk-rij-gov { font-weight: 600; }
+
+/* ─── Toetsing per staaf (afleidingen) ───
+   De sectie mag over vellen heen breken (kan lang zijn); de losse toetsen
+   houden zichzelf bijeen. */
+@media print {
+  .rpt-chk-detail { break-inside: auto; }
+}
+
+.rpt-chk-member { margin: 0 0 5mm; }
+
+/* Regel onder de staafkop: profiel/klasse links, norm en UC rechts. */
+.rpt-chk-member-meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 1mm 4mm;
+  margin: -1mm 0 3mm;
+  font-size: calc(var(--rpt-basis) * 0.85);
+  color: #444;
+  break-after: avoid;
+}
+
+.rpt-chk-member-uc {
+  margin-left: auto;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Eén toets. Geen kader: witruimte en uitlijning dragen de opmaak, zoals in
+   het referentie-rapport. Blijft op papier bijeen. */
+.rpt-chk-block {
+  margin: 0 0 4mm;
+  break-inside: avoid;
+}
+
+.rpt-chk-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 3mm;
+}
+
+.rpt-chk-title {
+  font-size: var(--rpt-basis);
+  font-weight: 700;
+  margin: 0;
+}
+
+/* "maatgevend" — geen badge maar een terzijde, zoals een rapport het zet. */
+.rpt-chk-gov-tag {
+  margin-left: 1.5mm;
+  font-size: calc(var(--rpt-basis) * 0.8);
+  font-weight: 400;
+  font-style: italic;
+  color: #444;
+  white-space: nowrap;
+}
+
+.rpt-chk-article {
+  font-size: calc(var(--rpt-basis) * 0.85);
+  color: #444;
+  white-space: nowrap;
+}
+
+.rpt-chk-forces {
+  font-size: calc(var(--rpt-basis) * 0.85);
+  color: #444;
+  margin: 0.5mm 0 1.5mm;
+}
+
+/* Afleiding: ingesprongen formuleblok links, vergelijkingsnummer rechts —
+   precies de indeling van het referentie-rapport.
+   overflow-y: hidden voorkomt de verticale scrollknopjes die KaTeX-struts
+   anders uitlokken (scrollHeight loopt 2px voor op clientHeight). */
+.rpt-chk-afleiding {
+  display: flex;
+  align-items: flex-start;
+  gap: 4mm;
+  margin: 0 0 1.5mm;
+  padding-left: 6mm;
+}
+
+.rpt-chk-afleiding-formule {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* KaTeX centreert displayformules; een rekenrapport lijnt ze links uit. */
+.rpt-chk-afleiding .katex-display {
+  margin: 0;
+  text-align: left;
+}
+
+.rpt-chk-afleiding .katex-display > .katex { text-align: left; }
+
+.rpt-chk-eq {
+  flex-shrink: 0;
+  font-size: calc(var(--rpt-basis) * 0.85);
+  color: #555;
+  white-space: nowrap;
+  padding-top: 0.8mm;
+}
+
+/* Waarden naast de afleiding: één doorlopende regel.
+
+   Stond eerder als driekolomsraster (symbool, "=", waarde) met de
+   is-gelijktekens onder elkaar. Netjes op zichzelf, maar het gaf elke toets
+   een blokje tabel onder de formule, en juist dat maakt van een afleiding een
+   opsomming. Het referentie-rapport laat een toets als wiskunde doorlopen: de
+   getallen ingevuld in de formule, de losse grootheden achter elkaar op één
+   regel. */
+.rpt-chk-waarden {
+  padding-left: 6mm;
+  margin: 0 0 1.5mm;
+  font-size: calc(var(--rpt-basis) * 0.85);
+  color: #333;
+  line-height: 1.7;
+}
+
+/* Elke grootheid als één geheel, zodat symbool, "=" en waarde nooit over een
+   regeleinde uiteenvallen. De ruime tussenruimte doet het scheidingswerk dat
+   eerder door kolommen werd gedaan. */
+.rpt-chk-waarde {
+  white-space: nowrap;
+  margin-right: 5mm;
+}
+
+.rpt-chk-waarde-eq {
+  color: #666;
+  margin: 0 0.6mm;
+}
+.rpt-chk-waarde-getal { font-variant-numeric: tabular-nums; }
+.rpt-chk-waarde-eenheid { color: #555; }
+
+.rpt-chk-waarden-kop {
+  font-style: italic;
+  color: #555;
+  margin-right: 2mm;
+}
+
+/* ─── De keten vóór de toets (deelstappen) ───
+   Ingesprongen ten opzichte van de toets zelf: het is de aanloop, niet de
+   conclusie. Elke stap krijgt zijn eigen kopje met de vindplaats rechts,
+   precies zoals de toets erboven — een lezer die één stap wil narekenen,
+   vindt daar meteen het artikelnummer bij. */
+.rpt-chk-keten {
+  margin: 0 0 2mm;
+  padding-left: 4mm;
+  border-left: 0.2mm solid #ccc;
+}
+
+/* De kop van de keten neemt de eerste stap mee naar de volgende bladzijde.
+   Zonder dit blijft "Afleiding, stap voor stap:" onder aan een vel achter met
+   niets eronder — een aankondiging zonder inhoud. Dat viel op zodra er naast de
+   kipketen een tweede, even lange betonketen bijkwam. */
+.rpt-chk-keten-kop {
+  font-size: calc(var(--rpt-basis) * 0.85);
+  font-style: italic;
+  color: #555;
+  margin: 0 0 1.5mm;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* Een stap blijft op papier bijeen: kop, formule en uitkomst horen bij
+   elkaar en mogen niet over een velgrens uiteenvallen. */
+.rpt-chk-stap {
+  margin: 0 0 2.5mm;
+  break-inside: avoid;
+}
+
+.rpt-chk-stap-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 3mm;
+}
+
+.rpt-chk-stap-titel {
+  font-size: calc(var(--rpt-basis) * 0.9);
+  font-weight: 600;
+  margin: 0;
+}
+
+.rpt-chk-stap-article {
+  font-size: calc(var(--rpt-basis) * 0.8);
+  color: #555;
+  white-space: nowrap;
+}
+
+/* Formuleregels van een stap: iets kleiner dan de toets zelf, links
+   uitgelijnd, en met dezelfde horizontale uitwijk als de afleiding erboven —
+   de C-formule van NB.NB.11 is breder dan een A4 als hij ingevuld is. */
+.rpt-chk-stap-regel {
+  padding-left: 4mm;
+  margin: 0.5mm 0 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.rpt-chk-stap-regel .katex-display { margin: 0; text-align: left; }
+.rpt-chk-stap-regel .katex-display > .katex { text-align: left; }
+.rpt-chk-stap-regel .katex { font-size: 0.95em; }
+
+.rpt-chk-stap .rpt-chk-waarden { padding-left: 4mm; }
+
+.rpt-chk-stap-notes {
+  margin: 0.8mm 0 0;
+  padding-left: 4mm;
+  list-style: none;
+  font-size: calc(var(--rpt-basis) * 0.8);
+  color: #555;
+}
+
+.rpt-chk-stap-notes li { margin-bottom: 0.4mm; }
+
+/* Afsluitende unity-checkregel. */
+.rpt-chk-ucline {
+  display: flex;
+  align-items: flex-start;
+  gap: 4mm;
+  padding-left: 6mm;
+  margin-top: 1mm;
+}
+
+.rpt-chk-ucline-formule {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.rpt-chk-ucline .katex-display {
+  margin: 0;
+  text-align: left;
+}
+
+.rpt-chk-ucline .katex-display > .katex { text-align: left; }
+
+.rpt-chk-status {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: calc(var(--rpt-basis) * 0.85);
+  white-space: nowrap;
+  padding-top: 0.8mm;
+}
+
+.rpt-chk-status.rpt-chk-ok { color: #15803d; }
+.rpt-chk-status.rpt-chk-notok { color: #b91c1c; }
+.rpt-chk-status.rpt-chk-na { color: #555; }
+
+.rpt-chk-notes {
+  margin: 1mm 0 0;
+  padding-left: 6mm;
+  list-style: none;
+  font-size: calc(var(--rpt-basis) * 0.85);
+  color: #444;
+}
+
+.rpt-chk-notes li { margin-bottom: 0.5mm; }
+
+/* ── Verlopend profiel: de toetsdoorsneden (ontwerp 15-09-2026, §6) ─────
+   Eén tabel per staaf met de zes toetsdoorsneden, het maatgevende punt en de
+   doorsnede waarmee de stabiliteit is gerekend. Compact gezet: hij staat
+   tussen de staafkop en de afleidingen in, en mag die niet wegdrukken. */
+.rpt-verloop {
+  margin: 1.5mm 0 2mm;
+}
+.rpt-verloop-kop {
+  font-weight: 600;
+  font-size: calc(var(--rpt-basis) * 0.92);
+  margin-bottom: 0.8mm;
+}
+.rpt-verloop-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: calc(var(--rpt-basis) * 0.82);
+}
+.rpt-verloop-tabel th,
+.rpt-verloop-tabel td {
+  border: 0.2mm solid #d4d4d4;
+  padding: 0.5mm 1mm;
+  text-align: right;
+  white-space: nowrap;
+}
+.rpt-verloop-tabel th { background: #f4f4f5; font-weight: 600; text-align: right; }
+.rpt-verloop-tabel th:first-child,
+.rpt-verloop-tabel td:first-child { text-align: left; }
+.rpt-verloop-tabel tr.rpt-verloop-maatgevend td { background: #fef3c7; font-weight: 600; }
+/* De toelichtingskolom van "Doorsnede voor de stabiliteitstoetsen" (#30).
+   De regel moet MINSTENS zo specifiek zijn als \`.rpt-verloop-tabel td\`
+   hierboven (klasse + element): met alleen \`.rpt-verloop-reden\` won de
+   nowrap van die regel, liep de zin op één regel door tot voorbij de
+   paginarand en verdween de rechts uitgelijnde kop "Reden" mee van het vel.
+   Nu breekt de zin af binnen de breedte die de andere kolommen overlaten;
+   \`overflow-wrap: anywhere\` vangt een lang woord zonder breekpunt op. */
+.rpt-verloop-tabel th.rpt-verloop-reden,
+.rpt-verloop-tabel td.rpt-verloop-reden {
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.rpt-verloop-tabel td.rpt-verloop-reden {
+  font-size: calc(var(--rpt-basis) * 0.8);
+  color: #444;
+}
+`;

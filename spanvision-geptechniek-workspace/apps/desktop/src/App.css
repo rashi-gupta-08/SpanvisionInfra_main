@@ -1,0 +1,1710 @@
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--theme-text);
+  background-color: var(--theme-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Labels and chrome are not selectable; inputs and content areas opt back in */
+#root {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea,
+[contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Content area between ribbon and status bar */
+.content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left panel */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--theme-bg);
+  border-right: 1px solid var(--theme-border);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  transition: width 0.15s ease;
+  z-index: 2;
+}
+
+/* Collapsed vertical tab */
+.left-panel-collapsed-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted);
+  cursor: default;
+  padding: 8px 0;
+  font-family: inherit;
+}
+
+.left-panel-collapsed-tab:hover {
+  color: var(--theme-accent);
+}
+
+.left-panel-collapsed-tab span {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+/* Panel toolbar */
+.left-panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 6px;
+  height: 24px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--theme-border);
+  background: var(--theme-bg-lighter);
+  color: var(--theme-accent);
+}
+
+.left-panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--theme-accent);
+}
+
+.left-panel-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--theme-accent);
+  cursor: default;
+  border-radius: 3px;
+  padding: 0;
+  opacity: 0.7;
+}
+
+.left-panel-close-btn:hover {
+  background: var(--theme-ribbon-btn-hover);
+  color: var(--theme-accent);
+  opacity: 1;
+}
+
+/* Panel body */
+.left-panel-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Resize handle */
+.left-panel-resize {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.left-panel-resize:hover,
+.left-panel-resize:active {
+  background: var(--theme-accent);
+  opacity: 0.3;
+}
+
+.left-panel.no-transition,
+.right-panel.no-transition {
+  transition: none;
+}
+
+/* Collapsible panel sections */
+.panel-section {
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+
+.panel-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 3px 10px;
+  border: none;
+  background: var(--theme-bg-lighter);
+  color: var(--theme-accent-tint);
+  cursor: default;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.panel-section-header:hover {
+  background: var(--theme-hover);
+  color: var(--theme-accent);
+}
+
+.panel-section-chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  transform: rotate(-90deg);
+  color: var(--theme-text-secondary);
+}
+
+.panel-section-chevron.open {
+  transform: rotate(0deg);
+}
+
+.panel-section-body {
+  padding: 4px 10px;
+}
+
+.panel-placeholder {
+  font-size: 11px;
+  color: var(--theme-text-faint);
+}
+
+/* Right panel */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--theme-bg);
+  border-left: 1px solid var(--theme-border);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  transition: width 0.15s ease;
+  z-index: 2;
+}
+
+/* Collapsed vertical tab for right panel */
+.right-panel-collapsed-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted);
+  cursor: default;
+  padding: 8px 0;
+  font-family: inherit;
+}
+
+.right-panel-collapsed-tab:hover {
+  color: var(--theme-accent);
+}
+
+.right-panel-collapsed-tab span {
+  writing-mode: vertical-lr;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+/* Right panel toolbar */
+.right-panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 6px;
+  height: 24px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--theme-border);
+  background: var(--theme-bg-lighter);
+  color: var(--theme-accent);
+}
+
+.right-panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--theme-accent);
+}
+
+.right-panel-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--theme-accent);
+  cursor: default;
+  border-radius: 3px;
+  padding: 0;
+  opacity: 0.7;
+}
+
+.right-panel-close-btn:hover {
+  background: var(--theme-ribbon-btn-hover);
+  color: var(--theme-accent);
+  opacity: 1;
+}
+
+/* Right panel body */
+.right-panel-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Right panel resize handle */
+.right-panel-resize {
+  position: absolute;
+  top: 0;
+  left: -3px;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.right-panel-resize:hover,
+.right-panel-resize:active {
+  background: var(--theme-accent);
+  opacity: 0.3;
+}
+
+.main-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--theme-content-bg);
+  overflow: hidden;
+}
+
+/* Placeholder is centred via its own rule (the parent must NOT centre or
+   real panels like ReportPreview would shrink instead of stretching). */
+.main-view .placeholder {
+  margin: auto;
+}
+
+/* Placeholder shown when no document is open */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--theme-placeholder-text);
+  gap: 8px;
+}
+
+.placeholder svg {
+  width: 64px;
+  height: 64px;
+  stroke: var(--theme-placeholder-icon);
+  margin-bottom: 8px;
+}
+
+.placeholder h2 {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--theme-placeholder-heading);
+}
+
+.placeholder p {
+  font-size: 13px;
+  color: var(--theme-placeholder-text);
+}
+
+/* ── Detached window dock-back bar ── */
+.detached-dock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: var(--theme-accent, #D97706);
+  color: #fff;
+  font-size: 12px;
+  gap: 8px;
+}
+
+.detached-dock-title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detached-dock-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px;
+  color: #fff;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.detached-dock-btn:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+/* ── CPT side panels — Task 8 ── */
+
+/* Generic empty/error labels shared by panel sections */
+.panel-empty {
+  font-size: 0.75rem;
+  color: var(--theme-text-muted);
+  margin: 0;
+}
+
+.panel-error {
+  font-size: 0.75rem;
+  color: var(--error, #DC2626);
+  margin: 0;
+}
+
+/* CPT list (Sonderingen) */
+.cpt-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cpt-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.cpt-list li.active {
+  background: var(--amber, #D97706);
+  color: #fff;
+}
+
+.cpt-list-name {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  padding: 4px 6px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: inherit;
+}
+
+.cpt-list-close {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 2px 6px;
+  color: inherit;
+  opacity: 0.6;
+  font-family: inherit;
+}
+
+.cpt-list-close:hover {
+  opacity: 1;
+}
+
+/* Eye toggle (hide / show CPT) — sits between name and close */
+.cpt-list-eye {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: inherit;
+  opacity: 0.55;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cpt-list-eye:hover {
+  opacity: 1;
+  color: var(--amber, #D97706);
+}
+
+.cpt-list-eye.is-hidden {
+  /* Eye-slash uses neutral (scaffold) gray; hover still goes amber. */
+  color: var(--theme-text-muted, #A1A1AA);
+  opacity: 0.85;
+}
+
+/* Muted appearance for hidden CPT rows. The name button still works (you
+   can click to make it active in the project), only the visuals are dimmed. */
+.cpt-list li.hidden .cpt-list-name {
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* Metadata list (Sonderingsgegevens) */
+.metadata-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.metadata-list dt {
+  color: var(--theme-text-muted);
+}
+
+.metadata-list dd {
+  margin: 0;
+  color: var(--theme-text);
+}
+
+/* Extra metadata (verbatim file fields) — keys may be long ALL-CAPS GEF
+   keywords or camelCase BRO names. Allow them to wrap and use a slightly
+   smaller font so the panel stays scannable. */
+.metadata-list-extra {
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  font-size: 0.7rem;
+}
+.metadata-list-extra dt {
+  font-family: 'JetBrains Mono', monospace;
+  word-break: break-word;
+  font-size: 0.68rem;
+}
+.metadata-list-extra dd {
+  word-break: break-word;
+}
+
+/* Layers + measurements tables */
+.layers-table,
+.measurements-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+
+.layers-table th,
+.layers-table td,
+.measurements-table th,
+.measurements-table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--theme-border-subtle);
+  text-align: right;
+}
+
+.layers-table th:last-child,
+.layers-table td:last-child {
+  text-align: left;
+}
+
+.layers-table thead th,
+.measurements-table thead th {
+  font-weight: 500;
+  color: var(--theme-text-muted);
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+}
+
+.layer-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  font-size: 0.7rem;
+}
+
+.pagination button {
+  background: transparent;
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Right panel — Robertson SBT legend */
+.right-panel-body {
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.right-panel-title {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--theme-text);
+}
+
+.sbt-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.7rem;
+}
+
+.sbt-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.sbt-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.sbt-num {
+  font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  width: 14px;
+  text-align: right;
+  color: var(--theme-text-muted);
+}
+
+.sbt-name {
+  flex: 1;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   Map view (Leaflet + PDOK BRT)
+   ─────────────────────────────────────────────────────────────────── */
+.map-view-wrap { width: 100%; height: 100%; position: relative; }
+.map-view-container { width: 100%; height: 100%; }
+.map-status {
+  /* Shifted upward to clear the Topotijdreis slider docked at the very
+     bottom of the wrap. */
+  position: absolute; left: 12px; bottom: 96px;
+  background: var(--theme-bg, white); color: var(--theme-text, #36363E);
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 4px; padding: 6px 10px;
+  font: 500 0.75rem var(--font-code, "JetBrains Mono");
+  z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* ── Cursor-coords (RD + WGS84) — bottom-right ──────────────── */
+.map-cursor-coords {
+  position: absolute;
+  right: 12px;
+  bottom: 96px; /* zelfde hoogte als map-status zodat Topotijdreis-slider niet overlapt */
+  background: var(--theme-bg, white);
+  color: var(--theme-text, #36363E);
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font: 500 0.72rem var(--font-code, "JetBrains Mono");
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  pointer-events: none; /* mag de kaart-interactie nooit blokkeren */
+  min-width: 200px;
+  line-height: 1.45;
+}
+.map-cursor-coords-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.map-cursor-coords-label {
+  color: var(--theme-text-secondary, #71717A);
+  font-weight: 700;
+}
+.map-cursor-coords-val {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Image-export knop top-right ────────────────────────────── */
+.map-export-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1100;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--theme-bg, white);
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background 80ms ease-out, border-color 80ms ease-out;
+}
+.map-export-btn:hover:not(:disabled) {
+  background: var(--theme-bg-hover, #f4f4f5);
+  border-color: var(--theme-border-strong, #94A3B8);
+}
+.map-export-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* ── Address-search box (top-left of the Map view) ──────────── */
+.map-addrsearch {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 320px;
+  max-width: calc(100% - 24px);
+  z-index: 1100;
+  font: 500 0.82rem 'Inter', system-ui, sans-serif;
+}
+.map-addrsearch-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--theme-bg, white);
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 6px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.map-addrsearch-icon {
+  color: var(--theme-text-secondary, #71717a);
+  flex-shrink: 0;
+}
+.map-addrsearch-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--theme-text, #36363e);
+}
+.map-addrsearch-input::placeholder {
+  color: var(--theme-text-secondary, #a1a1aa);
+}
+.map-addrsearch-clear {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--theme-text-secondary, #a1a1aa);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  border-radius: 3px;
+}
+.map-addrsearch-clear:hover {
+  background: var(--theme-bg-lighter, #f5f5f4);
+  color: var(--theme-text, #36363e);
+}
+.map-addrsearch-results {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  background: var(--theme-bg, white);
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  max-height: 320px;
+  overflow-y: auto;
+}
+.map-addrsearch-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--theme-text, #36363e);
+}
+.map-addrsearch-item.highlight,
+.map-addrsearch-item:hover {
+  background: var(--theme-hover, rgba(217, 119, 6, 0.08));
+}
+.map-addrsearch-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.map-addrsearch-item-type {
+  font: 500 0.7rem var(--font-code, 'JetBrains Mono'), monospace;
+  color: var(--theme-text-secondary, #a1a1aa);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+/* Coordinaten-suggestion staat altijd bovenaan en heeft een lichte
+   accent-rand zodat duidelijk is dat het géén PDOK-adres is maar een
+   directe lat/lon fly-to. */
+.map-addrsearch-item--coord {
+  border-left: 3px solid var(--accent, #2563EB);
+  background: rgba(37, 99, 235, 0.04);
+}
+.map-addrsearch-item--coord .map-addrsearch-item-type {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--theme-text-secondary, #71717A);
+}
+
+/* ── Topotijdreis slider — lives inside the GisLayerPanel section ── */
+.topotijdreis-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  pointer-events: auto;
+}
+/* Header row — checkbox + label + current-year/Uit indicator. */
+.topotijdreis-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.topotijdreis-toggle input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--amber, #D97706);
+  flex-shrink: 0;
+}
+.topotijdreis-toggle-label {
+  font: 600 0.78rem 'Inter', system-ui, sans-serif;
+  color: var(--theme-text, #36363E);
+  flex: 1;
+}
+.topotijdreis-year-label {
+  font: 700 1rem var(--font-heading, "Space Grotesk"), 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+  color: var(--amber, #D97706);
+  line-height: 1;
+}
+.topotijdreis-year-off {
+  font: 500 0.78rem 'Inter', system-ui, sans-serif;
+  color: var(--theme-text-secondary, #A1A1AA);
+  line-height: 1;
+}
+.topotijdreis-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.topotijdreis-off-btn,
+.topotijdreis-latest-btn {
+  appearance: none;
+  background: var(--theme-bg-lighter, #F5F5F4);
+  color: var(--theme-text, #36363E);
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 4px;
+  font: 600 0.7rem 'Inter', system-ui, sans-serif;
+  padding: 3px 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.topotijdreis-off-btn:hover:not(:disabled),
+.topotijdreis-latest-btn:hover:not(:disabled) {
+  background: var(--theme-bg, white);
+  border-color: var(--amber, #D97706);
+  color: var(--amber, #D97706);
+}
+.topotijdreis-off-btn:disabled,
+.topotijdreis-latest-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.topotijdreis-range {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #D97706 0%, #F59E0B 40%, #EA580C 100%);
+  outline: none;
+  cursor: pointer;
+}
+.topotijdreis-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--amber, #D97706);
+  border: 2px solid var(--theme-bg, white);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+.topotijdreis-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--amber, #D97706);
+  border: 2px solid var(--theme-bg, white);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+.topotijdreis-ticks {
+  position: relative;
+  height: 12px;
+  /* Only show first/middle/last when space is tight — the slider is
+     narrow now so individual year ticks would overlap. */
+  margin-left: 4px;
+  margin-right: 4px;
+}
+.topotijdreis-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font: 500 0.6rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text-secondary, #A1A1AA);
+  white-space: nowrap;
+  user-select: none;
+}
+.topotijdreis-opacity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--theme-border, #E7E5E4);
+}
+.topotijdreis-opacity-label {
+  font: 500 0.65rem 'Inter', system-ui, sans-serif;
+  color: var(--theme-text-secondary, #A1A1AA);
+  flex-shrink: 0;
+}
+.topotijdreis-opacity input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  appearance: none;
+  background: var(--theme-border, #E7E5E4);
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+.topotijdreis-opacity input[type="range"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.topotijdreis-opacity input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--amber, #D97706);
+  border: 1.5px solid var(--theme-bg, white);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.topotijdreis-opacity input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--amber, #D97706);
+  border: 1.5px solid var(--theme-bg, white);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.topotijdreis-opacity-val {
+  font: 500 0.65rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text-secondary, #A1A1AA);
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Drag-and-drop overlay (file dropped from OS) ── */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(54, 54, 62, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: drop-fade-in 0.12s ease-out;
+}
+.drop-overlay-card {
+  background: var(--theme-bg, #FAFAF9);
+  color: var(--amber, #D97706);
+  border: 2px dashed var(--amber, #D97706);
+  border-radius: 12px;
+  padding: 40px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  font: 600 0.95rem 'Inter', system-ui, sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.drop-overlay-card p { margin: 0; }
+@keyframes drop-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── ProjectSettingsDialog ── */
+/* De modal-body zelf is bewust padding-loos (sommige dialogs willen
+   full-bleed content). Het projectinfo-formulier krijgt daarom een eigen
+   binnenrand zodat de velden niet tegen de dialoograndjes plakken. */
+.ps-form {
+  padding: 20px 24px;
+}
+
+/* ── ProjectSettingsDialog: CPT-list section ── */
+.ps-section-title {
+  font: 700 0.85rem var(--font-heading, "Space Grotesk"), 'Inter', sans-serif;
+  margin: 0 0 8px;
+  color: var(--theme-text, inherit);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ps-section-header {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ps-section-header .ps-section-title { margin-bottom: 0; }
+.ps-count { font-weight: 500; color: var(--theme-text-muted, #A1A1AA); font-size: 0.8rem; }
+.ps-section-actions { display: flex; align-items: center; gap: 8px; }
+.ps-link-btn {
+  background: transparent; border: 0; padding: 4px 8px;
+  font: 500 0.75rem 'Inter', sans-serif;
+  color: var(--theme-text-muted, #A1A1AA);
+  cursor: pointer;
+}
+.ps-link-btn:hover { color: var(--error, #DC2626); }
+.ps-add-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--amber, #D97706); color: white;
+  border: 0; border-radius: 8px;
+  padding: 6px 12px;
+  font: 600 0.8rem 'Inter', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.ps-add-btn:hover { background: var(--signal-orange, #EA580C); }
+.ps-empty {
+  border: 1.5px dashed var(--theme-border, #D6D3D1);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--theme-text-muted, #A1A1AA);
+}
+.ps-empty p { margin: 0; }
+.ps-cpt-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 8px;
+}
+.ps-cpt-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--theme-border-subtle, #F5F5F4);
+  gap: 8px;
+}
+.ps-cpt-item:last-child { border-bottom: 0; }
+.ps-cpt-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ps-cpt-id { font: 600 0.85rem var(--font-code, "JetBrains Mono"), monospace; color: var(--theme-text, inherit); }
+.ps-cpt-meta { font: 400 0.7rem 'Inter', sans-serif; color: var(--theme-text-muted, #A1A1AA); }
+.ps-remove-btn {
+  background: transparent; border: 0; cursor: pointer;
+  width: 28px; height: 28px; border-radius: 4px;
+  font-size: 1.2rem; line-height: 1;
+  color: var(--theme-text-muted, #A1A1AA);
+  flex-shrink: 0;
+}
+.ps-remove-btn:hover { background: rgba(220, 38, 38, 0.1); color: var(--error, #DC2626); }
+.ps-footer {
+  margin-top: 20px;
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--theme-border, #E7E5E4);
+}
+/* Default footer-button styling (Annuleer / Sluiten). De primary
+   variant (Opslaan / Nieuw project) krijgt amber via .btn-primary
+   hieronder. */
+.ps-footer button {
+  appearance: none;
+  border: 1px solid var(--theme-border, #d4d4d4);
+  background: var(--theme-bg, #fafaf9);
+  color: var(--theme-text, #36363e);
+  font: 600 0.8rem 'Inter', sans-serif;
+  padding: 7px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.ps-footer button:hover {
+  background: var(--theme-bg-lighter, #f4f4f3);
+  border-color: var(--amber, #d97706);
+}
+.ps-footer .btn-primary,
+.btn-primary {
+  background: var(--amber, #d97706);
+  color: white;
+  border-color: var(--amber, #d97706);
+}
+.ps-footer .btn-primary:hover,
+.btn-primary:hover {
+  background: var(--signal-orange, #ea580c);
+  border-color: var(--signal-orange, #ea580c);
+  color: white;
+}
+
+/* ── RightPanel: stacked sections ── */
+.right-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 10px;
+  height: 100%;
+}
+/* The Locatie section reserves 50% of the right-panel height for the map. */
+.right-panel-section:has(.mini-map) { flex: 1 1 50%; min-height: 0; }
+.right-panel-section { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.mini-map {
+  width: 100%;
+  flex: 1;
+  min-height: 120px;
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* ── MapView: project CPT marker labels + distance labels ── */
+.cpt-marker-label {
+  background: var(--theme-bg, #FAFAF9);
+  color: var(--amber, #D97706);
+  border: 1px solid var(--amber, #D97706);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font: 600 0.7rem 'JetBrains Mono', monospace;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.cpt-marker-label::before { display: none; }   /* hide leaflet tooltip arrow */
+
+.cpt-distance-label {
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.cpt-distance-label span {
+  background: var(--theme-bg, #FAFAF9);
+  color: var(--theme-text, #36363E);
+  border: 1px solid var(--amber, #D97706);
+  border-radius: 9px;
+  padding: 1px 6px;
+  font: 500 0.65rem 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.map-cpt-count { color: var(--amber, #D97706); font-weight: 600; }
+
+/* ── LeftPanel: project browser header + section + button ── */
+.project-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--theme-bg-elevated, var(--theme-bg-lighter, transparent));
+  border-bottom: 1px solid var(--theme-border, #E7E5E4);
+  margin-bottom: 4px;
+}
+.project-header-icon {
+  width: 28px; height: 28px;
+  background: var(--amber, #D97706);
+  color: white;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.project-header-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.project-header-title {
+  font: 700 0.85rem 'Space Grotesk', 'Inter', sans-serif;
+  color: var(--theme-text, inherit);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.project-header-sub {
+  font: 400 0.7rem 'Inter', sans-serif;
+  color: var(--theme-text-muted, var(--scaffold-gray, #888));
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* + button at section header */
+.panel-section-header-row {
+  display: flex; align-items: stretch; justify-content: space-between;
+  padding-right: 6px;
+}
+.panel-section-header-row .panel-section-header { flex: 1; }
+.panel-section-add {
+  background: transparent; border: 0; cursor: pointer;
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  color: var(--amber, #D97706);
+  display: flex; align-items: center; justify-content: center;
+  align-self: center;
+  transition: background 0.12s ease;
+}
+.panel-section-add:hover { background: rgba(217, 119, 6, 0.12); }
+
+/* CPT-list: file icon + name */
+.cpt-list-name {
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── MapView: sondeer-symbool driehoek + label ── */
+.cpt-sondeer-icon {
+  background: transparent !important;
+  border: 0 !important;
+  width: 22px !important;
+  height: 22px !important;
+}
+.cpt-sondeer-marker {
+  position: relative;
+  width: 22px; height: 22px;
+}
+.cpt-sondeer-marker svg {
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35));
+}
+.cpt-sondeer-label {
+  position: absolute;
+  left: 26px;          /* to the right of the triangle */
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: var(--theme-bg, #FAFAF9);
+  color: var(--theme-text, #36363E);
+  border: 1px solid var(--amber, #D97706);
+  border-radius: 3px;
+  padding: 2px 6px;
+  /* 0.7rem → 0.9rem: sondeernummer beter leesbaar op de kaart
+     (gebruiker-verzoek: "dat sondeernummer mag wat groter"). */
+  font: 600 0.9rem 'JetBrains Mono', monospace;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.cpt-sondeer-marker.active .cpt-sondeer-label {
+  background: var(--amber, #D97706);
+  color: white;
+  border-color: var(--amber, #D97706);
+}
+/* Geselecteerde sondering: amber-gloed rond de driehoek + amber outline
+   op het label, zonder de bestaande active/inactive kleuren te
+   overschrijven. Werkt cumulatief met .active (active+selected =
+   amber-on-amber wat extra opvalt). */
+.cpt-sondeer-marker.selected svg {
+  filter:
+    drop-shadow(0 0 3px var(--amber, #D97706))
+    drop-shadow(0 0 1.5px var(--amber, #D97706))
+    drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35));
+}
+.cpt-sondeer-marker.selected .cpt-sondeer-label {
+  border-color: var(--amber, #D97706);
+  border-width: 2px;
+  padding: 0 4px;
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.55);
+}
+
+/* Floating selectie-badge linksboven op de kaart. Bouw op de zelfde
+   bg-glas-stijl als andere overlays in de viewer (witte bg + amber-
+   accent + lichte schaduw zodat hij ook over luchtfoto-tiles leesbaar
+   blijft). */
+.map-selection-badge {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--theme-bg, #FAFAF9);
+  color: var(--theme-text, #36363E);
+  border: 1.5px solid var(--amber, #D97706);
+  border-radius: 999px;
+  padding: 5px 8px 5px 12px;
+  font: 600 0.75rem 'Inter', sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  pointer-events: auto;
+}
+.map-selection-count {
+  color: var(--amber, #D97706);
+}
+.map-selection-clear {
+  appearance: none;
+  border: 0;
+  background: var(--amber, #D97706);
+  color: white;
+  font: 600 0.7rem 'Inter', sans-serif;
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.map-selection-clear:hover {
+  background: var(--signal-orange, #EA580C);
+}
+
+/* ── MapView: BRO archive sonderingen (small grey triangles) ── */
+.bro-sondering-icon {
+  background: transparent !important;
+  border: 0 !important;
+}
+.bro-sondering-marker {
+  width: 14px; height: 14px;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+/* ── MapView: measurement-mode cursor + label ── */
+.map-view-container.measuring {
+  cursor: crosshair;
+}
+.map-view-container.measuring .leaflet-marker-icon {
+  cursor: crosshair !important;
+}
+.cpt-measure-label {
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.cpt-measure-label span {
+  background: var(--theme-bg, #FAFAF9);
+  color: #2563EB;
+  border: 1.5px solid #2563EB;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font: 600 0.7rem 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+/* Live preview tijdens mousemove (vóór de 2e klik). Iets zachter
+   gestyld dan de definitieve label zodat de gebruiker visueel kan
+   zien dat de meting nog niet vastgelegd is. */
+.cpt-measure-label-preview span {
+  background: rgba(250, 250, 249, 0.92);
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+/* ── GisLayerPanel: layer-toggle list ── */
+.gis-layer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gis-layer-list li {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0;
+}
+.gis-layer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  font-size: 0.78rem;
+  color: var(--theme-text, #36363E);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.12s ease;
+}
+.gis-layer-row:hover {
+  background: var(--theme-hover, rgba(217, 119, 6, 0.08));
+}
+.gis-layer-row input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--amber, #D97706);
+  cursor: inherit;
+  flex-shrink: 0;
+}
+.gis-layer-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gis-layer-opacity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px 0 27px; /* indent under the checkbox column */
+  margin-top: -2px;
+}
+.gis-layer-opacity input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  appearance: none;
+  background: var(--theme-border, #E7E5E4);
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+.gis-layer-opacity input[type="range"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.gis-layer-opacity input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--amber, #D97706);
+  border: 1.5px solid var(--theme-bg, white);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.gis-layer-opacity input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--amber, #D97706);
+  border: 1.5px solid var(--theme-bg, white);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.gis-layer-opacity-val {
+  font: 500 0.65rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text-secondary, #A1A1AA);
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── AHN colour-ramp legend (under the AHN row when enabled) ── */
+.gis-layer-legend {
+  margin: 4px 6px 8px 27px;
+  padding: 6px 8px;
+  background: var(--theme-bg-lighter, #F5F5F4);
+  border: 1px solid var(--theme-border, #E7E5E4);
+  border-radius: 4px;
+}
+.gis-legend-title {
+  font: 600 0.65rem 'Inter', system-ui, sans-serif;
+  color: var(--theme-text-secondary, #A1A1AA);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.gis-legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gis-legend-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gis-legend-swatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+.gis-legend-label {
+  font: 500 0.7rem var(--font-code, "JetBrains Mono"), monospace;
+  color: var(--theme-text, #36363E);
+}
+
+/* ── GisLayerPanel: BRO load summary footer ── */
+.gis-bro-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  font-size: 0.72rem;
+  color: var(--theme-text-muted, #71717A);
+  background: var(--theme-hover, rgba(217, 119, 6, 0.05));
+  border-radius: 4px;
+}
+.gis-bro-counts {
+  flex: 1;
+  font-variant-numeric: tabular-nums;
+}
+.gis-bro-refresh {
+  border: 1px solid var(--theme-border, #D4D4D8);
+  background: var(--theme-bg, #FAFAF9);
+  color: var(--theme-text, #36363E);
+  font: 600 0.72rem 'Inter', system-ui, sans-serif;
+  padding: 3px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.gis-bro-refresh:hover {
+  background: var(--amber, #D97706);
+  color: white;
+  border-color: var(--amber, #D97706);
+}
+
+/* ── MapView: BRO popup styling ── */
+.bro-popup {
+  font: 0.78rem/1.4 'Inter', system-ui, sans-serif;
+  color: var(--theme-text, #36363E);
+}
+.bro-popup-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--theme-border, #D4D4D8);
+}
+.bro-popup-header strong {
+  font-size: 0.86rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--amber, #D97706);
+}
+.bro-popup-kind {
+  font-size: 0.7rem;
+  color: var(--theme-text-muted, #71717A);
+}
+.bro-popup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+.bro-popup-table td {
+  padding: 2px 6px 2px 0;
+  vertical-align: top;
+}
+.bro-popup-table td:first-child {
+  color: var(--theme-text-muted, #71717A);
+  white-space: nowrap;
+}
+.bro-popup-table td:last-child {
+  font-variant-numeric: tabular-nums;
+}
+.bro-popup-actions {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--theme-border, #D4D4D8);
+  text-align: right;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  justify-content: flex-end;
+}
+.bro-popup-actions a.bro-popup-open,
+.bro-popup-actions a.bro-popup-merge,
+.bro-popup-actions a.bro-popup-add-to-project {
+  font-weight: 600;
+  color: var(--amber, #D97706);
+  text-decoration: none;
+  cursor: pointer;
+}
+.bro-popup-actions a.bro-popup-open:hover,
+.bro-popup-actions a.bro-popup-merge:hover,
+.bro-popup-actions a.bro-popup-add-to-project:hover {
+  text-decoration: underline;
+}
+.bro-popup-actions a.bro-popup-merge,
+.bro-popup-actions a.bro-popup-add-to-project {
+  color: var(--theme-accent, #2563EB);
+}
+
+/* ── Chart context menu (right-click on marker) ── */
+.chart-context-menu {
+  z-index: 9999;
+  background: var(--theme-bg, #FAFAF9);
+  border: 1px solid var(--theme-border, #D6D3D1);
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 140px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  font: 400 0.8rem 'Inter', sans-serif;
+}
+.chart-context-item {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 6px 12px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--theme-text, inherit);
+  border-radius: 4px;
+}
+.chart-context-item:hover {
+  background: var(--theme-hover, rgba(0, 0, 0, 0.05));
+}
+
+/* ── Soil-layer tooltip (follows the cursor inside the chart) ── */
+.chart-soil-tooltip {
+  z-index: 10000;
+  background: rgba(54, 54, 62, 0.92);
+  color: #FAFAF9;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font: 600 0.72rem 'Inter', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* ── Boring "Ruwe data (XML)" viewer in LeftPanel ──────────── */
+
+.bore-raw-wrap {
+  position: relative;
+  margin: 0;
+}
+
+/* ── BRO foto's-sectie in LeftPanel ────────────────────────── */
+
+.bore-photo-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 0 0;
+}
+.bore-photo-hint {
+  margin: 0;
+  font: 400 0.75rem 'Inter', system-ui, sans-serif;
+  color: var(--theme-text-secondary, #71717a);
+}
+.bore-photo-link {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 5px 10px;
+  border: 1px solid var(--theme-border, #cbd5e1);
+  border-radius: 4px;
+  background: var(--theme-bg, #fff);
+  color: var(--theme-text, #36363e);
+  text-decoration: none;
+  font: 600 0.78rem 'Inter', system-ui, sans-serif;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.bore-photo-link:hover {
+  background: var(--theme-bg-lighter, #f5f5f4);
+  border-color: var(--amber, #d97706);
+  color: var(--amber, #d97706);
+}
+.bore-raw-copy {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  appearance: none;
+  background: var(--theme-bg, #ffffff);
+  color: var(--theme-text, #36363e);
+  border: 1px solid var(--theme-border, #cbd5e1);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font: 500 11px 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+  z-index: 1;
+}
+.bore-raw-copy:hover {
+  background: var(--theme-bg-lighter, #f1f5f9);
+  border-color: var(--amber, #d97706);
+  color: var(--amber, #d97706);
+}
+.bore-raw-pre {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--theme-bg-lighter, #f8fafc);
+  border: 1px solid var(--theme-border-subtle, #e7e5e4);
+  border-radius: 4px;
+  font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--theme-text, #1f2937);
+  white-space: pre;
+  overflow: auto;
+  max-height: 320px;
+}

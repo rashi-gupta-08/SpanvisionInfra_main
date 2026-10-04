@@ -1,0 +1,637 @@
+import { useState, useEffect, useId } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
+import { getSetting, setSetting } from "../../store";
+import {
+  WINDGEBIEDEN, TERREIN_CATEGORIEEN,
+  type Windgebied, type TerreinCategorie,
+} from "../../lib/wind/windEurocode";
+import {
+  normOordelen, normStanden, normenUitToetsen, zetNormStand,
+  type NormOordeel, type NormSleutel, type NormStand,
+} from "../../lib/normenInRapport";
+import { useCheckStore } from "../../stores/checkStore";
+import { usedNorms } from "../report/checkReportUtils";
+import {
+  GEVOLGKLASSEN, kFi, partieleFactoren, type Gevolgklasse as NbGevolgklasse,
+} from "../fem/solver/normcombinaties";
+import InfoTip from "../InfoTip";
+import "./ProjectSettingsDialog.css";
+import { aanduidingen, BIJLAGEN_GEVULD, STANDAARD_BIJLAGE, type NationaleBijlageCode } from "../../lib/normAanduidingen";
+
+interface ProjectSettingsDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+/**
+ * Gevolgklasse volgens EN 1990 bijlage B. Hij bepaalt de PARTIËLE FACTOREN
+ * van de standaardbelastingcombinaties: NEN-EN 1990 NB tabel NB.4 voor CC2,
+ * tabel NB.5 voor CC1 en CC3. K_FI (0,9 / 1,0 / 1,1) is de verhouding die in
+ * die tabellen verwerkt is; hij wordt niet nog eens op een uitkomst gezet.
+ * De tabellen en de afleiding staan in components/fem/solver/normcombinaties.ts.
+ */
+export type Gevolgklasse = NbGevolgklasse;
+
+
+export const GEVOLGKLASSE_OMSCHRIJVING: Record<Gevolgklasse, string> = {
+  CC1: "Geringe gevolgen — K_FI = 0,90",
+  CC2: "Normale gevolgen — K_FI = 1,00",
+  CC3: "Grote gevolgen — K_FI = 1,10",
+};
+
+/**
+ * Ontwerplevensduurklasse volgens EN 1990 tabel 2.1 — bepaalt de beoogde
+ * gebruiksduur en werkt door in o.a. vermoeiing, duurzaamheidseisen en (bij
+ * hout) de klimaat-/belastingduurfactoren.
+ */
+export type Levensduurklasse = "1" | "2" | "3" | "4" | "5";
+
+export const LEVENSDUUR_OMSCHRIJVING: Record<Levensduurklasse, string> = {
+  "1": "Klasse 1 — 10 jaar: tijdelijke constructies",
+  "2": "Klasse 2 — 10 tot 25 jaar: vervangbare constructiedelen",
+  "3": "Klasse 3 — 15 tot 30 jaar: agrarische en soortgelijke constructies",
+  "4": "Klasse 4 — 50 jaar: gebouwen en andere gewone constructies",
+  "5": "Klasse 5 — 100 jaar: monumentale gebouwen, bruggen en infrastructuur",
+};
+
+/**
+ * Windgebied (NEN-EN 1991-1-4/NB tabel NB.1) en terreincategorie
+ * (NEN-EN 1991-1-4 tabel 4.1). Ze horen bij de uitgangspunten van het project
+ * en worden door de windbelastinggenerator hier uitgelezen. De omschrijvingen
+ * en getalswaarden staan — met vindplaats — in de windmodule.
+ */
+export type WindgebiedId = Windgebied;
+export type TerreinCategorieId = TerreinCategorie;
+
+/**
+ * Normen die het project toepast (uitgangspunten van de berekening).
+ *
+ * Deze twee velden samen dragen per norm ÉÉN van drie standen — "volgt het
+ * model", "altijd vermelden", "niet vermelden". De boolean alleen zegt niets:
+ * hij telt pas als de sleutel ook in `normenHandmatig` staat. De regels, en de
+ * reden dat dit geen aan/uit-vinkje meer is, staan in `lib/normenInRapport`.
+ */
+export interface Uitgangspunten {
+  /** EN 1993 — staalconstructies. Alleen betekenisvol via `normenHandmatig`. */
+  en1993: boolean;
+  /** EN 1995 — houtconstructies (inclusief kruislaaghout). */
+  en1995: boolean;
+  /** EN 1992 — betonconstructies. */
+  en1992: boolean;
+  /**
+   * De normen waarover de gebruiker zelf een uitspraak heeft gedaan. Zonder
+   * dit spoor is aan `en1995: true` niet te zien of het een keuze was of de
+   * standaardstand, en dan meldt een zuiver stalen rapport doodleuk dat
+   * EN 1995 is toegepast. Ontbreekt het veld (projecten van vóór deze
+   * wijziging), dan volgen alle normen het model — dat laadt zonder migratie.
+   */
+  normenHandmatig?: readonly NormSleutel[];
+  /** Gevolgklasse volgens EN 1990. */
+  gevolgklasse: Gevolgklasse;
+  /** Ontwerplevensduurklasse volgens EN 1990 tabel 2.1. */
+  levensduurklasse: Levensduurklasse;
+  /** Nationale bijlage — vandaag alleen de Nederlandse. */
+  nationaleBijlage: NationaleBijlageCode;
+  /**
+   * Windgebied volgens NEN-EN 1991-1-4/NB tabel NB.1 — bepaalt v_b,0.
+   * Ontbreekt bij projecten van vóór de windgenerator → default "II".
+   */
+  windgebied?: WindgebiedId;
+  /**
+   * Terreincategorie volgens NEN-EN 1991-1-4 tabel 4.1 — bepaalt de
+   * ruwheidslengte z₀ en daarmee het snelheidsprofiel.
+   */
+  terreincategorie?: TerreinCategorieId;
+}
+
+/**
+ * De stand van een project waar niemand iets aan heeft gekozen. `normenHandmatig`
+ * is leeg, dus alle drie de normen staan op "volgt het model" — staal in het
+ * model levert EN 1993, hout levert EN 1995. De drie booleans staan op false
+ * omdat ze in die stand toch niet meetellen; een `true` zou alleen maar
+ * verwarrend in het projectbestand staan.
+ */
+export const DEFAULT_UITGANGSPUNTEN: Uitgangspunten = {
+  en1993: false,
+  en1995: false,
+  en1992: false,
+  normenHandmatig: [],
+  gevolgklasse: "CC2",
+  levensduurklasse: "4",
+  nationaleBijlage: STANDAARD_BIJLAGE,
+  windgebied: "II",
+  terreincategorie: "II",
+};
+
+export interface ProjectInfo {
+  name: string;
+  projectNumber: string;
+  engineer: string;
+  company: string;
+  date: string;
+  description: string;
+  notes: string;
+  location: string;
+  latitude?: number;
+  longitude?: number;
+  /** Uitgangspunten: toegepaste normen + gevolgklasse. */
+  uitgangspunten?: Uitgangspunten;
+}
+
+interface ErpProject {
+  name: string;
+  project_name: string;
+  customer: string;
+  status: string;
+}
+
+const emptyProject: ProjectInfo = {
+  name: "",
+  projectNumber: "",
+  engineer: "",
+  company: "",
+  date: new Date().toISOString().slice(0, 10),
+  description: "",
+  notes: "",
+  location: "",
+  uitgangspunten: DEFAULT_UITGANGSPUNTEN,
+};
+
+/**
+ * De drie normen zoals ze in de uitgangspunten staan. `materiaal` is de soort
+ * die deze norm in het model aandraagt — nodig om per stand in gewone taal te
+ * zeggen wat er gebeurt, in plaats van de gebruiker de regel te laten raden.
+ * EN 1992 staat hier gelijkwaardig bij: de betontoetsing draait mee in
+ * `checkStore` en heeft een eigen rapporthoofdstuk, dus een uitgeschakeld
+ * hokje met "volgt later" zou nu een onwaarheid zijn.
+ * `label` en `materiaal` zijn i18n-sleutels (naamruimte common), vertaald bij het tonen.
+ */
+const NORMEN: ReadonlyArray<{ sleutel: NormSleutel; label: string; materiaal: string }> = [
+  { sleutel: "en1993", label: "projectSettingsDialog.normEn1993", materiaal: "projectSettingsDialog.materialSteel" },
+  { sleutel: "en1995", label: "projectSettingsDialog.normEn1995", materiaal: "projectSettingsDialog.materialTimber" },
+  { sleutel: "en1992", label: "projectSettingsDialog.normEn1992", materiaal: "projectSettingsDialog.materialConcrete" },
+];
+
+/** De drie standen, in de volgorde waarin de keuzelijst ze aanbiedt (label = i18n-sleutel). */
+const STAND_LABEL: ReadonlyArray<{ stand: NormStand; label: string }> = [
+  { stand: "model", label: "projectSettingsDialog.standModel" },
+  { stand: "aan", label: "projectSettingsDialog.standOn" },
+  { stand: "uit", label: "projectSettingsDialog.standOff" },
+];
+
+/**
+ * Wat de gekozen stand voor het rapport betekent, in één zin onder de
+ * keuzelijst.
+ *
+ * Dit regeltje is de kern van de reparatie. Het lege hokje van vroeger stond
+ * zowel voor "ik wil deze norm niet zien" als voor "ik heb er nooit iets mee
+ * gedaan", en het zweeg helemaal wanneer een uitgevoerde toetsing de keuze
+ * overrulede. Nu zegt het scherm per norm wat er werkelijk gebeurt — inclusief
+ * het geval waarin de keuze van de gebruiker het aflegt tegen een feit over de
+ * berekening.
+ */
+function normGevolg(t: TFunction, oordeel: NormOordeel, stand: NormStand, materiaal: string): string {
+  switch (oordeel) {
+    case "getoetst":
+      return stand === "uit"
+        ? t("projectSettingsDialog.effectCheckedOverruled")
+        : t("projectSettingsDialog.effectChecked");
+    case "keuze-aan":
+      return t("projectSettingsDialog.effectOn", { materiaal });
+    case "keuze-uit":
+      return t("projectSettingsDialog.effectOff", { materiaal });
+    case "model":
+      return t("projectSettingsDialog.effectModel", { materiaal });
+  }
+}
+
+export default function ProjectSettingsDialog({ open, onClose }: ProjectSettingsDialogProps) {
+  const { t } = useTranslation("common");
+  const [project, setProject] = useState<ProjectInfo>(emptyProject);
+  const [erpEnabled, setErpEnabled] = useState(false);
+  const [erpUrl, setErpUrl] = useState("");
+  const [erpSearch, setErpSearch] = useState("");
+  const [erpResults, setErpResults] = useState<ErpProject[]>([]);
+  const [erpLoading, setErpLoading] = useState(false);
+  // Waarop daadwerkelijk getoetst is. Dat is de enige regel die de keuze van
+  // de gebruiker overrulet, dus de enige die de dialoog erbij moet kunnen
+  // vertellen. Wélk materiaal er in het model zit blijft hier bewust buiten
+  // beeld: de uitgangspunten hebben de staven niet in handen, en een uit de
+  // toetsing gereconstrueerd model zou verouderen zodra er een staaf bij komt
+  // — dan stond er weer iets op het scherm dat niet waar is.
+  const toetsResultaten = useCheckStore((s) => s.results);
+  // Ids voor de uitleg-tips (issue #50) en de velden waar hun labels naar
+  // wijzen. `useId` staat vóór de vroege `return` hieronder: hooks altijd.
+  const basisId = useId();
+  const tipId = (naam: string) => `${basisId}-tip-${naam}`;
+  const veldId = (naam: string) => `${basisId}-veld-${naam}`;
+
+  useEffect(() => {
+    if (!open) return;
+    getSetting<ProjectInfo>("projectInfo", emptyProject).then(setProject);
+    getSetting("erpNextUrl", "").then(setErpUrl);
+    getSetting("erpNextEnabled", false).then(setErpEnabled);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  // Uitgangspunten met terugval op de defaults, zodat projecten van vóór deze
+  // uitbreiding gewoon laden (gevolgklasse CC2, normen volgen het model).
+  const uitgangspunten: Uitgangspunten = project.uitgangspunten ?? DEFAULT_UITGANGSPUNTEN;
+  // De keuzelijsten tonen de stand zoals het rapport hem leest — inclusief
+  // "volgt het model" voor een bestaand projectbestand, waarin `en1995: true`
+  // staat zonder dat te achterhalen is wie dat deed. `normOordelen` zegt er
+  // per norm bij welke regel wint, zodat het scherm kan melden dat een
+  // uitgevoerde toetsing de keuze overrulet in plaats van erover te zwijgen.
+  const standen = normStanden(uitgangspunten);
+  const oordelen = normOordelen(uitgangspunten, normenUitToetsen(usedNorms(toetsResultaten)));
+
+  // Gevolgklasse: de klasse kiest de partiële factoren van de
+  // standaardcombinaties. Tot september 2026 stond hier dat K_FI de ongunstige
+  // belastingen vermenigvuldigt, terwijl geen enkele combinatie of toets er
+  // iets mee deed. De factoren komen uit de GEKOZEN bijlage (normnaad), niet
+  // uit een vaste tabel: de keuzelijst Nationale bijlage bepaalt de rij.
+  const cc = uitgangspunten.gevolgklasse;
+  const bijlage = uitgangspunten.nationaleBijlage;
+  const factoren = partieleFactoren(cc, bijlage);
+  const n = (x: number) => String(x).replace(".", ",");
+  const kFiTekst = kFi(cc, bijlage).toFixed(2).replace(".", ",");
+  // De volledige uitleg, in de tip bij "Gevolgklasse" (issue #50).
+  const gevolgklasseUitleg = (
+    <>
+      {t("projectSettingsDialog.consequenceExplainIntro", { bron: factoren.bron })}{" "}
+      6.10a γ<sub>G</sub> = {n(factoren.gGsup610a)}, 6.10b γ<sub>G</sub> ={" "}
+      {n(factoren.gGsup610b)}, γ<sub>Q</sub> = {n(factoren.gQ)}{" "}
+      {t("projectSettingsDialog.consequenceExplainFavourable")} K<sub>FI</sub> = {kFiTekst}
+      {t("projectSettingsDialog.consequenceExplainTail")}
+    </>
+  );
+  // Wind: windgebied en terreincategorie (projecten van vóór de
+  // windgenerator: "II").
+  const windgebied: Windgebied = uitgangspunten.windgebied ?? "II";
+  const terreincategorie: TerreinCategorie = uitgangspunten.terreincategorie ?? "II";
+  const vb0Tekst = WINDGEBIEDEN[windgebied].vb0.toFixed(1).replace(".", ",");
+  const z0Tekst = TERREIN_CATEGORIEEN[terreincategorie].z0.toFixed(3).replace(".", ",");
+  const updateUitgangspunt = <K extends keyof Uitgangspunten>(
+    sleutel: K,
+    waarde: Uitgangspunten[K],
+  ) => {
+    setProject((prev) => ({
+      ...prev,
+      uitgangspunten: { ...(prev.uitgangspunten ?? DEFAULT_UITGANGSPUNTEN), [sleutel]: waarde },
+    }));
+  };
+
+  /**
+   * Een norm op een andere stand zetten. Alle drie de standen lopen hier
+   * langs, óók "volgt het model": dat is de weg terug die er eerst niet was,
+   * want een vinkje kon zijn eigen spoor in `normenHandmatig` niet meer
+   * uitwissen en de gebruiker zat na één klik vast aan zijn eigen keuze.
+   * `zetNormStand` houdt de twee opgeslagen velden consistent.
+   */
+  const updateNormStand = (sleutel: NormSleutel, stand: NormStand) => {
+    setProject((prev) => {
+      const vorige = prev.uitgangspunten ?? DEFAULT_UITGANGSPUNTEN;
+      return {
+        ...prev,
+        uitgangspunten: { ...vorige, ...zetNormStand(vorige, sleutel, stand) },
+      };
+    });
+  };
+
+  const updateField = (field: keyof ProjectInfo, value: string) => {
+    setProject((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    await setSetting("projectInfo", project);
+    await setSetting("erpNextUrl", erpUrl);
+    await setSetting("erpNextEnabled", erpEnabled);
+    onClose();
+  };
+
+  const handleErpSearch = async () => {
+    if (!erpUrl || !erpSearch.trim()) return;
+    setErpLoading(true);
+    try {
+      const res = await fetch(
+        `${erpUrl}/api/resource/Project?filters=[["status","=","Open"],["name","like","%${erpSearch}%"]]&fields=["name","project_name","customer","status"]&limit_page_length=10`,
+        { headers: { "Content-Type": "application/json" } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setErpResults(data.data || []);
+      }
+    } catch {
+      setErpResults([]);
+    } finally {
+      setErpLoading(false);
+    }
+  };
+
+  const handleErpSelect = (ep: ErpProject) => {
+    setProject((prev) => ({
+      ...prev,
+      name: ep.project_name || ep.name,
+      projectNumber: ep.name,
+      company: ep.customer || prev.company,
+    }));
+    setErpResults([]);
+    setErpSearch("");
+  };
+
+  return (
+    <div className="proj-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="proj-dialog">
+        <div className="proj-header">
+          <h2>{t("projectSettings.title")}</h2>
+          <button className="proj-close" onClick={onClose}>&times;</button>
+        </div>
+
+        <div className="proj-body">
+          {/* ERPNext Integration */}
+          <div className="proj-section">
+            <div className="proj-section-title">
+              <label className="proj-toggle">
+                <input type="checkbox" checked={erpEnabled} onChange={(e) => setErpEnabled(e.target.checked)} />
+                {t("projectSettings.erpNext")}
+              </label>
+            </div>
+
+            {erpEnabled && (
+              <div className="proj-erp-section">
+                <div className="proj-field">
+                  <label>{t("projectSettings.erpUrl")}</label>
+                  <input
+                    type="url"
+                    value={erpUrl}
+                    onChange={(e) => setErpUrl(e.target.value)}
+                    placeholder="https://erp.example.com"
+                  />
+                </div>
+                <div className="proj-field proj-erp-search">
+                  <label>{t("projectSettings.erpSearch")}</label>
+                  <div className="proj-erp-search-row">
+                    <input
+                      type="text"
+                      value={erpSearch}
+                      onChange={(e) => setErpSearch(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleErpSearch()}
+                      placeholder={t("projectSettings.erpSearchPlaceholder")}
+                    />
+                    <button className="proj-erp-search-btn" onClick={handleErpSearch} disabled={erpLoading}>
+                      {erpLoading ? "..." : t("search")}
+                    </button>
+                  </div>
+                  {erpResults.length > 0 && (
+                    <div className="proj-erp-results">
+                      {erpResults.map((ep) => (
+                        <button key={ep.name} className="proj-erp-result" onClick={() => handleErpSelect(ep)}>
+                          <strong>{ep.project_name || ep.name}</strong>
+                          <span>{ep.customer} &middot; {ep.status}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Project Fields */}
+          <div className="proj-section">
+            <div className="proj-section-title">{t("projectSettings.info")}</div>
+            <div className="proj-fields">
+              <div className="proj-field">
+                <label>{t("projectSettings.name")}</label>
+                <input type="text" value={project.name} onChange={(e) => updateField("name", e.target.value)} />
+              </div>
+              <div className="proj-field">
+                <label>{t("projectSettings.number")}</label>
+                <input type="text" value={project.projectNumber} onChange={(e) => updateField("projectNumber", e.target.value)} />
+              </div>
+              <div className="proj-row">
+                <div className="proj-field">
+                  <label>{t("projectSettings.engineer")}</label>
+                  <input type="text" value={project.engineer} onChange={(e) => updateField("engineer", e.target.value)} />
+                </div>
+                <div className="proj-field">
+                  <label>{t("projectSettings.company")}</label>
+                  <input type="text" value={project.company} onChange={(e) => updateField("company", e.target.value)} />
+                </div>
+              </div>
+              <div className="proj-row">
+                <div className="proj-field">
+                  <label>{t("projectSettings.date")}</label>
+                  <input type="date" value={project.date} onChange={(e) => updateField("date", e.target.value)} />
+                </div>
+                <div className="proj-field">
+                  <label>{t("projectSettings.location")}</label>
+                  <input type="text" value={project.location} onChange={(e) => updateField("location", e.target.value)} />
+                </div>
+              </div>
+              <div className="proj-field">
+                <label>{t("projectSettings.description")}</label>
+                <textarea rows={2} value={project.description} onChange={(e) => updateField("description", e.target.value)} />
+              </div>
+              <div className="proj-field">
+                <label>{t("projectSettings.notes")}</label>
+                <textarea rows={2} value={project.notes} onChange={(e) => updateField("notes", e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          {/* Uitgangspunten — welke normen het project toepast en in welke
+              gevolgklasse. Deze keuzes horen bij de start van een project en
+              komen als uitgangspunten in het rekenrapport. */}
+          <div className="proj-section">
+            <div className="proj-section-title">{t("projectSettingsDialog.basisOfDesign")}</div>
+            <div className="proj-fields">
+              <div className="proj-field">
+                {/* Geen <label>: zonder eigen veld zou een klik op de kop de
+                    InfoTip-knop erin bedienen (het eerste labelbare element). */}
+                <span className="proj-label" id="proj-normen-kop">
+                  {t("projectSettingsDialog.appliedStandards")}
+                  <InfoTip id={tipId("normen")}>{t("projectSettingsDialog.standardsExplanation")}</InfoTip>
+                </span>
+                {/* Drie standen per norm, geen vinkje. Een vinkje toonde
+                    "volgt het model" en "niet vermelden" als hetzelfde lege
+                    hokje — twee standen met verschillende uitkomst in het
+                    rapport — en kende geen weg terug naar de eerste. De regel
+                    onder elke keuzelijst zegt wat de stand voor het rapport
+                    betekent, zodat de gebruiker het niet hoeft af te leiden. */}
+                <div
+                  className="proj-normen"
+                  role="group"
+                  aria-labelledby="proj-normen-kop"
+                  aria-describedby={tipId("normen")}
+                >
+                  {NORMEN.map(({ sleutel, label, materiaal }) => {
+                    const stand = standen[sleutel];
+                    const oordeel = oordelen[sleutel];
+                    // Alleen als een uitgevoerde toetsing de keuze "niet
+                    // vermelden" overrulet staat er iets op het scherm dat de
+                    // gebruiker niet verwacht; dat mag hij niet missen.
+                    const overruled = oordeel === "getoetst" && stand === "uit";
+                    return (
+                      <div key={sleutel} className="proj-norm">
+                        <div className="proj-norm-regel">
+                          <span className="proj-norm-naam">{t(label)}</span>
+                          <select
+                            className="proj-norm-stand"
+                            aria-label={t("projectSettingsDialog.normInReport", { norm: t(label) })}
+                            value={stand}
+                            onChange={(e) => updateNormStand(sleutel, e.target.value as NormStand)}
+                          >
+                            {STAND_LABEL.map(({ stand: waarde, label: standLabel }) => (
+                              <option key={waarde} value={waarde}>{t(standLabel)}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <p className={`proj-norm-gevolg${overruled ? " proj-norm-overruled" : ""}`}>
+                          {normGevolg(t, oordeel, stand, t(materiaal))}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="proj-row">
+                <div className="proj-field">
+                  <label htmlFor={veldId("gevolgklasse")}>
+                    {t("projectSettingsDialog.consequenceClass")}
+                    <InfoTip id={tipId("gevolgklasse")}>{gevolgklasseUitleg}</InfoTip>
+                  </label>
+                  <select
+                    id={veldId("gevolgklasse")}
+                    aria-describedby={tipId("gevolgklasse")}
+                    title={`${cc} — ${t(`projectSettingsDialog.consequenceClassDesc.${cc}`)}`}
+                    value={cc}
+                    onChange={(e) => updateUitgangspunt("gevolgklasse", e.target.value as Gevolgklasse)}
+                  >
+                    {GEVOLGKLASSEN.map((cc) => (
+                      <option key={cc} value={cc}>
+                        {cc} — {t(`projectSettingsDialog.consequenceClassDesc.${cc}`)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="proj-field">
+                  <label>{t("projectSettingsDialog.nationalAnnex")}</label>
+                  {/* De lijst komt uit de normnaad (`lib/normAanduidingen.ts`)
+                      en niet uit een vaste optie hier: zodra er een tweede rij
+                      met rekenwaarden is, staat hij vanzelf in de lijst en
+                      wordt de keuzelijst bruikbaar. Met één gevulde bijlage
+                      valt er niets te kiezen en blijft hij uit. */}
+                  <select
+                    value={uitgangspunten.nationaleBijlage}
+                    disabled={BIJLAGEN_GEVULD.length < 2}
+                    title={
+                      BIJLAGEN_GEVULD.length < 2
+                        ? t("projectSettingsDialog.onlyDutchAnnex")
+                        : undefined
+                    }
+                    onChange={(e) =>
+                      updateUitgangspunt("nationaleBijlage", e.target.value as NationaleBijlageCode)
+                    }
+                  >
+                    {BIJLAGEN_GEVULD.map((code) => (
+                      <option key={code} value={code}>
+                        {aanduidingen(code).keuzelabel}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {/* Korte status van de gekozen gevolgklasse; de uitleg staat in
+                  de tip bij het label. */}
+              <p className="proj-status">
+                γ<sub>G</sub> = {n(factoren.gGsup610a)} / {n(factoren.gGsup610b)} · γ<sub>Q</sub> ={" "}
+                {n(factoren.gQ)} · K<sub>FI</sub> = {kFiTekst}
+              </p>
+              <div className="proj-field">
+                <label htmlFor={veldId("levensduur")}>{t("projectSettingsDialog.designWorkingLife")}</label>
+                <select
+                  id={veldId("levensduur")}
+                  title={t(`projectSettingsDialog.designLifeClass${uitgangspunten.levensduurklasse}`)}
+                  value={uitgangspunten.levensduurklasse}
+                  onChange={(e) => updateUitgangspunt("levensduurklasse", e.target.value as Levensduurklasse)}
+                >
+                  {(Object.keys(LEVENSDUUR_OMSCHRIJVING) as Levensduurklasse[]).map((k) => (
+                    <option key={k} value={k}>{t(`projectSettingsDialog.designLifeClass${k}`)}</option>
+                  ))}
+                </select>
+              </div>
+              {/* Wind — windgebied en terreincategorie horen bij de
+                  uitgangspunten van het project; de windbelastinggenerator
+                  leest ze hier uit. */}
+              <div className="proj-row proj-row-breed">
+                <div className="proj-field">
+                  <label htmlFor={veldId("windgebied")}>
+                    {t("projectSettingsDialog.windRegion")}
+                    <InfoTip id={tipId("windgebied")}>
+                      {t("projectSettingsDialog.windExplainRegion", { gebied: windgebied })}{" "}
+                      v<sub>b,0</sub> = {vb0Tekst} m/s ({t("wind.regionSource")}).
+                    </InfoTip>
+                  </label>
+                  <select
+                    id={veldId("windgebied")}
+                    aria-describedby={tipId("windgebied")}
+                    title={t(`wind.regionOption.${windgebied}`)}
+                    value={windgebied}
+                    onChange={(e) => updateUitgangspunt("windgebied", e.target.value as Windgebied)}
+                  >
+                    {(Object.keys(WINDGEBIEDEN) as Windgebied[]).map((g) => (
+                      <option key={g} value={g}>{t(`wind.regionOption.${g}`)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="proj-field">
+                  <label htmlFor={veldId("terreincategorie")}>
+                    {t("projectSettingsDialog.terrainCategory")}
+                    <InfoTip id={tipId("terreincategorie")}>
+                      {t("projectSettingsDialog.windExplainTerrain")} z<sub>0</sub> = {z0Tekst} m{" "}
+                      {t("projectSettingsDialog.windExplainFromTable")}{" "}
+                      <strong>{t("projectSettingsDialog.windExplainNot")}</strong>{" "}
+                      {t("projectSettingsDialog.windExplainNationalAnnex")}
+                    </InfoTip>
+                  </label>
+                  <select
+                    id={veldId("terreincategorie")}
+                    aria-describedby={tipId("terreincategorie")}
+                    title={t(`wind.terrainOption.${terreincategorie}`)}
+                    value={terreincategorie}
+                    onChange={(e) => updateUitgangspunt("terreincategorie", e.target.value as TerreinCategorie)}
+                  >
+                    {(Object.keys(TERREIN_CATEGORIEEN) as TerreinCategorie[]).map((c) => (
+                      <option key={c} value={c}>{t(`wind.terrainOption.${c}`)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {/* Korte status van de windkeuze; de uitleg staat in de tips. */}
+              <p className="proj-status">
+                v<sub>b,0</sub> = {vb0Tekst} m/s · z<sub>0</sub> = {z0Tekst} m
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="proj-footer">
+          <button className="proj-btn secondary" onClick={onClose}>{t("cancel")}</button>
+          <button className="proj-btn primary" onClick={handleSave}>{t("save")}</button>
+        </div>
+      </div>
+    </div>
+  );
+}

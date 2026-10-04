@@ -1,0 +1,105 @@
+import type { FileFilter, FileRef, OpenDialogOpts, OpenedFile, SaveDialogOpts, SaveOutcome } from './index';
+import { basename, ensureExtension, extensionOf } from '@/utils/filePath';
+import { writeUserBytesTauri, writeUserTextFileTauri } from '@/services/fileAccess/atomicWrite';
+
+export interface TauriOpenIO {
+  readTextFile(path: string): Promise<string>;
+  readFile(path: string): Promise<Uint8Array>;
+}
+
+/** Injecteerbare kern van de Tauri-openroute: bewaakt vooral dat binaire bronformaten nooit via
+ * `readTextFile` lopen en hun oorspronkelijke bytes dus behouden. */
+export async function readOpenedTauriPath(
+  path: string,
+  opts: OpenDialogOpts | undefined,
+  io: TauriOpenIO,
+): Promise<OpenedFile> {
+  const isBinary = (opts?.binaryExtensions ?? []).includes(extensionOf(path));
+  if (isBinary) {
+    const bytes = await io.readFile(path);
+    return { name: basename(path), content: '', bytes, ref: { kind: 'path', path } };
+  }
+  const content = await io.readTextFile(path);
+  return { name: basename(path), content, ref: { kind: 'path', path } };
+}
+
+export async function openFileDialogTauri(filters: FileFilter[], opts?: OpenDialogOpts): Promise<OpenedFile | null> {
+  const { open } = await import('@tauri-apps/plugin-dialog');
+  const selected = await open({ multiple: false, filters });
+  if (!selected) return null;
+  const path = selected as string;
+  const { readTextFile, readFile } = await import('@tauri-apps/plugin-fs');
+  return readOpenedTauriPath(path, opts, { readTextFile, readFile });
+}
+
+/**
+ * De dialoogkant van beide opslaan-als-varianten: downloadmap-voorkeur, de kiezer zelf en de
+ * extensienormalisatie. Alleen het wegschrijven verschilt tussen tekst en bytes, dus dat blijft
+ * bij de aanroeper — één plek voor het gedrag dat de gebruiker ziet.
+ */
+async function pickSavePathTauri(
+  defaultName: string, filters: FileFilter[], opts?: SaveDialogOpts,
+): Promise<string | null> {
+  const { save } = await import('@tauri-apps/plugin-dialog');
+  let defaultPath = defaultName;
+  if (opts?.preferDownloads) {
+    try {
+      const { downloadDir, join } = await import('@tauri-apps/api/path');
+      defaultPath = await join(await downloadDir(), defaultName);
+    } catch {
+      // Downloadmap onbekend/ontoegankelijk (zeldzaam) — val terug op de kale bestandsnaam,
+      // net als het bestaande gedrag van elke andere export.
+    }
+  }
+  const picked = await save({ defaultPath, filters });
+  if (!picked) return null;
+  // Linux/GTK plakt de filter-extensie niet automatisch → normaliseren.
+  const ext = filters[0]?.extensions[0] ?? '';
+  return ext ? ensureExtension(picked, ext) : picked;
+}
+
+export async function saveFileDialogTauri(
+  defaultName: string, content: string, filters: FileFilter[], opts?: SaveDialogOpts,
+): Promise<SaveOutcome | null> {
+  const savedPath = await pickSavePathTauri(defaultName, filters, opts);
+  if (!savedPath) return null;
+  await writeUserTextFileTauri(savedPath, content);
+  return { ref: { kind: 'path', path: savedPath }, name: basename(savedPath) };
+}
+
+/** Binaire tegenhanger van `saveFileDialogTauri`: zelfde kiezer, `writeFile` i.p.v.
+ *  `writeTextFile`. Geen `viaDownload` — op desktop bestaat die route niet. */
+export async function saveBytesDialogTauri(
+  defaultName: string, bytes: Uint8Array, filters: FileFilter[], opts?: SaveDialogOpts,
+): Promise<SaveOutcome | null> {
+  const savedPath = await pickSavePathTauri(defaultName, filters, opts);
+  if (!savedPath) return null;
+  await writeUserBytesTauri(savedPath, bytes);
+  return { ref: { kind: 'path', path: savedPath }, name: basename(savedPath) };
+}
+
+export async function saveToRefTauri(ref: FileRef, content: string): Promise<boolean> {
+  if (ref.kind !== 'path') return false;
+  await writeUserTextFileTauri(ref.path, content);
+  return true;
+}
+
+export async function readFromRefTauri(ref: FileRef): Promise<string | null> {
+  if (ref.kind !== 'path') return null;
+  try {
+    const { readTextFile } = await import('@tauri-apps/plugin-fs');
+    return await readTextFile(ref.path);
+  } catch {
+    return null;
+  }
+}
+
+export async function readBytesFromRefTauri(ref: FileRef): Promise<Uint8Array | null> {
+  if (ref.kind !== 'path') return null;
+  try {
+    const { readFile } = await import('@tauri-apps/plugin-fs');
+    return await readFile(ref.path);
+  } catch {
+    return null;
+  }
+}

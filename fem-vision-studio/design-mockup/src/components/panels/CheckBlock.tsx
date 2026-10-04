@@ -1,0 +1,230 @@
+/**
+ * CheckBlock — volledige afleiding van één toets (EN 1993 of EN 1995) in het
+ * toetsingspaneel.
+ *
+ * Zet de afleiding in dezelfde drie stappen als het rapport: de formule
+ * symbolisch, dan met ingevulde getallen, dan de uitkomst met eenheid — met
+ * de is-gelijktekens onder elkaar — en sluit af met de unity check tegen 1,0.
+ * De LaTeX daarvoor komt uit checkReportUtils, zodat paneel en rapport
+ * gegarandeerd hetzelfde verhaal vertellen.
+ *
+ * Het datacontract (ResistanceCalc/StabilityCalc) is identiek voor staal en
+ * hout.
+ */
+import { useEffect, useRef, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import katex from "katex";
+import "katex/dist/katex.min.css";
+import "./CheckPanel.css";
+
+import type { ResistanceCalc } from "../../lib/types/steel/ResistanceCalc";
+import type { StabilityCalc } from "../../lib/types/steel/StabilityCalc";
+import type { NamedValue } from "../../lib/types/steel/NamedValue";
+import type { Deelstap } from "../../lib/types/steel/Deelstap";
+import {
+  afleidingLatex,
+  deelstapRegels,
+  deelstappenVan,
+  splitsArtikel,
+  unityCheckLatex,
+} from "../report/checkReportUtils";
+
+export type CheckLike = ResistanceCalc | StabilityCalc;
+
+function isStability(c: CheckLike): c is StabilityCalc {
+  return "intermediate_values" in c;
+}
+
+function renderLatex(latex: string, displayMode: boolean): string {
+  try {
+    return katex.renderToString(latex, { displayMode, throwOnError: false });
+  } catch {
+    return `<code>${latex}</code>`;
+  }
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation("check");
+  const cls =
+    status === "Ok" ? "check-status-ok" :
+    status === "NotOk" ? "check-status-notok" : "check-status-na";
+  const label =
+    status === "Ok" ? t("block.statusOk") :
+    status === "NotOk" ? t("block.statusNotOk") : t("statusNa");
+  return <span className={`check-status ${cls}`}>{label}</span>;
+}
+
+/** Waardenlijst met uitgelijnde is-gelijktekens (symbool = getal eenheid). */
+function VariableLine({ vars }: { vars: NamedValue[] }) {
+  if (!vars.length) return null;
+  return (
+    <div className="check-variables">
+      {vars.map((v, i) => (
+        <div key={i} className="check-var">
+          <span
+            className="var-symbol"
+            dangerouslySetInnerHTML={{ __html: renderLatex(v.symbol, false) }}
+          />
+          <span className="var-eq">=</span>
+          <span>
+            <span className="var-value">
+              {v.value.toLocaleString("nl-NL", { maximumFractionDigits: 3 })}
+            </span>
+            {v.unit && v.unit !== "-" && <span className="var-unit"> {v.unit}</span>}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** nl-notatie, gelijk aan het rapport (decimaalkomma). */
+function nl(v: number, digits: number): string {
+  return v.toLocaleString("nl-NL", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
+/**
+ * De uitgeschreven afleiding van de kern, inklapbaar.
+ *
+ * Tot september 2026 toonde het paneel alleen de losse tussenwaarden; de
+ * deelstappen stonden alleen in het rapport. Voor knik is dat te weinig: wie
+ * in het paneel "Kolomknik" ziet staan, hoort daar ook te kunnen lezen met
+ * welke L_cr,z om de zwakke as is gerekend en of die opgegeven, afgeleid of
+ * teruggevallen is. De regels komen uit `deelstapRegels`, dezelfde functie
+ * die het rapport gebruikt — paneel en rapport vertellen zo hetzelfde.
+ */
+function Afleiding({ stappen }: { stappen: Deelstap[] }) {
+  const { t } = useTranslation("check");
+  if (stappen.length === 0) return null;
+  return (
+    <details className="check-intermediates check-afleiding">
+      <summary>{t("block.derivation", { count: stappen.length })}</summary>
+      <ol className="check-afleiding-stappen">
+        {stappen.map((s, i) => {
+          const { formule, uitkomst } = deelstapRegels(s);
+          return (
+            <li key={`${s.id}-${i}`} className="check-afleiding-stap">
+              <div className="check-afleiding-kop">
+                <span>{s.titel}</span>
+                {s.article && <span className="check-article">{s.article}</span>}
+              </div>
+              {formule && (
+                <div dangerouslySetInnerHTML={{ __html: renderLatex(formule, false) }} />
+              )}
+              {uitkomst && (
+                <div dangerouslySetInnerHTML={{ __html: renderLatex(uitkomst, false) }} />
+              )}
+              {!formule && <VariableLine vars={s.variables} />}
+              {s.notes.length > 0 && (
+                <ul className="check-notes">
+                  {s.notes.map((n, j) => (
+                    <li key={j}>{n}</li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </details>
+  );
+}
+
+export default function CheckBlock({
+  check,
+  krachtregel,
+  maatgevend = false,
+}: {
+  check: CheckLike;
+  /**
+   * Vervangt de regel met de snedekrachten. Een plaattoets heeft geen N, V en
+   * M op een positie x, maar een element en een combinatie; zonder deze regel
+   * zou het blok "x = 0 mm, N = 0 kN" tonen, en dat leest als een uitkomst.
+   * Ontbreekt de prop, dan is het blok ongewijzigd.
+   */
+  krachtregel?: ReactNode;
+  /**
+   * Dit is de maatgevende toets van de staaf of plaat (issue #41): het woord
+   * staat dan achter de titel, zodat het onderscheid niet aan kleur hangt.
+   */
+  maatgevend?: boolean;
+}) {
+  const { t } = useTranslation("check");
+  const formulaRef = useRef<HTMLDivElement>(null);
+  const ucRef = useRef<HTMLDivElement>(null);
+
+  const { latex, ongebruikt } = afleidingLatex(check);
+  const { artikel, vergelijking } = splitsArtikel(check.article);
+
+  useEffect(() => {
+    if (formulaRef.current) formulaRef.current.innerHTML = renderLatex(latex, true);
+  }, [latex]);
+
+  useEffect(() => {
+    if (ucRef.current && check.uc) {
+      ucRef.current.innerHTML = renderLatex(unityCheckLatex(check.uc), true);
+    }
+  }, [check.uc]);
+
+  const intermediates = isStability(check) ? check.intermediate_values : [];
+
+  return (
+    <div className={`check-block${maatgevend ? " check-block-maatgevend" : ""}`}>
+      <div className="check-header">
+        <h3 className="check-title">
+          {check.title}
+          {maatgevend && <span className="cp-maatgevend-label">{t("maatgevend.label")}</span>}
+        </h3>
+        <span className="check-article">{artikel}</span>
+      </div>
+
+      {krachtregel !== undefined ? (
+        <div className="check-force-state">{krachtregel}</div>
+      ) : (
+        <div className="check-force-state">
+          {t("block.combination")} {check.force_state.combination_id}
+          &nbsp;&nbsp; x = {nl(check.force_state.position_mm, 0)} mm
+          &nbsp;&nbsp; N = {nl(check.force_state.forces.n_ed, 2)} kN
+          &nbsp;&nbsp; V<sub>z</sub> = {nl(check.force_state.forces.vz_ed, 2)} kN
+          &nbsp;&nbsp; M<sub>y</sub> = {nl(check.force_state.forces.my_ed, 2)} kNm
+        </div>
+      )}
+
+      {/* Symbolisch → ingevuld → uitkomst, met het vergelijkingsnummer rechts. */}
+      <div className="check-derivation">
+        <div className="check-formula" ref={formulaRef} />
+        {vergelijking && <span className="check-eq">({vergelijking})</span>}
+      </div>
+
+      {/* Wat niet in de formule ingevuld kon worden, staat hier alsnog. */}
+      <VariableLine vars={ongebruikt} />
+
+      {check.uc && (
+        <div className="check-uc-line">
+          <div className="check-uc-formula" ref={ucRef} />
+          <StatusBadge status={check.status} />
+        </div>
+      )}
+
+      <Afleiding stappen={deelstappenVan(check)} />
+
+      {intermediates.length > 0 && (
+        <details className="check-intermediates">
+          <summary>{t("block.intermediates", { aantal: intermediates.length })}</summary>
+          <VariableLine vars={intermediates} />
+        </details>
+      )}
+
+      {check.notes.length > 0 && (
+        <ul className="check-notes">
+          {check.notes.map((n, i) => (
+            <li key={i}>{n}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

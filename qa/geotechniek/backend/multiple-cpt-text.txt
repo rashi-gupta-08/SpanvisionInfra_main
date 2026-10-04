@@ -1,0 +1,34 @@
+Spanvision QA ground investigation
+Rotterdam
+Projectnummer: SV-QA-01
+Opdrachtgever: QA customer
+Datum: 2026-10-02
+Spanvision QA ground investigation
+Rotterdam
+Project: SV-QA-01 | Opdrachtgever: QA customer | Datum: 2026-10-02
+1 Overzicht sonderingen
+De onderstaande tabel toont de positie (RD-stelsel), maaiveldhoogte ten opzichte van NAP en de eindiepte
+van iedere sondering in dit rapport.
+Sonderingen — coordinaten en bereik
+Sondering X-RD [m] Y-RD [m] Z-NAP [m] Diepte tot [m] Datum
+CPT000000036564108159.70 445889.30 -1.73 12.04 16-08-2002
+SV-QA-CPT-02 108159.70 445889.30 -1.73 12.04 16-08-2002
+Spanvision infra · geptechniek workspace 1 / 5
+Spanvision infra · geptechniek workspace 2 / 5
+Spanvision infra · geptechniek workspace 3 / 5
+4 Robertson SBT — grondsoort-legenda
+Robertson grondsoort-classificatie (SBT) — kleurcodering in de sondeer-grafieken
+Spanvision infra · geptechniek workspace 4 / 5
+5 Metadata-overzicht
+Herkomst en kalibratie-context van iedere sondering in dit rapport.
+Metadata per sondering
+Sondering Project Apparatuur Maaiveld [m NAP] Datum Eindiepte [m]
+CPT000000036564 uitvoerder
+onderzoek
+-1.73 16-08-2002 12.04
+SV-QA-CPT-02 uitvoerder
+onderzoek
+-1.73 16-08-2002 12.04
+Spanvision infra · geptechniek workspace 5 / 5
+Spanvision infra
+geptechniek workspace

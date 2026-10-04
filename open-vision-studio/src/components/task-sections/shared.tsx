@@ -1,0 +1,131 @@
+import { forwardRef, useState } from 'react';
+import type { ResourceCurve } from '@/types/resource';
+import type { CustomFieldDef, CustomFieldValue } from '@/types/structure';
+import { DateTextInput } from '@/components/common/DateTextInput';
+
+/**
+ * Gedeelde primitieven voor de taak-sectie-componenten. Op een neutrale plek (niet in het
+ * paneel-bestand) omdat zowel `TaskPropertiesPanel` als `TaskDialog` als `Ribbon.tsx`
+ * (curve-labels in de rapportage-UI) ernaar verwijzen — een import vanuit het paneel zou een
+ * cirkelvormige afhankelijkheid geven zodra het paneel zelf secties uit deze map importeert.
+ */
+
+export { RESOURCE_CURVES } from '@/types/resource';
+
+/** ResourceCurve → i18n-key in de common-namespace (resource.curve.*). `as const` houdt de
+ *  literal-keytypes zodat de getypeerde `t(...)` ze accepteert. */
+export const CURVE_KEY = {
+  UNIFORM: 'resource.curve.uniform',
+  FRONT_LOADED: 'resource.curve.frontLoaded',
+  BACK_LOADED: 'resource.curve.backLoaded',
+  BELL: 'resource.curve.bell',
+  EARLY_PEAK: 'resource.curve.earlyPeak',
+  LATE_PEAK: 'resource.curve.latePeak',
+  DOUBLE_PEAK: 'resource.curve.doublePeak',
+  TURTLE: 'resource.curve.turtle',
+} as const satisfies Record<ResourceCurve, string>;
+
+/** Getypeerd invoerveld voor één custom field op een taak. */
+export function CustomFieldInput({ def, value, onCommit }: {
+  def: CustomFieldDef;
+  value: CustomFieldValue | undefined;
+  onCommit: (value: CustomFieldValue | null) => void;
+}) {
+  const cls = 'input !text-small !leading-4 !px-2.5 !py-1.5';
+  if (def.type === 'boolean') {
+    return (
+      <input
+        type="checkbox"
+        checked={value === true}
+        onChange={e => onCommit(e.target.checked ? true : null)}
+        className="w-4 h-4 accent-[var(--theme-accent)]"
+      />
+    );
+  }
+  if (def.type === 'date') {
+    return (
+      <DateTextInput
+        value={typeof value === 'string' ? value : ''}
+        onCommit={v => onCommit(v || null)}
+        className={cls}
+      />
+    );
+  }
+  if (def.type === 'text') {
+    return (
+      <input
+        value={typeof value === 'string' ? value : ''}
+        onChange={e => onCommit(e.target.value || null)}
+        className={cls}
+      />
+    );
+  }
+  // number / integer / cost
+  return (
+    <input
+      type="number"
+      step={def.type === 'integer' ? 1 : 'any'}
+      value={typeof value === 'number' ? value : ''}
+      onChange={e => {
+        const raw = e.target.value;
+        if (raw === '') { onCommit(null); return; }
+        const n = def.type === 'integer' ? parseInt(raw, 10) : parseFloat(raw);
+        if (Number.isFinite(n)) onCommit(n);
+      }}
+      className={cls}
+    />
+  );
+}
+
+export function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label
+        className="!text-small uppercase tracking-wide"
+        style={{ color: 'var(--theme-text-muted)' }}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+export const Input = forwardRef<HTMLInputElement, {
+  value: string | number;
+  onChange: (v: string) => void;
+  type?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  disabled?: boolean;
+  /**
+   * Verplicht tekstveld (taaknaam, WBS-code): een lege (of alleen-spaties) invoer gaat NIET naar
+   * `onChange` — het veld toont de lege invoer lokaal zolang de gebruiker bezig is en valt bij het
+   * verlaten terug op de huidige waarde. Zelfde regel als het raster (`required`) en de dialoog
+   * (Opslaan uitgeschakeld bij een lege naam).
+   */
+  required?: boolean;
+}>(function Input({ value, onChange, type = 'text', min, max, step, disabled, required }, ref) {
+  // Alleen gezet zolang een verplicht veld leeg is gemaakt; `null` = toon de echte waarde.
+  const [pendingEmpty, setPendingEmpty] = useState<string | null>(null);
+  return (
+    <input
+      ref={ref}
+      type={type}
+      value={pendingEmpty ?? value}
+      onChange={e => {
+        const v = e.target.value;
+        if (required && !v.trim()) { setPendingEmpty(v); return; }
+        setPendingEmpty(null);
+        onChange(v);
+      }}
+      onBlur={() => setPendingEmpty(null)}
+      min={min}
+      max={max}
+      step={step}
+      disabled={disabled}
+      className="input !text-small !leading-4 !px-2.5 !py-1.5 disabled:opacity-50"
+    />
+  );
+});

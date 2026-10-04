@@ -1,0 +1,46 @@
+/* Direct-file companion pages reuse the same source tokens as the application. */
+@import url('../ui/src/styles/tokens.css');
+
+body { background: var(--bg-app); color: var(--text-primary); }
+button, input, select { font-family: inherit; }
+.header { background: var(--bg-surface); border-bottom: var(--border-default); flex-wrap: wrap; }
+.header h1, .panel h2, .info h2, .job-mark, .summary .price { color: var(--text-primary); }
+.header .brand-mark { width: 28px; height: 28px; flex-shrink: 0; }
+.header .organization { color: var(--text-muted); font-size: 12px; }
+.panel, .job-card, .check-item, .info, .tabs { background: var(--bg-surface); border: var(--border-default); }
+.field input, .field select, .summary { background: var(--bg-input); color: var(--text-primary); border-color: var(--border-color); }
+.preview, model-viewer { background: var(--editor-bg); }
+.preview-placeholder, .field label, .job-info { color: var(--text-muted); }
+.btn, .scan-btn, .ar-btn { background: var(--action-bg); color: var(--action-text); }
+.btn:hover, .scan-btn:hover, .ar-btn:hover { background: var(--action-hover); }
+.tab { color: var(--text-muted); }
+.tab.active { background: var(--bg-selected); color: var(--text-primary); }
+.tab:hover, .check-item:hover { background: var(--hover-overlay); }
+.job-status { background: var(--bg-selected); color: var(--text-primary); border: var(--border-default); }
+.status-wacht { color: var(--text-muted); }
+.checkbox { border-color: var(--focus-color); }
+.checkbox.checked { background: var(--action-bg); }
+.checkbox.checked::after { color: var(--action-text); }
+.check-item.done { opacity: 1; color: var(--text-muted); }
+.tabs { overflow-x: auto; }
+.tab { flex-shrink: 0; }
+:is(button, a, input, select, [tabindex]):focus-visible { outline: 2px solid var(--focus-color); outline-offset: 2px; }
+:is(input, select):focus { border-color: var(--focus-color); }
+.field :is(input, select):focus-visible { outline: 2px solid var(--focus-color); border-color: var(--focus-color); }
+.job-card { gap: 12px; }
+.job-card > div { min-width: 0; }
+.scan-result-card { background: var(--bg-elevated); border: var(--border-default); border-radius: 8px; padding: 16px; text-align: left; margin-top: 12px; }
+.scan-result-card .result-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.scan-result-card .result-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.scan-result-card .result-status { font-size: 12px; color: var(--text-primary); margin-top: 8px; }
+@media (max-width: 767px) {
+  .main { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 16px; }
+  .header { padding: 12px 16px; gap: 8px; }
+  .header h1 { font-size: 16px; }
+  .panel { padding: 16px; min-width: 0; }
+  .job-card { align-items: flex-start; }
+  .job-status { flex-shrink: 0; }
+  .scan-area { padding: 24px 8px; }
+  .preview { min-height: 300px; }
+  .field input, .field select { font-size: 16px; min-height: 44px; }
+}

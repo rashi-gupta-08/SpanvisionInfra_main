@@ -1,0 +1,243 @@
+// Toelichting bij een nieuwe instelling (stappen, drie-plekken-UI, wat níét mechanisch bewaakt
+// wordt): docs/recepten/instelling.md.
+//
+// Settings-register — DÉ declaratieve bron van waarheid die per app-instelling (localStorage-sleutel,
+// validator/parser, doel-UIState-veld) bindt. Naar het `SHORTCUTS`-patroon
+// (`src/hooks/keyboard/shortcutRegistry.ts`): één descriptor-entry per instelling i.p.v. een
+// hand-gesynchroniseerd load-blok in `useSettingsBootstrap` én een parallel `loadX`-paar.
+// Een nieuwe instelling toevoegen = één entry hieronder (+ eventueel een dunne
+// `saveX`-wrapper in `settingsStore.ts` en de gedeelde UI in `SettingsPanelContent`).
+//
+// Contract: elke descriptor is 1-op-1 (één localStorage-sleutel → één UIState-veld). De AFWIJKERS
+// die niet in dit uniforme patroon passen — thema (7→3-migratie + persisteert de conversie + levert
+// ALTIJD een waarde) en bouwmodus (synchroon, geen Promise, want de kalenderfabriek leest 'm direct)
+// — worden expliciet in `loadAllSettings()` afgehandeld, met motivatie ter plaatse. Sleutels die
+// buiten de opstart-hydratatie lazy worden geladen (layouts, lastLayoutId, workTimePresets,
+// welcomeSeen, locale) staan BEWUST niet in dit register: die voeden geen enkele opstart-`setUI`.
+//
+// Dit register dekt alleen de LOAD-kant; het serialisatieformaat komt van de `saveX`-functies in
+// `settingsStore.ts`. Sleutels en formaten moeten daarmee in de pas blijven — bestaande opgeslagen
+// voorkeuren moeten gewoon blijven laden.
+
+import { snapToChoice } from '@/utils/numberChoice';
+import { parseBoolean, parseClampedInt as clampedInt, parseEnum as parseEnumValue } from '@/utils/settingParsers';
+import { loadBarColorSelection } from '@/utils/barColorSettings';
+import type { UIState } from '@/state/slices/types';
+import type { PersistedTaskGridPreferencesV1 } from '@/types/taskGrid';
+import {
+  DATE_NOTATIONS,
+  DURATION_DISPLAYS,
+  BAR_SPLIT_MODES,
+  UI_FONT_FAMILIES,
+  UI_FONT_SCALES,
+} from '@/state/slices/types';
+import type {
+  WeekStartDay,
+  ScrollMode,
+  PositionDivision,
+  ModifierMap,
+  WheelFunction,
+  DocumentChromeStyle,
+} from '@/state/slices/types';
+import {
+  getSetting,
+  initTheme,
+  loadConstructionMode,
+  TASK_TABLE_MIN_WIDTH,
+  TASK_TABLE_MAX_WIDTH,
+  RIGHT_PANEL_MIN_WIDTH,
+  RIGHT_PANEL_MAX_WIDTH,
+  RAIL_SECTION_MIN_HEIGHT,
+  RAIL_SECTION_MAX_HEIGHT,
+  HISTOGRAM_MIN_HEIGHT,
+  HISTOGRAM_MAX_HEIGHT,
+  loadTaskGridPreferences,
+} from '@/utils/settingsStore';
+import type { TaskGridPreferencesLoadResult } from '@/utils/settingsStore';
+
+// --- Parse-/validatiehelpers ---------------------------------------------------------------------
+
+// De registry-descriptors willen een parser per instelling; deze fabrieken binden de gedeelde
+// validators uit `settingParsers.ts` aan hun keuzelijst/bereik.
+
+/** Enum-instelling: alleen een waarde uit `allowed` wordt overgenomen. */
+function parseEnum<T extends string>(allowed: readonly T[]) {
+  return (raw: unknown): T | undefined => parseEnumValue(allowed, raw);
+}
+
+/** Geklemde integer: niet-eindig/geen getal ⇒ default behouden; anders afronden + klemmen op [min,max]. */
+function parseClampedInt(min: number, max: number) {
+  return (raw: unknown): number | undefined => clampedInt(raw, min, max);
+}
+
+/** Numerieke keuze uit een vaste lijst. Bewust geen `parseClampedInt(min, max)`: klemmen op het
+ *  BEREIK laat een waarde binnen het bereik maar buiten de lijst ongemoeid (een handmatig gezette
+ *  108 bij de keuzes 90/100/110/125 overleeft de klem), en dan toont de bijbehorende Select niets
+ *  zinnigs. De snap-semantiek zelf staat in {@link snapToChoice} — dat is de enige plek waar dit
+ *  gedrag gedefinieerd is. */
+function parseNumberChoice(allowed: readonly number[]) {
+  return (raw: unknown): number | undefined => snapToChoice(allowed, raw);
+}
+
+const WHEEL_FUNCTIONS: WheelFunction[] = ['vertical', 'horizontal', 'zoom'];
+
+// Een ModifierMap is alleen geldig als hij een strikte bijectie over de drie wielfuncties is (elk
+// precies één keer). Verworpen anders, zodat een corrupte localStorage-waarde de wielhandler niet
+// kan desyncen. Byte-identiek verplaatst uit `settingsStore.isValidModifierMap`.
+function parseModifierMap(raw: unknown): ModifierMap | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const map = raw as Record<string, unknown>;
+  const values = [map.plain, map.ctrl, map.shift];
+  if (!values.every(v => typeof v === 'string' && WHEEL_FUNCTIONS.includes(v as WheelFunction))) {
+    return undefined;
+  }
+  if (new Set(values).size !== 3) return undefined;
+  return raw as ModifierMap;
+}
+
+// Klem-grenzen komen rechtstreeks uit `settingsStore.ts` (dezelfde constanten die GanttCanvas/App
+// voor de live drag-klem gebruiken), zodat laden en slepen dezelfde klem kennen.
+// Geen import-cyclus: `settingsStore` importeert niets uit dit register.
+
+const SCROLL_MODES: ScrollMode[] = ['position', 'modifier', 'drag'];
+const POSITION_DIVISIONS: PositionDivision[] = ['left-right', 'top-bottom', 'corner'];
+const WEEK_START_DAYS: WeekStartDay[] = ['monday', 'sunday'];
+const DOCUMENT_CHROME_STYLES: DocumentChromeStyle[] = ['tabs', 'rail', 'switcher'];
+
+// --- Register -----------------------------------------------------------------------------------
+
+/** Eén 1-op-1-instelling: localStorage-sleutel `ops-<key>` → UIState-veld `field`, gefilterd door
+ *  `parse` (ongeldig/afwezig ⇒ `undefined` → de store-default blijft staan, nooit een reset). */
+export interface SettingDescriptor<K extends keyof UIState = keyof UIState> {
+  key: string;
+  field: K;
+  parse: (raw: unknown) => UIState[K] | undefined;
+}
+
+// Kleine helper zodat elke entry veldspecifiek getypeerd wordt (parse-return moet bij `field` passen),
+// terwijl `SETTINGS` een homogene array blijft.
+function setting<K extends keyof UIState>(d: SettingDescriptor<K>): SettingDescriptor {
+  return d as SettingDescriptor;
+}
+
+// Volgorde is niet betekenisvol: alle velden zijn onafhankelijk en worden tot één `setUI`-patch
+// samengevoegd (geen veld overschrijft een ander). Gegroepeerd voor leesbaarheid.
+export const SETTINGS: SettingDescriptor[] = [
+  // Zoom/scroll (`loadZoomSettings`: vijf onafhankelijke sleutels als vijf 1-op-1-descriptors).
+  setting({ key: 'enableQuarterHourZoom', field: 'enableQuarterHourZoom', parse: parseBoolean }),
+  setting({ key: 'weekStartDay', field: 'weekStartDay', parse: parseEnum(WEEK_START_DAYS) }),
+  setting({ key: 'scrollMode', field: 'scrollMode', parse: parseEnum(SCROLL_MODES) }),
+  setting({ key: 'positionDivision', field: 'positionDivision', parse: parseEnum(POSITION_DIVISIONS) }),
+  setting({ key: 'modifierMap', field: 'modifierMap', parse: parseModifierMap }),
+
+  // Debug-terminal
+  setting({ key: 'debugTerminalEnabled', field: 'debugTerminalEnabled', parse: parseBoolean }),
+
+  // AI-modus (MCP-bridge) — persistente spiegel die de conditionele AI-ribbontab voedt.
+  setting({ key: 'aiMode', field: 'aiMode', parse: parseBoolean }),
+  // Bridge automatisch starten bij het opstarten van de app (alleen van kracht mét aiMode, Tauri-only).
+  setting({ key: 'aiAutostart', field: 'aiAutostart', parse: parseBoolean }),
+
+  // Document-chrome-stijl
+  setting({ key: 'documentChromeStyle', field: 'documentChromeStyle', parse: parseEnum(DOCUMENT_CHROME_STYLES) }),
+
+  // Paneelbreedtes (geklemd) + ribbon-compact
+  setting({ key: 'leftPanelWidth', field: 'leftPanelWidth', parse: parseClampedInt(TASK_TABLE_MIN_WIDTH, TASK_TABLE_MAX_WIDTH) }),
+  setting({ key: 'rightPanelWidth', field: 'rightPanelWidth', parse: parseClampedInt(RIGHT_PANEL_MIN_WIDTH, RIGHT_PANEL_MAX_WIDTH) }),
+  setting({ key: 'ribbonCompact', field: 'ribbonCompact', parse: parseBoolean }),
+
+  // Rail-accordeon: hoogte van de Eigenschappen-sectie wanneer beide secties
+  // openstaan. Alleen de AFMETING is een voorkeur; de inklaptoestand per sectie is sessiewerk en
+  // staat hier daarom bewust NIET — net zoals `rightPanelCollapsed` er niet staat.
+  setting({ key: 'railPropertiesHeight', field: 'railPropertiesHeight', parse: parseClampedInt(RAIL_SECTION_MIN_HEIGHT, RAIL_SECTION_MAX_HEIGHT) }),
+  // Idem voor het Waarschuwingenpaneel onderin de rail — alleen de hoogte is een
+  // voorkeur, `showWarningsPanel` zelf is sessiewerk.
+  setting({ key: 'railWarningsHeight', field: 'railWarningsHeight', parse: parseClampedInt(RAIL_SECTION_MIN_HEIGHT, RAIL_SECTION_MAX_HEIGHT) }),
+
+  // Histogramstrook (view-state) — zichtbaarheid + geklemde hoogte
+  setting({ key: 'showHistogram', field: 'showHistogram', parse: parseBoolean }),
+  setting({ key: 'histogramHeight', field: 'histogramHeight', parse: parseClampedInt(HISTOGRAM_MIN_HEIGHT, HISTOGRAM_MAX_HEIGHT) }),
+
+  // Baseline-/voortgang-overlays (view-state)
+  setting({ key: 'showBaselineOverlay', field: 'showBaselineOverlay', parse: parseBoolean }),
+  setting({ key: 'showProgressLine', field: 'showProgressLine', parse: parseBoolean }),
+  setting({ key: 'showStatusDateLine', field: 'showStatusDateLine', parse: parseBoolean }),
+  setting({ key: 'showResourceAccent', field: 'showResourceAccent', parse: parseBoolean }),
+  setting({ key: 'showFloatBand', field: 'showFloatBand', parse: parseBoolean }),
+
+  // Mini-map (view-state)
+  setting({ key: 'showMiniMap', field: 'showMiniMap', parse: parseBoolean }),
+  setting({ key: 'showClassicViewControls', field: 'showClassicViewControls', parse: parseBoolean }),
+
+  // Automatisch berekenen
+  setting({ key: 'autoCalcCPM', field: 'autoCalcCPM', parse: parseBoolean }),
+
+  // Datumnotatie
+  setting({ key: 'dateNotation', field: 'dateNotation', parse: parseEnum(DATE_NOTATIONS) }),
+
+  // Lettertype interface: familie (enum) + schaalpercentage. De schaal snapt naar de
+  // dichtstbijzijnde waarde uit UI_FONT_SCALES — dezelfde lijst waaruit de Select zijn opties bouwt
+  // — zodat een geladen waarde gegarandeerd overeenkomt met een aanwijsbare optie.
+  setting({ key: 'uiFontFamily', field: 'uiFontFamily', parse: parseEnum(UI_FONT_FAMILIES) }),
+  setting({ key: 'uiFontScale', field: 'uiFontScale', parse: parseNumberChoice(UI_FONT_SCALES) }),
+
+  // Urenplanning
+  setting({ key: 'enableHourPlanning', field: 'enableHourPlanning', parse: parseBoolean }),
+  setting({ key: 'showTaskTypes', field: 'showTaskTypes', parse: parseBoolean }),
+  setting({ key: 'allowMixedDayHour', field: 'allowMixedDayHour', parse: parseBoolean }),
+  setting({ key: 'durationDisplay', field: 'durationDisplay', parse: parseEnum(DURATION_DISPLAYS) }),
+  setting({ key: 'barSplitMode', field: 'barSplitMode', parse: parseEnum(BAR_SPLIT_MODES) }),
+
+  // «alleen werkbare dagen tonen» — globale weergavevoorkeur, exact
+  // het barSplitMode-patroon (1 sleutel → 1 UIState-veld).
+  setting({ key: 'compressNonWorkdays', field: 'compressNonWorkdays', parse: parseBoolean }),
+];
+
+/** Hydrateert álle opstart-instellingen uit localStorage tot één `setUI`-patch voor
+ *  `useSettingsBootstrap` (ongeldig/afwezig ⇒ veld weggelaten → store-default blijft). Eén patch
+ *  i.p.v. een `setUI` per instelling scheelt renders; geen veld overlapt een ander.
+ *
+ *  AFWIJKERS (bewust buiten `SETTINGS`, expliciet hier):
+ *  1. Thema: `initTheme()` migreert 7→3 oude thema's, PERSISTEERT de conversie terug naar localStorage
+ *     en levert ALTIJD een waarde (default 'dark'). Dat past niet in het "afwezig ⇒ weglaten"-contract
+ *     van `SETTINGS`, dus expliciet.
+ *  2. Bouwmodus: `loadConstructionMode()` is SYNCHROON (geen Promise) — de kalenderfabriek moet de vlag
+ *     direct kunnen uitlezen — en heeft eigen serialisatie (`JSON.stringify`, default `true`). Wordt
+ *     daarom als losse sync-aanroep toegevoegd; de vlag wordt ALTIJD gezet.
+ *  3. Balkkleurkeuze (`barColorSelection`): `loadBarColorSelection()` is één objectkeuze met
+ *     legacy-migratie uit twee oude instellingen — past niet in het 1-op-1-register, want de loader
+ *     leest eerst de canonieke sleutel en valt pas bij ontbreken daarvan terug op de twee oude
+ *     bronnen. */
+export async function loadAllSettings(): Promise<Partial<UIState>> {
+  const patch: Partial<UIState> = {};
+
+  // Afwijker 1: thema-migratie (levert altijd een waarde, persisteert de 7→3-conversie).
+  patch.uiTheme = await initTheme();
+
+  // Afwijker 2: bouwmodus (synchroon; altijd gezet).
+  patch.constructionMode = loadConstructionMode();
+
+  // Afwijker 3: één objectkeuze met legacy-migratie uit twee oude instellingen. Dit past niet in
+  // het 1-op-1-register: de loader leest de canonieke sleutel en alleen bij ontbreken beide bronnen.
+  patch.barColorSelection = await loadBarColorSelection();
+
+  // 1-op-1-descriptors.
+  for (const d of SETTINGS) {
+    const raw = await getSetting<unknown>(d.key);
+    const value = d.parse(raw);
+    if (value !== undefined) {
+      // Cast is veilig: `setting()` bindt `parse`'s return aan het type van `field`.
+      (patch as Record<string, unknown>)[d.field] = value;
+    }
+  }
+
+  return patch;
+}
+
+/** Gestructureerde bootstrap-afwijker naast het 1-op-1 UI-register: één versieerbare sleutel
+ * voedt twee surfaces plus MRU en kan daarom niet als `SettingDescriptor` worden gemodelleerd. */
+export async function loadTaskGridSettings(
+  defaults: PersistedTaskGridPreferencesV1,
+): Promise<TaskGridPreferencesLoadResult> {
+  return loadTaskGridPreferences(defaults);
+}

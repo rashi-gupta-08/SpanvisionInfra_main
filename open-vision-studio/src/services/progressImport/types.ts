@@ -1,0 +1,152 @@
+import type { Task } from '@/types/task';
+
+/** Eén cel die ALLEEN voor datumvolgorde-detectie wordt gelezen. `start`/`finish` komen uit de
+ *  kolommen Start/Finish en worden NOOIT naar een taak geschreven. */
+export interface RawDateCell {
+  rowNumber: number;
+  field: 'actualStart' | 'actualFinish' | 'start' | 'finish';
+  raw: string;
+  /** Alleen gezet bij een harde id-treffer — de ijkpuntregel gebruikt niets zwakkers. */
+  taskId?: string;
+}
+
+/** Eén rij zoals de bestandslezer hem oplevert: sleutels al genormaliseerd, waarden nog RAUW
+ *  (de datumvolgorde is op dat moment nog niet bekend). */
+export interface RawProgressRow {
+  /** 1-gebaseerd rijnummer in het bronbestand, inclusief de kopregel. Sleutel van de overrides. */
+  rowNumber: number;
+  taskId?: string;
+  wbsCode?: string;
+  /** Naam uit het blad — UITSLUITEND om de preview leesbaar te maken; nooit geschreven. */
+  name?: string;
+  rawCompletion?: string;
+  rawActualStart?: string;
+  rawActualFinish?: string;
+}
+
+export type ProgressFileIssue =
+  | 'tooLarge' | 'tooManyRows' | 'noKeyColumn' | 'noProgressColumns' | 'unreadable'
+  /** Het bestand is met een wachtwoord beveiligd (CFB-container i.p.v. ZIP). */
+  | 'encrypted';
+
+/** Wat een bestandslezer (CSV of XLSX) oplevert. */
+export interface ProgressSheet {
+  fileIssue?: ProgressFileIssue;
+  rawRows: readonly RawProgressRow[];
+  /** Uitsluitend detectiemateriaal. */
+  detectionCells: readonly RawDateCell[];
+}
+
+export type DateOrder = 'dmy' | 'mdy';
+export type DateOrderDetection =
+  /** `contradictoryNoSample`: het bereikbewijs (regel 2) wees tegenstrijdig — sommige cellen
+   *  konden alleen dag-eerst kloppen, andere alleen maand-eerst — maar geen enkele cel was zelf
+   *  een eerlijk (onder beide lezingen geldig, verschillend) voorbeeld om te tonen. De orde blijft
+   *  `dmy` (een keuze moest gemaakt worden), maar dit label zegt eerlijk dat het bestand
+   *  tegenstrijdig was. */
+  | { order: DateOrder; evidence: 'noAmbiguity' | 'outOfRange' | 'calibration' | 'contradictoryNoSample' }
+  /** `sample` is de rauwe celtekst uit het bestand. `sampleAlternatives` zijn de twee lezingen als
+   *  ISO-datumstrings (GEEN geformatteerde tekst): de dialoog formatteert ze zelf, locale-bewust, met
+   *  `formatDisplayDate`. Beide lezingen zijn gegarandeerd geldige, VERSCHILLENDE kalenderdatums
+   *  (nooit een Date.UTC-rollover als "keuze"). */
+  | { order: 'ambiguous'; sample: string; sampleAlternatives: [dmyIso: string, mdyIso: string] };
+
+/** Eén gefinaliseerde rij: waarden geparsed onder de vastgestelde datumvolgorde. */
+export interface ProgressRow {
+  rowNumber: number;
+  taskId?: string;
+  wbsCode?: string;
+  name?: string;
+  completion?: { kind: 'value'; value: number } | { kind: 'unreadable'; raw: string }
+    | { kind: 'outOfRange'; raw: string };
+  actualStart?: { kind: 'value'; iso: string } | { kind: 'unreadable'; raw: string };
+  actualFinish?: { kind: 'value'; iso: string } | { kind: 'unreadable'; raw: string };
+}
+
+/** Handmatige koppelingen: rijnummer → task.id. Leeft in de dialoog, niet in de store. */
+export type ProgressOverrides = ReadonlyMap<number, string>;
+
+export type ProgressMatchKind = 'id' | 'wbs' | 'manual';
+
+export type ProgressRowReason =
+  | 'unmatched' | 'ambiguousWbs' | 'duplicateRow' | 'summaryTask'
+  // `noProgressColumns` is geen RIJ-reden: een rij zonder ingevulde voortgangswaarde is `noop`, geen
+  // weigering. Als BESTANDSniveau-issue (`ProgressFileIssue`) bestaat de code wel.
+  | 'unreadableDate' | 'unreadableNumber'
+  // `percentOutOfRange`: een numeriek LEESBARE waarde buiten [0, 100] (bv. "838", "-5") — apart van
+  // `unreadableNumber` (tekst/geen match), want de valkuil is anders: een decimaalteken dat een
+  // spreadsheet met andere landinstelling als duizendtalscheider las ("8,38" ⇒ 838). De dialoog mag
+  // dat verschil expliciet benoemen.
+  | 'percentOutOfRange'
+  | 'actualAfterStatusDate' | 'actualFinishBeforeStart' | 'conflictingProgressInputs'
+  // De taak begint volgens planning pas ná de statusdatum en het blad levert geen werkelijke start —
+  // niet verzinnen (`ProgressImportEntryOptions` in taskSlice.ts).
+  | 'actualStartRequired'
+  | 'rejected';          // overige plannerfout; `plannerCode` draagt de originele code
+
+export interface ProgressFieldChange {
+  field: 'completion' | 'actualStart' | 'actualFinish';
+  before: string | number | undefined;
+  after: string | number | undefined;
+}
+
+export interface ProgressPlanRow {
+  rowNumber: number;
+  outcome: 'apply' | 'noop' | 'refused';
+  reason?: ProgressRowReason;
+  plannerCode?: string;
+  match?: ProgressMatchKind;
+  /** Waar ⇔ `match === 'wbs'`: gematcht op de zwakkere terugvalsleutel. */
+  needsConfirmation?: boolean;
+  taskId?: string;
+  /** WBS + naam van de GEMATCHTE taak (niet uit het blad). */
+  taskLabel?: string;
+  changes: readonly ProgressFieldChange[];
+  /** Alleen bij `apply`: de volledig gecanonicaliseerde taak zoals hij geschreven wordt. */
+  plannedTask?: Task;
+}
+
+export interface ProgressImportPlan {
+  rows: readonly ProgressPlanRow[];
+  appliedCount: number;
+  noopCount: number;
+  refusedCount: number;
+  /** Rijen die op koppeling wachten: `unmatched` of `ambiguousWbs`. */
+  needsLinkCount: number;
+  /** Rijen met `needsConfirmation` (WBS-terugval, nog niet bevestigd). */
+  needsConfirmationCount: number;
+  /** Overrides die naar een niet meer bestaande taak wezen (resolutieregel 2) — nooit stil. */
+  ignoredOverrideRows: readonly number[];
+  /** Taken zonder enige rij die ze claimde (informatief, niet fout). */
+  untouchedTaskCount: number;
+}
+
+/** Harde grenzen op ONGEVALIDEERDE bestandsinvoer. */
+/**
+ * Widened vorm van `PROGRESS_IMPORT_LIMITS` (die `as const` is — sommige velden dragen daardoor
+ * een literal-type, bv. `256` i.p.v. `number`). Losse limieten (tests, een toekomstige instelling)
+ * moeten een AFWIJKENDE waarde kunnen meegeven; `typeof PROGRESS_IMPORT_LIMITS` zou dat afdwingen
+ * tot exact de standaardwaarde.
+ */
+export interface ProgressImportLimits {
+  readonly maxBytes: number;
+  readonly maxRows: number;
+  readonly maxCellChars: number;
+  readonly maxIdChars: number;
+  readonly maxWbsChars: number;
+}
+
+export const PROGRESS_IMPORT_LIMITS = {
+  maxBytes: 16 * 1024 * 1024,
+  maxRows: 50_000,
+  maxCellChars: 4096,
+  maxIdChars: 256,      // spiegelt isValidPersistedIfcId in ifcReader.ts
+  maxWbsChars: 128,
+} as const;
+
+/** Kalibratiedrempels (datumvolgorde, regel 3) — geëxporteerd zodat de test ze bij naam noemt. */
+export const MIN_CALIBRATION_HITS = 3;
+export const CALIBRATION_RATIO = 3;
+// Geen vaste no-op-tolerantie op completion: een float-epsilon is per constructie stuk (0.335 wordt
+// door `writeCSV` als "34" geschreven; `0.34 - 0.335` ligt net boven élke drempel die "45,5" nog als
+// wijziging moet doorlaten). Zie de precisiebewuste `isCompletionUnchanged` in `buildPlan.ts`.

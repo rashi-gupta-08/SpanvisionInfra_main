@@ -1,0 +1,53 @@
+[package]
+# Unieke naam: de Cargo-default "app" botst met andere Tauri-projecten op deze
+# machine (zelfde dev-binarynaam app.exe) en werd daardoor extern gekild.
+name = "open-calc-studio"
+version = "0.13.0"
+description = "geptechniek workspace · Calc by Spanvision infra"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+default-run = "open-calc-studio"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.6", features = [] }
+serde_json = "1"
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+base64 = "0.22"
+image = "0.25"
+log = "0.4"
+tauri = { version = "2.10.3", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-store = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-os = "2"
+tokio = { version = "1", features = ["rt", "net", "sync", "macros", "rt-multi-thread"] }
+tokio-tungstenite = "0.26"
+futures-util = "0.3"
+axum = "0.7"
+tower = "0.4"
+openaec-layout = { path = "../libs/openaec-reports/rust/crates/openaec-layout" }
+openaec-core = { path = "../libs/openaec-reports/rust/crates/openaec-core" }
+typst-as-lib = { version = "0.15.4", features = ["typst-kit-fonts"] }
+typst-pdf = "0.14.2"
+dirs = "6"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+# OpenAEC Accounts: OIDC/PKCE-login + Accounts API (cloud-opslag)
+reqwest = { version = "0.12", default-features = false, features = ["json", "multipart", "rustls-tls"] }
+sha2 = "0.10"
+rand = "0.8"
+keyring = { version = "3", features = ["windows-native"] }

@@ -1,0 +1,15 @@
+{
+  "source": "https://open-frame-studio.open-aec.com/wasm/",
+  "retrieved": "2026-10-02",
+  "purpose": "Restore the compiled browser engine omitted from the supplied archive.",
+  "files": {
+    "ofs_wasm.js": {
+      "bytes": 37669,
+      "sha256": "7fa57756a24c971b21a5f6eed930d318a91d7f07c3da5bbbaf0ce2e9fcccc595"
+    },
+    "ofs_wasm_bg.wasm": {
+      "bytes": 863870,
+      "sha256": "1676011df569c111efc4209dca9ca84a367e805a6c3d7aba85a942b01f14082b"
+    }
+  }
+}

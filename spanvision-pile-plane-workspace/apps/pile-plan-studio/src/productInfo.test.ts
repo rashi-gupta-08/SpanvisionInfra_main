@@ -1,0 +1,72 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const productInfo = readFileSync(resolve(import.meta.dirname, "productInfo.ts"), "utf8");
+const settings = readFileSync(
+  resolve(import.meta.dirname, "components/template/settings/SettingsDialog.tsx"),
+  "utf8",
+);
+const backstage = readFileSync(
+  resolve(import.meta.dirname, "components/template/backstage/Backstage.tsx"),
+  "utf8",
+);
+const englishSettings = readFileSync(
+  resolve(import.meta.dirname, "i18n/locales/en/settings.json"),
+  "utf8",
+);
+const dutchSettings = readFileSync(
+  resolve(import.meta.dirname, "i18n/locales/nl/settings.json"),
+  "utf8",
+);
+const packageJson = JSON.parse(readFileSync(resolve(import.meta.dirname, "../package.json"), "utf8"));
+const tauriConfig = JSON.parse(readFileSync(resolve(import.meta.dirname, "../src-tauri/tauri.conf.json"), "utf8"));
+const browserStore = readFileSync(resolve(import.meta.dirname, "store.ts"), "utf8");
+const settingsStore = readFileSync(
+  resolve(import.meta.dirname, "domain/settings/userSettingsStore.ts"),
+  "utf8",
+);
+const recoveryStore = readFileSync(
+  resolve(import.meta.dirname, "domain/project/recovery/browserRecoveryStore.ts"),
+  "utf8",
+);
+
+describe("product information", () => {
+  it("defines one build-versioned product identity", () => {
+    assert.match(productInfo, /name:\s*brand\.product/);
+    assert.match(productInfo, /version:\s*__APP_VERSION__/);
+    assert.match(productInfo, /status:\s*"Alpha"/);
+    assert.match(productInfo, /organization:\s*brand\.organization/);
+    assert.match(productInfo, /license:\s*"LGPL-3\.0-or-later"/);
+  });
+
+  it("changes the display name without changing persistent technical identity", () => {
+    assert.equal(packageJson.name, "@spanvision-infra/pile-plane-workspace");
+    assert.equal(tauriConfig.productName, "Pile Plane Workspace");
+    assert.equal(tauriConfig.identifier, "com.spanvisioninfra.pileplaneworkspace");
+    assert.equal(tauriConfig.app?.windows?.[0]?.title, "Pile Plane Workspace — Spanvision infra");
+    assert.match(settingsStore, /pile-plan-studio-settings/);
+    assert.match(recoveryStore, /pile-plan-studio-recovery/);
+    assert.match(browserStore, /pile-plan-studio:/);
+  });
+
+  it("identifies the 0.4.2 alpha consistently in web and desktop packages", () => {
+    assert.equal(packageJson.version, "0.4.2");
+    assert.equal(tauriConfig.version, "0.4.2");
+  });
+
+  it("uses the shared identity in both About views", () => {
+    assert.match(settings, /PRODUCT_INFO/);
+    assert.match(backstage, /PRODUCT_INFO/);
+    assert.doesNotMatch(settings, /Open Template|0\.1\.7|template application/i);
+    assert.doesNotMatch(backstage, /0\.1\.7/);
+  });
+
+  it("provides localized product-facing About copy", () => {
+    assert.match(englishSettings, /Create and evaluate pile plans/);
+    assert.match(englishSettings, /"organization": "Part of"/);
+    assert.match(dutchSettings, /Maak en beoordeel palenplannen/);
+    assert.match(dutchSettings, /"organization": "Onderdeel van"/);
+  });
+});

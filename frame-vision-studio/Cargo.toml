@@ -1,0 +1,17 @@
+[workspace]
+members = ["src-tauri", "ofs-core", "ofs-wasm", "ofs-cloud"]
+resolver = "2"
+
+[workspace.package]
+version = "0.6.0"
+edition = "2021"
+rust-version = "1.65"
+license = "AGPL-3.0"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+thiserror = "2"
+anyhow = "1"
+tauri = { version = "2", features = [] }

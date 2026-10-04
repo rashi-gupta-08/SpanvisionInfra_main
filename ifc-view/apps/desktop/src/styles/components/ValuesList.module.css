@@ -1,0 +1,130 @@
+.valuesSection {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    min-height: 170px;
+}
+
+.valuesHeader {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.valuesHeader h3 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.valuesCount {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--command-bg);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.valuesList {
+    flex: 0 0 auto;
+    overflow: visible;
+    padding: 10px;
+    user-select: none;
+}
+
+.valueItem {
+    display: flex;
+    align-items: center;
+    padding: 9px 11px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 6px;
+    border: 1px solid transparent;
+    width: 100%;
+    background: transparent;
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.valueItem:hover {
+    background: var(--command-hover);
+    border-color: var(--border);
+}
+
+.selected {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--highlight);
+    box-shadow: inset 3px 0 var(--highlight);
+}
+
+.selected .valueIcon {
+    background: var(--highlight);
+    color: var(--bg-dark);
+}
+
+.selected .valueStatus {
+    background: var(--highlight);
+}
+
+.valueIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--command-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.valueInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.valueName {
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.valueMeta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.valueStatus {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 28px 20px;
+    color: var(--text-muted);
+}
+
+.emptyStateIcon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    opacity: 0.5;
+    filter: grayscale(1);
+}

@@ -1,0 +1,1107 @@
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
+import { createPortal } from 'react-dom';
+import { useAppStore } from '@/state/appStore';
+import { useResolvedUITheme } from '@/hooks/useResolvedUITheme';
+import { useDisplayDate } from '@/hooks/displayDate';
+import { useTranslation } from 'react-i18next';
+import {
+  histogramPlotInsets,
+  type HistogramPickerItem,
+  type HistogramPickerSide,
+  type HistogramSeries,
+} from '@/engine/renderer/HistogramRenderer';
+import { saveBranchAsWbsTemplate } from '@/utils/wbsTemplates';
+import { resolveUIFontStack } from '@/utils/uiFont';
+import { scopeTaskResources } from '@/utils/taskResourceScope';
+import { computeResourceLoad } from '@/engine/scheduler/ResourceLoad';
+import { resolveCalendar } from '@/engine/scheduler/resolveCalendar';
+import { MiniMap } from './MiniMap';
+import { parseDate, parseInstant } from '@/utils/dateUtils';
+import { finishInstant } from '@/utils/taskDates';
+import { splitPanePrimaryWidthCss } from '@/utils/ganttViewport';
+import { effectiveCalendarByTask } from '@/services/subdayIo';
+import { durationSuffixesFrom } from '@/utils/taskDuration';
+import type { Task } from '@/types/task';
+import type { Sequence } from '@/types/sequence';
+import { isTreeMode } from '@/engine/view/visibleRows';
+import { ContextMenu } from './ContextMenu';
+// Reikwijdte (aangeklikte taak = handgreep, selectie = bereik) + de bulk-uitvoering
+// als ÉÉN undo-stap. DOM-vrij afgezonderd zodat de regressiebatterij dezelfde functies draait.
+import { contextMenuOutlineScope, contextMenuBulk } from './contextMenuScope';
+import { RelationTypePopover } from './RelationTypePopover';
+import { createRelationDraftWithFeedback } from '@/state/relationActions';
+// Hover-tooltip die zichzelf binnen het venster houdt (nodig zodra de titel wrapt).
+import { HoverTooltip } from './HoverTooltip';
+import { TaskTooltipContent } from './TaskTooltipContent';
+import { getLocalizedMonths } from '@/i18n/dateFormat';
+import { useTaskTypeLabels } from '@/i18n/taskTypes';
+import { saveHistogramHeight } from '@/utils/settingsStore';
+// De pure afleidingen achter de weergave + de opbouw van `GanttRenderOptions`. Ze staan apart
+// zodat ze headless te controleren zijn; de `useMemo`-aanroepen hieronder blijven
+// bewust in dit component staan (zie de kop van dat bestand voor waarom).
+import {
+  buildBaselineOverlay,
+  buildSharedAxis,
+  buildHistogramPicker, buildHistogramSeries,
+  type GanttRenderOptionsSourceInput,
+} from './ganttRenderOptions';
+import { buildTrace } from '@/engine/taskGrid/trace';
+import { predecessorDrivenTaskIds } from '@/engine/startEditConstraint';
+import { useGanttRendererHost, useGanttRendererRefs } from './hooks/useGanttRendererHost';
+import { useGanttViewportCoordinator } from './hooks/useGanttViewportCoordinator';
+import { useGanttHistogramInteraction } from './hooks/useGanttHistogramInteraction';
+import { useGanttHistogramPickerScroll } from './hooks/useGanttHistogramPickerScroll';
+import { useGanttPointerCoordinator } from './hooks/useGanttPointerCoordinator';
+import { editableSplitPieces } from './hooks/useBarDrag';
+import { removeGap } from '@/engine/scheduler/splitEdit';
+import { useGanttRowDragBridge } from './ganttRowDragBridge';
+import type { HistogramRenderInput } from './hooks/ganttCoordinatorTypes';
+
+// Basisgeometrie op Tekengrootte 100%: de component leidt hieruit de EFFECTIEVE
+// `rowHeight`/`headerHeight` af (× ui.uiFontScale/100) — gebruik binnen de component die geschaalde
+// waarden, nooit deze constanten direct, anders lopen tekenen en hit-testen uit de pas.
+const ROW_HEIGHT = 28;
+const HEADER_HEIGHT = 50;
+// Dikte van de ZWEVENDE scrollbalken over de panes (horizontaal en verticaal).
+// Exact de `::-webkit-scrollbar`-maat uit globals.css (8px) — NIET ruimer: meer levert een dode
+// strook op die als een te brede balk leest. Omdat de balken overlays zijn is gelijkheid met
+// globals.css bovendien functioneel: de strook is dan precies één scrollbalk dik,
+// dus er ontstaat geen dode klikzone náást de balk die de kaart eronder afdekt.
+const SCROLLBAR_GUTTER = 8;
+// Breedte van de sleepbare ratio-balk tussen de twee panes — de mini-map-strook eronder laat
+// exact dezelfde tussenruimte, anders schuift hij t.o.v. zijn pane.
+const SPLIT_RATIO_BAR_WIDTH = 5;
+
+export interface GanttGridRevealRequest {
+  taskId: string;
+  nonce: number;
+}
+
+export interface GanttCanvasProps {
+  revealRequest?: GanttGridRevealRequest | null;
+  histogramHost: HTMLDivElement | null;
+  histogramPickerWidth: number;
+  /** Kant van de takenlijst en dus van de histogramkiezer: links in ltr, rechts in ar/fa. */
+  histogramPickerSide: HistogramPickerSide;
+  miniMapHost: HTMLDivElement | null;
+}
+
+const NO_SEQUENCES: Sequence[] = [];
+
+export function GanttCanvas({
+  revealRequest = null,
+  histogramHost,
+  histogramPickerWidth,
+  histogramPickerSide,
+  miniMapHost,
+}: GanttCanvasProps) {
+  const { t: tTask, i18n } = useTranslation('task');
+  const { t: tCommon } = useTranslation('common');
+  const { t: tMenu } = useTranslation('menu');
+  const displayDateFormat = useDisplayDate();
+  const { labels: taskTypeLabels } = useTaskTypeLabels();
+
+  const tasks = useAppStore(s => s.tasks);
+  const allSequences = useAppStore(s => s.sequences);
+  // Relatielijnen uit (o.a. het resourcediagram, waar een taak onder meerdere banden
+  // staat) = de renderer krijgt geen relaties; tekenen én hit-testen vallen dan samen weg.
+  const showRelations = useAppStore(s => s.view.showRelations ?? true);
+  const sequences = useMemo(() => (showRelations ? allSequences : NO_SEQUENCES), [showRelations, allSequences]);
+  const calendar = useAppStore(s => s.calendar);
+  const calendars = useAppStore(s => s.calendars);
+  const barSplitMode = useAppStore(s => s.ui.barSplitMode);
+  // «Alleen werkbare dagen tonen» — globale weergavevoorkeur.
+  const compressNonWorkdays = useAppStore(s => s.ui.compressNonWorkdays);
+  const enableHourPlanning = useAppStore(s => s.ui.enableHourPlanning);
+  const durationDisplay = useAppStore(s => s.ui.durationDisplay);
+  const view = useAppStore(s => s.view);
+  const selectedTaskIds = useAppStore(s => s.selectedTaskIds);
+  const selectTask = useAppStore(s => s.selectTask);
+  const selectTasks = useAppStore(s => s.selectTasks);
+  const deselectAll = useAppStore(s => s.deselectAll);
+  const addTask = useAppStore(s => s.addTask);
+  const updateTask = useAppStore(s => s.updateTask);
+  // Een gesleepte start volgt dezelfde startregel als een getypte. De voorgangervraag
+  // gebruikt ALLE relaties (ook als de relatielijnen verborgen zijn) en wordt pas bij het begin van
+  // een sleepgebaar gesteld.
+  const notify = useAppStore(s => s.notify);
+  const dateNotation = useAppStore(s => s.ui.dateNotation);
+  const isStartDrivenByPredecessor = useCallback(
+    (taskId: string) => predecessorDrivenTaskIds(tasks, allSequences).has(taskId),
+    [tasks, allSequences],
+  );
+  // De relatiemodus is een "plakkende Shift" — staat hij aan, dan armt een mousedown op
+  // een balk hetzelfde dependency-tekenen als shift+slepen. Dit is de ENIGE lezer die gedrag
+  // stuurt.
+  const dependencyMode = useAppStore(s => s.ui.showDependencyMode);
+  // De splits-modus werkt precies zo — staat hij aan, dan knipt een mousedown op een
+  // balk de taak op de aangeklikte dag. Wederzijds uitsluitend met de relatiemodus (zie `setUI`).
+  const splitMode = useAppStore(s => s.ui.showSplitMode);
+  const setTaskSplits = useAppStore(s => s.setTaskSplits);
+  const undo = useAppStore(s => s.undo);
+  const setScroll = useAppStore(s => s.setScroll);
+  const setUI = useAppStore(s => s.setUI);
+  // Store-acties die het contextmenu ontsluit. De muterende taak-acties (in-/uitspringen,
+  // mijlpaal, kalender, voortgang, prioriteit, verwijderen) lopen via `contextMenuBulk` en worden
+  // hier daarom niet los uit de store getrokken.
+  const pasteTasks = useAppStore(s => s.pasteTasks);
+  const taskClipboard = useAppStore(s => s.taskClipboard);
+  // Het bandkop-contextmenu bestaat alléén in gegroepeerde weergave, en daar neemt
+  // `computeViewRows` de taak-collapse volledig over door de groepsbanden. `expandAll`/`collapseAll`
+  // werken op summary-taken en zijn daar dus inert; "Alles uit-/inklappen" in het bandkop-menu
+  // gebruikt daarom de groepsacties (zelfde als de Beeld-tab in gegroepeerde weergave).
+  const expandAllGroups = useAppStore(s => s.expandAllGroups);
+  const collapseAllGroups = useAppStore(s => s.collapseAllGroups);
+  // Het taakcontextmenu klapt APART in/uit (net als de Beeld-tab) en gebruikt daarom
+  // dezelfde gerichte acties als `outlineGroup` — niet de toggle.
+  const collapseTasks = useAppStore(s => s.collapseTasks);
+  const expandTasks = useAppStore(s => s.expandTasks);
+  const setZoom = useAppStore(s => s.setZoom);
+  const setViewStartDate = useAppStore(s => s.setViewStartDate);
+  // Het OPGELOSTE thema (voorkeur 'system' → dark/light): een canvas leest geen CSS, dus de
+  // renderers krijgen het hier expliciet mee — 'system' zou daar geen betekenis hebben.
+  const uiTheme = useResolvedUITheme();
+  // Primitive invalidatiesleutel voor Canvas-2D: CSS-variabelen veranderen buiten de teken-
+  // callbackidentiteit om, dus elke canvaslaag krijgt dit expliciete thema-contract mee.
+  const canvasThemeRevision = uiTheme;
+  // Interface-lettertypefamilie → concrete CSS font-stack voor de Canvas-2D-
+  // renderers. De DOM krijgt de familie via CSS-variabelen, maar een canvas leest die niet, dus
+  // resolven we hem hier één keer en geven we de string mee aan beide renderers. De waarde staat
+  // ook in de deps van de teken-callbacks: zonder dat hertekent het canvas niet bij een wijziging
+  // en lijkt de instelling stuk (de chrome schakelt wél om, de planning niet).
+  const uiFontFamily = useAppStore(s => s.ui.uiFontFamily);
+  const canvasFontFamily = resolveUIFontStack(uiFontFamily);
+  // De Tekengrootte-instelling (ui.uiFontScale). De DOM-chrome schaalt via de rem-basis
+  // (`--ui-font-scale` in App.tsx), maar een canvas leest geen CSS — de factor gaat daarom als
+  // `fontScale` mee naar de renderer, en schaalt hier óók de rij-/headerhoogte: zonder dat zou
+  // grotere tekst in de vaste 28px-rij clippen. Alle hit-tests, overlays en scrollgrenzen hieronder
+  // rekenen met dezelfde geschaalde waarden, zodat tekenen en aanwijzen op de pixel blijven kloppen.
+  const uiFontScale = useAppStore(s => s.ui.uiFontScale);
+  const fontScale = uiFontScale / 100;
+  const rowHeight = Math.round(ROW_HEIGHT * fontScale);
+  const headerHeight = Math.round(HEADER_HEIGHT * fontScale);
+  const weekStartDay = useAppStore(s => s.ui.weekStartDay);
+  const enableQuarterHourZoom = useAppStore(s => s.ui.enableQuarterHourZoom);
+  const scrollMode = useAppStore(s => s.ui.scrollMode);
+  const positionDivision = useAppStore(s => s.ui.positionDivision);
+  const modifierMap = useAppStore(s => s.ui.modifierMap);
+  const traceMode = useAppStore(s => s.ui.traceMode);
+  const cpmResult = useAppStore(s => s.cpmResult);
+  // DE gedeelde zichtbare-rijenlijst: zelfde store-veld als FullTaskGrid.
+  const viewRows = useAppStore(s => s.viewRows);
+  const setCollapsedGroupKey = useAppStore(s => s.setCollapsedGroupKey);
+  const splitView = useAppStore(s => s.view.splitView);
+  const setSplitView = useAppStore(s => s.setSplitView);
+  const clearPendingFit = useAppStore(s => s.clearPendingFit);
+  const clearPendingFocusTask = useAppStore(s => s.clearPendingFocusTask);
+  const showMiniMap = useAppStore(s => s.ui.showMiniMap);
+  const showHistogram = useAppStore(s => s.ui.showHistogram);
+  const histogramHeight = useAppStore(s => s.ui.histogramHeight);
+  const histogramResourceId = useAppStore(s => s.view.histogramResourceId);
+  const resourceLoadResult = useAppStore(s => s.resourceLoadResult);
+  const scheduleStale = useAppStore(s => s.scheduleStale);
+  // Voortgang & baselines
+  const statusDate = useAppStore(s => s.project.statusDate);
+  const showBaselineOverlay = useAppStore(s => s.ui.showBaselineOverlay);
+  const showProgressLine = useAppStore(s => s.ui.showProgressLine);
+  // Resource-accent + de bijbehorende resources/toewijzingen (zelfde bron als de histogram/
+  // tabelweergave — de renderer krijgt alles doorgegeven en leeft buiten de store).
+  const showResourceAccent = useAppStore(s => s.ui.showResourceAccent);
+  const showFloatBand = useAppStore(s => s.ui.showFloatBand);
+  const barColorSelection = useAppStore(s => s.ui.barColorSelection);
+  const activityCodeTypes = useAppStore(s => s.activityCodeTypes);
+  const customFieldDefs = useAppStore(s => s.customFieldDefs);
+  const resources = useAppStore(s => s.resources);
+  const assignments = useAppStore(s => s.assignments);
+  const showStatusDateLine = useAppStore(s => s.ui.showStatusDateLine);
+  const baselines = useAppStore(s => s.baselines);
+  const activeBaselineId = useAppStore(s => s.activeBaselineId);
+  const setHistogramResource = useAppStore(s => s.setHistogramResource);
+
+  const scopedTaskResources = useMemo(
+    () => scopeTaskResources(resources, assignments, selectedTaskIds),
+    [resources, assignments, selectedTaskIds],
+  );
+
+  const scopedResourceLoadResult = useMemo(() => {
+    if (!resourceLoadResult || !scopedTaskResources.isFiltered) return resourceLoadResult;
+    return computeResourceLoad(
+      scopedTaskResources.resources,
+      scopedTaskResources.assignments,
+      tasks,
+      calendar,
+      calendars,
+    );
+  }, [resourceLoadResult, scopedTaskResources, tasks, calendar, calendars]);
+
+  // Een handmatig gekozen histogramresource blijft als voorkeur bewaard. Valt hij buiten de
+  // tijdelijke taakcontext, dan is de samengevoegde scoped reeks het eerlijke alternatief.
+  const effectiveHistogramResourceId = scopedTaskResources.resources.some(
+    resource => resource.id === histogramResourceId,
+  ) ? histogramResourceId : undefined;
+
+  const viewport = useGanttViewportCoordinator({
+    tasks,
+    rows: viewRows,
+    calendar,
+    view,
+    histogramPickerWidth,
+    histogramPickerSide,
+    histogramHeight,
+    rowHeight,
+    headerHeight,
+    showHistogram,
+    showMiniMap,
+    compressNonWorkdays,
+    enableQuarterHourZoom,
+    enableHourPlanning,
+    scrollMode,
+    positionDivision,
+    modifierMap,
+    setScroll,
+    setZoom,
+    setViewStartDate,
+    clearPendingFit,
+    clearPendingFocusTask,
+    setSplitView,
+    setHistogramHeight: height => setUI({ histogramHeight: height }),
+    persistHistogramHeight: height => { void saveHistogramHeight(height); },
+  });
+  const {
+    paneRowRef,
+    primaryContainerRef: containerRef,
+    secondaryContainerRef,
+    histogramContainerRef,
+    primaryHScrollRef: hScrollRef,
+    secondaryHScrollRef: hScrollSecondaryRef,
+  } = viewport.refs;
+  // `histogramContainerRef` is een stabiel `RefObject` — bij een remount van de
+  // strook (portal-doel `histogramHost` bestaat pas ná de eerste render, of de hele Gantt wordt
+  // ver- en hermount bij een tabwissel naar Tabel/Backstage) wijzigt `.current` zonder dat React dat
+  // als een echte waardewissel ziet. `useGanttHistogramPickerScroll` moet de node zelf als afhankelijk-
+  // heid krijgen om zijn wheel-listener opnieuw te hechten, dus spiegelen we `.current` hier naar
+  // React-state via een callback-ref (overige consumenten van `histogramContainerRef`, zoals
+  // `useGanttRendererHost`, lezen via het ref-object).
+  const [histogramContainerEl, setHistogramContainerEl] = useState<HTMLDivElement | null>(null);
+  const setHistogramContainerNode = useCallback((node: HTMLDivElement | null) => {
+    histogramContainerRef.current = node;
+    setHistogramContainerEl(node);
+  }, [histogramContainerRef]);
+  const effectiveViewStart = viewport.effectiveViewStart;
+  const effectiveView = viewport.effectiveView;
+  const sharedAxis = viewport.sharedAxis;
+  const histogramAxis = viewport.histogramAxis;
+  // Minimap op dezelfde as als de Gantt: op de werkdagen-as telt `scrollX / zoom` in werkdagen,
+  // dus de strip moet de balken ook zo plaatsen (anders lopen kader en balken uiteen).
+  // Eigen as zonder zoom/scroll (`dayIndexOf` hangt daar niet van af): zo blijft de functie over
+  // scrollframes heen dezelfde en kan de strip zijn dagindeling cachen.
+  const minimapAxisDayOf = useMemo(() => {
+    if (!compressNonWorkdays) return undefined;
+    const axis = buildSharedAxis({
+      calendar, compressNonWorkdays, viewStartDate: effectiveViewStart, chartOriginX: 0, zoom: 1, scrollX: 0,
+    });
+    const originIndex = axis.dayIndexOf(parseDate(effectiveViewStart));
+    return (date: Date) => axis.dayIndexOf(date) - originIndex;
+  }, [calendar, compressNonWorkdays, effectiveViewStart]);
+  const primaryChartWidth = viewport.primary.chartWidth;
+  const secondaryChartWidth = viewport.secondary?.chartWidth ?? 0;
+  const histogramSplitter = viewport.splitters.histogram;
+  // De refs komen uit de rendererhostmodule maar worden vóór de renderopties samengesteld: zo kan
+  // de pointercoördinator zijn gesturehooks bezitten en tegelijk de actieve resize aan de renderer
+  // leveren, zonder een tweede canvas-/rendererinstantie te introduceren.
+  const rendererHost = useGanttRendererRefs();
+  const {
+    primaryCanvasRef: canvasRef,
+    secondaryCanvasRef,
+    secondaryRendererRef,
+    histogramCanvasRef,
+    histogramRendererRef,
+    dependencyCanvasRef: depLineCanvasRef,
+  } = rendererHost;
+
+  const localizedMonths = useMemo(() => getLocalizedMonths(i18n.language), [i18n.language]);
+  // 7 weekdag-afkortingen in getUTCDay()-volgorde
+  // (0=zondag … 6=zaterdag). Hergebruikt de bestaande kalender-vertalingen uit het menu-
+  // namespace (ribbon.calendarDialog.days, ISO 1=ma … 7=zo) en remapt die naar Sun-first.
+  // Gememoized op de gebonden vertaalfunctie, zodat een taalwissel de labels vernieuwt en de
+  // renderer-opts tussen taalwissels stabiel blijven.
+  const localizedWeekdays = useMemo(
+    () => [
+      tMenu('ribbon.calendarDialog.days.7'), // zo (getUTCDay 0 = zondag)
+      tMenu('ribbon.calendarDialog.days.1'), // ma
+      tMenu('ribbon.calendarDialog.days.2'), // di
+      tMenu('ribbon.calendarDialog.days.3'), // wo
+      tMenu('ribbon.calendarDialog.days.4'), // do
+      tMenu('ribbon.calendarDialog.days.5'), // vr
+      tMenu('ribbon.calendarDialog.days.6'), // za
+    ],
+    [tMenu],
+  );
+  // Vertaalde duur-eenheid-suffixen voor de duurkolom-weergave. De gebonden
+  // vertaalfunctie wisselt mee met de taal; daarbuiten blijft de rendereroptie stabiel.
+  const durationSuffixes = useMemo(() => durationSuffixesFrom(tCommon), [tCommon]);
+
+  // Effectieve kalender per taak (task.calendarId → bibliotheek, anders de
+  // projectkalender). De renderer leest hieruit per taak uur- vs dag-modus en de banden voor de
+  // balk-opsplitsing. Gememoized zodat er niet per frame een map gebouwd wordt.
+  const effectiveCalById = useMemo(
+    () => effectiveCalendarByTask(tasks, calendar, calendars),
+    [tasks, calendar, calendars],
+  );
+
+  const formatHistogramContributionLabel = useCallback(
+    (count: number, isoDate: string) => tCommon('resource.histogram.overallocatedTooltip', {
+      count,
+      date: isoDate,
+    }),
+    [tCommon],
+  );
+  // Reden achter een overbezette dag zichtbaar maken in de bestaande tooltip — géén nieuwe
+  // UI-laag. `non-working-day` (resourcekalender kent die dag geen werkdag) krijgt de kalendernaam
+  // erbij; `over-capacity` laat de tooltip ongewijzigd (de bestaande taaklijst zegt daar al genoeg).
+  const describeHistogramNonWorkingDay = useCallback((resourceId: string, isoDate: string): string | null => {
+    const reason = scopedResourceLoadResult?.overallocatedReasons[resourceId]?.[isoDate];
+    if (reason !== 'non-working-day') return null;
+    const resource = scopedTaskResources.resources.find(r => r.id === resourceId);
+    const resourceCalendar = resolveCalendar(resource?.calendarId, calendars, calendar);
+    return tCommon('resource.histogram.overallocatedNonWorkingDay', { calendar: resourceCalendar.name });
+  }, [scopedResourceLoadResult, scopedTaskResources, calendars, calendar, tCommon]);
+  const histogramInteraction = useGanttHistogramInteraction({
+    canvasRef: histogramCanvasRef,
+    rendererRef: histogramRendererRef,
+    assignments: scopedTaskResources.assignments,
+    resources: scopedTaskResources.resources,
+    tasks,
+    selectedResourceId: effectiveHistogramResourceId,
+    selectResource: setHistogramResource,
+    formatContributionLabel: formatHistogramContributionLabel,
+    describeNonWorkingDay: describeHistogramNonWorkingDay,
+    active: showHistogram,
+  });
+
+  const defaultTaskName = tTask('defaultTask');
+  const defaultMilestoneName = tTask('defaultMilestone');
+  const revealTaskIfOffscreen = useCallback((task: Task) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const startString = task.time.earlyStart || task.time.scheduleStart;
+    const finishString = task.time.earlyFinish || task.time.scheduleFinish;
+    if (!startString || !finishString) return;
+    const state = useAppStore.getState();
+    const currentView = state.view;
+    const rect = canvas.getBoundingClientRect();
+    const usableWidth = rect.width;
+    if (usableWidth <= 0) return;
+    const hourMode = startString.includes('T') || finishString.includes('T');
+    const start = hourMode ? parseInstant(startString) : parseDate(startString);
+    // Zelfde eindregel als `GanttRenderer.barGeometry` (einde zonder tijd in een uur-balk = einde van die dag).
+    const finish = hourMode ? finishInstant(finishString) : parseDate(finishString);
+    // De gedeelde as is ook bij werkdagencompressie de renderbron. Tel scrollX er weer bij op
+    // om van scherm- naar contentcoördinaten terug te gaan, waarna de zichtbaarheidstest exact
+    // dezelfde positie gebruikt als de getekende balk.
+    const startX = sharedAxis.dateToX(start) + currentView.scrollX;
+    const finishX = sharedAxis.dateToX(finish) + currentView.scrollX
+      + (hourMode ? 0 : currentView.zoom);
+    const visibleLeft = currentView.scrollX;
+    const visibleRight = visibleLeft + usableWidth;
+    if (finishX > visibleLeft && startX < visibleRight) return;
+    state.setScroll(Math.max(0, startX - 40), currentView.scrollY);
+  }, [canvasRef, sharedAxis]);
+
+  // Een onthulverzoek is eenmalig. `revealTaskIfOffscreen` hangt aan `sharedAxis`,
+  // die bij iedere scrollX-wijziging opnieuw gebouwd wordt; zonder deze poort vuurt het effect
+  // daardoor bij élke scroll opnieuw voor hetzelfde verzoek en trekt het de balk telkens terug in
+  // beeld — de Gantt zit dan "vast" aan de laatst in de tabel aangeklikte taak.
+  const handledRevealNonceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!revealRequest) return;
+    if (handledRevealNonceRef.current === revealRequest.nonce) return;
+    handledRevealNonceRef.current = revealRequest.nonce;
+    const task = tasks.find(candidate => candidate.id === revealRequest.taskId);
+    if (task) revealTaskIfOffscreen(task);
+  }, [revealRequest, tasks, revealTaskIfOffscreen]);
+
+  const openTask = useCallback((taskId: string) => {
+    setUI({ showTaskDialog: true, editingTaskId: taskId });
+  }, [setUI]);
+
+  // Verticale balkbody-sleep ⇒ de rijsleep van de taakgrid links (zie `ganttRowDragBridge`).
+  // BEWUST geen `isTreeMode`-poort hier: die hoort bij de ontvanger. `useTableRowDrag` kent hem al
+  // als `enabled`, en koppelt er `onBlocked` aan — de melding die uitlegt dat de structuur op slot
+  // zit zolang er gesorteerd of gegroepeerd wordt. Zeeft het canvas de kandidaat er zelf uit, dan
+  // krijgt de balk-gebruiker die uitleg niet en wordt het gebaar stil afgebroken. Eén poort, bij de
+  // eigenaar van de sleep.
+  // De starter wordt via de ref op het gebaar zelf gelezen, zodat een (her)registratie van de
+  // grid geen rerender van de coördinator uitlokt.
+  const rowDragBridge = useGanttRowDragBridge();
+  const startVerticalRowDrag = useCallback((candidate: {
+    taskId: string;
+    startClientX: number;
+    startClientY: number;
+  }) => {
+    rowDragBridge?.startRef.current?.(candidate);
+  }, [rowDragBridge]);
+
+  const pointer = useGanttPointerCoordinator({
+    host: rendererHost,
+    viewport,
+    tasks,
+    calendar,
+    effectiveCalendarByTaskId: effectiveCalById,
+    selectedTaskIds,
+    headerHeight,
+    dependencyMode,
+    splitMode,
+    scrollMode,
+    enableQuarterHourZoom,
+    enableHourPlanning,
+    compressNonWorkdays,
+    selectTask,
+    selectTasks,
+    deselectAll,
+    updateTask,
+    setTaskSplits,
+    undo,
+    setScroll,
+    openTask,
+    clearHistogramTooltip: histogramInteraction.clearTooltip,
+    startVerticalRowDrag: rowDragBridge ? startVerticalRowDrag : undefined,
+    isStartDrivenByPredecessor,
+    notify,
+    dateNotation,
+  });
+
+  // Canvas is wel tabbable, maar krijgt bij een gepositioneerde canvas-klik niet in elke browser
+  // automatisch DOM-focus. Doe dat expliciet op de bestaande klikroutes, zodat muis én Tab naar
+  // precies hetzelfde ↑/↓-oppervlak leiden.
+  const focusCanvas = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    event.currentTarget.focus({ preventScroll: true });
+  }, []);
+  const handlePrimaryClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    focusCanvas(event);
+    pointer.onClick(event);
+  }, [focusCanvas, pointer]);
+  const handleHistogramClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    focusCanvas(event);
+    histogramInteraction.onClick(event);
+  }, [focusCanvas, histogramInteraction]);
+  // De tooltip is een echte hover-tooltip (zie de hook), dus deze twee
+  // routes hoeven geen focus te claimen — alleen de klik (resourceselectie) doet dat. Geen eigen
+  // wrapper nodig: `histogramInteraction.onMouseMove`/`.onMouseLeave` zijn zelf al gememoiseerd in
+  // de hook, dus rechtstreeks doorgeven zoals `onKeyDown` hieronder.
+
+  // Alleen een actieve RAND-sleep voedt de duurpil in de renderer.
+  const durationDrag = useMemo(
+    () => (pointer.overlays.barDrag && pointer.overlays.barDrag.edge !== 'body'
+      ? { taskId: pointer.overlays.barDrag.taskId, edge: pointer.overlays.barDrag.edge }
+      : undefined),
+    [pointer.overlays.barDrag],
+  );
+
+  // Baseline-overlay-Map uit de actieve baseline: keyed op Task.id (leaf-taken).
+  const baselineOverlay = useMemo(
+    () => buildBaselineOverlay(baselines, activeBaselineId),
+    [baselines, activeBaselineId],
+  );
+
+  // Path tracing rond de (eerst) geselecteerde taak: transitieve voorgangers/opvolgers, met de
+  // driving-ketens apart zodat de renderer die sterker kan tinten (MSP Task Path-conventie).
+  const trace = useMemo(
+    () => buildTrace(traceMode, selectedTaskIds, allSequences, cpmResult),
+    [traceMode, selectedTaskIds, allSequences, cpmResult],
+  );
+
+  // --- Histogram ---
+  const histogramPicker = useMemo<HistogramPickerItem[]>(
+    () => buildHistogramPicker(scopedTaskResources.resources, scopedResourceLoadResult, tCommon('resource.histogram.allResources')),
+    [scopedTaskResources.resources, scopedResourceLoadResult, tCommon],
+  );
+
+  const histogramSeries = useMemo<HistogramSeries>(
+    () => buildHistogramSeries(scopedResourceLoadResult, effectiveHistogramResourceId, scopedTaskResources.resources),
+    [scopedResourceLoadResult, effectiveHistogramResourceId, scopedTaskResources.resources],
+  );
+
+  // Scrollpositie van de kiezerlijst — sessiestate, buiten de store (zie de hook-kop). De
+  // id-lijst is nodig voor de reveal-logica (een van buiten gekozen resource die buiten
+  // beeld ligt) en volgt bewust dezelfde volgorde als `buildHistogramPicker`.
+  const histogramPickerIds = useMemo(
+    () => histogramPicker.map(item => item.id),
+    [histogramPicker],
+  );
+  const { pickerScrollY: histogramPickerScrollY } = useGanttHistogramPickerScroll({
+    container: showHistogram ? histogramContainerEl : null,
+    pickerWidth: histogramPickerWidth,
+    pickerSide: histogramPickerSide,
+    canvasHeight: histogramHeight,
+    itemCount: histogramPicker.length,
+    pickerIds: histogramPickerIds,
+    selectedResourceId: effectiveHistogramResourceId,
+    fontScale,
+  });
+
+  const histogramRenderInput = useMemo<HistogramRenderInput | undefined>(() => (
+    showHistogram ? {
+      series: histogramSeries,
+      picker: histogramPicker,
+      selectedResourceId: effectiveHistogramResourceId,
+      view: effectiveView,
+      pickerWidth: histogramPickerWidth,
+      pickerSide: histogramPickerSide,
+      pickerScrollY: histogramPickerScrollY,
+      axis: histogramAxis,
+      // Zelfde lettertypefamilie als de Gantt erboven en de DOM-chrome.
+      fontFamily: canvasFontFamily,
+      // Zelfde tekstschaal als de Gantt erboven, anders staan
+      // de strooklabels zichtbaar uit de pas op de gedeelde as.
+      fontScale,
+      labels: { unitsSuffix: tCommon('resource.histogram.units') },
+      emptyHint: !scopedResourceLoadResult
+        ? tCommon('resource.histogram.noData')
+        : scopedTaskResources.resources.length === 0
+          ? tCommon('resource.histogram.noResources')
+          : undefined,
+    } : undefined
+  ), [showHistogram, histogramSeries, histogramPicker, effectiveHistogramResourceId, effectiveView, histogramPickerWidth, histogramPickerSide, histogramPickerScrollY, scopedResourceLoadResult, scopedTaskResources.resources.length, tCommon, histogramAxis, canvasFontFamily, fontScale]);
+
+  const primaryRenderInput = useMemo<GanttRenderOptionsSourceInput>(() => ({
+    rows: viewRows,
+    sequences,
+    calendar,
+    view: effectiveView,
+    selectedTaskIds,
+    cpmResult,
+    statusDate,
+    showStatusDateLine,
+    showProgressLine,
+    showResourceAccent,
+    showFloatBand,
+    barColorSelection,
+    activityCodeTypes,
+    customFieldDefs,
+    taskTypeLabels,
+    barColorNoneLabel: tTask('structure.none'),
+    resources,
+    assignments,
+    showBaselineOverlay,
+    baselineOverlay,
+    trace,
+    rowHeight,
+    headerHeight,
+    localizedMonths,
+    localizedWeekdays,
+    weekStartDay,
+    enableQuarterHourZoom,
+    effectiveCalById,
+    barSplitMode,
+    enableHourPlanning,
+    durationDisplay,
+    durationSuffixes,
+    externalStaleLabel: tTask('externalLinks.stale'),
+    durationDrag,
+    highContrast: uiTheme === 'high-contrast',
+    palette: undefined,
+    darkTheme: uiTheme === 'dark',
+    compressNonWorkdays,
+    axis: sharedAxis,
+    fontFamily: canvasFontFamily,
+    fontScale,
+  }), [viewRows, sequences, calendar, effectiveView, selectedTaskIds, cpmResult, statusDate, showStatusDateLine, showProgressLine, showResourceAccent, showFloatBand, barColorSelection, activityCodeTypes, customFieldDefs, taskTypeLabels, resources, assignments, showBaselineOverlay, baselineOverlay, trace, rowHeight, headerHeight, localizedMonths, localizedWeekdays, weekStartDay, enableQuarterHourZoom, effectiveCalById, barSplitMode, enableHourPlanning, durationDisplay, durationSuffixes, tTask, durationDrag, uiTheme, compressNonWorkdays, sharedAxis, canvasFontFamily, fontScale]);
+
+  // Secondary houdt exact zijn eigen zoom/scrollX en deelt rows/scrollY met primary.
+  const secondaryRenderInput = useMemo<GanttRenderOptionsSourceInput | undefined>(() => (
+    splitView ? {
+      rows: viewRows,
+      sequences,
+      calendar,
+      view: {
+        ...effectiveView,
+        zoom: splitView.secondaryZoom,
+        scrollX: splitView.secondaryScrollX,
+      },
+      selectedTaskIds,
+      cpmResult,
+      statusDate,
+      showStatusDateLine,
+      showProgressLine,
+      showResourceAccent,
+      showFloatBand,
+      barColorSelection,
+      activityCodeTypes,
+      customFieldDefs,
+      taskTypeLabels,
+      barColorNoneLabel: tTask('structure.none'),
+      resources,
+      assignments,
+      showBaselineOverlay,
+      baselineOverlay,
+      trace,
+      rowHeight,
+      headerHeight,
+      localizedMonths,
+      localizedWeekdays,
+      weekStartDay,
+      enableQuarterHourZoom,
+      effectiveCalById,
+      barSplitMode,
+      // De taaktabel ontbreekt hier, maar de tijdas is een volledig tweede viewport en moet
+      // dezelfde uren-/kwartier-tiers tonen als het primaire paneel.
+      enableHourPlanning,
+      durationDisplay: undefined,
+      durationSuffixes: undefined,
+      externalStaleLabel: tTask('externalLinks.stale'),
+      durationDrag: undefined,
+      highContrast: uiTheme === 'high-contrast',
+      palette: undefined,
+      darkTheme: uiTheme === 'dark',
+      // Geen gedeelde primary/histogram-as: secondary heeft een eigen tijdvenster.
+      compressNonWorkdays,
+      axis: undefined,
+      fontFamily: canvasFontFamily,
+      fontScale,
+    } : undefined
+  ), [splitView, viewRows, sequences, calendar, effectiveView, selectedTaskIds, cpmResult, statusDate, showStatusDateLine, showProgressLine, showResourceAccent, showFloatBand, barColorSelection, activityCodeTypes, customFieldDefs, taskTypeLabels, resources, assignments, showBaselineOverlay, baselineOverlay, trace, rowHeight, headerHeight, localizedMonths, localizedWeekdays, weekStartDay, enableQuarterHourZoom, effectiveCalById, barSplitMode, enableHourPlanning, tTask, uiTheme, compressNonWorkdays, canvasFontFamily, fontScale]);
+
+  useGanttRendererHost({
+    containers: {
+      primaryContainerRef: containerRef,
+      secondaryContainerRef,
+      histogramContainerRef,
+    },
+    primary: primaryRenderInput,
+    secondary: secondaryRenderInput,
+    histogram: histogramRenderInput,
+    renderRevision: canvasThemeRevision,
+    onPrimarySize: viewport.onPrimarySize,
+    onSecondarySize: viewport.onSecondarySize,
+  }, rendererHost);
+
+  // Het secundaire tijdlijnpaneel selecteert uitsluitend een zichtbare balk of mijlpaal.
+  const handleSecondaryClick = useCallback((e: ReactMouseEvent<HTMLCanvasElement>) => {
+    e.currentTarget.focus({ preventScroll: true });
+    const canvas = secondaryCanvasRef.current;
+    const renderer = secondaryRendererRef.current;
+    if (!canvas || !renderer) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (y < headerHeight) return;
+    const task = renderer.getRelationSourceAt(x, y);
+    if (task) selectTask(task.id, e.ctrlKey || e.metaKey, e.shiftKey);
+    else deselectAll();
+  }, [secondaryCanvasRef, secondaryRendererRef, selectTask, deselectAll, headerHeight]);
+
+  const { contextMenu, relationPopover, tooltip } = pointer;
+  const boxSelectState = pointer.overlays.boxSelect;
+  const splitOverlay = pointer.overlays.split;
+  const splitDragLabel = pointer.overlays.barSplitDrag;
+
+  const histogramPortal = histogramHost
+    ? createPortal(showHistogram ? (
+        <div data-testid="gantt-histogram" style={{ display: 'contents' }}>
+          <div
+            className="histogram-splitter"
+            onMouseDown={event => { event.preventDefault(); histogramSplitter.start(); }}
+            style={{ height: 5, flexShrink: 0, cursor: 'row-resize', background: 'var(--theme-border)' }}
+          />
+          <div
+            ref={setHistogramContainerNode}
+            className="relative overflow-hidden"
+            style={{ height: histogramHeight, flexShrink: 0 }}
+            data-tour-anchor="histogram-strip"
+          >
+            <canvas
+              ref={histogramCanvasRef}
+              data-testid="gantt-histogram-canvas"
+              tabIndex={0}
+              className="absolute inset-0 outline-none"
+              style={{ cursor: 'pointer' }}
+              onClick={handleHistogramClick}
+              onMouseMove={histogramInteraction.onMouseMove}
+              onMouseLeave={histogramInteraction.onMouseLeave}
+              onKeyDown={histogramInteraction.onKeyDown}
+            />
+            {scheduleStale && (
+              // Hoort bij de grafiek: rechtsboven in de plot, dus in ar/fa (kiezer rechts) vóór de
+              // kiezer in plaats van eroverheen — dezelfde indeling als de renderer.
+              <div
+                className="absolute top-1 !text-small px-1.5 py-0.5 rounded pointer-events-none"
+                style={{
+                  right: `calc(${histogramPlotInsets(histogramPickerWidth, histogramPickerSide).right}px + 0.5rem)`,
+                  background: 'var(--theme-surface)',
+                  color: 'var(--theme-warning-text)',
+                  opacity: 0.9,
+                }}
+              >
+                ⚠ {tCommon('resource.histogram.staleHint')}
+              </div>
+            )}
+            {histogramInteraction.tooltip && (
+              <HoverTooltip left={histogramInteraction.tooltip.x + 14} top={histogramInteraction.tooltip.y - 10}>
+                {histogramInteraction.tooltip.lines.map((line, index) => (
+                  <div key={index} className={index === 0 ? 'tooltip-title' : 'tooltip-row'}>{line}</div>
+                ))}
+              </HoverTooltip>
+            )}
+          </div>
+        </div>
+      ) : null, histogramHost)
+    : null;
+
+  const miniMapPortal = miniMapHost
+    ? createPortal(showMiniMap ? (
+        <div className="flex w-full" dir="ltr" style={{ flexShrink: 0 }}>
+          <div
+            style={{
+              width: splitView
+                ? splitPanePrimaryWidthCss(splitView.ratio, SPLIT_RATIO_BAR_WIDTH)
+                : '100%',
+              flexShrink: 0,
+            }}
+          >
+            <MiniMap
+              originDate={effectiveViewStart}
+              axisDayOf={minimapAxisDayOf}
+              timelineWidth={primaryChartWidth}
+              scrollX={viewport.primary.scrollX}
+              zoom={viewport.primary.zoom}
+              onScrollXChange={viewport.minimap.primaryScrollTo}
+            />
+          </div>
+          {splitView && (
+            <>
+              <div style={{ width: SPLIT_RATIO_BAR_WIDTH, flexShrink: 0 }} />
+              <div className="flex-1 min-w-0">
+                <MiniMap
+                  originDate={effectiveViewStart}
+                  axisDayOf={minimapAxisDayOf}
+                  timelineWidth={secondaryChartWidth}
+                  scrollX={splitView.secondaryScrollX}
+                  zoom={splitView.secondaryZoom}
+                  onScrollXChange={viewport.minimap.secondaryScrollTo}
+                  testId="minimap-secondary"
+                />
+              </div>
+            </>
+          )}
+        </div>
+      ) : null, miniMapHost)
+    : null;
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Pane-rij. De scrollbalken zijn ZWEVENDE overlays binnen deze rij en binnen de panes
+          zelf, geen eigen kolom/rij in de layout: een echte 8px-goot/-rij snoept die 8px van de
+          kaart af en laat onder de takenlijst een lege strook achter. Als overlay houdt het canvas
+          de volle hoogte en breedte en loopt het paneel eronder door tot de rand.
+          `dir="ltr"` op de pane-rij is FUNCTIONEEL: liet je deze rij mirroren, dan wisselen
+          primair en secundair pane visueel van
+          plek terwijl de mini-map-strook hieronder wél LTR gepind is — die komt dan onder het
+          VERKEERDE pane te liggen. Dezelfde pin houdt bovendien de ratio-sleep
+          kloppend, die `clientX - rect.left` tegen `paneRowRef` rekent en dus een niet-gespiegelde
+          rij veronderstelt, én zet de overlay-balken hieronder aan de kant waar ze horen. */}
+      <div ref={paneRowRef} className="flex-1 min-w-0 flex overflow-hidden relative" dir="ltr">
+      <div
+        ref={containerRef}
+        className="overflow-hidden relative"
+        style={{
+          width: splitView
+            ? splitPanePrimaryWidthCss(splitView.ratio, SPLIT_RATIO_BAR_WIDTH)
+            : '100%',
+          flexShrink: 0,
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          data-testid="gantt-primary-canvas"
+          tabIndex={0}
+          className="absolute inset-0 outline-none"
+          style={{ cursor: pointer.cursor }}
+          onClick={handlePrimaryClick}
+          onDoubleClick={pointer.onDoubleClick}
+          onMouseDown={pointer.onMouseDown}
+          onMouseMove={pointer.onMouseMove}
+          onMouseLeave={pointer.onMouseLeave}
+          onContextMenu={pointer.onContextMenu}
+        />
+        {/* Overlay canvas for dependency drag line */}
+        <canvas
+          ref={depLineCanvasRef}
+          className="absolute inset-0"
+          style={{ pointerEvents: 'none' }}
+        />
+
+        {/* Box-selection kader: half-transparant rechthoekje tijdens de sleep,
+            in viewport-coördinaten — hoeft niet mee te scrollen, de rij-intersectie zelf
+            wordt op het actuele moment berekend (getTaskIdsInYRange). */}
+        {boxSelectState && (() => {
+          const containerRect = containerRef.current?.getBoundingClientRect();
+          const left = (containerRect?.left ?? 0);
+          const top = (containerRect?.top ?? 0);
+          const x1 = Math.min(boxSelectState.startClientX, boxSelectState.currentClientX) - left;
+          const y1 = Math.min(boxSelectState.startClientY, boxSelectState.currentClientY) - top;
+          const w = Math.abs(boxSelectState.currentClientX - boxSelectState.startClientX);
+          const h = Math.abs(boxSelectState.currentClientY - boxSelectState.startClientY);
+          return (
+            <div
+              data-testid="box-select-rect"
+              className="absolute"
+              style={{
+                left: x1,
+                top: y1,
+                width: w,
+                height: h,
+                border: '1px solid var(--theme-accent)',
+                pointerEvents: 'none',
+                zIndex: 5,
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ position: 'absolute', inset: 0, background: 'var(--theme-accent)', opacity: 0.15 }} />
+            </div>
+          );
+        })()}
+
+        {/* Splits-modus: het LABEL bij de geleidelijn staat bewust in de DOM en niet op
+            het canvas — zo volgt het de zes tekstrollen en de tekengrootte-instelling vanzelf. De
+            lijn zelf tekent `useSplitGesture` op de overlaylaag. Zolang er niet gesleept is toont
+            het de gesnapte datum; tijdens het gebaar de lengte van de pauze. */}
+        {splitOverlay && (
+          <div
+            data-testid="split-mode-label"
+            className="absolute text-small leading-4 px-1.5 py-0.5 rounded pointer-events-none whitespace-nowrap"
+            style={{
+              left: Math.max(splitOverlay.anchorX, splitOverlay.currentX) + 6,
+              top: splitOverlay.top - 18,
+              background: 'var(--theme-accent)',
+              color: 'var(--theme-accent-contrast, #fff)',
+              zIndex: 3,
+            }}
+          >
+            {splitOverlay.gapUnits > 0
+              ? tTask(splitOverlay.hourMode ? 'split.gapHours' : 'split.gapDays', { count: splitOverlay.gapUnits })
+              : (splitOverlay.hourMode ? displayDateFormat.dateTime(splitOverlay.atIso) : displayDateFormat.date(splitOverlay.atIso))}
+          </div>
+        )}
+
+        {/* Hetzelfde DOM-label tijdens het verslepen van een stuk (de pauze
+            ervóór) of een stukrand (de lengte van dat stuk) op een gesplitste balk. */}
+        {splitDragLabel && (
+          <div
+            data-testid="split-drag-label"
+            className="absolute text-small leading-4 px-1.5 py-0.5 rounded pointer-events-none whitespace-nowrap"
+            style={{
+              left: splitDragLabel.x + 6,
+              top: splitDragLabel.top - 18,
+              background: 'var(--theme-accent)',
+              color: 'var(--theme-accent-contrast, #fff)',
+              zIndex: 3,
+            }}
+          >
+            {splitDragLabel.kind === 'gap'
+              ? (splitDragLabel.units > 0
+                ? tTask(splitDragLabel.hourMode ? 'split.gapHours' : 'split.gapDays', { count: splitDragLabel.units })
+                : tTask('split.merged'))
+              : tTask(splitDragLabel.hourMode ? 'split.pieceHours' : 'split.pieceDays', { count: splitDragLabel.units })}
+          </div>
+        )}
+
+        {/* Tooltip — HoverTooltip houdt de doos binnen het venster. De content zit in
+            TaskTooltipContent, gedeeld met de WBS-sprongknop in het eigenschappenpaneel. */}
+        {tooltip && (
+          <HoverTooltip left={tooltip.x + 16} top={tooltip.y - 10}>
+            <TaskTooltipContent task={tooltip.task} />
+          </HoverTooltip>
+        )}
+
+        {/* De horizontale balk rekent volledig in lokale tijdlijncoördinaten. */}
+        <div
+          ref={hScrollRef}
+          data-testid="gantt-hscroll"
+          className="gantt-overlay-scrollbar absolute overflow-x-auto overflow-y-hidden"
+          style={{ left: 0, right: 0, bottom: 0, height: SCROLLBAR_GUTTER, zIndex: 4 }}
+          onScroll={viewport.scrollHandlers.onPrimaryHorizontalScroll}
+        >
+          <div style={{ width: Math.max(1, viewport.primary.scrollbarWidth), height: 1 }} />
+        </div>
+      </div>
+      {/* Secundair pane: eigen tijdvenster, gedeelde rijen + verticale scroll */}
+      {splitView && (
+        <>
+          <div
+            data-testid="split-ratio-bar"
+            onMouseDown={e => { e.preventDefault(); viewport.splitters.ratio.start(); }}
+            style={{ width: SPLIT_RATIO_BAR_WIDTH, flexShrink: 0, cursor: 'col-resize', background: 'var(--theme-border)' }}
+          />
+          <div
+            ref={secondaryContainerRef}
+            data-testid="split-secondary-pane"
+            className="flex-1 overflow-hidden relative"
+          >
+            <canvas
+              ref={secondaryCanvasRef}
+              data-testid="gantt-secondary-canvas"
+              tabIndex={0}
+              className="absolute inset-0 outline-none"
+              onClick={handleSecondaryClick}
+            />
+            {/* Eigen zwevende horizontale balk voor het secundaire tijdvenster. */}
+            <div
+              ref={hScrollSecondaryRef}
+              data-testid="gantt-hscroll-secondary"
+              className="gantt-overlay-scrollbar absolute overflow-x-auto overflow-y-hidden"
+              style={{ left: 0, right: 0, bottom: 0, height: SCROLLBAR_GUTTER, zIndex: 4 }}
+              onScroll={viewport.scrollHandlers.onSecondaryHorizontalScroll}
+            >
+              <div style={{ width: Math.max(1, viewport.secondary?.scrollbarWidth ?? 0), height: 1 }} />
+            </div>
+          </div>
+        </>
+      )}
+      </div>
+      {histogramPortal}
+      {miniMapPortal}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          task={contextMenu.task}
+          barHit={contextMenu.barHit}
+          group={contextMenu.group}
+          traceActive={traceMode !== 'off'}
+          isTreeMode={isTreeMode(view)}
+          calendars={calendars}
+          canPaste={!!taskClipboard}
+          onClose={pointer.closeContextMenu}
+          onEdit={() => {
+            if (contextMenu.task) setUI({ showTaskDialog: true, editingTaskId: contextMenu.task.id });
+          }}
+          onAddSubtask={() => {
+            const parentId = contextMenu.task?.id || null;
+            addTask({
+              name: defaultTaskName,
+              parentId,
+            });
+          }}
+          onAddMilestone={() => {
+            addTask({
+              name: defaultMilestoneName,
+              isMilestone: true,
+              taskType: 'ATTENDANCE',
+              parentId: contextMenu.task?.id || null,
+            });
+          }}
+          onAddRelation={() => {
+            // Armt de relatiemodus. De aangeklikte taak wordt geselecteerd zodat zichtbaar is
+            // vanaf welke balk je sleept.
+            if (contextMenu.task) {
+              selectTask(contextMenu.task.id, false);
+              setUI({ showDependencyMode: true });
+            }
+          }}
+          onSaveTemplate={() => {
+            if (!contextMenu.task) return;
+            const st = useAppStore.getState();
+            const tpl = saveBranchAsWbsTemplate(contextMenu.task.name, contextMenu.task.id, st.tasks, st.sequences);
+            // De sjabloonmelding gaat door het gecentraliseerde meldingskanaal (zichtbaar óók
+            // buiten de Gantt).
+            st.notify({
+              severity: 'info',
+              messageKey: 'notifications.templateSaved',
+              params: { name: tpl.name },
+            });
+          }}
+          onTracePath={() => {
+            if (traceMode !== 'off') {
+              setUI({ traceMode: 'off' });
+            } else if (contextMenu.task) {
+              selectTask(contextMenu.task.id);
+              setUI({ traceMode: 'both' });
+            }
+          }}
+          onCollapse={() => {
+            if (contextMenu.task) collapseTasks(contextMenuOutlineScope(contextMenu.task.id));
+          }}
+          onExpand={() => {
+            if (contextMenu.task) expandTasks(contextMenuOutlineScope(contextMenu.task.id));
+          }}
+          onDelete={() => {
+            if (contextMenu.task) contextMenuBulk.remove(contextMenu.task.id);
+          }}
+          onAddTask={() => {
+            contextMenuBulk.addNearSelection(defaultTaskName);
+          }}
+          onInsertAbove={() => {
+            if (contextMenu.task) contextMenuBulk.insert(contextMenu.task.id, 'above', defaultTaskName);
+          }}
+          onInsertBelow={() => {
+            if (contextMenu.task) contextMenuBulk.insert(contextMenu.task.id, 'below', defaultTaskName);
+          }}
+          onIndent={() => { if (contextMenu.task) contextMenuBulk.indent(contextMenu.task.id); }}
+          onOutdent={() => { if (contextMenu.task) contextMenuBulk.outdent(contextMenu.task.id); }}
+          onToggleMilestone={() => {
+            if (contextMenu.task) contextMenuBulk.toggleMilestone(contextMenu.task);
+          }}
+          onSetCalendar={(calendarId) => {
+            if (contextMenu.task) contextMenuBulk.setCalendar(contextMenu.task.id, calendarId);
+          }}
+          onSetProgress={(completion) => {
+            if (contextMenu.task) void contextMenuBulk.setProgress(contextMenu.task.id, completion);
+          }}
+          onSetPriority={(priority) => {
+            if (contextMenu.task) contextMenuBulk.setPriority(contextMenu.task.id, priority);
+          }}
+          splitGapIndex={contextMenu.splitGapIndex}
+          onRemoveSplitGap={(gapIndex) => {
+            // Rekenen via `splitEdit.ts` op de ACTUELE taak, schrijven via de
+            // ene schrijfweg. Een weigering (taak intussen gewijzigd) doet niets.
+            const task = contextMenu.task && useAppStore.getState().tasks.find(t => t.id === contextMenu.task!.id);
+            if (!task?.splitGaps) return;
+            const pieces = editableSplitPieces(task, effectiveCalById.get(task.id) ?? calendar, task.splitGaps.length + 1);
+            const result = pieces ? removeGap(pieces, gapIndex) : null;
+            if (result?.ok) setTaskSplits(task.id, result.pieces);
+          }}
+          onRemoveAllSplitGaps={() => { if (contextMenu.task) setTaskSplits(contextMenu.task.id, null); }}
+          onStartRelationFromBar={() => {
+            // Zelfde route als `onAddRelation` (balk-contextmenu i.p.v. rij-contextmenu).
+            if (contextMenu.task) {
+              selectTask(contextMenu.task.id, false);
+              setUI({ showDependencyMode: true });
+            }
+          }}
+          onPaste={() => { pasteTasks(); }}
+          onZoomReset={viewport.resetZoom}
+          onFitToProject={viewport.fitToProject}
+          onToggleGroupCollapse={() => {
+            if (contextMenu.group) setCollapsedGroupKey(contextMenu.group.key, !contextMenu.group.collapsed);
+          }}
+          onExpandAll={() => expandAllGroups()}
+          onCollapseAll={() => collapseAllGroups()}
+        />
+      )}
+
+      {relationPopover && (
+        <RelationTypePopover
+          sourceTaskId={relationPopover.sourceTaskId}
+          targetTaskId={relationPopover.targetTaskId}
+          x={relationPopover.x}
+          y={relationPopover.y}
+          onCommit={(relation) => {
+            createRelationDraftWithFeedback(relation);
+            pointer.closeRelationPopover();
+          }}
+          onCancel={pointer.closeRelationPopover}
+        />
+      )}
+    </div>
+  );
+}

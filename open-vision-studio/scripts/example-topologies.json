@@ -1,0 +1,4462 @@
+{
+  "filenames": [
+    "01-grachtenpand-amsterdam",
+    "02-renovatie-basisschool",
+    "03-kantoorgebouw-zuidas",
+    "04-appartementen-eindhoven",
+    "05-brugvervanging-n279",
+    "06-parkeergarage-utrecht",
+    "07-industriehal-venlo",
+    "08-zorgcentrum-de-linde",
+    "09-rioolvervanging-delft",
+    "10-villa-wassenaar",
+    "11-sporthal-amstelveen",
+    "12-windturbine-offshore",
+    "13-supermarkt-albert-heijn",
+    "14-fietstunnel-arnhem",
+    "15-datacentrum-agriport",
+    "16-dijkversterking-markermeerdijk",
+    "17-hotel-scheveningen",
+    "18-station-uitbreiding-breda",
+    "19-basisschool-ikc",
+    "20-woonwijk-almere"
+  ],
+  "defs": [
+    {
+      "id": "proj-grachtenpand",
+      "name": "New-Build Canal House, Amsterdam",
+      "description": "New three-storey canal house with basement",
+      "startDate": "2026-03-02",
+      "endDate": "2027-05-01",
+      "author": "Jan de Vries",
+      "company": "Amsterdam Construction BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Set up site",
+              "duration": 5,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Install sheet piling",
+              "duration": 10,
+              "taskType": "CONSTRUCTION",
+              "isCritical": true
+            },
+            {
+              "name": "Install dewatering",
+              "duration": 5,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Carry out soil investigation",
+              "duration": 3
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations & basement",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Excavate building pit",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Drive foundation piles",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "Rebar fixing, basement",
+              "duration": 8
+            },
+            {
+              "name": "Pour basement floor",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Pour basement walls",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Basement waterproofing",
+              "duration": 5
+            },
+            {
+              "name": "Backfill building pit",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            }
+          ]
+        },
+        {
+          "name": "3. Structural works",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Ground floor masonry",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "First floor slab",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "First floor masonry",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Second floor slab",
+              "duration": 5
+            },
+            {
+              "name": "Second floor masonry",
+              "duration": 10
+            },
+            {
+              "name": "Third floor slab",
+              "duration": 5
+            },
+            {
+              "name": "Third floor masonry",
+              "duration": 8
+            },
+            {
+              "name": "Timber roof structure",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Roofing",
+              "duration": 8
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & roof",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Facade insulation",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Natural stone cladding",
+              "duration": 15,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Install window frames",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Glazing",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Electrical first fix",
+              "duration": 10
+            },
+            {
+              "name": "Plumbing first fix",
+              "duration": 8
+            },
+            {
+              "name": "Heating installation",
+              "duration": 10,
+              "depType": "SS",
+              "lag": 3
+            },
+            {
+              "name": "Ventilation system",
+              "duration": 8
+            },
+            {
+              "name": "Home automation cabling",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Internal walls",
+              "duration": 10
+            },
+            {
+              "name": "Plastering",
+              "duration": 12
+            },
+            {
+              "name": "Bathroom tiling",
+              "duration": 8
+            },
+            {
+              "name": "Screed floors",
+              "duration": 5
+            },
+            {
+              "name": "Painting",
+              "duration": 10
+            },
+            {
+              "name": "Install kitchen",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Second-fix sanitary fittings",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Floor finishes",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Construct outdoor areas",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Cleaning",
+              "duration": 3,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Final inspection of services",
+              "duration": 3
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-school-renovatie",
+      "name": "Renovation of De Regenboog Primary School",
+      "description": "Energy-efficiency renovation and extension of a primary school",
+      "startDate": "2026-06-29",
+      "endDate": "2026-12-18",
+      "author": "Petra Jansen",
+      "company": "SchoolBuild Netherlands",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Asbestos survey",
+              "duration": 3
+            },
+            {
+              "name": "Set up temporary accommodation",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Set up site",
+              "duration": 3,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Start of renovation",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Demolition & strip-out",
+          "wbs": "2",
+          "taskType": "DEMOLITION",
+          "children": [
+            {
+              "name": "Asbestos removal",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Strip out interior",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Demolish internal walls",
+              "duration": 5
+            },
+            {
+              "name": "Remove roofing",
+              "duration": 5
+            },
+            {
+              "name": "Remove window frames",
+              "duration": 3
+            }
+          ]
+        },
+        {
+          "name": "3. Structural works",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Foundation repair",
+              "duration": 5
+            },
+            {
+              "name": "Structural steel strengthening",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "New roof structure",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Extension masonry",
+              "duration": 10
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & roof",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "External facade insulation",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "New HR++ window frames",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Roof insulation and roofing",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Renew electrical installation",
+              "duration": 8
+            },
+            {
+              "name": "Install heat pump",
+              "duration": 5
+            },
+            {
+              "name": "Underfloor heating",
+              "duration": 8,
+              "depType": "SS",
+              "lag": 2
+            },
+            {
+              "name": "Heat recovery ventilation",
+              "duration": 5
+            },
+            {
+              "name": "Solar panels",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Install internal walls",
+              "duration": 8
+            },
+            {
+              "name": "Ceilings",
+              "duration": 5
+            },
+            {
+              "name": "Floor finishes",
+              "duration": 5
+            },
+            {
+              "name": "Painting",
+              "duration": 8
+            },
+            {
+              "name": "Sanitary fittings",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Classroom furnishing",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "External areas",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-kantoor-zuidas",
+      "name": "Zuidas Office Building",
+      "description": "Eight-storey office building with basement car park, BREEAM Excellent",
+      "startDate": "2026-02-02",
+      "endDate": "2027-08-01",
+      "author": "Mark Bakker",
+      "company": "Zuidas Development BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Set up site",
+              "duration": 8,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Stakeholder management",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Traffic management",
+              "duration": 3,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Piezometer monitoring",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Earthworks & foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Sheet pile sections",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "Wellpoint dewatering",
+              "duration": 5,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Excavate to level -2",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Excavate to level -1",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Bore foundation piles",
+              "duration": 20,
+              "isCritical": true
+            },
+            {
+              "name": "Foundation beams",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Basement floor P2",
+              "duration": 8
+            },
+            {
+              "name": "Basement floor P1",
+              "duration": 8
+            },
+            {
+              "name": "Pour basement walls",
+              "duration": 12
+            },
+            {
+              "name": "Basement waterproofing",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "3. Structural works",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Ground floor columns & slab",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Floor 1 structural works",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Floor 2 structural works",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Floor 3 structural works",
+              "duration": 8
+            },
+            {
+              "name": "Floor 4 structural works",
+              "duration": 8
+            },
+            {
+              "name": "Floor 5 structural works",
+              "duration": 8
+            },
+            {
+              "name": "Floor 6 structural works",
+              "duration": 8
+            },
+            {
+              "name": "Floor 7 structural works",
+              "duration": 8
+            },
+            {
+              "name": "Floor 8 structural works",
+              "duration": 8
+            },
+            {
+              "name": "Concrete stair and lift core",
+              "duration": 20,
+              "depType": "SS",
+              "lag": 5
+            },
+            {
+              "name": "Steel roof structure",
+              "duration": 10
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade",
+          "wbs": "4",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Curtain wall installation, phase 1",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "Curtain wall installation, phase 2",
+              "duration": 15
+            },
+            {
+              "name": "Curtain wall installation, phase 3",
+              "duration": 12
+            },
+            {
+              "name": "Roof finishes and services",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Main electrical switchroom",
+              "duration": 10
+            },
+            {
+              "name": "Risers, electrical",
+              "duration": 12
+            },
+            {
+              "name": "Risers, mechanical services",
+              "duration": 12,
+              "depType": "SS",
+              "lag": 3
+            },
+            {
+              "name": "Air handling units",
+              "duration": 10
+            },
+            {
+              "name": "Ventilation ductwork",
+              "duration": 15
+            },
+            {
+              "name": "Sprinkler installation",
+              "duration": 10
+            },
+            {
+              "name": "Lift installation",
+              "duration": 20
+            },
+            {
+              "name": "BMS/building management",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Office system partitions",
+              "duration": 15
+            },
+            {
+              "name": "Suspended ceilings",
+              "duration": 12
+            },
+            {
+              "name": "Raised floors",
+              "duration": 10
+            },
+            {
+              "name": "Sanitary rooms",
+              "duration": 8
+            },
+            {
+              "name": "Kitchen/pantry fit-out",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Painting & finishing",
+              "duration": 10
+            }
+          ]
+        },
+        {
+          "name": "7. Site works & handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Paving & landscaping",
+              "duration": 10
+            },
+            {
+              "name": "Entrance & lobby fit-out",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Testing & commissioning",
+              "duration": 10,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-appartementen-ehv",
+      "name": "24 Apartments, Eindhoven",
+      "description": "24 apartments over four storeys with basement car park",
+      "startDate": "2026-03-16",
+      "endDate": "2027-07-01",
+      "author": "Sophie van Dijk",
+      "company": "Housing South BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Set up site",
+              "duration": 5,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Pile load test",
+              "duration": 3,
+              "isCritical": true
+            },
+            {
+              "name": "Divert utilities",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Pile driving, foundation piles",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "Earthworks, basement car park",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Foundation beams and pile caps",
+              "duration": 8
+            },
+            {
+              "name": "Pour basement floor",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Basement walls",
+              "duration": 8
+            },
+            {
+              "name": "Waterproofing",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "3. Structural works",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Ground floor walls and slab",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "First floor concrete",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Second floor concrete",
+              "duration": 10
+            },
+            {
+              "name": "Third floor concrete",
+              "duration": 10
+            },
+            {
+              "name": "Fourth floor concrete",
+              "duration": 10
+            },
+            {
+              "name": "Concrete stair core",
+              "duration": 15,
+              "depType": "SS",
+              "lag": 5
+            },
+            {
+              "name": "Roof build-up",
+              "duration": 8
+            },
+            {
+              "name": "Balcony structures",
+              "duration": 10
+            },
+            {
+              "name": "Facade masonry",
+              "duration": 20
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & roof",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Facade insulation",
+              "duration": 12,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Window frames and glazing",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Roofing and insulation",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Balcony balustrades",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Electrical risers",
+              "duration": 10
+            },
+            {
+              "name": "Plumbing risers",
+              "duration": 10,
+              "depType": "SS",
+              "lag": 3
+            },
+            {
+              "name": "Heating pipework per dwelling",
+              "duration": 12
+            },
+            {
+              "name": "Heat recovery ventilation units",
+              "duration": 8
+            },
+            {
+              "name": "Lift installation",
+              "duration": 15
+            },
+            {
+              "name": "Intercom and access control",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Set out internal walls",
+              "duration": 10
+            },
+            {
+              "name": "Plastering",
+              "duration": 12
+            },
+            {
+              "name": "Tiling",
+              "duration": 10
+            },
+            {
+              "name": "Screed floors",
+              "duration": 8
+            },
+            {
+              "name": "Internal doors",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Kitchen units installation",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Painting",
+              "duration": 10
+            },
+            {
+              "name": "Floor finishes",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Site paving",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Landscaping",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Cleaning",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Pre-handover inspection, dwellings",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-brug-n279",
+      "name": "N279 Bridge Replacement",
+      "description": "Replacement of the existing bridge with a new concrete bridge",
+      "startDate": "2026-04-01",
+      "endDate": "2027-04-01",
+      "author": "Henk Mulder",
+      "company": "Infra Netherlands BV",
+      "phases": [
+        {
+          "name": "1. Preparation & diversions",
+          "wbs": "1",
+          "taskType": "LOGISTIC",
+          "children": [
+            {
+              "name": "Implement traffic management",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Temporary diversion route",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Set up site",
+              "duration": 5
+            },
+            {
+              "name": "Impose shipping restrictions",
+              "duration": 3
+            },
+            {
+              "name": "Start of works",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Demolition of old bridge",
+          "wbs": "2",
+          "taskType": "DEMOLITION",
+          "children": [
+            {
+              "name": "Divert services",
+              "duration": 8,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Remove asphalt",
+              "duration": 3,
+              "isCritical": true
+            },
+            {
+              "name": "Remove bridge railings",
+              "duration": 3
+            },
+            {
+              "name": "Demolish bridge deck",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Demolish abutments",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Remove rubble",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            }
+          ]
+        },
+        {
+          "name": "3. New foundations",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Drive sheet piling",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Underwater concrete",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Dewater excavation pit",
+              "duration": 5
+            },
+            {
+              "name": "Bore pile foundation",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Ground improvement",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "4. Concrete structure",
+          "wbs": "4",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "West abutment: rebar and pour",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "East abutment: rebar and pour",
+              "duration": 15,
+              "depType": "SS",
+              "lag": 5
+            },
+            {
+              "name": "Pour central pier",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Place precast beams",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Bridge deck reinforcement",
+              "duration": 10
+            },
+            {
+              "name": "Pour bridge deck",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Concrete curing",
+              "duration": 15
+            }
+          ]
+        },
+        {
+          "name": "5. Finishing",
+          "wbs": "5",
+          "children": [
+            {
+              "name": "Install bridge railings",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Bridge deck waterproofing",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Asphalt bridge deck",
+              "duration": 3,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Asphalt tie-ins",
+              "duration": 5
+            },
+            {
+              "name": "Lighting",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Crash barrier",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "6. Handover",
+          "wbs": "6",
+          "children": [
+            {
+              "name": "Load test",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Remove diversions",
+              "duration": 3,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Clear site",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Bridge open to traffic",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-parkeergarage-utrecht",
+      "name": "Stationsplein Car Park, Utrecht",
+      "description": "Three-level underground car park, 400 spaces",
+      "startDate": "2026-03-02",
+      "endDate": "2027-06-01",
+      "author": "Robert Visser",
+      "company": "Underground Construction BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Divert cables and pipes",
+              "duration": 10,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Set up site",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Environmental monitoring",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Traffic management",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Excavation pit",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Construct diaphragm walls",
+              "duration": 20,
+              "isCritical": true
+            },
+            {
+              "name": "Struts, level 1",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Excavate layer 1",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Struts, level 2",
+              "duration": 8
+            },
+            {
+              "name": "Excavate layer 2",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Struts, level 3",
+              "duration": 8
+            },
+            {
+              "name": "Excavate layer 3",
+              "duration": 10
+            },
+            {
+              "name": "Underwater concrete slab",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Pump dry",
+              "duration": 5
+            },
+            {
+              "name": "Excavation pit dry",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "3. Concrete structure",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Slab at level -3",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Columns and walls, level -3",
+              "duration": 8
+            },
+            {
+              "name": "Slab at level -2",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Columns and walls, level -2",
+              "duration": 8
+            },
+            {
+              "name": "Slab at level -1",
+              "duration": 10
+            },
+            {
+              "name": "Columns and walls, level -1",
+              "duration": 8
+            },
+            {
+              "name": "Car park deck",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Remove struts",
+              "duration": 8,
+              "taskType": "DEMOLITION"
+            },
+            {
+              "name": "Waterproofing",
+              "duration": 10
+            }
+          ]
+        },
+        {
+          "name": "4. Building services",
+          "wbs": "4",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Main electrical distribution",
+              "duration": 8
+            },
+            {
+              "name": "Lighting, parking levels",
+              "duration": 10
+            },
+            {
+              "name": "Ventilation and CO detection",
+              "duration": 10
+            },
+            {
+              "name": "Sprinkler installation",
+              "duration": 8
+            },
+            {
+              "name": "Parking guidance system",
+              "duration": 5
+            },
+            {
+              "name": "Lift installation",
+              "duration": 12
+            },
+            {
+              "name": "Fire alarm system",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "5. Finishing",
+          "wbs": "5",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Apply floor coating",
+              "duration": 8
+            },
+            {
+              "name": "Road marking and signage",
+              "duration": 5
+            },
+            {
+              "name": "Access control barriers",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Finish emergency exits",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "6. Surface reinstatement",
+          "wbs": "6",
+          "children": [
+            {
+              "name": "Redevelop the square",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Paving and landscaping",
+              "duration": 8
+            },
+            {
+              "name": "Remove traffic management",
+              "duration": 3,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-industriehal-venlo",
+      "name": "Logistics Warehouse, Venlo",
+      "description": "10,000 m2 logistics warehouse with office space",
+      "startDate": "2026-04-01",
+      "endDate": "2026-12-01",
+      "author": "Kees van der Berg",
+      "company": "Limburg Hall Construction BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Site ready for construction",
+              "duration": 5,
+              "taskType": "CONSTRUCTION",
+              "isCritical": true
+            },
+            {
+              "name": "Sewerage and utility connections",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Ground improvement",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Pour strip foundations",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Prepare shallow-founded slab",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "3. Steel structure",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Erect steel columns",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Erect steel trusses",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Purlins and wind bracing",
+              "duration": 5
+            },
+            {
+              "name": "Install crane runway",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & roof",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Sandwich roof decking",
+              "duration": 10,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Facade cladding",
+              "duration": 12,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Overhead doors",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Roof lights",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Floor & services",
+          "wbs": "5",
+          "children": [
+            {
+              "name": "Pour concrete hall floor",
+              "duration": 10,
+              "taskType": "CONSTRUCTION",
+              "isCritical": true
+            },
+            {
+              "name": "Floor coating",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Electrical installation, hall",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Lighting, hall",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Fire alarm system",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "6. Office section",
+          "wbs": "6",
+          "children": [
+            {
+              "name": "Office internal walls",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Office building services",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Office finishes",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Sanitary facilities",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "7. Site works & handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Site paving",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Site lighting",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Fencing and gate",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-zorgcentrum",
+      "name": "De Linde Care Centre",
+      "description": "New-build care centre with 60 rooms and treatment areas",
+      "startDate": "2026-03-02",
+      "endDate": "2027-05-01",
+      "author": "Linda de Groot",
+      "company": "Healthcare Construction Netherlands BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Set up site",
+              "duration": 5,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Additional soil investigation",
+              "duration": 3
+            },
+            {
+              "name": "Fell and transplant trees",
+              "duration": 3,
+              "taskType": "DEMOLITION"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Pile driving, foundation piles",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Foundation beams",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Sewerage and underground pipework",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Pour ground floor slab",
+              "duration": 8,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "3. Structural works",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Ground floor load-bearing structure",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Floor 1 concrete",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Floor 2 concrete",
+              "duration": 10
+            },
+            {
+              "name": "Facade masonry",
+              "duration": 15
+            },
+            {
+              "name": "Internal walls, sand-lime brick",
+              "duration": 10
+            },
+            {
+              "name": "Roof structure",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & roof",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Facade insulation and finish",
+              "duration": 12,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Window frames and screens",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Roof insulation and covering",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Roof edges and rainwater drainage",
+              "duration": 5
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Main electrical distribution",
+              "duration": 8
+            },
+            {
+              "name": "Emergency power supply",
+              "duration": 5
+            },
+            {
+              "name": "Oxygen and medical gases",
+              "duration": 8
+            },
+            {
+              "name": "Heating and cooling",
+              "duration": 10,
+              "depType": "SS",
+              "lag": 3
+            },
+            {
+              "name": "Ventilation with HEPA filters",
+              "duration": 10
+            },
+            {
+              "name": "Sprinkler and fire alarm",
+              "duration": 8
+            },
+            {
+              "name": "Lift installation",
+              "duration": 15
+            },
+            {
+              "name": "Nurse call system",
+              "duration": 5
+            },
+            {
+              "name": "ICT cabling",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Partition walls",
+              "duration": 8
+            },
+            {
+              "name": "Finish ceilings and walls",
+              "duration": 10
+            },
+            {
+              "name": "Tiling, wet rooms",
+              "duration": 8
+            },
+            {
+              "name": "Screeds and floor finishes",
+              "duration": 8
+            },
+            {
+              "name": "Painting",
+              "duration": 10
+            },
+            {
+              "name": "Kitchens and pantry",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Install sanitary fittings",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Construct external areas",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Room furnishing",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Test building services",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-riool-delft",
+      "name": "Sewer Replacement, Delft City Centre",
+      "description": "Replacement of the city-centre main sewer including street reinstatement",
+      "startDate": "2026-05-04",
+      "endDate": "2026-10-01",
+      "author": "Bas Hendriks",
+      "company": "Delft Infra BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "taskType": "LOGISTIC",
+          "children": [
+            {
+              "name": "Resident letter and communication",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Traffic management",
+              "duration": 3,
+              "isCritical": true
+            },
+            {
+              "name": "Locate cables and pipes",
+              "duration": 3
+            },
+            {
+              "name": "Start of works",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Phase 1 - north side",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Break up paving, phase 1",
+              "duration": 5,
+              "taskType": "DEMOLITION",
+              "isCritical": true
+            },
+            {
+              "name": "Excavate trench, phase 1",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Lay sewer pipes, phase 1",
+              "duration": 8,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "House connections, phase 1",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Backfill and compact, phase 1",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "3. Phase 2 - south side",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Break up paving, phase 2",
+              "duration": 5,
+              "taskType": "DEMOLITION",
+              "isCritical": true
+            },
+            {
+              "name": "Excavate trench, phase 2",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Lay sewer pipes, phase 2",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "House connections, phase 2",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Backfill and compact, phase 2",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "4. Reinstatement",
+          "wbs": "4",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Paving sub-base",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Relay paving",
+              "duration": 8
+            },
+            {
+              "name": "Install street furniture",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Landscaping",
+              "duration": 3
+            }
+          ]
+        },
+        {
+          "name": "5. Handover",
+          "wbs": "5",
+          "children": [
+            {
+              "name": "CCTV sewer inspection",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Remove traffic management",
+              "duration": 2,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-villa-wassenaar",
+      "name": "New-Build Villa, Wassenaar",
+      "description": "Detached luxury villa with swimming pool and guest house",
+      "startDate": "2026-03-02",
+      "endDate": "2027-03-01",
+      "author": "Thomas van Leeuwen",
+      "company": "Exclusive Living BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Set up site",
+              "duration": 3,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Protect trees",
+              "duration": 2,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Earthworks & foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Excavate swimming pool",
+              "duration": 8
+            },
+            {
+              "name": "Excavate foundation trenches",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Pour foundations",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Sewerage and drainage",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Fill crawl space",
+              "duration": 3
+            },
+            {
+              "name": "Ground floor slab",
+              "duration": 5,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "3. Structural works",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Ground floor masonry",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Pour upper floor slab",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Upper floor masonry",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Timber roof structure",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Roof tiles",
+              "duration": 5
+            },
+            {
+              "name": "Build chimneys",
+              "duration": 3
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & roof",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Facade insulation",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Hardwood window frames",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Triple glazing HR+++",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Zinc gutters and downpipes",
+              "duration": 5
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Electrical first fix",
+              "duration": 8
+            },
+            {
+              "name": "Plumbing first fix",
+              "duration": 8,
+              "depType": "SS",
+              "lag": 2
+            },
+            {
+              "name": "Underfloor heating",
+              "duration": 8
+            },
+            {
+              "name": "Home automation system",
+              "duration": 5
+            },
+            {
+              "name": "Pool plant",
+              "duration": 10
+            },
+            {
+              "name": "Heat pump and ground loop",
+              "duration": 8
+            },
+            {
+              "name": "Solar panels",
+              "duration": 3
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Plastering, walls and ceilings",
+              "duration": 12
+            },
+            {
+              "name": "Luxury bathroom tiling",
+              "duration": 10
+            },
+            {
+              "name": "Natural stone floors",
+              "duration": 8
+            },
+            {
+              "name": "Oak staircases",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Bespoke kitchen",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Painting",
+              "duration": 10
+            },
+            {
+              "name": "Second-fix sanitary fittings",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "7. External works & handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Complete swimming pool",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Garden landscaping",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Driveway and paving",
+              "duration": 5
+            },
+            {
+              "name": "Cleaning",
+              "duration": 3,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-sporthal-amstelveen",
+      "name": "Amstelveen Municipal Sports Hall",
+      "description": "Multifunctional sports hall with three courts and a grandstand",
+      "startDate": "2026-04-01",
+      "endDate": "2027-02-01",
+      "author": "Erik Smit",
+      "company": "Sports Facilities Holland BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Set up site",
+              "duration": 5,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Earthworks, site preparation",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Drive piles",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Foundation beams",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Ground floor slab on piles",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "3. Structure",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Structural steel trusses",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "Steel columns",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Concrete grandstand structure",
+              "duration": 10
+            },
+            {
+              "name": "Install roof beams",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & roof",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Roof deck insulation",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Bituminous roofing",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Facade panels",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Entrance screens",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Sports floor & services",
+          "wbs": "5",
+          "children": [
+            {
+              "name": "Sports floor sub-base",
+              "duration": 10,
+              "taskType": "CONSTRUCTION",
+              "isCritical": true
+            },
+            {
+              "name": "Sports floor top layer",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Sports lighting",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "HVAC installation",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Scoreboards and AV",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "children": [
+            {
+              "name": "Changing room fit-out",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Sanitary fittings and showers",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Entrance hall finishes",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Sports pitch line marking",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "External areas and parking",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Test building services",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-windturbine-offshore",
+      "name": "Offshore Wind Turbine Foundation",
+      "description": "Monopile foundation for a 15 MW offshore wind turbine",
+      "startDate": "2026-04-01",
+      "endDate": "2026-10-01",
+      "author": "Freek de Wind",
+      "company": "North Sea Energy BV",
+      "phases": [
+        {
+          "name": "1. Fabrication & preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Monopile fabrication inspection",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Transition piece fabrication",
+              "duration": 10,
+              "taskType": "CONSTRUCTION",
+              "isCritical": true
+            },
+            {
+              "name": "Mobilise installation vessel",
+              "duration": 8,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Seabed survey",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Transport monopile",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Start of offshore works",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Seabed preparation",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Level seabed",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Scour protection, layer 1",
+              "duration": 3,
+              "isCritical": true
+            },
+            {
+              "name": "Weather window monitoring",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            }
+          ]
+        },
+        {
+          "name": "3. Monopile installation",
+          "wbs": "3",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Upend monopile",
+              "duration": 2,
+              "isCritical": true
+            },
+            {
+              "name": "Position monopile",
+              "duration": 2,
+              "isCritical": true
+            },
+            {
+              "name": "Drive monopile",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Verticality check",
+              "duration": 1,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Install transition piece",
+              "duration": 3,
+              "isCritical": true
+            },
+            {
+              "name": "Grouting",
+              "duration": 3,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Finishing",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Scour protection, layer 2",
+              "duration": 3,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "J-tube installation",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Platform and railing",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Cathodic protection",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Install boat landing",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "5. Cable & handover",
+          "wbs": "5",
+          "children": [
+            {
+              "name": "Export cable pull-in",
+              "duration": 5,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Cable termination",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Inspection and survey",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Demobilisation",
+              "duration": 3,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Foundation complete",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-supermarkt-ah",
+      "name": "Albert Heijn Supermarket Refurbishment",
+      "description": "Internal refurbishment and extension of a supermarket",
+      "startDate": "2026-08-10",
+      "endDate": "2026-11-06",
+      "author": "Anne Willems",
+      "company": "Retail Build Express BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Clear out store",
+              "duration": 3,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Temporary facilities",
+              "duration": 2,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Start of refurbishment",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Demolition works",
+          "wbs": "2",
+          "taskType": "DEMOLITION",
+          "children": [
+            {
+              "name": "Demolish existing fit-out",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Partially break out floor",
+              "duration": 3
+            },
+            {
+              "name": "Open up rear facade for extension",
+              "duration": 5,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "3. Extension",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Foundations, extension",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Structural steel, extension",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Roof and facade, extension",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Floor, extension",
+              "duration": 3
+            }
+          ]
+        },
+        {
+          "name": "4. Building services",
+          "wbs": "4",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Renew cooling installation",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Electrical, extension",
+              "duration": 5
+            },
+            {
+              "name": "Ventilation and air conditioning",
+              "duration": 5
+            },
+            {
+              "name": "Fire alarm system",
+              "duration": 3
+            }
+          ]
+        },
+        {
+          "name": "5. Fit-out & furnishing",
+          "wbs": "5",
+          "children": [
+            {
+              "name": "Lay floor tiles",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Ceilings and lighting",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Shelving and refrigeration",
+              "duration": 5,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Checkout island",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Stocking and fit-out",
+              "duration": 3,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Reopening",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-fietstunnel-arnhem",
+      "name": "Cycle Tunnel, Arnhem Station",
+      "description": "Underground cycle tunnel beneath a railway yard",
+      "startDate": "2026-03-02",
+      "endDate": "2026-12-01",
+      "author": "Marian Bos",
+      "company": "Tunnel Construction East BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Divert cables and pipes",
+              "duration": 8,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Plan track possessions",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Install sheet piling",
+              "duration": 10,
+              "taskType": "CONSTRUCTION",
+              "isCritical": true
+            },
+            {
+              "name": "Set up site",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Excavation pit",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Install struts",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Excavation, phase 1",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Excavation, phase 2",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Groundwater dewatering",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Underwater concrete",
+              "duration": 5,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "3. Tunnel structure",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Tunnel box floor",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Tunnel box walls",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Tunnel box roof",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Waterproofing",
+              "duration": 5
+            },
+            {
+              "name": "Backfill and compact",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            }
+          ]
+        },
+        {
+          "name": "4. Approach ramps",
+          "wbs": "4",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "North approach ramp, concrete works",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "South approach ramp, concrete works",
+              "duration": 8,
+              "depType": "SS",
+              "lag": 3
+            },
+            {
+              "name": "Cycle path ramp",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "5. Building services & finishing",
+          "wbs": "5",
+          "children": [
+            {
+              "name": "Tunnel lighting",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Pump installation",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Ventilation",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Tiling and wall finishes",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Cycle path asphalt",
+              "duration": 3,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Signage",
+              "duration": 2,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "6. Handover",
+          "wbs": "6",
+          "children": [
+            {
+              "name": "Reinstate track",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Testing and inspection",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Tunnel open to traffic",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-datacenter",
+      "name": "Agriport A7 Data Centre",
+      "description": "5,000 m2 data centre with its own power supply",
+      "startDate": "2026-03-02",
+      "endDate": "2027-03-01",
+      "author": "Vincent Kok",
+      "company": "Digital Infrastructure BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Prepare site for construction",
+              "duration": 8,
+              "taskType": "CONSTRUCTION",
+              "isCritical": true
+            },
+            {
+              "name": "10 kV utility connections",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Temporary security fencing",
+              "duration": 3,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Pile driving, foundation piles",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Foundation beams",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Pour slab on piles",
+              "duration": 8
+            },
+            {
+              "name": "Cable trays in floor",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "3. Structure",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Precast concrete walls",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Structural steel, roof",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Sandwich roof panels",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Raised computer floor",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & weathertight",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Facade insulation and cladding",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Loading docks and doors",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Roof waterproofing",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Power & cooling",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "10 kV transformers",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "UPS systems",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Emergency generators",
+              "duration": 8
+            },
+            {
+              "name": "Main distribution and PDUs",
+              "duration": 10
+            },
+            {
+              "name": "Chillers",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "CRAH units, data halls",
+              "duration": 8
+            },
+            {
+              "name": "External cooling towers",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "6. ICT & security",
+          "wbs": "6",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Incoming fibre optics",
+              "duration": 5
+            },
+            {
+              "name": "Patch panels and cabling",
+              "duration": 8
+            },
+            {
+              "name": "Gas fire suppression system",
+              "duration": 5
+            },
+            {
+              "name": "Biometric access control",
+              "duration": 5
+            },
+            {
+              "name": "CCTV system",
+              "duration": 5
+            },
+            {
+              "name": "BMS monitoring",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Test failover scenario",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Site finishing",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Tier III certification",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-dijk-markermeerdijk",
+      "name": "Markermeerdijk Dike Reinforcement",
+      "description": "Dike reinforcement over a 5 km stretch, Hoorn-Amsterdam",
+      "startDate": "2026-03-02",
+      "endDate": "2027-09-01",
+      "author": "Dirk Waterschap",
+      "company": "Hydraulic Engineering Holland BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Ecological survey",
+              "duration": 10,
+              "taskType": "ATTENDANCE",
+              "isCritical": true
+            },
+            {
+              "name": "Water management permits",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Complete land acquisition",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Construct site roads",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Set up depots",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Start of works",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Preloading",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Deliver soil to depot",
+              "duration": 15,
+              "taskType": "LOGISTIC",
+              "isCritical": true
+            },
+            {
+              "name": "Preloading, km 0-1",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Preloading, km 1-2",
+              "duration": 10,
+              "depType": "SS",
+              "lag": 5
+            },
+            {
+              "name": "Preloading, km 2-3",
+              "duration": 10
+            },
+            {
+              "name": "Await settlement period",
+              "duration": 20,
+              "isCritical": true
+            },
+            {
+              "name": "Settlement monitoring",
+              "duration": 20,
+              "taskType": "ATTENDANCE",
+              "depType": "SS"
+            }
+          ]
+        },
+        {
+          "name": "3. Embankment",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Remove preloading",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Install geotextile",
+              "duration": 8
+            },
+            {
+              "name": "Build up clay core, km 0-2",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "Build up clay core, km 2-5",
+              "duration": 15
+            },
+            {
+              "name": "Place sand core",
+              "duration": 12
+            },
+            {
+              "name": "Survey profile check",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            }
+          ]
+        },
+        {
+          "name": "4. Revetment & erosion protection",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "Stone revetment, inner slope",
+              "duration": 12,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Grass cover, outer slope",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Toe structure, waterside",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Place toe protection berm",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            }
+          ]
+        },
+        {
+          "name": "5. Civil structures",
+          "wbs": "5",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Culvert renovation",
+              "duration": 10
+            },
+            {
+              "name": "Modify pumping station",
+              "duration": 8,
+              "taskType": "RENOVATION"
+            },
+            {
+              "name": "Barrier lock maintenance",
+              "duration": 5,
+              "taskType": "MAINTENANCE"
+            },
+            {
+              "name": "Stairs and transitions",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "6. Finishing & reinstatement",
+          "wbs": "6",
+          "children": [
+            {
+              "name": "Reinstate dike road",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Construct cycle path",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Ecological restoration",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Fencing and signage",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-hotel-scheveningen",
+      "name": "120-Room Hotel, Scheveningen",
+      "description": "New-build six-storey seafront hotel with wellness facilities",
+      "startDate": "2026-03-02",
+      "endDate": "2027-07-01",
+      "author": "Chantal Zee",
+      "company": "Coastal Construction BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Demolish existing building",
+              "duration": 10,
+              "taskType": "DEMOLITION",
+              "isCritical": true
+            },
+            {
+              "name": "Set up site",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Foundation survey",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Start of new build",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Sheet piling, boulevard",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Excavate basement",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Foundation piles",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Basement floor, wellness",
+              "duration": 8
+            },
+            {
+              "name": "Basement walls",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "3. Structural works",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Ground floor lobby",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Floor 1 rooms",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Floor 2 rooms",
+              "duration": 8
+            },
+            {
+              "name": "Floor 3 rooms",
+              "duration": 8
+            },
+            {
+              "name": "Floor 4 rooms",
+              "duration": 8
+            },
+            {
+              "name": "Floor 5 rooms",
+              "duration": 8
+            },
+            {
+              "name": "Penthouse floor",
+              "duration": 10
+            },
+            {
+              "name": "Roof terrace structure",
+              "duration": 8
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade",
+          "wbs": "4",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Curtain wall, sea side",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Curtain wall, land side",
+              "duration": 10
+            },
+            {
+              "name": "Natural stone cladding",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Window frames and glazing",
+              "duration": 8
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Main electrical distribution",
+              "duration": 8
+            },
+            {
+              "name": "Risers, all services",
+              "duration": 12
+            },
+            {
+              "name": "VRF climate system",
+              "duration": 10,
+              "depType": "SS",
+              "lag": 5
+            },
+            {
+              "name": "Ventilation and air handling",
+              "duration": 10
+            },
+            {
+              "name": "Lift installation (2 units)",
+              "duration": 15
+            },
+            {
+              "name": "Sprinkler and fire alarm",
+              "duration": 8
+            },
+            {
+              "name": "Wellness building services",
+              "duration": 10
+            },
+            {
+              "name": "Hotel automation",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Prefab room walls",
+              "duration": 12
+            },
+            {
+              "name": "Prefab bathroom pods",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Screeds and carpet",
+              "duration": 8
+            },
+            {
+              "name": "Luxury lobby finishes",
+              "duration": 10
+            },
+            {
+              "name": "Restaurant kitchen",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Painting",
+              "duration": 10
+            },
+            {
+              "name": "Room furnishing",
+              "duration": 10,
+              "taskType": "LOGISTIC"
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Finish roof terrace",
+              "duration": 5,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "External areas, boulevard",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Testing and commissioning",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Hotel handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-station-breda",
+      "name": "Breda Railway Station Extension",
+      "description": "Extension of the station concourse and an extra platform with underpass",
+      "startDate": "2026-02-02",
+      "endDate": "2027-10-01",
+      "author": "Willem Spoor",
+      "company": "Station Construction BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Phasing of rail traffic",
+              "duration": 5,
+              "taskType": "ATTENDANCE",
+              "isCritical": true
+            },
+            {
+              "name": "Temporary platform facility",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Rail cables and pipes",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Set up site",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Start of works",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Underpass",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Sheet piling, tunnel",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Track possession, weekend 1",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Excavate tunnel box",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Pour tunnel floor",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Pour tunnel walls",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Place precast tunnel roof",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Track possession, weekend 2",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Tunnel waterproofing",
+              "duration": 8
+            },
+            {
+              "name": "Backfill over tunnel",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            }
+          ]
+        },
+        {
+          "name": "3. Platform structure",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Prefab platform edges",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Platform infill",
+              "duration": 5
+            },
+            {
+              "name": "Lay platform tiles",
+              "duration": 8
+            },
+            {
+              "name": "Steel canopy",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Glass canopy",
+              "duration": 8
+            },
+            {
+              "name": "Install stairs and lifts",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "4. Station concourse extension",
+          "wbs": "4",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Structural steel, hall",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Glass facade and roof",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Natural stone flooring",
+              "duration": 8
+            },
+            {
+              "name": "Shopfronts",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Platform power and lighting",
+              "duration": 8
+            },
+            {
+              "name": "Passenger information systems",
+              "duration": 5
+            },
+            {
+              "name": "Install escalators",
+              "duration": 10
+            },
+            {
+              "name": "Public address system",
+              "duration": 3
+            },
+            {
+              "name": "CCTV and security",
+              "duration": 5
+            },
+            {
+              "name": "HVAC installation, hall",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "6. Track & finishing",
+          "wbs": "6",
+          "children": [
+            {
+              "name": "Lay track at new platform",
+              "duration": 10,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Overhead line portals",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Overhead line commissioning",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Signalling and safety systems",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Painting and finishing",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Platform trial operation",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Remove temporary facilities",
+              "duration": 5,
+              "taskType": "DEMOLITION"
+            },
+            {
+              "name": "Station in service",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-ikc-school",
+      "name": "New-Build Primary School (Integrated Child Centre)",
+      "description": "Integrated child centre with school, after-school care and day care",
+      "startDate": "2026-03-02",
+      "endDate": "2027-03-01",
+      "author": "Femke Onderwijs",
+      "company": "School Construction West BV",
+      "phases": [
+        {
+          "name": "1. Preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Prepare construction site",
+              "duration": 5,
+              "taskType": "CONSTRUCTION",
+              "isCritical": true
+            },
+            {
+              "name": "Set up site",
+              "duration": 3,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Pile driving, foundation piles",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Foundation beams and pile caps",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Below-slab drainage",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Pour ground floor slab",
+              "duration": 5,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "3. Structural works",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Ground floor masonry",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Precast upper floor slab",
+              "duration": 5,
+              "isCritical": true
+            },
+            {
+              "name": "Upper floor masonry",
+              "duration": 10
+            },
+            {
+              "name": "CLT roof structure",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "EPDM roofing",
+              "duration": 5
+            },
+            {
+              "name": "Install sedum roof",
+              "duration": 3
+            },
+            {
+              "name": "Topping out",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "4. Facade & roof",
+          "wbs": "4",
+          "children": [
+            {
+              "name": "ETICS facade insulation",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Aluminium window frames",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Facade finish, brick slips",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Roof solar panels",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Wind and weathertight",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Building services",
+          "wbs": "5",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Electrical and data",
+              "duration": 8
+            },
+            {
+              "name": "Air-to-water heat pump",
+              "duration": 5
+            },
+            {
+              "name": "Underfloor heating",
+              "duration": 8,
+              "depType": "SS",
+              "lag": 2
+            },
+            {
+              "name": "CO2-controlled ventilation",
+              "duration": 8
+            },
+            {
+              "name": "Sanitary pipework",
+              "duration": 5
+            },
+            {
+              "name": "Fire alarm and evacuation",
+              "duration": 3
+            }
+          ]
+        },
+        {
+          "name": "6. Fit-out",
+          "wbs": "6",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Internal walls, metal stud",
+              "duration": 8
+            },
+            {
+              "name": "Acoustic ceilings",
+              "duration": 5
+            },
+            {
+              "name": "Screed floors",
+              "duration": 5
+            },
+            {
+              "name": "Tiling, sanitary areas",
+              "duration": 5
+            },
+            {
+              "name": "Painting",
+              "duration": 8
+            },
+            {
+              "name": "Linoleum floor finish",
+              "duration": 5
+            },
+            {
+              "name": "Outdoor playground",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            }
+          ]
+        },
+        {
+          "name": "7. Handover",
+          "wbs": "7",
+          "children": [
+            {
+              "name": "Classroom furnishing",
+              "duration": 5,
+              "taskType": "LOGISTIC"
+            },
+            {
+              "name": "Testing and commissioning",
+              "duration": 3,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Child centre handover",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proj-woonwijk-almere",
+      "name": "60-Home Residential District, Almere",
+      "description": "New residential district with 40 terraced houses and 20 semi-detached homes",
+      "startDate": "2026-02-02",
+      "endDate": "2028-02-01",
+      "author": "Gerrit Nieuwland",
+      "company": "Flevoland Housing Construction BV",
+      "phases": [
+        {
+          "name": "1. Site preparation",
+          "wbs": "1",
+          "children": [
+            {
+              "name": "Clear and level site",
+              "duration": 8,
+              "taskType": "DEMOLITION",
+              "isCritical": true
+            },
+            {
+              "name": "Install main sewer",
+              "duration": 12,
+              "taskType": "INSTALLATION",
+              "isCritical": true
+            },
+            {
+              "name": "Utility main",
+              "duration": 10,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Construct site roads",
+              "duration": 8,
+              "taskType": "CONSTRUCTION"
+            },
+            {
+              "name": "Start of construction",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "2. Foundations phase 1 (blocks 1-3)",
+          "wbs": "2",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Piling block 1 (10 terraced houses)",
+              "duration": 8,
+              "isCritical": true
+            },
+            {
+              "name": "Piling block 2 (10 terraced houses)",
+              "duration": 8
+            },
+            {
+              "name": "Piling block 3 (10 terraced houses)",
+              "duration": 8,
+              "depType": "SS",
+              "lag": 3
+            },
+            {
+              "name": "Foundation beams, blocks 1-3",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Ground floor slab, blocks 1-3",
+              "duration": 10
+            }
+          ]
+        },
+        {
+          "name": "3. Foundations phase 2 (blocks 4-5)",
+          "wbs": "3",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Piling block 4 (10 terraced houses)",
+              "duration": 8
+            },
+            {
+              "name": "Piling block 5 (10 semi-detached)",
+              "duration": 8,
+              "depType": "SS",
+              "lag": 3
+            },
+            {
+              "name": "Foundation beams, blocks 4-5",
+              "duration": 8
+            },
+            {
+              "name": "Ground floor slab, blocks 4-5",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "4. Structural works phase 1",
+          "wbs": "4",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Masonry ground floor, blocks 1-3",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "Upper floor slab, blocks 1-3",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Masonry upper floor, blocks 1-3",
+              "duration": 15
+            },
+            {
+              "name": "Roof structure, blocks 1-3",
+              "duration": 12,
+              "isCritical": true
+            },
+            {
+              "name": "Roof tiles, blocks 1-3",
+              "duration": 10
+            },
+            {
+              "name": "Topping out, phase 1",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "5. Structural works phase 2",
+          "wbs": "5",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Masonry ground floor, blocks 4-5",
+              "duration": 15
+            },
+            {
+              "name": "Upper floor slab, blocks 4-5",
+              "duration": 8
+            },
+            {
+              "name": "Masonry upper floor, blocks 4-5",
+              "duration": 12
+            },
+            {
+              "name": "Roof structure, blocks 4-5",
+              "duration": 10
+            },
+            {
+              "name": "Roof tiles, blocks 4-5",
+              "duration": 8
+            },
+            {
+              "name": "Topping out, phase 2",
+              "milestone": true
+            }
+          ]
+        },
+        {
+          "name": "6. Facades & roofs",
+          "wbs": "6",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Window frames, blocks 1-3",
+              "duration": 10,
+              "isCritical": true
+            },
+            {
+              "name": "Window frames, blocks 4-5",
+              "duration": 8
+            },
+            {
+              "name": "Facade sealing and insulation",
+              "duration": 12
+            },
+            {
+              "name": "Gutters and rainwater downpipes",
+              "duration": 8
+            },
+            {
+              "name": "Wind and weathertight, all blocks",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        },
+        {
+          "name": "7. Building services",
+          "wbs": "7",
+          "taskType": "INSTALLATION",
+          "children": [
+            {
+              "name": "Electrical, blocks 1-3",
+              "duration": 12
+            },
+            {
+              "name": "Electrical, blocks 4-5",
+              "duration": 8,
+              "depType": "SS",
+              "lag": 5
+            },
+            {
+              "name": "Plumbing, blocks 1-3",
+              "duration": 10
+            },
+            {
+              "name": "Plumbing, blocks 4-5",
+              "duration": 8
+            },
+            {
+              "name": "Heat pumps, all dwellings",
+              "duration": 15
+            },
+            {
+              "name": "Heat recovery ventilation units",
+              "duration": 10
+            }
+          ]
+        },
+        {
+          "name": "8. Fit-out phase 1",
+          "wbs": "8",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Plastering, blocks 1-3",
+              "duration": 15
+            },
+            {
+              "name": "Tiling, blocks 1-3",
+              "duration": 10
+            },
+            {
+              "name": "Kitchens, blocks 1-3",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Painting, blocks 1-3",
+              "duration": 10
+            },
+            {
+              "name": "Floor finishes, blocks 1-3",
+              "duration": 8
+            }
+          ]
+        },
+        {
+          "name": "9. Fit-out phase 2",
+          "wbs": "9",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Plastering, blocks 4-5",
+              "duration": 12
+            },
+            {
+              "name": "Tiling, blocks 4-5",
+              "duration": 8
+            },
+            {
+              "name": "Kitchens, blocks 4-5",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Painting, blocks 4-5",
+              "duration": 8
+            },
+            {
+              "name": "Floor finishes, blocks 4-5",
+              "duration": 5
+            }
+          ]
+        },
+        {
+          "name": "10. Final site works",
+          "wbs": "10",
+          "taskType": "CONSTRUCTION",
+          "children": [
+            {
+              "name": "Connect permanent sewer",
+              "duration": 8,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Paving and pavements",
+              "duration": 15,
+              "isCritical": true
+            },
+            {
+              "name": "Construct parking spaces",
+              "duration": 8
+            },
+            {
+              "name": "Landscaping and trees",
+              "duration": 10
+            },
+            {
+              "name": "Play equipment",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            },
+            {
+              "name": "Street lighting",
+              "duration": 5,
+              "taskType": "INSTALLATION"
+            }
+          ]
+        },
+        {
+          "name": "11. Handover",
+          "wbs": "11",
+          "children": [
+            {
+              "name": "Pre-handover inspection, phase 1",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Pre-handover inspection, phase 2",
+              "duration": 5,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Handover of dwellings",
+              "duration": 10,
+              "taskType": "ATTENDANCE"
+            },
+            {
+              "name": "Residential district complete",
+              "milestone": true,
+              "isCritical": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

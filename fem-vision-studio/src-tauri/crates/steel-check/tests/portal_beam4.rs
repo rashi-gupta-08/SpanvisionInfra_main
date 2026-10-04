@@ -1,0 +1,270 @@
+//! Portal Frame Beam 4 acceptance test — HEB300 S235 (horizontal ridge beam).
+//!
+//! Reference: verificatie calculations/original/portal-frame.pdf §2.6.4 (page 60-64)
+//! Profile: HEB300. Beam length: 5000 mm. TENSION member (Nx positive).
+//! Governing check: 6.2.5 bending, UC = 0.62.
+//!
+//! LTB: 2 lateral restraints at 1667 mm spacing, C1=1.582, M_cr=7883.581 kNm,
+//!       lambda_LT=0.236 < 0.4, chi_LT=1.00
+//! Reference: Combination 2.1 (id=21) governs bending; 1.1 (id=11) for LTB.
+//!
+//! WAAROM DE SNAPSHOT IN SEPTEMBER 2026 IS VERSCHOVEN
+//! Alleen de regel `deflection_w_add` verandert, en daarbinnen alleen de
+//! GRENSWAARDE, het artikel en de toelichting — niet een unity check. De
+//! w_add-noemer stond vast op 150 ("conform de referentie-uitwerking"), maar
+//! NEN-EN 1990:2002/NB:2019 A1.4.3(3) geeft ℓ_rep/150 uitsluitend voor
+//! vloerafscheidingen ter plaatse van een hoogteverschil. Voor deze staaf geldt
+//! het tweede gedachtestreepje — "overige vloeren en daken die intensief door
+//! personen worden gebruikt" — dus 3/1 000 deel van ℓ_rep: 15.0 mm in plaats
+//! van de oude 33.33 mm bij L = 5000 mm.
+//! De unity check blijft 0,00 omdat `deflection_actual_max_mm` in deze test 0 is;
+//! de referentie-uitwerking rekent de doorbuiging niet mee in deze staaf.
+//!
+//! WAAROM DE SNAPSHOT OP 15 SEPTEMBER 2026 IS VERSCHOVEN (knik om de zwakke as)
+//! Alleen de toets `6.3.1_buckling` verandert, en daarin geen enkel getal dat
+//! al bestond. De titel noemt beide assen met hun vlak; `variables` krijgt
+//! L_cr,y en L_cr,z, `intermediate_values` N_b,Rd per as; de afleiding
+//! (`deelstappen`) schrijft per as een volledige tak uit; en de Engelse notitie
+//! "Governing axis" is vervangen door Nederlandse kanttekeningen met de
+//! herkomst van de kniklengte. Waarde, unity check, status en alle bestaande
+//! variabelen en tussenwaarden zijn gelijk gebleven — bij het bijwerken per veld
+//! nagelopen.
+//!
+//! WAAROM DE SNAPSHOT OP 15 SEPTEMBER 2026 NOGMAALS IS VERSCHOVEN (kipvelden)
+//! Eén regel erbij, geen getal veranderd: de deelstap `uitgangspunten` van de
+//! kiptoets krijgt de notitie "Overzicht per kipveld" met per veld L_st, β,
+//! L_kip en M_cr. Die getallen rekende de kern al uit om het maatgevende veld
+//! te kiezen, maar ze stonden nergens. Per veld nagelopen tegen NB.NB.4.3,
+//! L_kip = (1,4 − 0,8·β)·L_st met 1,0 ≤ L_kip/L_st ≤ 1,4:
+//! veld 1 β = 1,000 → 0,6 → ondergrens 1,0 → 1667 mm;
+//! veld 2 β = 0,639 → 0,889 → ondergrens 1,0 → 1666 mm;
+//! veld 3 β = −0,118 → 1,494 → bovengrens 1,4 → 1,4·1667 = 2334 mm.
+//! Veld 1 heeft de laagste M_cr (10 062,4 kNm) en blijft maatgevend; L_kip,
+//! M_cr, χ_LT, de unity check en alle overige velden zijn ongewijzigd.
+
+use steel_check::*;
+use mechanics::{InternalForces, ForcePoint};
+use nen_en_1993_1_1_ltb::LateralBracing;
+use nen_en_1990::ConsequenceClass;
+use nen_en_1993_1_1_section::{CheckStatus, classification::CrossSectionClass};
+use approx::assert_relative_eq;
+use std::sync::OnceLock;
+
+fn run() -> &'static BeamCheckResult {
+    static RESULT: OnceLock<BeamCheckResult> = OnceLock::new();
+    RESULT.get_or_init(|| {
+        let input = BeamCheckInput {
+            bijlage: Default::default(),
+            beam_id: 4,
+            profile_name: "HEB300".to_string(),
+            steel_grade: "S235".to_string(),
+            length_m: 5.0,
+            forces_envelope: vec![
+                // Combination 2.1 (id=21), x=2491 mm: tension + bending (decisive)
+                ForcePoint {
+                    combination_id: 21,
+                    position_mm: 2491.0,
+                    forces: InternalForces { n_ed: 18.479, vy_ed: 0.0, vz_ed: 0.0, mt_ed: 0.0, my_ed: 273.135, mz_ed: 0.0 },
+                },
+                // Combination 2.1 (id=21), x=5000 mm: shear check
+                ForcePoint {
+                    combination_id: 21,
+                    position_mm: 5000.0,
+                    forces: InternalForces { n_ed: 18.479, vy_ed: 0.0, vz_ed: -234.164, mt_ed: 0.0, my_ed: -20.602, mz_ed: 0.0 },
+                },
+                // Combination 1.1 (id=11), x=2491 mm: used for LTB check
+                ForcePoint {
+                    combination_id: 11,
+                    position_mm: 2491.0,
+                    forces: InternalForces { n_ed: 16.042, vy_ed: 0.0, vz_ed: 134.475, mt_ed: 0.0, my_ed: 237.241, mz_ed: 0.0 },
+                },
+            ],
+            // 2 lateral restraints at 1667 mm and 3333 mm from start (5000 mm beam)
+            // Stored as fractions of beam length per unbraced_length_mm() convention:
+            // 1667/5000 = 0.3334, 3333/5000 = 0.6666
+            lateral_bracing: LateralBracing {
+                top_flange_positions: vec![0.3334, 0.6666],
+                bottom_flange_positions: vec![],
+            },
+            // Reference: Lcr,y=5000 mm, Lcr,z (not critical: chi_LT=1.0)
+            buckling_length_y_m: 5.0,
+            buckling_length_z_m: 5.0,
+            deflection_limit_class: DeflectionClass::Floor,
+            deflection_limit_numerator: 333,
+            deflection_actual_max_mm: 0.0,
+            is_cantilever: false,
+            consequence_class: ConsequenceClass::CC1,
+            pre_camber_mm: 0.0,
+            deflection_permanent_mm: 0.0,
+            deflection_add_limit_numerator: 0.0,
+            deflection_notes: vec![],
+            q_equiv_n_per_mm: 0.0,
+            z_a_mm: 0.0,
+            custom_section: None,
+            staafstand: None,
+            staafstand_notities: None,
+            staafeinden: None,
+            staaf_notities: None,
+            profile_end: None,
+            custom_section_end: None,
+        };
+        check_beam(input)
+    })
+}
+
+fn find_check<'a>(result: &'a BeamCheckResult, id: &str) -> &'a NamedCheck {
+    result.checks.iter().find(|c| c.id == id)
+        .unwrap_or_else(|| panic!("check '{}' not found; available: {:?}", id,
+            result.checks.iter().map(|c| c.id.as_str()).collect::<Vec<_>>()))
+}
+
+fn resistance_value(result: &BeamCheckResult, id: &str) -> f64 {
+    match &find_check(result, id).kind {
+        CheckKind::Resistance(r) => r.value,
+        CheckKind::Stability(s) => s.value,
+    }
+}
+
+fn uc_value(result: &BeamCheckResult, id: &str) -> f64 {
+    match &find_check(result, id).kind {
+        CheckKind::Resistance(r) => r.uc.as_ref().expect("expected UC").uc,
+        CheckKind::Stability(s) => s.uc.as_ref().expect("expected UC").uc,
+    }
+}
+
+/// Een tussenwaarde van een stabiliteitstoets, op symbool.
+///
+/// Nodig sinds `value` van de kiptoets de uitkomst van háár eigen formule is
+/// (M_b,Rd in kNm) en niet langer χ_LT; die staat in de tussenwaarden.
+fn intermediate(result: &BeamCheckResult, id: &str, symbool: &str) -> f64 {
+    match &find_check(result, id).kind {
+        CheckKind::Stability(s) => s
+            .intermediate_values
+            .iter()
+            .find(|v| v.symbol == symbool)
+            .unwrap_or_else(|| panic!("tussenwaarde {symbool} ontbreekt bij {id}"))
+            .value,
+        CheckKind::Resistance(_) => panic!("{id} is geen stabiliteitstoets"),
+    }
+}
+
+#[test]
+fn portal_beam4_bending() {
+    let r = run();
+    // Reference: M_y,c,Rd = 439.199 kNm, UC = 0.62
+    assert_relative_eq!(resistance_value(r, "6.2.5_bending_y"), 439.199, max_relative = 1e-3);
+    assert_relative_eq!(uc_value(r, "6.2.5_bending_y"), 0.62, max_relative = 0.02);
+}
+
+#[test]
+fn portal_beam4_shear() {
+    let r = run();
+    // Reference: V_c,z,Rd = 643.8 kN (Av=4745 mm²), UC = 0.36 (at x=5000 mm, Vz=-234.164 kN)
+    // Our profile DB: Av_z=4742 mm² → V_c,z,Rd = 643.4 kN
+    // Phase 13-A fix: orchestrator now picks max |Vz| as governing for shear check.
+    // → position x=5000 mm, Vz=-234.164 kN, UC = 234.164 / 643.4 ≈ 0.364
+    assert_relative_eq!(resistance_value(r, "6.2.6_shear_z"), 643.4, max_relative = 1e-2);
+    // UC close to reference 0.36 (small delta due to profile DB Av_z: 4742 vs reference 4745 mm²)
+    assert_relative_eq!(uc_value(r, "6.2.6_shear_z"), 0.364, max_relative = 0.02);
+}
+
+#[test]
+fn portal_beam4_ltb_chi_is_one() {
+    let r = run();
+    // Reference: lambda_LT = 0.236 < 0.4, so chi_LT = 1.00.
+    // The LTB result value IS chi_LT per the orchestrator convention.
+    // We check that M_b,Rd (indirectly via 6.3.2_ltb value or UC) reflects chi_LT=1.0.
+    // UC_LTB = M_y,Ed / M_b,Rd = 273.135 / 439.199 = 0.622 (same as pure bending since chi_LT=1)
+    let ltb_uc = uc_value(r, "6.3.2_ltb");
+    // Sept 2026: de twee TODO's uit fase 13 vroegen om verificatie van M_cr
+    // voor de HEB 300 mét kipsteunen. Die is er nu, dankzij de kipreparatie —
+    // en de uitkomst is ONVERANDERD gebleven, zie hieronder. De tolerantie van
+    // 5 % blijft staan omdat de referentie met de algemene EN-formule voor
+    // M_cr rekent en onze kern met de Nederlandse bijlage; dat methodeverschil
+    // is groter dan de rekennauwkeurigheid en hoort niet weggetolereerd te
+    // worden.
+    assert_relative_eq!(ltb_uc, 0.622, max_relative = 0.05);
+    // χ_LT = 1,00 is de eigenlijke bewering; die mag exact. De verwachting is
+    // onveranderd — alleen het veld waaruit χ_LT komt is verhuisd: `value` van
+    // de kiptoets is nu de uitkomst van háár eigen formule (M_b,Rd in kNm),
+    // zoals de kniktoets van 6.3.1 N_b,Rd in kN levert.
+    assert_relative_eq!(intermediate(r, "6.3.2_ltb", r"\chi_{LT}"), 1.0, max_relative = 1e-12);
+    // En `value` is dan ook werkelijk M_b,Rd: bij χ_LT = 1 valt die samen met
+    // de doorsnedeweerstand M_y,c,Rd van 6.2.5 — 439,199 kNm.
+    assert_relative_eq!(resistance_value(r, "6.3.2_ltb"), 439.199, max_relative = 1e-3);
+}
+
+#[test]
+fn portal_beam4_governing_ok() {
+    let r = run();
+    // Reference: all checks OK, UC_max = 0.62 (bending governs)
+    assert!(r.uc_max < 1.0, "expected uc_max < 1.0 (reference: 0.62), got {}", r.uc_max);
+    assert_eq!(r.status, CheckStatus::Ok);
+}
+
+/// Regressiesnapshot van het volledige resultaat.
+///
+/// Sept 2026 (b) bijgewerkt na de nabeschouwing op de kipreparatie.
+/// **Geen enkele unity check en geen enkele tussenwaarde verandert**; het
+/// verschil met de vorige snapshot zit volledig in de notitieteksten:
+///  * de kipkrommenotitie is per rij van tabel 6.5 apart geformuleerd. Zij
+///    stond onvoorwaardelijk als "volgens tabel 6.5", ook voor doorsneden
+///    waarvoor die tabel geen rij heeft — precies de kloof tussen commentaar en
+///    code die de reparatie zelf moest dichten, terug op de plek waar de
+///    constructeur hem leest. De krommeletter staat nu bovendien klein, zoals de
+///    norm hem schrijft, en de getallen met een decimale komma;
+///  * er komt een notitie bij dat vgl. (6.58) — χ_LT,mod — niet is toegepast.
+///    Het artikellabel van deze toets noemt 6.3.2.3; dan hoort het rapport te
+///    zeggen welk deel daarvan is overgeslagen. Weglaten is veilig-zijdig
+///    (f ≤ 1, dus χ_LT,mod ≥ χ_LT), maar niet stilzwijgend;
+///  * er komt een notitie bij dat de omhullende van de maatgevende
+///    combinatie is bemonsterd van x = 2491 tot x = 5000 mm op een staaf van
+///    5000 mm: het eindmoment aan de beginzijde is vastgehouden, niet gemeten.
+///
+/// Sept 2026 bijgewerkt na de kipreparatie, maar **geen enkel getal is
+/// veranderd**. Alleen de nieuwe tussenwaarde α_LT = 0,34 is bijgekomen.
+///
+/// Dit is de enige ligger in de suite met échte kipsteunen (twee, op 1667 en
+/// 3333 mm), en dus het geval waar de veldindeling er het meest toe doet. De
+/// drie velden krijgen elk hun eigen β en L_kip:
+///   [0 ; 1667]     M = 273,135 en 273,135 → β = +1,00 → L_kip = 1667 mm
+///   [1667 ; 3333]  M = 273,135 en 174,55  → β = +0,64 → L_kip = 1667 mm
+///   [3333 ; 5000]  M = 174,55 en −20,602  → β = −0,12 → L_kip = 2334 mm
+/// Het eerste veld heeft de laagste M_cr en is dus maatgevend — nét, want het
+/// derde veld komt er met zijn 40 % langere kiplengte dicht bij (C = 30,70
+/// tegen 30,76). Dat het maatgevende veld het KORTSTE van de drie is, laat
+/// zien waarom "het langste veld" niet als criterium kan dienen.
+///
+/// Het maatgevende veld levert β = +1 en L_kip = L_st = 1667 mm; toevallig
+/// precies wat de oude kwartpuntbenadering hier ook opleverde (die las op
+/// x = 417 mm af, waar de envelop nog op M_max staat, en de formule kapte
+/// (1,4 − 0,8) op de ondergrens 1,0 af). λ_LT blijft 0,209 en dus χ_LT = 1,00,
+/// zoals in de referentie (λ_LT = 0,236). HEB 300 heeft h/b = 1,0 ≤ 2, dus
+/// tabel 6.5 geeft kromme b met dezelfde α_LT = 0,34 die er vast stond.
+/// September 2026 (f) — bijlage B en tabel 3.1 (basisaudit nr 7, 17, 36).
+/// Drie wijzigingen, alle drie per veld nagelopen en met de hand nagerekend
+/// (formules van tabel B.1/B.2/B.3, invoer uit deze snapshot zelf):
+///  * 6.3.3 rekent niet meer met een vaste C_m = 0,6 en tabel B.1, maar met
+///    C_my, C_mz en C_mLT uit tabel B.3 (uit het momentenverloop van
+///    respectievelijk de staaf, de staaf om z en het maatgevende kipveld) en,
+///    voor een open doorsnede met χ_LT < 1, k_zy uit tabel B.2. De variabelen
+///    C_my, C_mz en C_mLT komen erbij en de notities beschrijven de rij van
+///    tabel B.3 en de gebruikte tabel voor k_zy.
+///  * Elke gerekende toets met f_y in haar formule krijgt de notitie van
+///    tabel 3.1 (dikteklasse t ≤ 40 mm; f_y en f_u ongewijzigd voor deze
+///    doorsnede).
+///  * Geen enkele weerstand, χ, λ̄, M_cr of doorbuiging verandert.
+/// Getallen (HEB 300, klasse 1, λ̄_y = 0,4096, λ̄_z = 0,7024, n_y = 0,0057,
+/// n_z = 0,0073, χ_LT = 1,0 → tabel B.1):
+///   C_my = 0,5698 — rij 1: M(2491) = 273,13, M(5000) = −20,60, ψ = −0,075.
+///   C_mLT = 1,0 — het maatgevende kipveld is het eerste (0–1667 mm), waar de
+///   bemonstering vóór x = 2491 het moment vasthoudt op 273,13: constant,
+///   ψ = 1. Rekent niet mee: bij χ_LT = 1 geldt tabel B.1 en k_zy = 0,6·k_yy.
+///   k_yy = 0,5698·(1 + 0,2096·0,0057) = 0,5705 (was 0,6007), k_zy = 0,3423,
+///   k_zz = 1 + (2·0,7024 − 0,6)·0,0073 = 1,0059, k_yz = 0,6035.
+///   6.61 = 0,0057 + 0,5705·273,13/439,45 = 0,3603 (was 0,3791); 6.62 = 0,2201
+///   (was 0,2313). uc_max blijft 0,6215 op 6.2.5.
+#[test]
+fn portal_beam4_snapshot() {
+    insta::assert_json_snapshot!("portal_beam4", run());
+}

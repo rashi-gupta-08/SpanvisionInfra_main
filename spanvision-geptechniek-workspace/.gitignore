@@ -1,0 +1,41 @@
+# IDE / agent state
+.claude/
+.vscode/
+.idea/
+*.swp
+*~
+
+# Dependencies + build artefacts
+node_modules/
+target/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Rust
+**/*.rs.bk
+
+# Local test/sample data (real CPT files — don't commit)
+sample/
+
+# Test-output (PDF verification rapporten) — lokaal artefact, niet committen
+**/__output__/
+
+# Docs work-in-progress / prompt notes
+PROMPTS.md
+# docs/* (niet docs/) zodat we kunnen white-listen — git ondersteunt
+# geen re-include als de parent-directory volledig genegeerd is.
+docs/*
+# README-screenshots zijn WEL onderdeel van de repo.
+!docs/screenshots/
+# Design specs uit de brainstorming-skill horen ook in de repo.
+!docs/superpowers/
+# REST/MCP-API-documentatie hoort in de repo.
+!docs/API.md
+/export/

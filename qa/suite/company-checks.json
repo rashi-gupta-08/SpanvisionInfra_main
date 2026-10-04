@@ -1,0 +1,85 @@
+{
+  "organization": "SpanvisionInfra",
+  "tools": [
+    {
+      "tool": "CAD",
+      "url": "http://127.0.0.1:4173/app/",
+      "passed": true
+    },
+    {
+      "tool": "2D CAD",
+      "url": "http://127.0.0.1:4220/",
+      "passed": true
+    },
+    {
+      "tool": "Vision BIM Validator",
+      "url": "http://127.0.0.1:4260/home",
+      "passed": true
+    },
+    {
+      "tool": "PDF",
+      "url": "http://127.0.0.1:3084/",
+      "passed": true
+    },
+    {
+      "tool": "IFC",
+      "url": "http://127.0.0.1:3005/",
+      "passed": true
+    },
+    {
+      "tool": "Calc",
+      "url": "http://127.0.0.1:4225/",
+      "passed": true
+    },
+    {
+      "tool": "Open Vision Studio",
+      "url": "http://127.0.0.1:4265/",
+      "passed": true
+    },
+    {
+      "tool": "FEM Vision Studio",
+      "url": "http://127.0.0.1:4270/",
+      "passed": true
+    },
+    {
+      "tool": "Frame Vision Studio",
+      "url": "http://127.0.0.1:4275/",
+      "passed": true
+    },
+    {
+      "tool": "Vision Calculation Studio",
+      "url": "http://127.0.0.1:4280/",
+      "passed": true
+    },
+    {
+      "tool": "Geotechniek",
+      "url": "http://127.0.0.1:4235/",
+      "passed": true
+    },
+    {
+      "tool": "Speech",
+      "url": "http://127.0.0.1:4240/",
+      "passed": true
+    },
+    {
+      "tool": "STL-3D Map",
+      "url": "http://127.0.0.1:8765/",
+      "passed": true
+    },
+    {
+      "tool": "Field Workspace",
+      "url": "http://127.0.0.1:4245/",
+      "passed": true
+    },
+    {
+      "tool": "Pointcloud Workspace",
+      "url": "http://127.0.0.1:4250/",
+      "passed": true
+    },
+    {
+      "tool": "Pile Plane Workspace",
+      "url": "http://127.0.0.1:4255/",
+      "passed": true
+    }
+  ]
+}

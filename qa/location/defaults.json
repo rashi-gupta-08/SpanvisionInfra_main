@@ -1,0 +1,70 @@
+[
+  {
+    "id": "hub",
+    "passed": true
+  },
+  {
+    "id": "cad2d",
+    "passed": true
+  },
+  {
+    "id": "bim",
+    "passed": true
+  },
+  {
+    "id": "pdf",
+    "passed": true
+  },
+  {
+    "id": "ifc",
+    "passed": true
+  },
+  {
+    "id": "calc",
+    "passed": true
+  },
+  {
+    "id": "planner",
+    "passed": true
+  },
+  {
+    "id": "fem",
+    "passed": true
+  },
+  {
+    "id": "frame",
+    "passed": true
+  },
+  {
+    "id": "calculation",
+    "passed": true
+  },
+  {
+    "id": "geo",
+    "passed": true
+  },
+  {
+    "id": "speech",
+    "passed": true
+  },
+  {
+    "id": "stl",
+    "passed": true
+  },
+  {
+    "id": "field",
+    "passed": true
+  },
+  {
+    "id": "pointcloud",
+    "passed": true
+  },
+  {
+    "id": "pile",
+    "passed": true
+  },
+  {
+    "id": "cad",
+    "passed": true
+  }
+]

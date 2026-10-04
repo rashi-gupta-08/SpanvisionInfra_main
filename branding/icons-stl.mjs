@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import sharp from 'sharp';
+import pngToIco from 'png-to-ico';
+import {root} from './common.mjs';
+const app=path.join(root,'spanvision-stl-3d-map-workspace');
+const png=await sharp(fs.readFileSync(path.join(app,'web/stl-mark.svg'))).resize(256).png().toBuffer();
+const ico=await pngToIco(png);
+fs.writeFileSync(path.join(app,'web/favicon.ico'),ico);
+fs.writeFileSync(path.join(app,'packaging/app.ico'),ico);
+fs.writeFileSync(path.join(app,'packaging/app.png'),png);
+console.log('STL favicon and Windows icons generated.');

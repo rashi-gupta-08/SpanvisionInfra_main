@@ -1,0 +1,26 @@
+{
+  "organization": "Spanvision Infra",
+  "product": "Spanvision Infra · Geotechnical",
+  "suiteName": "Spanvision Infra",
+  "mark": "GW",
+  "theme": "spanvision-mono",
+  "version": "0.4.1",
+  "tenant": "spanvision_infra",
+  "services": {
+    "accountsEnabled": false,
+    "updaterEnabled": false,
+    "websiteUrl": null,
+    "supportUrl": null
+  },
+  "palette": {
+    "page": "#000000",
+    "surface": "#121212",
+    "canvas": "#1B1B1B",
+    "raised": "#202020",
+    "text": "#FFFFFF",
+    "textSoft": "#EEEEEE",
+    "muted": "#999999",
+    "border": "rgba(255,255,255,.16)",
+    "focus": "rgba(255,255,255,.58)"
+  }
+}

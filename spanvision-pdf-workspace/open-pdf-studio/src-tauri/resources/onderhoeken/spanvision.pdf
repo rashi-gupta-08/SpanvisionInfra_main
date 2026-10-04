@@ -1,0 +1,291 @@
+%PDF-1.3
+%‚„œ”
+1 0 obj
+<<
+/Producer (pypdf)
+/Author (Spanvision infra)
+/Creator (pdf workspace)
+/Title (Spanvision infra title block)
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Count 1
+/Kids [ 4 0 R ]
+>>
+endobj
+3 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+/Outlines 9 0 R
+>>
+endobj
+4 0 obj
+<<
+/Contents 5 0 R
+/MediaBox [ 1817.00787 28.3464567 2355.59054 340.15748 ]
+/Resources <<
+/Font 6 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+/CropBox [ 1817.00787 28.3464567 2355.59054 340.15748 ]
+/Annots [ 10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 15 0 R 16 0 R 17 0 R 18 0 R 19 0 R 20 0 R 21 0 R ]
+>>
+endobj
+5 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 652
+>>
+stream
+GatUp9lJ`N&;KZQ'm"24R-s>8*aN^t<tRjoP+GMh.b[3#Oda&B_8bDuSC5omi@ru2kBU]'6Ql/tk5TE'n2\@`CBBY1=$RZ]`&fAVL1HtS<Ate!Gg3Z^SfA*r6$cMaC(!LV1gW4>7-KJ8rrdHk)ZBX/-:J*FhLMsK[BY*W*aV%>]#qN<5CB]oO?g85#Uk`R*2b#:H#6B>!pL]YK2UL?L\fsS`#fPo%]<*F4#td2q'!"N;)o.Z-re&\/%/Z"J$351cWaLi=8QQ)qUd3G&7e.X;3YBqe!l!Lmb8(TTD(QWG0@q(Sm9$s3hY'\_Zlnl##1b3lkam;=P@.]gg]KIo51mRlhF/J#[*b\4;%tROPEq/0?#36QF[bZq*p&V:4_)GW5j;o,+u7l[Eul^=eO\M9@NH*X8H`n]6V9qYm!oH:!'<^Wi54kr8[tfk?X_['H>)24?>&,rj8:b[ub.Vhr]'$aab#&Jk?JoZ#Ktm(kj^3Hq`tN@WpuL8i#\!a2OnK#D#WpC]!b%f`0@.$OWD5(#_L&1<Jth)`^%8$lBECVU=RL[lMLK!<t&/"IT>RMg.=ehEr]Z!+cFa_Gb7b+ce9p=WZIRn@G^d#\@9phUP0r2?X5$'$Msd%T=j6]Q$loWd#rXE^'AE7`bQ/5cB9W~>
+endstream
+endobj
+6 0 obj
+<<
+/F1 7 0 R
+/F2 8 0 R
+>>
+endobj
+7 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+8 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+9 0 obj
+<<
+>>
+endobj
+10 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 1831.1811 218.267717 2199.68504 231.267717 ]
+/Contents (Project name)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (projectnaam)
+/NM (projectnaam)
+/P 4 0 R
+>>
+endobj
+11 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 2228.03149 218.267717 2327.24409 231.267717 ]
+/Contents (2026\055001)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (projectnr)
+/NM (projectnr)
+/P 4 0 R
+>>
+endobj
+12 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 1831.1811 178.582677 2100.47244 191.582677 ]
+/Contents (Construction drawing)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (documenttype)
+/NM (documenttype)
+/P 4 0 R
+>>
+endobj
+13 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 2128.81889 178.582677 2341.41732 191.582677 ]
+/Contents (Street\054 number\054 city)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (adres)
+/NM (adres)
+/P 4 0 R
+>>
+endobj
+14 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 1831.1811 138.897638 2199.68504 151.897638 ]
+/Contents (SV\0552026\055001\055A100)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (kenmerk)
+/NM (kenmerk)
+/P 4 0 R
+>>
+endobj
+15 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 2228.03149 138.897638 2327.24409 151.897638 ]
+/Contents (Phase)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (fase)
+/NM (fase)
+/P 4 0 R
+>>
+endobj
+16 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 1831.1811 99.2125984 2199.68504 112.212598 ]
+/Contents (Client name)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (opdrachtgever)
+/NM (opdrachtgever)
+/P 4 0 R
+>>
+endobj
+17 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 2228.03149 99.2125984 2327.24409 112.212598 ]
+/Contents (For review)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (status)
+/NM (status)
+/P 4 0 R
+>>
+endobj
+18 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 1828.34645 51.0236221 1941.73228 64.0236221 ]
+/Contents (1\072100)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (schaal)
+/NM (schaal)
+/P 4 0 R
+>>
+endobj
+19 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 1961.5748 51.0236221 2074.96063 64.0236221 ]
+/Contents (Author name)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (auteur)
+/NM (auteur)
+/P 4 0 R
+>>
+endobj
+20 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 2097.63779 51.0236221 2211.02362 64.0236221 ]
+/Contents (DD\055MM\055YYYY)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (datum\137eerste)
+/NM (datum\137eerste)
+/P 4 0 R
+>>
+endobj
+21 0 obj
+<<
+/Subtype /FreeText
+/Rect [ 2233.70078 51.0236221 2332.91338 64.0236221 ]
+/Contents (01)
+/DS (font\072 normal normal 9pt Helvetica\073text\055align\072left\073color\072\043000000)
+/DA (0 g \057Helv 9 Tf)
+/BS <<
+/W 0
+>>
+/T (wijziging)
+/NM (wijziging)
+/P 4 0 R
+>>
+endobj
+xref
+0 22
+0000000000 65535 f 
+0000000015 00000 n 
+0000000144 00000 n 
+0000000203 00000 n 
+0000000268 00000 n 
+0000000640 00000 n 
+0000001383 00000 n 
+0000001424 00000 n 
+0000001531 00000 n 
+0000001643 00000 n 
+0000001664 00000 n 
+0000001957 00000 n 
+0000002246 00000 n 
+0000002549 00000 n 
+0000002845 00000 n 
+0000003143 00000 n 
+0000003416 00000 n 
+0000003712 00000 n 
+0000003994 00000 n 
+0000004274 00000 n 
+0000004556 00000 n 
+0000004862 00000 n 
+trailer
+<<
+/Size 22
+/Root 3 0 R
+/Info 1 0 R
+>>
+startxref
+5142
+%%EOF

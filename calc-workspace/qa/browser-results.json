@@ -1,0 +1,297 @@
+[
+  {
+    "name": "desktop: start has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: start has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: fresh theme",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: workspace has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: workspace has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: title does not overlap controls",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: settings has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: settings has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: settings fit viewport",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Spanvision Mono is available and selected",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: keyboard focus is visible",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: dialog has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: dialog has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: search dialog fits its workspace",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: report has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: report has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: report has data and no old branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: no uncaught errors",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: no external startup or report requests",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: start has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: start has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: fresh theme",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: workspace has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: workspace has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: title does not overlap controls",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: settings has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: settings has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: settings fit viewport",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: Spanvision Mono is available and selected",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: keyboard focus is visible",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: dialog has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: dialog has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: search dialog fits its workspace",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: report has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: report has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: report has data and no old branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: no uncaught errors",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tablet: no external startup or report requests",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: start has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: start has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: fresh theme",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: workspace has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: workspace has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: title does not overlap controls",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: settings has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: settings has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: settings fit viewport",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: Spanvision Mono is available and selected",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: keyboard focus is visible",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: dialog has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: dialog has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: search dialog fits its workspace",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: report has no page overflow",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: report has only edition branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: report has data and no old branding",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: no uncaught errors",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: no external startup or report requests",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "structured saved theme",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "legacy saved theme",
+    "pass": true,
+    "detail": ""
+  }
+]

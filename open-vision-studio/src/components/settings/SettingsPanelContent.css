@@ -1,0 +1,127 @@
+/* Shared settings panel — used by the gear dialog, the ribbon (via dialog),
+   and the File → Backstage section. Reuses the .settings-* classes from
+   SettingsDialog.css and adds the theme-picker + checkbox styling. */
+
+/* In the Backstage there is no fixed-height shell, so give the panel a
+   sensible working height; inside the dialog the flex shell already
+   stretches it to 100%. */
+.settings-content {
+  min-height: 360px;
+}
+
+/* U1: subkop binnen een tab die een paar secties groepeert (bv. "Gantt" onder
+   Weergave) zonder zelf een nieuwe tab te worden. Iets prominenter dan een
+   gewone sectie-h3 (die is uppercase/gedimd), zonder de vorm te herontwerpen. */
+.settings-subhead {
+  margin: 4px 0 0 0;
+  font-family: var(--font-heading);
+  font-size: var(--text-large);
+  font-weight: 700;
+  color: var(--theme-text);
+}
+
+/* Checkbox rows */
+.settings-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-body);
+  color: var(--theme-text);
+  cursor: pointer;
+}
+
+/* Theme picker — visual swatch cards */
+.settings-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.settings-theme-card {
+  border: 1.5px solid var(--theme-control-border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  cursor: pointer;
+  background: var(--theme-surface);
+  text-align: left;
+  font-family: inherit;
+  color: var(--theme-text);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.settings-theme-card:hover { border-color: var(--theme-accent); }
+.settings-theme-card:focus-visible {
+  outline: none;
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.20);
+}
+.settings-theme-card.active {
+  border-color: var(--theme-accent);
+  background: rgba(217, 119, 6, 0.10);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.10);
+}
+
+/* Uitgegrijsd zolang "Volg systeemthema" aanstaat: de kaarten tonen dan alleen nog WAT het
+   systeem oplevert, ze zijn geen keuze meer. De tweede regel houdt de gemarkeerde kaart ook bij
+   hover herkenbaar — zonder die uitzondering wint de disabled-hoverregel van `.active`. */
+.settings-theme-card:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.settings-theme-card:disabled:hover { border-color: var(--theme-control-border); }
+.settings-theme-card.active:disabled:hover { border-color: var(--theme-accent); }
+
+.settings-theme-card h4 {
+  margin: 0 0 6px 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--theme-text);
+}
+
+.settings-theme-swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.settings-theme-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--theme-border);
+}
+
+/* Tab Statistieken — compacte cijfertabellen die in de 520 px brede popup passen. Geen vaste
+   kolombreedtes: de browser verdeelt op inhoud, en `.num` lijnt cijfers rechts uit met tabulaire
+   cijfers zodat kolommen op elkaar staan. De tabel scrolt nooit horizontaal (issue-klasse
+   "past niet in de tandwiel-popup"): bij krapte breken de koppen, niet de cijfers. */
+.settings-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body);
+  color: var(--theme-text);
+  font-variant-numeric: tabular-nums;
+}
+.settings-stats-table th,
+.settings-stats-table td {
+  padding: 3px 6px 3px 0;
+  text-align: left;
+  vertical-align: baseline;
+  border-bottom: 1px solid var(--theme-border);
+}
+.settings-stats-table th {
+  font-weight: 600;
+  color: var(--theme-text-muted);
+  font-size: var(--text-small);
+}
+.settings-stats-table th.num,
+.settings-stats-table td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+.settings-stats-table tr.total td {
+  font-weight: 600;
+  border-bottom: none;
+}
+.settings-stats-error {
+  color: var(--theme-danger, #dc2626);
+}

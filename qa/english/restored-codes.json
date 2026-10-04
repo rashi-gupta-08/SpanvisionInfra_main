@@ -1,0 +1,277 @@
+[
+  {
+    "file": "fem-vision-studio\\src\\components\\AgentPanel\\AgentPanel.tsx",
+    "from": "en-GB",
+    "to": "nl-NL"
+  },
+  {
+    "file": "frame-vision-studio\\ui\\src\\lib\\layout.js",
+    "from": "right",
+    "to": "rechts"
+  },
+  {
+    "file": "frame-vision-studio\\ui\\src\\lib\\profileContour.js",
+    "from": "none",
+    "to": "geen"
+  },
+  {
+    "file": "frame-vision-studio\\ui\\src\\lib\\profileContour.js",
+    "from": "outside",
+    "to": "buiten"
+  },
+  {
+    "file": "frame-vision-studio\\ui\\src\\lib\\tauri.js",
+    "from": "Frame",
+    "to": "Kozijn"
+  },
+  {
+    "file": "frame-vision-studio\\ui\\src\\stores\\aiAssistant.js",
+    "from": "Calculated",
+    "to": "Berekend"
+  },
+  {
+    "file": "open-vision-studio\\src\\engine\\calendar\\holidays.ts",
+    "from": "North",
+    "to": "Noord"
+  },
+  {
+    "file": "open-vision-studio\\src\\engine\\calendar\\holidays.ts",
+    "from": "Center",
+    "to": "Midden"
+  },
+  {
+    "file": "open-vision-studio\\src\\engine\\calendar\\holidays.ts",
+    "from": "South",
+    "to": "Zuid"
+  },
+  {
+    "file": "open-vision-studio\\src\\engine\\renderer\\GanttRenderer.ts",
+    "from": "(none)",
+    "to": "(geen)"
+  },
+  {
+    "file": "open-vision-studio\\src\\engine\\renderer\\GanttRenderer.ts",
+    "from": "wk",
+    "to": "week"
+  },
+  {
+    "file": "open-vision-studio\\src\\engine\\renderer\\GanttRenderer.ts",
+    "from": "wk",
+    "to": "week"
+  },
+  {
+    "file": "open-vision-studio\\src\\engine\\renderer\\GanttRenderer.ts",
+    "from": "outdated",
+    "to": "verouderd"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "critical",
+    "to": "kritiek"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "or",
+    "to": "van"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "or",
+    "to": "van"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "day",
+    "to": "dag"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "wk",
+    "to": "week"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "month",
+    "to": "maand"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "day",
+    "to": "dag"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "day",
+    "to": "dag"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "month",
+    "to": "maand"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "month",
+    "to": "maand"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\mcp\\tools\\readTools.ts",
+    "from": "wk",
+    "to": "week"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "(none)",
+    "to": "(geen)"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Today",
+    "to": "Vandaag"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Progress date",
+    "to": "Voortgangsdatum"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Status date",
+    "to": "Statusdatum"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Printed:",
+    "to": "Afgedrukt:"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "(none)",
+    "to": "(geen)"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Critical path",
+    "to": "Kritiek pad"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Normal",
+    "to": "Normaal"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Critical path",
+    "to": "Kritiek pad"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Milestone",
+    "to": "Mijlpaal"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Summary",
+    "to": "Samenvatting"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Float",
+    "to": "Speling"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\print\\printPreview.ts",
+    "from": "Driving / non-driving",
+    "to": "Bepalend / niet-bepalend"
+  },
+  {
+    "file": "open-vision-studio\\src\\services\\updater\\releaseHighlights.ts",
+    "from": "and",
+    "to": "en"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\bcf\\BcfIssueQueue.tsx",
+    "from": "Open Arrow",
+    "to": "Open"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\chrome\\backstage\\Backstage.tsx",
+    "from": "New project",
+    "to": "Nieuw project"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\model-browser\\ModelBrowser.tsx",
+    "from": "Error",
+    "to": "Fout"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\model-browser\\SpatialSubTree.tsx",
+    "from": "Collapse",
+    "to": "Inklappen"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\model-browser\\SpatialSubTree.tsx",
+    "from": "Expand",
+    "to": "Uitklappen"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\projects\\ProjectList.tsx",
+    "from": "file",
+    "to": "bestand"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\projects\\ProjectList.tsx",
+    "from": "files",
+    "to": "bestanden"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\projects\\ProjectList.tsx",
+    "from": "Delete",
+    "to": "Verwijderen"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\properties\\PropertiesPanel.tsx",
+    "from": "Yes",
+    "to": "Ja"
+  },
+  {
+    "file": "vision-bim-validator\\viewer\\src\\components\\properties\\PropertiesPanel.tsx",
+    "from": "No",
+    "to": "Nee"
+  },
+  {
+    "file": "vision-calculation-studio\\packages\\desktop\\src\\components\\calc\\designerKit.tsx",
+    "from": "on",
+    "to": " aan"
+  },
+  {
+    "file": "vision-calculation-studio\\packages\\desktop\\src\\components\\calc\\designerKit.tsx",
+    "from": "Yes",
+    "to": "Ja"
+  },
+  {
+    "file": "vision-calculation-studio\\packages\\desktop\\src\\components\\calc\\designerKit.tsx",
+    "from": "No",
+    "to": "Nee"
+  },
+  {
+    "file": "vision-calculation-studio\\packages\\desktop\\src\\components\\calc\\ifcCalcLanguage.ts",
+    "from": "item",
+    "to": "post"
+  },
+  {
+    "file": "vision-calculation-studio\\packages\\desktop\\src\\components\\calc\\IfcViewerPanel.tsx",
+    "from": "Calculation",
+    "to": "Berekening"
+  },
+  {
+    "file": "vision-calculation-studio\\packages\\desktop\\src\\components\\calc\\ProjectBrowser.tsx",
+    "from": "draft",
+    "to": "concept"
+  },
+  {
+    "file": "vision-calculation-studio\\packages\\desktop\\src\\components\\calc\\ProjectBrowser.tsx",
+    "from": "draft",
+    "to": "concept"
+  }
+]

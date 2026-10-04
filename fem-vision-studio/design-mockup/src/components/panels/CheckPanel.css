@@ -1,0 +1,766 @@
+/* CheckPanel — toetsingspaneel (EN 1993 + EN 1995) + CheckBlock afleiding. */
+
+.check-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--theme-content-bg, var(--theme-bg));
+  color: var(--theme-text);
+  overflow: hidden;
+}
+
+.cp-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  flex: 0 0 auto;
+}
+
+.cp-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.cp-stats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--theme-text-muted);
+}
+
+.cp-stat-ok { color: #16a34a; font-weight: 600; }
+.cp-stat-notok { color: var(--theme-danger-color, #dc2626); font-weight: 600; }
+.cp-stat-time { color: var(--theme-text-faint, var(--theme-text-muted)); }
+
+.cp-run-btn {
+  margin-left: 0;
+  padding: 6px 16px;
+  border: 1px solid var(--theme-btn-primary-border, var(--theme-accent));
+  border-radius: 4px;
+  background: var(--theme-btn-primary-bg, var(--theme-accent));
+  color: var(--theme-btn-primary-text, #fff);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cp-run-btn:hover:not(:disabled) {
+  background: var(--theme-btn-primary-hover-bg, var(--theme-accent-hover));
+}
+
+.cp-run-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.cp-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 12px 16px 32px;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.cp-error {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--theme-danger-color, #dc2626);
+  border-radius: 4px;
+  color: var(--theme-danger-color, #dc2626);
+  font-size: 12.5px;
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.cp-desktop-note {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--theme-accent);
+  border-radius: 4px;
+  color: var(--theme-text);
+  background: var(--theme-accent-soft, rgba(217, 119, 6, 0.08));
+  font-size: 12.5px;
+}
+
+.cp-skipped {
+  margin: 8px 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--theme-border);
+  border-left: 3px solid var(--theme-accent);
+  border-radius: 4px;
+  background: var(--theme-surface);
+  font-size: 12.5px;
+}
+
+.cp-skipped summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--theme-text-secondary, var(--theme-text));
+}
+
+.cp-skipped ul {
+  margin: 8px 0 2px;
+  padding-left: 18px;
+  color: var(--theme-text-muted);
+}
+
+.cp-skipped li { margin: 3px 0; }
+
+.cp-empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--theme-text-muted);
+}
+
+.cp-empty-title { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+.cp-empty-hint { font-size: 12.5px; margin: 0; }
+
+/* ── Kaart per staaf ─────────────────────────────────────────────────── */
+
+.cp-card {
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  background: var(--theme-surface);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.cp-card.cp-status-notok { border-left: 3px solid var(--theme-danger-color, #dc2626); }
+.cp-card.cp-status-ok    { border-left: 3px solid #16a34a; }
+
+.cp-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.cp-card-head:hover { background: var(--theme-hover, rgba(0, 0, 0, 0.04)); }
+
+.cp-chevron {
+  flex: 0 0 auto;
+  transition: transform 0.15s;
+  color: var(--theme-text-muted);
+}
+
+.cp-chevron.open { transform: rotate(90deg); }
+
+.cp-card-main { flex: 1 1 auto; min-width: 0; }
+
+.cp-card-id {
+  font-size: 11px;
+  color: var(--theme-text-muted);
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.cp-card-code {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--theme-border);
+  font-size: 10px;
+  color: var(--theme-text-secondary, var(--theme-text-muted));
+}
+
+.cp-card-profile {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.cp-card-grade {
+  font-weight: 400;
+  color: var(--theme-text-muted);
+  font-size: 11.5px;
+}
+
+.cp-card-governing {
+  font-size: 11.5px;
+  color: var(--theme-text-muted);
+  margin-top: 2px;
+}
+
+.cp-card-uc {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cp-uc-ok   { color: #16a34a; }
+.cp-uc-warn { color: var(--theme-accent); }
+.cp-uc-fail { color: var(--theme-danger-color, #dc2626); }
+
+.cp-card-badge {
+  flex: 0 0 auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cp-badge-ok    { background: rgba(22, 163, 74, 0.14); color: #16a34a; }
+.cp-badge-notok { background: rgba(220, 38, 38, 0.14); color: var(--theme-danger-color, #dc2626); }
+.cp-badge-notapplicable { background: var(--theme-hover, rgba(0,0,0,0.05)); color: var(--theme-text-muted); }
+
+.cp-card-body {
+  border-top: 1px solid var(--theme-border);
+  padding: 4px 14px 12px;
+  background: var(--theme-content-bg, var(--theme-bg));
+}
+
+/* ── CheckBlock — afleiding per toets ────────────────────────────────── */
+
+.check-block {
+  border-left: 3px solid var(--theme-accent);
+  background: var(--theme-surface);
+  padding: 12px 14px;
+  margin: 12px 0;
+  border-radius: 4px;
+}
+
+.check-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.check-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.check-article {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: var(--theme-accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.check-force-state {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: var(--theme-text-muted);
+  margin-bottom: 8px;
+  padding: 3px 8px;
+  background: var(--theme-hover, rgba(0, 0, 0, 0.04));
+  border-radius: 3px;
+}
+
+/* Afleiding: ingesprongen formuleblok links, vergelijkingsnummer rechts —
+   dezelfde indeling als in het rapport. */
+.check-derivation {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 10px 0 6px;
+  padding-left: 10px;
+}
+
+.check-formula {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* KaTeX centreert displayformules; een afleiding lijnt links uit. */
+.check-formula .katex-display,
+.check-uc-formula .katex-display {
+  margin: 0;
+  text-align: left;
+}
+
+.check-formula .katex-display > .katex,
+.check-uc-formula .katex-display > .katex {
+  text-align: left;
+}
+
+.check-eq {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--theme-text-muted);
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+/* Waardenlijst: symbool rechts uitgelijnd zodat de = onder elkaar staan. */
+.check-variables {
+  display: grid;
+  grid-template-columns: max-content max-content 1fr;
+  gap: 1px 8px;
+  font-size: 12px;
+  color: var(--theme-text-muted);
+  margin: 6px 0 6px 10px;
+}
+
+.check-var { display: contents; }
+.var-symbol { justify-self: end; font-style: italic; }
+.var-eq { color: var(--theme-text-faint, var(--theme-text-muted)); }
+.var-value { color: var(--theme-text); font-weight: 500; }
+.var-unit { color: var(--theme-text-faint, var(--theme-text-muted)); font-size: 11px; }
+
+.check-uc-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 8px;
+  padding-left: 10px;
+  border-top: 1px solid var(--theme-border);
+  font-size: 12.5px;
+}
+
+.check-uc-formula {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.check-status {
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.check-status-ok { background: rgba(22, 163, 74, 0.14); color: #16a34a; }
+.check-status-notok { background: rgba(220, 38, 38, 0.14); color: var(--theme-danger-color, #dc2626); }
+.check-status-na { background: var(--theme-hover, rgba(0,0,0,0.05)); color: var(--theme-text-muted); }
+
+.check-intermediates { margin-top: 8px; font-size: 12px; }
+
+.check-intermediates summary {
+  cursor: pointer;
+  color: var(--theme-text-muted);
+  font-weight: 500;
+}
+
+.check-intermediates summary:hover { color: var(--theme-accent); }
+
+/* De uitgeschreven afleiding (deelstappen) in het paneel. */
+.check-afleiding-stappen { margin: 6px 0 0; padding-left: 20px; }
+.check-afleiding-stap { margin: 8px 0; }
+.check-afleiding-kop {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+}
+.check-afleiding-stap .check-notes { margin-top: 4px; }
+
+.check-notes {
+  margin-top: 8px;
+  padding-left: 18px;
+  font-style: italic;
+  color: var(--theme-text-muted);
+  font-size: 12px;
+}
+
+/* KaTeX moet meekleuren met het thema. */
+.check-block .katex { color: var(--theme-text); }
+
+/* ── Vrije spanningstoets: doorsnede + spanningsverloop in de kaart ────── */
+
+.cp-spanning-figuur { margin: 4px 0 10px; }
+
+.cp-spanning-figuur svg {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+}
+
+.cp-spanning-bijschrift {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--theme-text-muted);
+}
+
+.cp-spanning-notes {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--theme-text-muted);
+}
+
+/* Toetsen die niet uitgevoerd konden worden (basisaudit ruw 55). Zichtbaar
+   zonder de kaart open te klappen: de badge zegt "n.v.t." en dan hoort er
+   direct bij te staan waaróver. */
+.cp-card-onuitgevoerd {
+  padding: 4px 10px 6px 26px;
+  font-size: 11px;
+  color: var(--cp-warn-text, #8a6d3b);
+  background: var(--cp-warn-bg, rgba(240, 173, 78, 0.10));
+  border-top: 1px solid var(--cp-border, rgba(0, 0, 0, 0.08));
+}
+
+.cp-close-btn, .cp-export-btn, .properties-check-toggle {
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+/* Het kruisje staat vast rechtsboven in de kop, zoals bij een venster. Het
+   stond in de knoppenrij, en omdat de lange titel die rij naar een tweede
+   regel duwt, belandde het als klein vakje links naast "Staven:". */
+.cp-toolbar { position: relative; padding-right: 48px; }
+.cp-close-btn {
+  position: absolute; top: 6px; right: 8px;
+  width: 32px; height: 32px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-color: transparent; background: transparent;
+  font-size: 22px; line-height: 1; color: var(--theme-text-muted);
+}
+.cp-close-btn:hover { background: var(--theme-bg-lighter, var(--theme-surface)); color: var(--theme-text); border-color: var(--theme-border); }
+.cp-close-btn:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 1px; }
+.cp-export-btn { font-size: 12px; }
+.cp-export-btn:disabled { opacity: .55; cursor: default; }
+.cp-provenance { padding: 6px 12px; font-size: 11px; color: var(--theme-text-muted); }
+.properties-check-toggle { display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; }
+
+/* ── Wat maatgevend is (issue #41) ───────────────────────────────────────
+   Het onderscheid hangt nooit alleen aan kleur: de maatgevende toets draagt
+   het woord "maatgevend", elke UC-klasse een eigen teken (✓ ! ✗) en een
+   overschrijding een gearceerd balkje. De kleuren zijn de drie die het
+   paneel al gebruikt (.cp-uc-ok / -warn / -fail). */
+
+.cp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.cp-maatgevend-label {
+  display: inline-block;
+  flex: 0 0 auto;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid var(--theme-accent);
+  border-radius: 3px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--theme-accent);
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+
+/* De samenvattingsregel onder de kop van een kaart. */
+.cp-maatgevend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 14px 6px 36px;
+  border: none;
+  border-top: 1px solid var(--theme-border);
+  background: none;
+  color: var(--theme-text);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+}
+
+.cp-maatgevend .cp-maatgevend-label { margin-left: 0; }
+.cp-maatgevend-knop { cursor: pointer; }
+.cp-maatgevend-knop:hover { background: var(--theme-hover, rgba(0, 0, 0, 0.04)); }
+.cp-maatgevend-knop:focus-visible,
+.cp-model-top:focus-visible,
+.cp-model-soort:focus-visible,
+.cp-toetsregel-toon:focus-visible,
+.cp-volgorde-knop:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: -2px;
+}
+
+.cp-maatgevend-leeg { color: var(--theme-text-muted); font-style: italic; }
+.cp-maatgevend-tekst { flex: 1 1 auto; min-width: 0; }
+.cp-maatgevend-titel { font-weight: 600; }
+.cp-maatgevend-artikel { color: var(--theme-text-muted); }
+.cp-maatgevend-herkomst {
+  color: var(--theme-text-muted);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+}
+.cp-maatgevend-pijl { flex: 0 0 auto; color: var(--theme-accent); font-size: 14px; line-height: 1; }
+
+/* Het balkje: spoor 0–1,5 met een streepje op UC = 1,0. */
+.cp-ucbalk {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 84px;
+  height: 8px;
+  border: 1px solid var(--theme-border);
+  border-radius: 2px;
+  background: var(--theme-hover, rgba(0, 0, 0, 0.05));
+  overflow: visible;
+}
+
+.cp-ucbalk-vulling {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 1px;
+}
+
+.cp-ucbalk-goed .cp-ucbalk-vulling { background: #16a34a; }
+.cp-ucbalk-letop .cp-ucbalk-vulling { background: var(--theme-accent); }
+/* Overschreden: gearceerd, zodat het ook zonder kleur anders is. */
+.cp-ucbalk-overschreden .cp-ucbalk-vulling {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--theme-danger-color, #dc2626) 0 4px,
+    rgba(220, 38, 38, 0.45) 4px 7px
+  );
+}
+
+.cp-ucbalk-grens {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 0;
+  border-left: 1.5px solid var(--theme-text);
+}
+
+.cp-ucbalk-afgekapt {
+  position: absolute;
+  right: -9px;
+  top: -6px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  color: var(--theme-danger-color, #dc2626);
+}
+
+.cp-ucwaarde {
+  flex: 0 0 auto;
+  min-width: 52px;
+  text-align: right;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cp-ucwaarde-goed { color: #16a34a; }
+.cp-ucwaarde-letop { color: var(--theme-accent); }
+.cp-ucwaarde-overschreden { color: var(--theme-danger-color, #dc2626); }
+
+/* De lijst van alle toetsen in een opengeklapte kaart. */
+.cp-toetslijst {
+  margin: 10px 0 4px;
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  background: var(--theme-surface);
+}
+
+.cp-toetslijst-kop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--theme-border);
+  font-size: 11.5px;
+}
+
+.cp-toetslijst-titel { flex: 1 1 auto; font-weight: 600; }
+.cp-toetslijst-volgorde { display: inline-flex; align-items: center; gap: 4px; }
+.cp-toetslijst-volgorde-label { color: var(--theme-text-muted); }
+
+.cp-volgorde-knop {
+  padding: 2px 8px;
+  border: 1px solid var(--theme-border);
+  border-radius: 3px;
+  background: none;
+  color: var(--theme-text-muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.cp-volgorde-knop.actief {
+  border-color: var(--theme-accent);
+  color: var(--theme-text);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.cp-toetslijst-regels { list-style: none; margin: 0; padding: 0; }
+
+.cp-toetsregel {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--theme-border);
+  border-left: 3px solid transparent;
+  font-size: 11.5px;
+}
+
+.cp-toetsregel:last-child { border-bottom: none; }
+
+.cp-toetsregel-maatgevend {
+  border-left-color: var(--theme-accent);
+  background: var(--theme-accent-soft, rgba(217, 119, 6, 0.08));
+}
+
+.cp-toetsregel-maatgevend .cp-toetsregel-naam { font-weight: 700; }
+.cp-toetsregel-nietmee { color: var(--theme-text-muted); }
+
+.cp-toetsregel-hoofd { display: flex; align-items: center; gap: 8px; }
+.cp-toetsregel-naam { flex: 1 1 auto; min-width: 0; }
+.cp-toetsregel-artikel { color: var(--theme-text-muted); font-weight: 400; }
+.cp-toetsregel-geenuc { flex: 0 0 auto; font-style: italic; text-align: right; }
+
+.cp-toetsregel-herkomst {
+  margin-top: 1px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--theme-text-muted);
+}
+
+.cp-toetsregel-toon {
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid var(--theme-border);
+  border-radius: 3px;
+  background: none;
+  color: var(--theme-accent);
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.cp-toetsregel-toon:hover { border-color: var(--theme-accent); }
+
+.cp-toetsregel-redenen {
+  margin: 3px 0 1px;
+  padding-left: 16px;
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.cp-toetslijst-voet {
+  padding: 5px 10px;
+  border-top: 1px solid var(--theme-border);
+  font-size: 11px;
+  color: var(--theme-text-muted);
+}
+
+.check-block-maatgevend { border-left-width: 5px; }
+
+/* Het maatgevende onderdeel van het hele model, bovenaan het paneel. */
+.cp-model {
+  margin: 0 0 12px;
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  background: var(--theme-surface);
+  overflow: hidden;
+}
+
+.cp-model-titel {
+  padding: 6px 12px 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+}
+
+.cp-model-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 12px 8px;
+  border: none;
+  background: none;
+  color: var(--theme-text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cp-model-top:hover,
+.cp-model-soort:hover { background: var(--theme-hover, rgba(0, 0, 0, 0.04)); }
+
+.cp-model-object {
+  flex: 0 0 auto;
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+}
+
+.cp-model-soorten {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--theme-border);
+}
+
+.cp-model-soort {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3px 12px;
+  border: none;
+  background: none;
+  color: var(--theme-text);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cp-model-soort-naam { flex: 0 0 96px; color: var(--theme-text-muted); }
+.cp-model-soort-object { flex: 0 0 72px; font-family: ui-monospace, Consolas, monospace; }
+.cp-model-soort-toets { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cp-model-voet {
+  padding: 5px 12px;
+  border-top: 1px solid var(--theme-border);
+  font-size: 11px;
+  color: var(--theme-text-muted);
+}

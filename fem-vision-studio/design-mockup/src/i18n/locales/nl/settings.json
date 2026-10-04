@@ -1,0 +1,86 @@
+{
+  "title": "Instellingen",
+  "resetToDefaults": "Standaardwaarden herstellen",
+  "resetConfirm": "Weet je zeker dat je alle instellingen wilt terugzetten naar de standaardwaarden?",
+  "tabs": {
+    "general": "Algemeen",
+    "appearance": "Uiterlijk",
+    "editor": "Editor",
+    "files": "Bestanden",
+    "shortcuts": "Sneltoetsen",
+    "plugins": "Invoegtoepassingen",
+    "about": "Over"
+  },
+  "general": {
+    "application": "Applicatie",
+    "language": "Taal",
+    "startup": "Opstarten",
+    "restoreSession": "Laatste sessie herstellen bij opstarten",
+    "checkUpdates": "Automatisch controleren op updates",
+    "author": "Auteur",
+    "authorName": "Auteursnaam"
+  },
+  "appearance": {
+    "theme": "Thema",
+    "themeDescription": "Kies een kleurthema voor de applicatie.",
+    "light": "Licht",
+    "forge": "Forge (donker)",
+    "dark": "OpenAEC (donker)",
+    "blueprint": "Blueprint",
+    "contrast": "Hoog contrast",
+    "font": "Lettertype",
+    "uiFontSize": "UI-lettergrootte"
+  },
+  "editor": {
+    "general": "Algemeen",
+    "wordWrap": "Woordterugloop",
+    "lineNumbers": "Regelnummers weergeven",
+    "minimap": "Minimap weergeven",
+    "indentation": "Inspringen",
+    "tabSize": "Tabgrootte",
+    "insertSpaces": "Spaties invoegen in plaats van tabs",
+    "nSpaces": "{{count}} spaties"
+  },
+  "files": {
+    "autoSave": "Automatisch opslaan",
+    "autoSaveOption": "Automatisch opslaan",
+    "off": "Uit",
+    "afterDelay": "Na vertraging",
+    "onFocusChange": "Bij focuswijziging",
+    "onWindowChange": "Bij vensterwijziging",
+    "encoding": "Bestandscodering",
+    "defaultEncoding": "Standaardcodering",
+    "backup": "Back-up",
+    "autoBackup": "Automatische back-ups maken"
+  },
+  "shortcuts": {
+    "placeholder": "Configuratie van sneltoetsen verschijnt hier."
+  },
+  "plugins": {
+    "placeholder": "Beheer van invoegtoepassingen verschijnt hier."
+  },
+  "library": {
+    "title": "Bibliotheek",
+    "subtitle": "Bibliotheek — alleen-lezen naslag. Waarden komen uit de profieldatabase en de normtabellen (EN 338 / EN 14080); bewerken is hier niet mogelijk.",
+    "tabSections": "Staalprofielen",
+    "tabMaterials": "Materialen",
+    "search": "Zoeken…",
+    "noResults": "Geen resultaten voor dit zoekfilter.",
+    "colName": "Naam",
+    "colA": "A [mm²]",
+    "colIy": "Iy [×10⁶ mm⁴]",
+    "colDims": "h × b × tw × tf [mm]",
+    "colFy": "fy [N/mm²]",
+    "colE": "E [N/mm²]",
+    "colEmean": "E₀,mean [N/mm²]",
+    "steelGroup": "Staalklassen (EN 1993)",
+    "timberGroup": "Houtsterkteklassen (EN 338 / EN 14080)"
+  },
+  "about": {
+    "appName": "Open FEM2D Studio",
+    "version": "Versie",
+    "framework": "Framework",
+    "license": "Licentie",
+    "description": "Een sjabloonapplicatie voor het bouwen van platformonafhankelijke desktopapps met Tauri."
+  }
+}

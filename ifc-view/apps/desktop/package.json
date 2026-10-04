@@ -1,0 +1,32 @@
+{
+  "name": "@spanvision-infra/ifc-view-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Spanvision Infra · IFC by Spanvision Infra",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3005",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@spanvision-infra/ifc-core": "workspace:*",
+    "@spanvision-infra/viewer-engine": "workspace:*",
+    "@tauri-apps/api": "^2",
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "solid-js": "^1.9.5",
+    "three": "0.128.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.5.0",
+    "@types/node": "^24.10.1",
+    "@types/three": "^0.128.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.0",
+    "vite-plugin-solid": "^2.11.0"
+  }
+}

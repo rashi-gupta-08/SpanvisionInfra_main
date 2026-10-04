@@ -1,0 +1,709 @@
+//! IBIS-style PDF report generation using Typst.
+//! Template: tenants/bouw1/templates/ibis.typ (landscape A4, IBIS-TRAD style layout).
+//!
+//! Generates an IBIS-TRAD lookalike budget report:
+//! - Landscape A4 with project header block (links) + logo (rechts)
+//! - Hoofdtabel: Stabucode | S | Omschrijving | Hoeveelheid | Eh | Uurnorm | Uren |
+//!   Materiaal | Materieel | Onderaanneming | Eenheidsprijs | TOTAAL
+//! - Hoofdstukrijen (blauwe achtergrond), subkoprijen (lichter), subtotaalrijen (vet)
+//! - Footer-cascade: Alle kosten -> AK% -> W&R% -> CAR% -> Transport -> Afronding ->
+//!   Totaal excl BTW -> Grondslag BTW hoog/laag -> Totaal BTW -> Totaal incl BTW
+//!
+//! The staart (footer) cascade reuses the same item-driven computation as bouw1.rs:
+//! percentages and amounts come from the live staart_* CostItems, never hardcoded.
+
+use super::{CostItem, ReportRequest};
+
+static IBIS_TEMPLATE: &str = include_str!("../../../tenants/bouw1/templates/ibis.typ");
+// Logos are user-supplied via CompanyInfo.logoLeft/logoRight (PNG base64).
+// Valid 8-bit gray+alpha 1x1 transparent PNG (68 bytes) — no third-party logos bundled.
+static EMPTY_PNG: &[u8] = &[
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+    0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+    0x08, 0x04, 0x00, 0x00, 0x00, 0xB5, 0x1C, 0x0C, 0x02, 0x00, 0x00, 0x00,
+    0x0B, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x60, 0x60, 0x00, 0x00,
+    0x00, 0x03, 0x00, 0x01, 0xB8, 0xAD, 0x3A, 0x63, 0x00, 0x00, 0x00, 0x00,
+    0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+];
+
+#[derive(serde::Serialize)]
+struct IbisReportData {
+    document_name: String,
+    project_name: String,
+    project_number: String,
+    client: String,
+    author: String,
+    location: String,
+    expert: String,
+    report_date: String,
+    chapters: Vec<IbisChapter>,
+    totalen: Option<IbisTotalen>,
+    #[serde(default)]
+    page_size: String,
+    #[serde(default)]
+    page_orientation: String,
+    /// Stijlvariant: "ibis" (default) of "directie" (STABU-directiebegroting).
+    #[serde(default)]
+    style: String,
+    /// Optionele rapporttitel (bv. "Bouwkundige directiebegroting").
+    #[serde(default)]
+    report_title: String,
+    /// Of gewijzigde regels in de PDF gemarkeerd worden.
+    #[serde(default)]
+    report_show_changes: bool,
+    /// Rapportteksten in de rapporttaal (platte keys); het sjabloon valt per
+    /// key terug op de Nederlandse tekst.
+    labels: std::collections::HashMap<String, String>,
+}
+
+#[derive(serde::Serialize)]
+struct IbisChapter {
+    title: String,
+    rows: Vec<IbisRow>,
+}
+
+/// A single budget line in the IBIS table.
+/// `level`: 0 = hoofdstuk (blauw), 1 = subgroep (lichter), 2 = regel (normaal).
+#[derive(serde::Serialize)]
+struct IbisRow {
+    stabucode: String,
+    s: String,          // soort-kolom (S) — verrekenbaar/markering
+    omschrijving: String,
+    hoeveelheid: String,
+    eh: String,
+    uurnorm: String,
+    uren: String,
+    materiaal: String,
+    materieel: String,
+    onderaan: String,
+    eenheidsprijs: String,
+    totaal: String,
+    level: u8,
+    is_subtotal: bool,
+    #[serde(default)]
+    changed: bool,
+}
+
+#[derive(serde::Serialize)]
+struct IbisTotalen {
+    rows: Vec<IbisTotalenRow>,
+}
+
+/// A row in the footer cascade. `symbol` is the IBIS marker column (@, %, +, $, *, GH, GL, %H, BT).
+#[derive(serde::Serialize)]
+struct IbisTotalenRow {
+    symbol: String,
+    label: String,
+    percentage: String,
+    bedrag: String,   // grondslag / basisbedrag for this row
+    post: String,     // amount this row adds (post-bedrag)
+    totaal: String,   // cumulative running total (totaal generaal)
+    is_bold: bool,
+}
+
+/// Resource breakdown for a single item or aggregated from children.
+struct ResourceBreakdown {
+    loon: f64,
+    materiaal: f64,
+    materieel: f64,
+    stelpost: f64,
+    ond_aann: f64,
+}
+
+/// Compute resource breakdown for an item based on its resourceType.
+/// Mirrors bouw1.rs::compute_item_breakdown.
+fn compute_item_breakdown(item: &CostItem) -> ResourceBreakdown {
+    let total = item.total;
+    let rt = item.resource_type.as_deref().unwrap_or("");
+    let mut bd = ResourceBreakdown { loon: 0.0, materiaal: 0.0, materieel: 0.0, stelpost: 0.0, ond_aann: 0.0 };
+
+    match rt {
+        "arbeid" => bd.loon = total,
+        "materiaal" => bd.materiaal = total,
+        "materieel" => bd.materieel = total,
+        "onderaannemer" => bd.ond_aann = total,
+        "overig" => bd.stelpost = total,
+        _ => {
+            if item.labor_price.unwrap_or(0.0) > 0.0 {
+                bd.loon = item.labor_price.unwrap_or(0.0);
+                let rest = total - bd.loon;
+                if rest > 0.0 { bd.materiaal = rest; }
+            } else if item.norm_unit_price.unwrap_or(0.0) > 0.0 {
+                bd.materiaal = total;
+            } else {
+                bd.ond_aann = total;
+            }
+        }
+    }
+    bd
+}
+
+/// Aggregate breakdown for a parent by summing all leaf descendants.
+/// Mirrors bouw1.rs::compute_parent_breakdown.
+fn compute_parent_breakdown(parent_id: &str, all_items: &[&CostItem]) -> ResourceBreakdown {
+    let mut bd = ResourceBreakdown { loon: 0.0, materiaal: 0.0, materieel: 0.0, stelpost: 0.0, ond_aann: 0.0 };
+    let mut stack: Vec<&str> = vec![parent_id];
+    while let Some(pid) = stack.pop() {
+        for item in all_items.iter() {
+            if item.parent_id.as_deref() == Some(pid) {
+                let children: Vec<&&CostItem> = all_items.iter().filter(|i| i.parent_id.as_deref() == Some(&item.id)).collect();
+                if children.is_empty() {
+                    let child_bd = compute_item_breakdown(item);
+                    bd.loon += child_bd.loon;
+                    bd.materiaal += child_bd.materiaal;
+                    bd.materieel += child_bd.materieel;
+                    bd.stelpost += child_bd.stelpost;
+                    bd.ond_aann += child_bd.ond_aann;
+                } else {
+                    stack.push(&item.id);
+                }
+            }
+        }
+    }
+    bd
+}
+
+/// IBIS Stabucode: the original code as-is (e.g. "00", "0001", "1032").
+fn build_ibis_row(request: &ReportRequest, item: &CostItem, level: u8, all_items: &[&CostItem]) -> IbisRow {
+    let nf = &request.number_format;
+    let qty_s = item.quantity.map(|q| nf.opt_number(Some(q))).unwrap_or_default();
+    let unit = request.unit(item.unit.as_deref().unwrap_or(""));
+
+    let price_s = if item.unit_price != 0.0 { nf.currency(item.unit_price) } else { String::new() };
+    let total_s = if item.total != 0.0 { nf.currency(item.total) } else { String::new() };
+    // Uurnorm = norm per eenheid (normQuantity). Uren = hoeveelheid x uurnorm.
+    let uurnorm_s = item.norm_quantity
+        .filter(|n| *n != 0.0)
+        .map(|n| nf.number(n, 3))
+        .unwrap_or_default();
+    let uren = match (item.quantity, item.norm_quantity) {
+        (Some(q), Some(n)) if q != 0.0 && n != 0.0 => nf.opt_number(Some(q * n)),
+        _ => String::new(),
+    };
+
+    // Resource breakdown (materiaal / materieel / onderaanneming columns).
+    let has_children = all_items.iter().any(|i| i.parent_id.as_deref() == Some(&item.id));
+    let bd = if has_children {
+        compute_parent_breakdown(&item.id, all_items)
+    } else {
+        compute_item_breakdown(item)
+    };
+    // IBIS heeft geen aparte stelpost-kolom: tel stelpost (overig) bij materiaal.
+    let materiaal_amt = bd.materiaal + bd.stelpost;
+
+    // "S" markering: 'S' bij stelpost-regels, 'exc'/'inc' uit verrekenbaar indien aanwezig.
+    let s_mark = item.verrekenbaar.clone().unwrap_or_default();
+
+    IbisRow {
+        stabucode: item.code.clone(),
+        s: s_mark,
+        omschrijving: item.description.clone(),
+        hoeveelheid: qty_s,
+        eh: unit,
+        uurnorm: uurnorm_s,
+        uren,
+        materiaal: if materiaal_amt != 0.0 { nf.currency(materiaal_amt) } else { String::new() },
+        materieel: if bd.materieel != 0.0 { nf.currency(bd.materieel) } else { String::new() },
+        onderaan: if bd.ond_aann != 0.0 { nf.currency(bd.ond_aann) } else { String::new() },
+        eenheidsprijs: price_s,
+        totaal: total_s,
+        level,
+        is_subtotal: false,
+        changed: false,
+    }
+}
+
+fn subtotal_row(label: &str, subtotal: &str) -> IbisRow {
+    IbisRow {
+        stabucode: String::new(),
+        s: String::new(),
+        omschrijving: label.to_string(),
+        hoeveelheid: String::new(),
+        eh: String::new(),
+        uurnorm: String::new(),
+        uren: String::new(),
+        materiaal: String::new(),
+        materieel: String::new(),
+        onderaan: String::new(),
+        eenheidsprijs: String::new(),
+        totaal: subtotal.to_string(),
+        level: 2,
+        is_subtotal: true,
+        changed: false,
+    }
+}
+
+fn build_ibis_data(request: &ReportRequest) -> IbisReportData {
+    let nf = &request.number_format;
+    let visible: Vec<&CostItem> = request.items.iter()
+        .filter(|i| !i.row_type.starts_with("staart_") && i.row_type != "witregel")
+        .collect();
+
+    // Wijzigingsmarkering: alleen tonen als de gebruiker het aanzet én er een baseline is.
+    let show_changes = request.schedule.report_show_changes;
+    let since = request.schedule.change_tracking_since.clone();
+
+    let mut chapters: Vec<IbisChapter> = Vec::new();
+    let mut cur_ch: Option<&CostItem> = None;
+    let mut ch_rows: Vec<IbisRow> = Vec::new();
+
+    // Begrotingspost/bewakingspost mét kinderen zijn redundant: kinderen tonen we wel.
+    let redundant_parents: std::collections::HashSet<&str> = visible.iter()
+        .filter(|item| item.row_type == "begrotingspost" || item.row_type == "bewakingspost")
+        .filter(|item| {
+            visible.iter().any(|c| c.parent_id.as_deref() == Some(&item.id))
+        })
+        .map(|item| item.id.as_str())
+        .collect();
+
+    for item in &visible {
+        if item.row_type == "chapter" && item.depth == 0 {
+            // Flush previous chapter
+            if let Some(ch) = cur_ch {
+                if !ch_rows.is_empty() || ch.total != 0.0 {
+                    let subtotal = nf.currency(ch.total);
+                    let title = if ch.code.is_empty() { ch.description.clone() } else { format!("{}  {}", ch.code, ch.description) };
+                    ch_rows.push(subtotal_row(&ch.description, &subtotal));
+                    chapters.push(IbisChapter { title, rows: std::mem::take(&mut ch_rows) });
+                }
+                ch_rows.clear();
+            }
+            cur_ch = Some(item);
+        } else if redundant_parents.contains(item.id.as_str()) {
+            continue;
+        } else {
+            // level: chapter(>0)=0 blue, begrotings/bewakingspost=1 lighter, regel=2 normal
+            let level: u8 = match item.row_type.as_str() {
+                "chapter" => 0,
+                "begrotingspost" | "bewakingspost" => 1,
+                _ => 2,
+            };
+            let mut row = build_ibis_row(request, item, level, &visible);
+            row.changed = show_changes && item.changed_since(&since);
+            ch_rows.push(row);
+        }
+    }
+    if let Some(ch) = cur_ch {
+        if !ch_rows.is_empty() || ch.total != 0.0 {
+            let subtotal = nf.currency(ch.total);
+            let title = if ch.code.is_empty() { ch.description.clone() } else { format!("{}  {}", ch.code, ch.description) };
+            ch_rows.push(subtotal_row(&ch.description, &subtotal));
+            chapters.push(IbisChapter { title, rows: std::mem::take(&mut ch_rows) });
+        }
+    }
+
+    let totalen = build_ibis_totalen(request);
+
+    let report_date = match request.schedule.report_date.as_deref() {
+        Some(s) if !s.is_empty() => nf.date_short_year(s),
+        _ => nf.date_short_year(&chrono::Local::now().format("%Y-%m-%d").to_string()),
+    };
+
+    let is_directie = request.report_view == "directie";
+    IbisReportData {
+        document_name: request.schedule.name.clone(),
+        project_name: request.schedule.project_name.clone(),
+        project_number: request.schedule.project_number.clone(),
+        client: request.schedule.client.clone(),
+        author: request.schedule.author.clone(),
+        location: String::new(),
+        expert: String::new(),
+        report_date,
+        chapters,
+        totalen,
+        page_size: String::new(),
+        page_orientation: String::new(),
+        style: if is_directie { "directie".into() } else { "ibis".into() },
+        report_title: if is_directie {
+            request.lbl("views.directieTitle", "Bouwkundige directiebegroting").into()
+        } else {
+            String::new()
+        },
+        report_show_changes: show_changes,
+        labels: request.labels.clone(),
+    }
+}
+
+/// Build the IBIS footer cascade from the live staart_* items.
+///
+/// Order mirrors the IBIS-TRAD uitdraai:
+///   @  Alle kosten
+///   %  <opslag>      (AK / W&R / CAR / verzekering — % over cumulatief)
+///   +  (Transport)
+///   $  Afronding
+///   *  Totaal excl BTW
+///   GH/GL Grondslag BTW hoog/laag  +  %H/%L
+///   BT Totaal BTW
+///   *  Totaal incl BTW
+///
+/// Percentages and amounts come from the staart items (never hardcoded). BTW splitting
+/// hoog/laag: each staart_btw item becomes one "Grondslag BTW <desc>" + computed BTW.
+fn build_ibis_totalen(request: &ReportRequest) -> Option<IbisTotalen> {
+    let nf = &request.number_format;
+    let staart_items: Vec<&CostItem> = request.items.iter()
+        .filter(|i| i.row_type.starts_with("staart_"))
+        .collect();
+    if staart_items.is_empty() {
+        return None;
+    }
+
+    // Directe kosten (Alle kosten @) = som van top-level hoofdstukken.
+    let alle_kosten: f64 = request.items.iter()
+        .filter(|i| i.row_type == "chapter" && i.depth == 0)
+        .map(|i| i.total)
+        .sum();
+
+    let mut rows: Vec<IbisTotalenRow> = Vec::new();
+    let mut cumulative = alle_kosten;
+
+    // @ Alle kosten
+    rows.push(IbisTotalenRow {
+        symbol: "@".into(),
+        label: request.lbl("staart.allCosts", "Alle kosten").into(),
+        percentage: String::new(),
+        bedrag: String::new(),
+        post: String::new(),
+        totaal: nf.currency(alle_kosten),
+        is_bold: true,
+    });
+
+    // Walk staart items in order. Split into: opslag-fase (everything except btw/afronding),
+    // afronding, btw-fase.
+    let opslag: Vec<&&CostItem> = staart_items.iter()
+        .filter(|i| !i.row_type.starts_with("staart_btw") && i.row_type != "staart_afronding")
+        .collect();
+    let btw_items: Vec<&&CostItem> = staart_items.iter()
+        .filter(|i| i.row_type.starts_with("staart_btw"))
+        .collect();
+    let afronding_item = staart_items.iter().find(|i| i.row_type == "staart_afronding");
+
+    // Onderaanneming-deel: nodig voor staart_ak_oa (AK over onderaanneming).
+    let oa_total: f64 = request.items.iter()
+        .filter(|i| i.row_type == "regel")
+        .filter(|i| i.resource_type.as_deref() == Some("onderaannemer"))
+        .map(|i| i.total)
+        .sum();
+
+    for si in &opslag {
+        let pct = si.staart_percentage.unwrap_or(0.0);
+        let pct_frac = pct / 100.0;
+        let pct_str = if si.staart_percentage.is_some() {
+            nf.percent(pct, 2)
+        } else {
+            String::new()
+        };
+
+        // Base depends on staart type (mirrors calculator.ts cascade).
+        let (base, post) = match si.row_type.as_str() {
+            "staart_ak_oa" => {
+                let v = oa_total * pct_frac;
+                (oa_total, v)
+            }
+            // All other opslag types: percentage over running cumulative.
+            _ => {
+                let v = cumulative * pct_frac;
+                (cumulative, v)
+            }
+        };
+        cumulative += post;
+
+        rows.push(IbisTotalenRow {
+            symbol: "%".into(),
+            label: clean_label(&si.description),
+            percentage: pct_str,
+            bedrag: nf.currency(base),
+            post: nf.currency(post),
+            totaal: nf.currency(cumulative),
+            is_bold: false,
+        });
+    }
+
+    // (Transport): cumulatief vóór afronding — markeerregel zoals IBIS.
+    let transport = cumulative;
+    rows.push(IbisTotalenRow {
+        symbol: "+".into(),
+        label: request.lbl("staart.transport", "(Transport)").into(),
+        percentage: String::new(),
+        bedrag: String::new(),
+        post: String::new(),
+        totaal: nf.currency(transport),
+        is_bold: false,
+    });
+
+    // $ Afronding
+    if let Some(af) = afronding_item {
+        cumulative += af.total;
+        rows.push(IbisTotalenRow {
+            symbol: "$".into(),
+            label: request.lbl("staart.rounding", "Afronding").into(),
+            percentage: String::new(),
+            bedrag: String::new(),
+            post: nf.currency(af.total),
+            totaal: String::new(),
+            is_bold: false,
+        });
+    }
+
+    // * Totaal excl BTW
+    let excl_btw = cumulative;
+    rows.push(IbisTotalenRow {
+        symbol: "*".into(),
+        label: request.lbl("staart.totalExclVat", "Totaal excl BTW").into(),
+        percentage: String::new(),
+        bedrag: String::new(),
+        post: String::new(),
+        totaal: nf.currency(excl_btw),
+        is_bold: true,
+    });
+
+    // BTW-fase. IBIS toont grondslag hoog/laag apart: staart_btw_laag rekent
+    // over de per-onderdeel markering (btw_tarief, pro rata) of anders over
+    // de ingevulde grondslag (staart_btw_basis); staart_btw over de rest.
+    let laag_direct = crate::reports::btw_laag_direct(&request.items);
+    let dir_totaal = crate::reports::direct_totaal(&request.items);
+    let markering_actief = laag_direct > 0.0 && dir_totaal > 0.0;
+    let laag_raw: f64 = if markering_actief {
+        (laag_direct / dir_totaal) * excl_btw
+    } else {
+        btw_items.iter()
+            .filter(|i| i.row_type == "staart_btw_laag")
+            .map(|i| i.staart_btw_basis.unwrap_or(0.0).max(0.0))
+            .sum::<f64>()
+    };
+    let laag_grondslag_totaal: f64 = laag_raw.max(0.0).min(excl_btw.max(0.0));
+    let mut laag_resterend = laag_grondslag_totaal;
+    let mut total_btw = 0.0;
+    for bi in &btw_items {
+        let pct = bi.staart_percentage.unwrap_or(0.0);
+        let pct_frac = pct / 100.0;
+        let pct_str = nf.percent(pct, 2);
+        let grondslag = if bi.row_type == "staart_btw_laag" {
+            let basis = if markering_actief {
+                laag_resterend
+            } else {
+                bi.staart_btw_basis.unwrap_or(0.0).max(0.0).min(laag_resterend)
+            };
+            laag_resterend -= basis;
+            basis
+        } else {
+            excl_btw - laag_grondslag_totaal
+        };
+        // Laag-regel zonder grondslag: niet tonen (draagt € 0 bij).
+        if bi.row_type == "staart_btw_laag" && grondslag <= 0.0 {
+            continue;
+        }
+        let btw_amt = grondslag * pct_frac;
+        total_btw += btw_amt;
+
+        // Symbol GH for "hoog", GL for "laag", G otherwise. Detect from description.
+        let desc_lc = bi.description.to_lowercase();
+        let (g_sym, b_sym, kind) = if desc_lc.contains("hoog") {
+            ("GH", "%H", "hoog")
+        } else if desc_lc.contains("laag") {
+            ("GL", "%L", "laag")
+        } else {
+            ("G", "%", "")
+        };
+
+        rows.push(IbisTotalenRow {
+            symbol: g_sym.into(),
+            label: match kind {
+                "hoog" => request.lbl("staart.vatBaseHigh", "Grondslag BTW hoog").into(),
+                "laag" => request.lbl("staart.vatBaseLow", "Grondslag BTW laag").into(),
+                _ => request.lbl("staart.vatBase", "Grondslag BTW").into(),
+            },
+            percentage: pct_str,
+            bedrag: nf.currency(grondslag),
+            post: String::new(),
+            totaal: String::new(),
+            is_bold: false,
+        });
+        rows.push(IbisTotalenRow {
+            symbol: b_sym.into(),
+            label: match kind {
+                "hoog" => request.lbl("staart.vatHigh", "BTW hoog").into(),
+                "laag" => request.lbl("staart.vatLow", "BTW laag").into(),
+                _ => clean_label(&bi.description),
+            },
+            percentage: String::new(),
+            bedrag: String::new(),
+            post: nf.currency(btw_amt),
+            totaal: String::new(),
+            is_bold: false,
+        });
+    }
+
+    // BT Totaal BTW
+    rows.push(IbisTotalenRow {
+        symbol: "BT".into(),
+        label: request.lbl("staart.totalVat", "Totaal BTW").into(),
+        percentage: String::new(),
+        bedrag: String::new(),
+        post: nf.currency(total_btw),
+        totaal: nf.currency(total_btw),
+        is_bold: false,
+    });
+
+    // * Totaal incl BTW
+    let incl_btw = excl_btw + total_btw;
+    rows.push(IbisTotalenRow {
+        symbol: "*".into(),
+        label: request.lbl("staart.totalInclVat", "Totaal incl BTW").into(),
+        percentage: String::new(),
+        bedrag: String::new(),
+        post: String::new(),
+        totaal: nf.currency(incl_btw),
+        is_bold: true,
+    });
+
+    Some(IbisTotalen { rows })
+}
+
+/// Strip trailing colon and whitespace from a staart label for the cascade.
+fn clean_label(s: &str) -> String {
+    s.trim().trim_end_matches(':').trim().to_string()
+}
+
+pub fn generate_ibis_typst(request: &ReportRequest) -> Result<Vec<u8>, String> {
+    use typst_as_lib::{TypstEngine, typst_kit_options::TypstKitFontOptions};
+
+    // Resolve tenant path (shared fonts with bouw1).
+    let tenant_path = {
+        let candidates = [
+            option_env!("CARGO_MANIFEST_DIR").map(|d| std::path::PathBuf::from(d).join("..").join("tenants").join("bouw1")),
+            Some(std::path::PathBuf::from("tenants/bouw1")),
+        ];
+        candidates.into_iter().flatten().find(|p| p.exists())
+            .unwrap_or_else(|| std::path::PathBuf::from("tenants/bouw1"))
+    };
+    let fonts_dir = tenant_path.join("fonts");
+    let _ = std::fs::create_dir_all(&fonts_dir);
+    let sys_fonts = std::path::Path::new("C:/Windows/Fonts");
+    for (src, dst) in [("arial.ttf","Arial.ttf"),("arialbd.ttf","Arial-Bold.ttf"),("ariali.ttf","Arial-Italic.ttf")] {
+        let d = fonts_dir.join(dst);
+        if !d.exists() { let _ = std::fs::copy(sys_fonts.join(src), &d); }
+    }
+
+    let mut data = build_ibis_data(request);
+    data.page_size = request.page_size.to_lowercase();
+    data.page_orientation = request.page_orientation.clone();
+    let json_bytes = serde_json::to_vec_pretty(&data).map_err(|e| e.to_string())?;
+
+    // Logo's van de gebruiker; zie bouw1.rs — ze worden als "logo-*.png"
+    // geregistreerd, dus een JPEG moet eerst omgezet worden.
+    let logo_left_bytes: Vec<u8> = request.company_info.as_ref()
+        .and_then(|ci| ci.logo_left.as_ref())
+        .filter(|s| !s.is_empty())
+        .and_then(|b64| super::generator::logo_as_png(b64))
+        .unwrap_or_else(|| EMPTY_PNG.to_vec());
+
+    let logo_right_bytes: Vec<u8> = request.company_info.as_ref()
+        .and_then(|ci| ci.logo_right.as_ref())
+        .filter(|s| !s.is_empty())
+        .and_then(|b64| super::generator::logo_as_png(b64))
+        .unwrap_or_else(|| EMPTY_PNG.to_vec());
+
+    let engine = TypstEngine::builder()
+        .main_file(IBIS_TEMPLATE)
+        .with_static_file_resolver([
+            ("data.json", json_bytes.as_slice()),
+            ("logo-left.png", logo_left_bytes.as_slice()),
+            ("logo-right.png", logo_right_bytes.as_slice()),
+        ])
+        .search_fonts_with(
+            TypstKitFontOptions::default()
+                .include_system_fonts(false)
+                .include_dirs([fonts_dir.to_str().unwrap_or("tenants/bouw1/fonts")]),
+        )
+        .build();
+
+    let compiled = engine.compile();
+    let doc = compiled.output.map_err(|errs| {
+        format!("Typst compile errors: {:?}", errs)
+    })?;
+
+    let options = typst_pdf::PdfOptions::default();
+    let pdf = typst_pdf::pdf(&doc, &options)
+        .map_err(|errs| format!("Typst PDF errors: {:?}", errs))?;
+
+    Ok(pdf)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn request(view: &str, labels: serde_json::Value) -> ReportRequest {
+        serde_json::from_value(serde_json::json!({
+            "schedule": { "name": "Test", "projectName": "Testproject" },
+            "items": [
+                { "id": "ch1", "code": "10", "description": "GRONDWERK", "rowType": "chapter",
+                  "depth": 0, "parentId": null, "total": 800.0 },
+                { "id": "r1", "code": "1000", "description": "graven", "rowType": "regel",
+                  "depth": 1, "parentId": "ch1", "quantity": 10.0, "unit": "uur",
+                  "unitPrice": 80.0, "total": 800.0, "resourceType": "arbeid" },
+                { "id": "s1", "code": "", "description": "Algemene kosten:", "rowType": "staart_ak",
+                  "depth": 0, "parentId": null, "staartPercentage": 6.0, "total": 48.0 },
+                { "id": "s2", "code": "", "description": "Btw hoog:", "rowType": "staart_btw",
+                  "depth": 0, "parentId": null, "staartPercentage": 21.0, "total": 178.08 }
+            ],
+            "reportView": view,
+            "labels": labels,
+        }))
+        .expect("ReportRequest parsen")
+    }
+
+    fn en_labels() -> serde_json::Value {
+        serde_json::json!({
+            "staart.allCosts": "All costs",
+            "staart.transport": "(Carried forward)",
+            "staart.totalExclVat": "Total excl. VAT",
+            "staart.vatBaseHigh": "VAT base high",
+            "staart.vatHigh": "VAT high",
+            "staart.totalVat": "Total VAT",
+            "staart.totalInclVat": "Total incl. VAT",
+            "staart.title": "Markups",
+            "views.directieTitle": "Client budget estimate",
+            "columns.description": "Description",
+            "footer.pageOf": "Page: {{page}} of {{total}}",
+            "units.uur": "h"
+        })
+    }
+
+    fn totalen_labels(data: &IbisReportData) -> Vec<String> {
+        data.totalen.as_ref().unwrap().rows.iter().map(|r| r.label.clone()).collect()
+    }
+
+    #[test]
+    fn zonder_labels_nederlands() {
+        let data = build_ibis_data(&request("directie", serde_json::json!({})));
+        let labels = totalen_labels(&data);
+        assert!(labels.iter().any(|l| l == "Alle kosten"), "{:?}", labels);
+        assert!(labels.iter().any(|l| l == "Grondslag BTW hoog"), "{:?}", labels);
+        assert!(labels.iter().any(|l| l == "Totaal incl BTW"), "{:?}", labels);
+        assert_eq!(data.report_title, "Bouwkundige directiebegroting");
+        assert_eq!(data.chapters[0].rows[0].eh, "uur");
+    }
+
+    #[test]
+    fn labels_vertalen_staart_titel_en_eenheden() {
+        let data = build_ibis_data(&request("directie", en_labels()));
+        let labels = totalen_labels(&data);
+        assert!(labels.iter().any(|l| l == "All costs"), "{:?}", labels);
+        assert!(labels.iter().any(|l| l == "VAT base high"), "{:?}", labels);
+        assert!(labels.iter().any(|l| l == "Total incl. VAT"), "{:?}", labels);
+        // Staartomschrijvingen zijn gebruikersdata en blijven zoals ingevoerd
+        assert!(labels.iter().any(|l| l == "Algemene kosten"), "{:?}", labels);
+        assert_eq!(data.report_title, "Client budget estimate");
+        assert_eq!(data.chapters[0].rows[0].eh, "h");
+        assert_eq!(data.labels.get("columns.description").map(String::as_str), Some("Description"));
+    }
+
+    #[test]
+    fn sjabloon_compileert_met_en_zonder_labels() {
+        for labels in [serde_json::json!({}), en_labels()] {
+            let pdf = generate_ibis_typst(&request("ibis", labels)).expect("Typst-compilatie");
+            assert_eq!(&pdf[0..4], b"%PDF");
+        }
+    }
+}

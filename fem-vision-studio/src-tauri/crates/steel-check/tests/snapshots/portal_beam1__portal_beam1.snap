@@ -1,0 +1,1956 @@
+---
+source: crates/steel-check/tests/portal_beam1.rs
+assertion_line: 256
+expression: run()
+---
+{
+  "beam_id": 1,
+  "profile_name": "UNP350",
+  "steel_grade": "S235",
+  "classification": "Class1",
+  "checks": [
+    {
+      "id": "6.2.4_compression",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "6.2.4_compression",
+          "title": "Druk",
+          "article": "art. 6.2.4 (6.10)",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 0.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": -232.736,
+              "mt_ed": 0.0,
+              "my_ed": 66.036,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "N_{c,Rd} = \\frac{A \\cdot f_y}{\\gamma_{M0}}",
+          "variables": [
+            {
+              "symbol": "A",
+              "value": 7665.7,
+              "unit": "mm²"
+            },
+            {
+              "symbol": "f_y",
+              "value": 235.0,
+              "unit": "MPa"
+            },
+            {
+              "symbol": "\\gamma_{M0}",
+              "value": 1.0,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 1801.4395,
+          "unit": "kN",
+          "uc": {
+            "ed": 18.479,
+            "rd": 1801.4395,
+            "uc": 0.01025790763442236,
+            "formula_latex": "N_{Ed} / N_{c,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "Tabel 3.1: dikste element t = 16 mm ≤ 40 mm, dus f_y = 235 N/mm² en f_u = 360 N/mm² (S235)."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.2.5_bending_y",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "6.2.5_bending_y",
+          "title": "Buigend moment (maatgevend)",
+          "article": "art. 6.2.5 (6.13)",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "M_{y,c,Rd} = M_{pl,y,Rd} = \\frac{W_{pl,y} \\cdot f_y}{\\gamma_{M0}}",
+          "variables": [
+            {
+              "symbol": "W_{pl,y}",
+              "value": 889763.0,
+              "unit": "mm³"
+            },
+            {
+              "symbol": "f_y",
+              "value": 235.0,
+              "unit": "MPa"
+            },
+            {
+              "symbol": "\\gamma_{M0}",
+              "value": 1.0,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 209.094305,
+          "unit": "kNm",
+          "uc": {
+            "ed": 194.796,
+            "rd": 209.094305,
+            "uc": 0.9316179127882034,
+            "formula_latex": "M_{y,Ed} / M_{y,c,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "Tabel 3.1: dikste element t = 16 mm ≤ 40 mm, dus f_y = 235 N/mm² en f_u = 360 N/mm² (S235)."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.2.5_bending_z",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "6.2.5_bending_z",
+          "title": "Buigend moment (z-as)",
+          "article": "art. 6.2.5",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "M_{z,c,Rd} = \\frac{W_{pl,z} \\cdot f_y}{\\gamma_{M0}}",
+          "variables": [
+            {
+              "symbol": "W_{pl,z}",
+              "value": 139730.0,
+              "unit": "mm³"
+            },
+            {
+              "symbol": "f_y",
+              "value": 235.0,
+              "unit": "MPa"
+            },
+            {
+              "symbol": "\\gamma_{M0}",
+              "value": 1.0,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 32.836549999999995,
+          "unit": "kNm",
+          "uc": {
+            "ed": 0.0,
+            "rd": 32.836549999999995,
+            "uc": 0.0,
+            "formula_latex": "M_{z,Ed} / M_{z,c,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "Tabel 3.1: dikste element t = 16 mm ≤ 40 mm, dus f_y = 235 N/mm² en f_u = 360 N/mm² (S235)."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.2.6_shear_z",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "6.2.6_shear_z",
+          "title": "Dwarskracht",
+          "article": "art. 6.2.6 (6.18)",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "V_{c,z,Rd} = V_{pl,z,Rd} = \\frac{A_v \\cdot (f_y / \\sqrt{3})}{\\gamma_{M0}}",
+          "variables": [
+            {
+              "symbol": "A_v",
+              "value": 4946.0,
+              "unit": "mm²"
+            },
+            {
+              "symbol": "f_y",
+              "value": 235.0,
+              "unit": "MPa"
+            },
+            {
+              "symbol": "\\gamma_{M0}",
+              "value": 1.0,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 671.059991381794,
+          "unit": "kN",
+          "uc": {
+            "ed": 235.084,
+            "rd": 671.059991381794,
+            "uc": 0.35031741277845146,
+            "formula_latex": "V_{z,Ed} / V_{c,z,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "Tabel 3.1: dikste element t = 16 mm ≤ 40 mm, dus f_y = 235 N/mm² en f_u = 360 N/mm² (S235)."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.2.6_shear_y",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "6.2.6_shear_y",
+          "title": "Dwarskracht (y-as)",
+          "article": "art. 6.2.6",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "V_{c,y,Rd} = \\frac{A_v \\cdot (f_y/\\sqrt{3})}{\\gamma_{M0}}",
+          "variables": [
+            {
+              "symbol": "A_v",
+              "value": 3200.0,
+              "unit": "mm²"
+            },
+            {
+              "symbol": "f_y",
+              "value": 235.0,
+              "unit": "MPa"
+            },
+            {
+              "symbol": "\\gamma_{M0}",
+              "value": 1.0,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 434.1674024305986,
+          "unit": "kN",
+          "uc": {
+            "ed": 0.0,
+            "rd": 434.1674024305986,
+            "uc": 0.0,
+            "formula_latex": "V_{y,Ed}/V_{c,y,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "Tabel 3.1: dikste element t = 16 mm ≤ 40 mm, dus f_y = 235 N/mm² en f_u = 360 N/mm² (S235)."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.2.8_combined_mv",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "6.2.8_combined_mv",
+          "title": "Buiging en dwarskracht",
+          "article": "art. 6.2.8",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "M_{y,V,Rd} = M_{y,c,Rd} \\text{ if } V_{z,Ed} \\leq V_{z,pl,Rd}/2",
+          "variables": [
+            {
+              "symbol": "V_{z,Ed}",
+              "value": 235.084,
+              "unit": "kN"
+            },
+            {
+              "symbol": "V_{z,pl,Rd}",
+              "value": 671.059991381794,
+              "unit": "kN"
+            },
+            {
+              "symbol": "M_{y,c,Rd}",
+              "value": 209.094305,
+              "unit": "kNm"
+            }
+          ],
+          "deelstappen": [],
+          "value": 209.094305,
+          "unit": "kNm",
+          "uc": {
+            "ed": 194.796,
+            "rd": 209.094305,
+            "uc": 0.9316179127882034,
+            "formula_latex": "M_{y,Ed} / M_{y,V,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "V_z,Ed = 235.084 kN < V_z,pl,Rd / 2 = 335.530 kN — The effect of shear on the moment resistance can be neglected."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.2.9_combined_mn",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "6.2.9_combined_mn",
+          "title": "Buiging en normaalkracht",
+          "article": "art. 6.2.9",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "M_{N,y,Rd} = M_{pl,y,Rd} \\cdot (1-n)/(1-0.5a)",
+          "variables": [
+            {
+              "symbol": "N_{Ed}",
+              "value": 18.479,
+              "unit": "kN"
+            },
+            {
+              "symbol": "N_{pl,Rd}",
+              "value": 1801.4395,
+              "unit": "kN"
+            },
+            {
+              "symbol": "M_{pl,y,Rd}",
+              "value": 209.094305,
+              "unit": "kNm"
+            }
+          ],
+          "deelstappen": [],
+          "value": 209.094305,
+          "unit": "kNm",
+          "uc": {
+            "ed": 194.796,
+            "rd": 209.094305,
+            "uc": 0.9316179127882034,
+            "formula_latex": "M_{y,Ed} / M_{N,y,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "n = 0.010 <= a = 0.500 -> M_N,y,Rd = M_pl,y,Rd (no reduction)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.2.10_combined_mnv",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "6.2.10_combined_mnv",
+          "title": "Bending, axial, shear (no shear effect)",
+          "article": "art. 6.2.10",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "M_{N,y,Rd} = M_{pl,y,Rd} \\cdot (1-n)/(1-0.5a)",
+          "variables": [
+            {
+              "symbol": "N_{Ed}",
+              "value": 18.479,
+              "unit": "kN"
+            },
+            {
+              "symbol": "N_{pl,Rd}",
+              "value": 1801.4395,
+              "unit": "kN"
+            },
+            {
+              "symbol": "M_{pl,y,Rd}",
+              "value": 209.094305,
+              "unit": "kNm"
+            }
+          ],
+          "deelstappen": [],
+          "value": 209.094305,
+          "unit": "kNm",
+          "uc": {
+            "ed": 194.796,
+            "rd": 209.094305,
+            "uc": 0.9316179127882034,
+            "formula_latex": "M_{y,Ed} / M_{N,y,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "n = 0.010 <= a = 0.500 -> M_N,y,Rd = M_pl,y,Rd (no reduction)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.3.1_buckling",
+      "kind": {
+        "type": "Stability",
+        "data": {
+          "id": "6.3.1_buckling",
+          "title": "Kolomknik — om y (in het vlak) en om z (uit het vlak)",
+          "article": "art. 6.3.1 (6.46)",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 0.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": -232.736,
+              "mt_ed": 0.0,
+              "my_ed": 66.036,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "N_{b,Rd} = \\chi \\cdot A \\cdot f_y / \\gamma_{M1}",
+          "variables": [
+            {
+              "symbol": "A",
+              "value": 7665.7,
+              "unit": "mm²"
+            },
+            {
+              "symbol": "f_y",
+              "value": 235.0,
+              "unit": "MPa"
+            },
+            {
+              "symbol": "\\gamma_{M1}",
+              "value": 1.0,
+              "unit": "-"
+            },
+            {
+              "symbol": "i_y",
+              "value": 128.7,
+              "unit": "mm"
+            },
+            {
+              "symbol": "i_z",
+              "value": 27.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "L_{cr,y}",
+              "value": 5000.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "L_{cr,z}",
+              "value": 5000.0,
+              "unit": "mm"
+            }
+          ],
+          "intermediate_values": [
+            {
+              "symbol": "\\lambda_y",
+              "value": 38.85003885003886,
+              "unit": "-"
+            },
+            {
+              "symbol": "\\lambda_z",
+              "value": 185.1851851851852,
+              "unit": "-"
+            },
+            {
+              "symbol": "\\bar{\\lambda}_y",
+              "value": 0.4136812799614926,
+              "unit": "-"
+            },
+            {
+              "symbol": "\\bar{\\lambda}_z",
+              "value": 1.9718807678164478,
+              "unit": "-"
+            },
+            {
+              "symbol": "\\chi_y",
+              "value": 0.8900615225146796,
+              "unit": "-"
+            },
+            {
+              "symbol": "\\chi_z",
+              "value": 0.2010067155980563,
+              "unit": "-"
+            },
+            {
+              "symbol": "\\chi",
+              "value": 0.2010067155980563,
+              "unit": "-"
+            },
+            {
+              "symbol": "N_{b,Rd,y}",
+              "value": 1603.391984088083,
+              "unit": "kN"
+            },
+            {
+              "symbol": "N_{b,Rd,z}",
+              "value": 362.1014372436047,
+              "unit": "kN"
+            }
+          ],
+          "deelstappen": [
+            {
+              "id": "uitgangspunten",
+              "titel": "Uitgangspunten van de knikcontrole",
+              "symbol": "",
+              "article": "art. 6.3.1.1",
+              "formula_latex": "",
+              "ingevuld_latex": "",
+              "variables": [
+                {
+                  "symbol": "N_{Ed}",
+                  "value": 18.479,
+                  "unit": "kN"
+                },
+                {
+                  "symbol": "A",
+                  "value": 7665.7,
+                  "unit": "mm²"
+                },
+                {
+                  "symbol": "f_y",
+                  "value": 235.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "E",
+                  "value": 210000.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "\\gamma_{M1}",
+                  "value": 1.0,
+                  "unit": "-"
+                }
+              ],
+              "value": null,
+              "unit": "",
+              "notes": [
+                "N_Ed is de grootste drukkracht uit de omhullende (combinatie 21, x = 0 mm). De toets rekent met die kracht over de hele staaf.",
+                "(6.47) geldt voor doorsneden van klasse 1, 2 en 3. Een doorsnede van klasse 4 wordt eerder in de toetsing geweigerd, dus (6.48) komt hier niet voor.",
+                "Elke as krijgt hieronder een eigen, volledige tak: kniklengte met herkomst, traagheidsstraal, relatieve slankheid, knikkromme, reductiefactor, knikweerstand en unity check. De knikweerstand van de staaf is de kleinste van de takken."
+              ]
+            },
+            {
+              "id": "lambda_1",
+              "titel": "Referentieslankheid",
+              "symbol": "\\lambda_1",
+              "article": "art. 6.3.1.3(1)",
+              "formula_latex": "\\lambda_1 = \\pi \\sqrt{\\frac{E}{f_y}}",
+              "ingevuld_latex": "\\lambda_1 = \\pi \\sqrt{\\frac{210000}{235}}",
+              "variables": [
+                {
+                  "symbol": "E",
+                  "value": 210000.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "f_y",
+                  "value": 235.0,
+                  "unit": "MPa"
+                }
+              ],
+              "value": 93.9129729381402,
+              "unit": "-",
+              "notes": [
+                "Gelijk aan 93,9·ε met ε = √(235/f_y) = 1,000."
+              ]
+            },
+            {
+              "id": "l_cr_y",
+              "titel": "Kniklengte om de y-as — in het vlak",
+              "symbol": "L_{cr,y}",
+              "article": "art. 6.3.1.3(1)",
+              "formula_latex": "L_{cr,y} = \\text{opgegeven}",
+              "ingevuld_latex": "",
+              "variables": [
+                {
+                  "symbol": "L",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "L_{cr,y}",
+                  "value": 5000.0,
+                  "unit": "mm"
+                }
+              ],
+              "value": 5000.0,
+              "unit": "mm",
+              "notes": [
+                "Herkomst: opgegeven.",
+                "L_cr,y is voor deze staaf opgegeven: 5000 mm. Een opgegeven kniklengte gaat altijd voor; de kern leidt dan niets af.",
+                "Knik om de y-as is uitbuigen IN het vlak van het model. De raamwerkberekening ziet die richting; rekent zij tweede orde, dan zit het globale effect in de krachten. Deze toets blijft nodig zolang de staafimperfecties niet in die berekening zitten (NEN-EN 1993-1-1 5.2.2(7))."
+              ]
+            },
+            {
+              "id": "i_y",
+              "titel": "Traagheidsstraal om de y-as",
+              "symbol": "i_{y}",
+              "article": "art. 6.3.1.3(1)",
+              "formula_latex": "i_{y} = \\sqrt{\\frac{I_{y}}{A}}",
+              "ingevuld_latex": "i_{y} = \\sqrt{\\frac{126942139}{7665{,}7}}",
+              "variables": [
+                {
+                  "symbol": "I_{y}",
+                  "value": 126942139.0,
+                  "unit": "mm⁴"
+                },
+                {
+                  "symbol": "A",
+                  "value": 7665.7,
+                  "unit": "mm²"
+                }
+              ],
+              "value": 128.7,
+              "unit": "mm",
+              "notes": [
+                "Bepaald uitgaande van de brutodoorsnede, zoals 6.3.1.3(1) voorschrijft."
+              ]
+            },
+            {
+              "id": "lambda_bar_y",
+              "titel": "Relatieve slankheid om de y-as",
+              "symbol": "\\bar{\\lambda}_{y}",
+              "article": "art. 6.3.1.3(1) (6.50)",
+              "formula_latex": "\\bar{\\lambda}_{y} = \\frac{L_{cr,y}}{i_{y}} \\cdot \\frac{1}{\\lambda_1}",
+              "ingevuld_latex": "\\bar{\\lambda}_{y} = \\frac{5000}{128{,}70} \\cdot \\frac{1}{93{,}913}",
+              "variables": [
+                {
+                  "symbol": "L_{cr,y}",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "i_{y}",
+                  "value": 128.7,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "\\lambda_1",
+                  "value": 93.9129729381402,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.4136812799614926,
+              "unit": "-",
+              "notes": [
+                "De slankheid zelf is λ_y = L_cr,y/i_y = 38,85."
+              ]
+            },
+            {
+              "id": "kromme_y",
+              "titel": "Knikkromme en imperfectiefactor om de y-as",
+              "symbol": "\\alpha_{y}",
+              "article": "tabel 6.2 en tabel 6.1",
+              "formula_latex": "\\text{knikkromme c} \\;\\Rightarrow\\; \\alpha_{y}",
+              "ingevuld_latex": "",
+              "variables": [
+                {
+                  "symbol": "\\alpha_{y}",
+                  "value": 0.49,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.49,
+              "unit": "-",
+              "notes": [
+                "Tabel 6.2 via de profieldatabase: bij UNP350 staat knikkromme 'c' om de eerste as en 'c' om de tweede as.",
+                "Tabel 6.1: knikkromme a0 / a / b / c / d → imperfectiefactor α = 0,13 / 0,21 / 0,34 / 0,49 / 0,76."
+              ]
+            },
+            {
+              "id": "phi_y",
+              "titel": "Hulpgrootheid Φ om de y-as",
+              "symbol": "\\Phi_{y}",
+              "article": "art. 6.3.1.2(1) (6.49)",
+              "formula_latex": "\\Phi_{y} = 0{,}5 \\left[ 1 + \\alpha_{y} \\left( \\bar{\\lambda}_{y} - 0{,}2 \\right) + \\bar{\\lambda}_{y}^2 \\right]",
+              "ingevuld_latex": "\\Phi_{y} = 0{,}5 \\left[ 1 + 0{,}49 \\left( 0{,}4137 - 0{,}2 \\right) + 0{,}4137^2 \\right]",
+              "variables": [
+                {
+                  "symbol": "\\alpha_{y}",
+                  "value": 0.49,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\bar{\\lambda}_{y}",
+                  "value": 0.4136812799614926,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.6379180142858552,
+              "unit": "-",
+              "notes": []
+            },
+            {
+              "id": "chi_y",
+              "titel": "Reductiefactor om de y-as",
+              "symbol": "\\chi_{y}",
+              "article": "art. 6.3.1.2(1) (6.49)",
+              "formula_latex": "\\chi_{y} = \\frac{1}{\\Phi_{y} + \\sqrt{\\Phi_{y}^2 - \\bar{\\lambda}_{y}^2}} \\le 1{,}0",
+              "ingevuld_latex": "\\chi_{y} = \\frac{1}{0{,}6379 + \\sqrt{0{,}6379^2 - 0{,}4137^2}}",
+              "variables": [
+                {
+                  "symbol": "\\Phi_{y}",
+                  "value": 0.6379180142858552,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\bar{\\lambda}_{y}",
+                  "value": 0.4136812799614926,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.8900615225146796,
+              "unit": "-",
+              "notes": []
+            },
+            {
+              "id": "n_b_rd_y",
+              "titel": "Knikweerstand om de y-as",
+              "symbol": "N_{b,Rd,y}",
+              "article": "art. 6.3.1.1(3) (6.47)",
+              "formula_latex": "N_{b,Rd,y} = \\frac{\\chi_{y} \\cdot A \\cdot f_y}{\\gamma_{M1}} \\cdot 10^{-3}",
+              "ingevuld_latex": "N_{b,Rd,y} = \\frac{0{,}8901 \\cdot 7665{,}7 \\cdot 235}{1} \\cdot 10^{-3}",
+              "variables": [
+                {
+                  "symbol": "\\chi_{y}",
+                  "value": 0.8900615225146796,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "A",
+                  "value": 7665.7,
+                  "unit": "mm²"
+                },
+                {
+                  "symbol": "f_y",
+                  "value": 235.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "\\gamma_{M1}",
+                  "value": 1.0,
+                  "unit": "-"
+                }
+              ],
+              "value": 1603.391984088083,
+              "unit": "kN",
+              "notes": [
+                "De factor 10⁻³ zet N om in kN."
+              ]
+            },
+            {
+              "id": "uc_y",
+              "titel": "Unity check om de y-as",
+              "symbol": "UC_{y}",
+              "article": "art. 6.3.1.1(1) (6.46)",
+              "formula_latex": "UC_{y} = \\frac{N_{Ed}}{N_{b,Rd,y}} \\le 1{,}0",
+              "ingevuld_latex": "UC_{y} = \\frac{18{,}48}{1603{,}39}",
+              "variables": [
+                {
+                  "symbol": "N_{Ed}",
+                  "value": 18.479,
+                  "unit": "kN"
+                },
+                {
+                  "symbol": "N_{b,Rd,y}",
+                  "value": 1603.391984088083,
+                  "unit": "kN"
+                }
+              ],
+              "value": 0.011524942237072358,
+              "unit": "-",
+              "notes": [
+                "Om de y-as voldoet de staaf."
+              ]
+            },
+            {
+              "id": "l_cr_z",
+              "titel": "Kniklengte om de z-as — uit het vlak",
+              "symbol": "L_{cr,z}",
+              "article": "art. 6.3.1.3(1)",
+              "formula_latex": "L_{cr,z} = \\text{opgegeven}",
+              "ingevuld_latex": "",
+              "variables": [
+                {
+                  "symbol": "L",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "L_{cr,z}",
+                  "value": 5000.0,
+                  "unit": "mm"
+                }
+              ],
+              "value": 5000.0,
+              "unit": "mm",
+              "notes": [
+                "Herkomst: opgegeven.",
+                "L_cr,z is voor deze staaf opgegeven: 5000 mm. Een opgegeven kniklengte gaat altijd voor; de kern leidt dan niets af.",
+                "Knik om de z-as is uitbuigen UIT het vlak van het model. Een vlak raamwerkmodel kent die richting niet, ook niet in zijn tweede-orde-berekening (P-Δ): knik uit het vlak is nooit door de raamwerkberekening gedekt, en deze toets is daar altijd nodig."
+              ]
+            },
+            {
+              "id": "i_z",
+              "titel": "Traagheidsstraal om de z-as",
+              "symbol": "i_{z}",
+              "article": "art. 6.3.1.3(1)",
+              "formula_latex": "i_{z} = \\sqrt{\\frac{I_{z}}{A}}",
+              "ingevuld_latex": "i_{z} = \\sqrt{\\frac{5603739}{7665{,}7}}",
+              "variables": [
+                {
+                  "symbol": "I_{z}",
+                  "value": 5603739.0,
+                  "unit": "mm⁴"
+                },
+                {
+                  "symbol": "A",
+                  "value": 7665.7,
+                  "unit": "mm²"
+                }
+              ],
+              "value": 27.0,
+              "unit": "mm",
+              "notes": [
+                "Bepaald uitgaande van de brutodoorsnede, zoals 6.3.1.3(1) voorschrijft."
+              ]
+            },
+            {
+              "id": "lambda_bar_z",
+              "titel": "Relatieve slankheid om de z-as",
+              "symbol": "\\bar{\\lambda}_{z}",
+              "article": "art. 6.3.1.3(1) (6.50)",
+              "formula_latex": "\\bar{\\lambda}_{z} = \\frac{L_{cr,z}}{i_{z}} \\cdot \\frac{1}{\\lambda_1}",
+              "ingevuld_latex": "\\bar{\\lambda}_{z} = \\frac{5000}{27} \\cdot \\frac{1}{93{,}913}",
+              "variables": [
+                {
+                  "symbol": "L_{cr,z}",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "i_{z}",
+                  "value": 27.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "\\lambda_1",
+                  "value": 93.9129729381402,
+                  "unit": "-"
+                }
+              ],
+              "value": 1.9718807678164478,
+              "unit": "-",
+              "notes": [
+                "De slankheid zelf is λ_z = L_cr,z/i_z = 185,19."
+              ]
+            },
+            {
+              "id": "kromme_z",
+              "titel": "Knikkromme en imperfectiefactor om de z-as",
+              "symbol": "\\alpha_{z}",
+              "article": "tabel 6.2 en tabel 6.1",
+              "formula_latex": "\\text{knikkromme c} \\;\\Rightarrow\\; \\alpha_{z}",
+              "ingevuld_latex": "",
+              "variables": [
+                {
+                  "symbol": "\\alpha_{z}",
+                  "value": 0.49,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.49,
+              "unit": "-",
+              "notes": [
+                "Tabel 6.2 via de profieldatabase: bij UNP350 staat knikkromme 'c' om de eerste as en 'c' om de tweede as.",
+                "Tabel 6.1: knikkromme a0 / a / b / c / d → imperfectiefactor α = 0,13 / 0,21 / 0,34 / 0,49 / 0,76."
+              ]
+            },
+            {
+              "id": "phi_z",
+              "titel": "Hulpgrootheid Φ om de z-as",
+              "symbol": "\\Phi_{z}",
+              "article": "art. 6.3.1.2(1) (6.49)",
+              "formula_latex": "\\Phi_{z} = 0{,}5 \\left[ 1 + \\alpha_{z} \\left( \\bar{\\lambda}_{z} - 0{,}2 \\right) + \\bar{\\lambda}_{z}^2 \\right]",
+              "ingevuld_latex": "\\Phi_{z} = 0{,}5 \\left[ 1 + 0{,}49 \\left( 1{,}9719 - 0{,}2 \\right) + 1{,}9719^2 \\right]",
+              "variables": [
+                {
+                  "symbol": "\\alpha_{z}",
+                  "value": 0.49,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\bar{\\lambda}_{z}",
+                  "value": 1.9718807678164478,
+                  "unit": "-"
+                }
+              ],
+              "value": 2.8782676693572213,
+              "unit": "-",
+              "notes": []
+            },
+            {
+              "id": "chi_z",
+              "titel": "Reductiefactor om de z-as",
+              "symbol": "\\chi_{z}",
+              "article": "art. 6.3.1.2(1) (6.49)",
+              "formula_latex": "\\chi_{z} = \\frac{1}{\\Phi_{z} + \\sqrt{\\Phi_{z}^2 - \\bar{\\lambda}_{z}^2}} \\le 1{,}0",
+              "ingevuld_latex": "\\chi_{z} = \\frac{1}{2{,}8783 + \\sqrt{2{,}8783^2 - 1{,}9719^2}}",
+              "variables": [
+                {
+                  "symbol": "\\Phi_{z}",
+                  "value": 2.8782676693572213,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\bar{\\lambda}_{z}",
+                  "value": 1.9718807678164478,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.2010067155980563,
+              "unit": "-",
+              "notes": []
+            },
+            {
+              "id": "n_b_rd_z",
+              "titel": "Knikweerstand om de z-as",
+              "symbol": "N_{b,Rd,z}",
+              "article": "art. 6.3.1.1(3) (6.47)",
+              "formula_latex": "N_{b,Rd,z} = \\frac{\\chi_{z} \\cdot A \\cdot f_y}{\\gamma_{M1}} \\cdot 10^{-3}",
+              "ingevuld_latex": "N_{b,Rd,z} = \\frac{0{,}2010 \\cdot 7665{,}7 \\cdot 235}{1} \\cdot 10^{-3}",
+              "variables": [
+                {
+                  "symbol": "\\chi_{z}",
+                  "value": 0.2010067155980563,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "A",
+                  "value": 7665.7,
+                  "unit": "mm²"
+                },
+                {
+                  "symbol": "f_y",
+                  "value": 235.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "\\gamma_{M1}",
+                  "value": 1.0,
+                  "unit": "-"
+                }
+              ],
+              "value": 362.1014372436047,
+              "unit": "kN",
+              "notes": [
+                "De factor 10⁻³ zet N om in kN."
+              ]
+            },
+            {
+              "id": "uc_z",
+              "titel": "Unity check om de z-as",
+              "symbol": "UC_{z}",
+              "article": "art. 6.3.1.1(1) (6.46)",
+              "formula_latex": "UC_{z} = \\frac{N_{Ed}}{N_{b,Rd,z}} \\le 1{,}0",
+              "ingevuld_latex": "UC_{z} = \\frac{18{,}48}{362{,}10}",
+              "variables": [
+                {
+                  "symbol": "N_{Ed}",
+                  "value": 18.479,
+                  "unit": "kN"
+                },
+                {
+                  "symbol": "N_{b,Rd,z}",
+                  "value": 362.1014372436047,
+                  "unit": "kN"
+                }
+              ],
+              "value": 0.05103266129144967,
+              "unit": "-",
+              "notes": [
+                "Om de z-as voldoet de staaf."
+              ]
+            },
+            {
+              "id": "maatgevend",
+              "titel": "Knikweerstand van de staaf — de kleinste van de takken",
+              "symbol": "N_{b,Rd}",
+              "article": "art. 6.3.1.1(1)",
+              "formula_latex": "N_{b,Rd} = \\min\\left( N_{b,Rd,y} \\,;\\, N_{b,Rd,z} \\right)",
+              "ingevuld_latex": "N_{b,Rd} = \\min\\left( 1603{,}39 \\,;\\, 362{,}10 \\right)",
+              "variables": [
+                {
+                  "symbol": "N_{b,Rd,y}",
+                  "value": 1603.391984088083,
+                  "unit": "kN"
+                },
+                {
+                  "symbol": "N_{b,Rd,z}",
+                  "value": 362.1014372436047,
+                  "unit": "kN"
+                }
+              ],
+              "value": 362.1014372436047,
+              "unit": "kN",
+              "notes": [
+                "Maatgevend is knik om de z-as (uit het vlak)."
+              ]
+            }
+          ],
+          "value": 362.1014372436047,
+          "unit": "kN",
+          "uc": {
+            "ed": 18.479,
+            "rd": 362.1014372436047,
+            "uc": 0.05103266129144967,
+            "formula_latex": "N_{Ed} / N_{b,Rd}"
+          },
+          "status": "Ok",
+          "notes": [
+            "Om de y-as (in het vlak): L_cr,y = 5000 mm (opgegeven), λ̄_y = 0,414, knikkromme c (α = 0,49), χ_y = 0,8901, N_b,Rd,y = 1603,4 kN, UC = 0,012.",
+            "Om de z-as (uit het vlak): L_cr,z = 5000 mm (opgegeven), λ̄_z = 1,972, knikkromme c (α = 0,49), χ_z = 0,2010, N_b,Rd,z = 362,1 kN, UC = 0,051.",
+            "Maatgevend is knik om de z-as (uit het vlak): N_b,Rd = 362,1 kN.",
+            "Knik om de z-as ziet de raamwerkberekening nooit, ook niet in een tweede-orde-berekening: de toets met χ is daarvoor altijd nodig.",
+            "Tabel 3.1: dikste element t = 16 mm ≤ 40 mm, dus f_y = 235 N/mm² en f_u = 360 N/mm² (S235)."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.3.2_ltb_channel",
+      "kind": {
+        "type": "Stability",
+        "data": {
+          "id": "6.3.2_ltb_channel",
+          "title": "Kip (U-profiel, monosymmetrisch)",
+          "article": "art. 6.3.2.3 + NB.NB.4/NB.7/NB.11/NB.13, met een M_cr buiten de norm om",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "M_{b,Rd} = \\chi_{LT} \\cdot W_{pl,y} \\cdot f_y / \\gamma_{M1}",
+          "variables": [
+            {
+              "symbol": "W_{pl,y}",
+              "value": 889763.0,
+              "unit": "mm³"
+            },
+            {
+              "symbol": "f_y",
+              "value": 235.0,
+              "unit": "MPa"
+            },
+            {
+              "symbol": "\\gamma_{M1}",
+              "value": 1.0,
+              "unit": "-"
+            }
+          ],
+          "intermediate_values": [
+            {
+              "symbol": "L_g",
+              "value": 5000.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "L_{st}",
+              "value": 5000.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "L_{kip}",
+              "value": 5000.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "\\beta",
+              "value": -0.33900080083779954,
+              "unit": "-"
+            },
+            {
+              "symbol": "B^*",
+              "value": -1.0,
+              "unit": "-"
+            },
+            {
+              "symbol": "C_1",
+              "value": 2.1229008809215792,
+              "unit": "-"
+            },
+            {
+              "symbol": "C_2",
+              "value": -0.0,
+              "unit": "-"
+            },
+            {
+              "symbol": "S",
+              "value": 859.5496958758131,
+              "unit": "mm"
+            },
+            {
+              "symbol": "C",
+              "value": 7.57977825473234,
+              "unit": "-"
+            },
+            {
+              "symbol": "k_{red}",
+              "value": 1.0,
+              "unit": "-"
+            },
+            {
+              "symbol": "M_{cr}",
+              "value": 254.24287332430595,
+              "unit": "kNm"
+            },
+            {
+              "symbol": "\\bar{\\lambda}_{LT}",
+              "value": 0.9068734930617727,
+              "unit": "-"
+            },
+            {
+              "symbol": "\\alpha_{LT}",
+              "value": 0.49,
+              "unit": "-"
+            },
+            {
+              "symbol": "\\chi_{LT}",
+              "value": 0.6966238901351572,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [
+            {
+              "id": "uitgangspunten",
+              "titel": "Uitgangspunten van het maatgevende kipveld",
+              "symbol": "",
+              "article": "NB.NB.4.3",
+              "formula_latex": "",
+              "ingevuld_latex": "",
+              "variables": [
+                {
+                  "symbol": "n_{kipsteunen}",
+                  "value": 0.0,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "L_g",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "L_{st}",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "M_{y,1,Ed}",
+                  "value": 66.036,
+                  "unit": "kNm"
+                },
+                {
+                  "symbol": "M_{y,2,Ed}",
+                  "value": -194.796,
+                  "unit": "kNm"
+                },
+                {
+                  "symbol": "M_{y,Ed}(L_{st}/2)",
+                  "value": -101.16400000000002,
+                  "unit": "kNm"
+                },
+                {
+                  "symbol": "q",
+                  "value": 0.0,
+                  "unit": "N/mm"
+                },
+                {
+                  "symbol": "z_a",
+                  "value": 0.0,
+                  "unit": "mm"
+                }
+              ],
+              "value": null,
+              "unit": "",
+              "notes": [
+                "Er is geen kipsteun aan de gedrukte flens: de ligger heeft één kipveld, van gaffel tot gaffel.",
+                "De staafeinden zijn als gaffels (vorkopleggingen) aangenomen. Op die aanname berust de hele keten: NB.NB.4.3 kent alleen kipvelden tussen twee gaffels, tussen één gaffel en één kipsteun, of tussen twee kipsteunen, en het aantal kipsteunen hierboven volgt uit het aantal kipvelden min één.",
+                "q en z_a zijn uitgangspunten, geen gemeten grootheden. q is de equivalente gelijkmatig verdeelde belasting die bij de momentenlijn van dit kipveld hoort (NB.NB.4.3(3)); z_a is het aangenomen aangrijpingspunt van die belasting ten opzichte van het zwaartepunt van de doorsnede, positief naar boven en dus destabiliserend. Beide bepalen B*, C₁ en C₂ en daarmee M_cr; wie ze anders aanhoudt, krijgt een andere kipweerstand.",
+                "M_y,Ed(L_st/2) rekent nergens in mee — NB.NB.4.3 bepaalt β en B* uit de eindmomenten. Hij staat erbij zodat te zien is of de momentenlijn tussen die eindmomenten doorbuigt, en dus of de aanname 'gelijkmatig verdeelde belasting met eindmomenten' van NB.NB.4.3(3) hier opgaat."
+              ]
+            },
+            {
+              "id": "b_ster",
+              "titel": "Aandeel eindmoment in de momentenlijn",
+              "symbol": "B^*",
+              "article": "NB.NB.4.3(3)",
+              "formula_latex": "B^* = \\frac{8 \\cdot M_{y,2,Ed} \\cdot 10^6}{8 \\cdot \\left| M_{y,2,Ed} \\right| \\cdot 10^6 + q \\cdot L_{st}^2}",
+              "ingevuld_latex": "B^* = \\frac{8 \\cdot (-194{,}796) \\cdot 10^6}{8 \\cdot \\left| (-194{,}796) \\right| \\cdot 10^6 + 0 \\cdot 5000^2}",
+              "variables": [
+                {
+                  "symbol": "M_{y,2,Ed}",
+                  "value": -194.796,
+                  "unit": "kNm"
+                },
+                {
+                  "symbol": "q",
+                  "value": 0.0,
+                  "unit": "N/mm"
+                },
+                {
+                  "symbol": "L_{st}",
+                  "value": 5000.0,
+                  "unit": "mm"
+                }
+              ],
+              "value": -1.0,
+              "unit": "-",
+              "notes": [
+                "B* is de maat voor het aandeel eindmoment in de momentenlijn: B* = ±1 betekent uitsluitend eindmomenten (basisgeval 1 van tabel NB.NB.1), B* = 0 uitsluitend veldbelasting (basisgeval 2). De factor 10⁶ zet M_y,2,Ed van kNm naar N·mm, zodat teller en noemer in dezelfde eenheid staan als q·L_st²."
+              ]
+            },
+            {
+              "id": "beta",
+              "titel": "Verhouding van de eindmomenten",
+              "symbol": "\\beta",
+              "article": "NB.NB.4.3",
+              "formula_latex": "\\beta = \\frac{M_{y,1,Ed}}{M_{y,2,Ed}}",
+              "ingevuld_latex": "\\beta = \\frac{66{,}036}{-194{,}796}",
+              "variables": [
+                {
+                  "symbol": "M_{y,1,Ed}",
+                  "value": 66.036,
+                  "unit": "kNm"
+                },
+                {
+                  "symbol": "M_{y,2,Ed}",
+                  "value": -194.796,
+                  "unit": "kNm"
+                }
+              ],
+              "value": -0.33900080083779954,
+              "unit": "-",
+              "notes": [
+                "M_y,1,Ed is het eindmoment met de KLEINSTE absolute waarde, M_y,2,Ed dat met de grootste. De breuk gaat over de ondertekende rekenwaarden: β = +1 hoort bij een constant moment (enkelvoudige kromming), β = −1 bij de scherpste tekenwisseling."
+              ]
+            },
+            {
+              "id": "c1",
+              "titel": "Momentenfactor C₁",
+              "symbol": "C_1",
+              "article": "NB.NB.4.3(3), figuur NB.NB.5",
+              "formula_latex": "C_1 = f_{NB.NB.5}\\left( \\beta \\,;\\, \\left| B^* \\right| \\right)",
+              "ingevuld_latex": "C_1 = f_{NB.NB.5}\\left( -0{,}339 \\,;\\, 1 \\right)",
+              "variables": [
+                {
+                  "symbol": "\\beta",
+                  "value": -0.33900080083779954,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "B^*",
+                  "value": -1.0,
+                  "unit": "-"
+                }
+              ],
+              "value": 2.1229008809215792,
+              "unit": "-",
+              "notes": [
+                "Bilineair geïnterpoleerd uit figuur NB.NB.5 — C₁ bij gelijkmatig verdeelde belasting met eindmomenten — op het raster β = −1,0 … +1,0 in stappen van 0,5 en B* = 0,00 … 1,00 in stappen van 0,05. De uiteinden van dat raster zijn verankerd op tabel NB.NB.1: C₁ = 1,13 bij B* = 0 en C₁ = min(1,75 − 1,05·β + 0,3·β² ; 2,30) bij B* = 1.",
+                "B* is negatief; afgelezen is bij |B*|. De negatieve tak van de figuur is niet gedigitaliseerd — daar kruisen de krommen elkaar en liggen pieken tot C₁ = 2,3. De hier gebruikte waarde ligt daaronder en is dus veilig-zijdig, maar zij is een benadering en geen aflezing."
+              ]
+            },
+            {
+              "id": "c2_tabel",
+              "titel": "Belastingfactor C₂ uit de figuur",
+              "symbol": "C_{2,tabel}",
+              "article": "NB.NB.4.3(3), figuur NB.NB.6",
+              "formula_latex": "C_{2,tabel} = f_{NB.NB.6}\\left( \\beta \\,;\\, \\left| B^* \\right| \\right)",
+              "ingevuld_latex": "C_{2,tabel} = f_{NB.NB.6}\\left( -0{,}339 \\,;\\, 1 \\right)",
+              "variables": [
+                {
+                  "symbol": "\\beta",
+                  "value": -0.33900080083779954,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "B^*",
+                  "value": -1.0,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.0,
+              "unit": "-",
+              "notes": [
+                "Bilineair geïnterpoleerd uit figuur NB.NB.6, op hetzelfde raster als C₁ en verankerd op tabel NB.NB.1: C₂ = 0,45 bij B* = 0 en C₂ = 0 bij B* = 1. Deze tabelwaarde geldt voor een belasting die aangrijpt in het zwaartepunt van de bovenflens; de volgende stap schaalt haar naar het werkelijke aangrijpingspunt.",
+                "B* is negatief; afgelezen is bij |B*|. De negatieve tak van de figuur is niet gedigitaliseerd — daar kruisen de krommen elkaar en liggen pieken tot C₁ = 2,3. De hier gebruikte waarde ligt daaronder en is dus veilig-zijdig, maar zij is een benadering en geen aflezing."
+              ]
+            },
+            {
+              "id": "c2",
+              "titel": "Belastingfactor C₂ bij het werkelijke aangrijpingspunt",
+              "symbol": "C_2",
+              "article": "NB.NB.4.3(1)",
+              "formula_latex": "C_2 = -\\,C_{2,tabel} \\cdot \\frac{z_a}{\\left( h - t_f \\right)/2}",
+              "ingevuld_latex": "C_2 = -\\,0 \\cdot \\frac{0}{\\left( 350 - 16 \\right)/2}",
+              "variables": [
+                {
+                  "symbol": "C_{2,tabel}",
+                  "value": 0.0,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "z_a",
+                  "value": 0.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "h",
+                  "value": 350.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "t_f",
+                  "value": 16.0,
+                  "unit": "mm"
+                }
+              ],
+              "value": -0.0,
+              "unit": "-",
+              "notes": [
+                "De tabelwaarde geldt bij een belasting op het zwaartepunt van de bovenflens, en C₂ = 0 bij een belasting op het zwaartepunt van de doorsnede; daartussen wordt lineair geïnterpoleerd. De arm tussen beide zwaartepunten is (h − t_f)/2. Het minteken is de tekenafspraak van NB.NB.11: daar staat C₂ in een OPTELterm, dus een belasting bóven het zwaartepunt (z_a > 0) werkt destabiliserend en moet C₂ negatief maken."
+              ]
+            },
+            {
+              "id": "l_kip",
+              "titel": "Vervangende ongesteunde kiplengte",
+              "symbol": "L_{kip}",
+              "article": "NB.NB.4.3",
+              "formula_latex": "L_{kip} = L_{st}",
+              "ingevuld_latex": "",
+              "variables": [
+                {
+                  "symbol": "L_{st}",
+                  "value": 5000.0,
+                  "unit": "mm"
+                }
+              ],
+              "value": 5000.0,
+              "unit": "mm",
+              "notes": [
+                "Dit kipveld ligt tussen TWEE GAFFELS; NB.NB.4.3 geeft dan L_kip = L_st. De formule (1,4 − 0,8·β)·L_st geldt alleen tussen één gaffel en één kipsteun of tussen twee kipsteunen. Zou zij hier tóch worden toegepast, dan gaf β = 0 een L_kip van 1,4·L_st en daarmee een ruim 30 % te lage M_cr."
+              ]
+            },
+            {
+              "id": "s",
+              "titel": "Doorsnedeparameter S",
+              "symbol": "S",
+              "article": "NB.NB.13",
+              "formula_latex": "S = \\frac{h}{2} \\cdot \\sqrt{\\frac{E \\cdot I_z}{G \\cdot I_t}}",
+              "ingevuld_latex": "S = \\frac{350}{2} \\cdot \\sqrt{\\frac{210000 \\cdot 5603739}{80769 \\cdot 603930}}",
+              "variables": [
+                {
+                  "symbol": "h",
+                  "value": 350.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "E",
+                  "value": 210000.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "I_z",
+                  "value": 5603739.0,
+                  "unit": "mm⁴"
+                },
+                {
+                  "symbol": "G",
+                  "value": 80769.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "I_t",
+                  "value": 603930.0,
+                  "unit": "mm⁴"
+                }
+              ],
+              "value": 859.5496958758131,
+              "unit": "mm",
+              "notes": [
+                "S vervangt in de NB-vorm de welvingsstijfheid. NB.NB.13 rekent met de VOLLE hoogte h; een herleiding via I_w = I_z·(h − t_f)²/4 zou (h − t_f)/2 geven. Het welvingstraagheidsmoment I_w komt in deze keten dan ook nergens voor: NB.148 rekent alleen met I_z en I_t.",
+                "E = 210 000 MPa volgens art. 3.2.6. G = 80 769 MPa; dat is E/(2(1+ν)) met ν = 0,3, afgerond zoals de referentie-uitwerking hem voert."
+              ]
+            },
+            {
+              "id": "c",
+              "titel": "C-coëfficiënt",
+              "symbol": "C",
+              "article": "NB.NB.11",
+              "formula_latex": "C = \\frac{\\pi \\cdot C_1 \\cdot L_g}{L_{kip}} \\left( \\sqrt{1 + \\frac{\\pi^2 \\cdot S^2}{L_{kip}^2} \\left( C_2^2 + 1 \\right)} + \\frac{\\pi \\cdot C_2 \\cdot S}{L_{kip}} \\right)",
+              "ingevuld_latex": "C = \\frac{\\pi \\cdot 2{,}123 \\cdot 5000}{5000} \\left( \\sqrt{1 + \\frac{\\pi^2 \\cdot 859{,}55^2}{5000^2} \\left( 0^2 + 1 \\right)} + \\frac{\\pi \\cdot 0 \\cdot 859{,}55}{5000} \\right)",
+              "variables": [
+                {
+                  "symbol": "C_1",
+                  "value": 2.1229008809215792,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "L_g",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "L_{kip}",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "S",
+                  "value": 859.5496958758131,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "C_2",
+                  "value": -0.0,
+                  "unit": "-"
+                }
+              ],
+              "value": 7.57977825473234,
+              "unit": "-",
+              "notes": [
+                "Let op de haakjes: de term π·C₂·S/L_kip staat BUITEN de wortel. Bij een belasting boven het zwaartepunt is C₂ negatief, en die losse term verlaagt C dan — en daarmee M_cr."
+              ]
+            },
+            {
+              "id": "k_red",
+              "titel": "Reductiefactor voor de vervormbaarheid van het lijf",
+              "symbol": "k_{red}",
+              "article": "NB.NB.7",
+              "formula_latex": "\\frac{h}{t_w} \\le 75 \\;\\Rightarrow\\; k_{red} = 1{,}0",
+              "ingevuld_latex": "\\frac{350}{14} = 25 \\le 75 \\;\\Rightarrow\\; k_{red} = 1{,}0",
+              "variables": [
+                {
+                  "symbol": "h",
+                  "value": 350.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "t_w",
+                  "value": 14.0,
+                  "unit": "mm"
+                }
+              ],
+              "value": 1.0,
+              "unit": "-",
+              "notes": [
+                "Het lijf is niet slank genoeg om M_cr te verlagen: NB.NB.7 geeft dan k_red = 1 en de vervormbaarheidsmaat α van NB.NB.9 hoeft niet te worden bepaald."
+              ]
+            },
+            {
+              "id": "m_cr",
+              "titel": "Kritiek kipmoment",
+              "symbol": "M_{cr}",
+              "article": "NB.148, met een reductie buiten de norm om",
+              "formula_latex": "M_{cr} = 0{,}70 \\cdot k_{red} \\cdot \\frac{C}{L_g} \\cdot \\sqrt{E \\cdot I_z \\cdot G \\cdot I_t} \\cdot 10^{-6}",
+              "ingevuld_latex": "M_{cr} = 0{,}70 \\cdot 1 \\cdot \\frac{7{,}580}{5000} \\cdot \\sqrt{210000 \\cdot 5603739 \\cdot 80769 \\cdot 603930} \\cdot 10^{-6}",
+              "variables": [
+                {
+                  "symbol": "k_{red}",
+                  "value": 1.0,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "C",
+                  "value": 7.57977825473234,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "L_g",
+                  "value": 5000.0,
+                  "unit": "mm"
+                },
+                {
+                  "symbol": "E",
+                  "value": 210000.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "I_z",
+                  "value": 5603739.0,
+                  "unit": "mm⁴"
+                },
+                {
+                  "symbol": "G",
+                  "value": 80769.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "I_t",
+                  "value": 603930.0,
+                  "unit": "mm⁴"
+                }
+              ],
+              "value": 254.24287332430595,
+              "unit": "kNm",
+              "notes": [
+                "De factor 10⁻⁶ zet het resultaat van N·mm naar kNm. I_w komt in deze formule niet voor: de NB-vorm vangt de welving in de C-coëfficiënt, via S.",
+                "De factor 0,7 is GEEN normwaarde. De bijlage geeft voor een monosymmetrisch U-profiel geen M_cr; de werkelijke waarde vraagt de monosymmetrieparameter z_j, die hier niet is uitgewerkt. Aangehouden is de I-vorm van NB.148 maal een vaste, veilig-zijdig bedoelde reductie — een expliciete keuze buiten de norm om."
+              ]
+            },
+            {
+              "id": "lambda_lt",
+              "titel": "Relatieve slankheid voor kip",
+              "symbol": "\\bar{\\lambda}_{LT}",
+              "article": "art. 6.3.2.2(1)",
+              "formula_latex": "\\bar{\\lambda}_{LT} = \\sqrt{\\frac{W_{pl,y} \\cdot f_y}{M_{cr} \\cdot 10^6}}",
+              "ingevuld_latex": "\\bar{\\lambda}_{LT} = \\sqrt{\\frac{889763 \\cdot 235}{254{,}243 \\cdot 10^6}}",
+              "variables": [
+                {
+                  "symbol": "W_{pl,y}",
+                  "value": 889763.0,
+                  "unit": "mm³"
+                },
+                {
+                  "symbol": "f_y",
+                  "value": 235.0,
+                  "unit": "MPa"
+                },
+                {
+                  "symbol": "M_{cr}",
+                  "value": 254.24287332430595,
+                  "unit": "kNm"
+                }
+              ],
+              "value": 0.9068734930617727,
+              "unit": "-",
+              "notes": [
+                "W_pl,y omdat de doorsnede in klasse 1 of 2 valt; de factor 10⁶ zet M_cr van kNm naar N·mm."
+              ]
+            },
+            {
+              "id": "phi_lt",
+              "titel": "Hulpgrootheid Φ_LT",
+              "symbol": "\\Phi_{LT}",
+              "article": "art. 6.3.2.3 (6.57)",
+              "formula_latex": "\\Phi_{LT} = 0{,}5 \\left[ 1 + \\alpha_{LT} \\left( \\bar{\\lambda}_{LT} - \\bar{\\lambda}_{LT,0} \\right) + \\beta \\cdot \\bar{\\lambda}_{LT}^2 \\right]",
+              "ingevuld_latex": "\\Phi_{LT} = 0{,}5 \\left[ 1 + 0{,}49 \\left( 0{,}907 - 0{,}4 \\right) + 0{,}75 \\cdot 0{,}907^2 \\right]",
+              "variables": [
+                {
+                  "symbol": "\\alpha_{LT}",
+                  "value": 0.49,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\bar{\\lambda}_{LT}",
+                  "value": 0.9068734930617727,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\bar{\\lambda}_{LT,0}",
+                  "value": 0.4,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\beta",
+                  "value": 0.75,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.9325913304569072,
+              "unit": "-",
+              "notes": [
+                "Tabel 6.5 kent geen rij voor U-profielen; zij noemt alleen gewalste en gelaste I-profielen. Aangehouden is kipkromme c met α_LT = 0,49 (tabel 6.3), één kromme ongunstiger dan een gewalste I met h/b ≤ 2. Dat is een expliciete keuze buiten de tabel om, geen normwaarde.",
+                "λ_LT,0 = 0,4 en β = 0,75 zijn de waarden die de nationale bijlage bij 6.3.2.3(1) VOORSCHRIJFT; zij schrapt daar het woord 'aanbevolen'. De β in deze formule is NIET de β van NB.NB.4.3 hierboven — dat is de verhouding van de eindmomenten, dit is een vaste factor in de kipkromme."
+              ]
+            },
+            {
+              "id": "chi_lt",
+              "titel": "Kipreductiefactor",
+              "symbol": "\\chi_{LT}",
+              "article": "art. 6.3.2.3 (6.57)",
+              "formula_latex": "\\chi_{LT} = \\min\\left( \\frac{1}{\\Phi_{LT} + \\sqrt{\\Phi_{LT}^2 - \\beta \\cdot \\bar{\\lambda}_{LT}^2}} \\,;\\, 1{,}0 \\,;\\, \\frac{1}{\\bar{\\lambda}_{LT}^2} \\right)",
+              "ingevuld_latex": "\\chi_{LT} = \\min\\left( \\frac{1}{0{,}933 + \\sqrt{0{,}933^2 - 0{,}75 \\cdot 0{,}907^2}} \\,;\\, 1{,}0 \\,;\\, \\frac{1}{0{,}907^2} \\right)",
+              "variables": [
+                {
+                  "symbol": "\\Phi_{LT}",
+                  "value": 0.9325913304569072,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\beta",
+                  "value": 0.75,
+                  "unit": "-"
+                },
+                {
+                  "symbol": "\\bar{\\lambda}_{LT}",
+                  "value": 0.9068734930617727,
+                  "unit": "-"
+                }
+              ],
+              "value": 0.6966238901351572,
+              "unit": "-",
+              "notes": [
+                "De twee bovengrenzen horen bij vgl. (6.57): χ_LT ≤ 1,0 en χ_LT ≤ 1/λ̄_LT²."
+              ]
+            }
+          ],
+          "value": 145.66008815420705,
+          "unit": "kNm",
+          "uc": {
+            "ed": 194.796,
+            "rd": 145.66008815420705,
+            "uc": 1.3373327070472034,
+            "formula_latex": "M_{y,Ed} / M_{b,Rd}"
+          },
+          "status": "NotOk",
+          "notes": [
+            "Conservatieve monosymmetriereductie: M_cr is de I-vorm van NB.148 maal een vaste factor 0,7. De monosymmetrieparameter z_j, die een U-profiel werkelijk nodig heeft, is niet uitgewerkt. Deze factor is geen normwaarde.",
+            "Tabel 6.5 kent geen rij voor U-profielen; α_LT = 0,49 (kromme c) is een expliciete keuze buiten de tabel om, geen normwaarde.",
+            "De momentenlijn van de maatgevende combinatie is bemonsterd van x = 0 tot x = 3900 mm op een staaf van 5000 mm. Buiten dat bereik is de laatst bemonsterde waarde vastgehouden, dus de eindmomenten waaruit β en B* volgen (NB.NB.4.3) zijn doorgetrokken en niet gemeten."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.3.3_eq_6_61",
+      "kind": {
+        "type": "Stability",
+        "data": {
+          "id": "6.3.3_eq_6_61",
+          "title": "Knik en kip om de y-as (N + M)",
+          "article": "art. 6.3.3 (6.61)",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "\\frac{N_{Ed}}{\\chi_y N_{Rk}/\\gamma_{M1}} + k_{yy}\\frac{M_{y,Ed}}{\\chi_{LT} M_{y,Rk}/\\gamma_{M1}} + k_{yz}\\frac{M_{z,Ed}}{M_{z,Rk}/\\gamma_{M1}} \\leq 1",
+          "variables": [
+            {
+              "symbol": "k_{yy}",
+              "value": 0.46554334022740246,
+              "unit": "-"
+            },
+            {
+              "symbol": "k_{yz}",
+              "value": 0.6428674354848176,
+              "unit": "-"
+            },
+            {
+              "symbol": "C_{my}",
+              "value": 0.46439967966488016,
+              "unit": "-"
+            },
+            {
+              "symbol": "C_{mz}",
+              "value": 1.0,
+              "unit": "-"
+            }
+          ],
+          "intermediate_values": [
+            {
+              "symbol": "term_N",
+              "value": 0.011524942237072358,
+              "unit": "-"
+            },
+            {
+              "symbol": "term_{M_y}",
+              "value": 0.6225863354341094,
+              "unit": "-"
+            },
+            {
+              "symbol": "term_{M_z}",
+              "value": 0.0,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 0.6341112776711817,
+          "unit": "-",
+          "uc": {
+            "ed": 0.6341112776711817,
+            "rd": 1.0,
+            "uc": 0.6341112776711817,
+            "formula_latex": "Sum of terms"
+          },
+          "status": "Ok",
+          "notes": [
+            "C_my tabel B.3, rij 1 (alleen eindmomenten, lineair verloop): M = -194,80 kNm en ψ·M met ψ = -0,339 → C_m = 0,6 + 0,4·ψ = 0,464 (ondergrens 0,4).",
+            "C_mz tabel B.3: geen buigend moment over dit veld, C_m = 1,0 aangehouden (rekent niet mee omdat de momentterm nul is).",
+            "C_mLT (kipveld 1 van 1, x = 0–5000 mm) tabel B.3: de momentenlijn loopt monotoon van 66,04 naar -194,80 kNm maar wijkt van de rechte lijn af (grootste afwijking 57,38 kNm); zo'n verloop heeft geen eigen rij. Aangehouden is de grootste van rij 1 (ψ = -0,339, C_m = 0,464) en rij 2 met het gemiddelde moment over het veld als veldmoment (M_s = -93,07 kNm, α_s = 0,478, gelijkmatig verdeelde belasting, C_m = 0,582): C_m = 0,582.",
+            "k_zy volgens tabel B.2 (staaf gevoelig voor vervormingen door torsie: open doorsnede met χ_LT < 1): k_zy = 1 − 0,1·λ̄_z·n_z/(C_mLT − 0,25) ≥ 1 − 0,1·n_z/(C_mLT − 0,25) met λ̄_z = 1,972, n_z = N_Ed/(χ_z·N_Rk/γ_M1) = 0,051 en C_mLT = 0,582 → k_zy = 0,985. k_yy, k_yz en k_zz volgens tabel B.1."
+          ]
+        }
+      }
+    },
+    {
+      "id": "6.3.3_eq_6_62",
+      "kind": {
+        "type": "Stability",
+        "data": {
+          "id": "6.3.3_eq_6_62",
+          "title": "Knik en kip om de z-as (N + M)",
+          "article": "art. 6.3.3 (6.62)",
+          "force_state": {
+            "combination_id": 21,
+            "position_mm": 3900.0,
+            "forces": {
+              "n_ed": -18.479,
+              "vy_ed": 0.0,
+              "vz_ed": 235.084,
+              "mt_ed": 0.0,
+              "my_ed": -194.796,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "\\frac{N_{Ed}}{\\chi_z N_{Rk}/\\gamma_{M1}} + k_{zy}\\frac{M_{y,Ed}}{\\chi_{LT} M_{y,Rk}/\\gamma_{M1}} + k_{zz}\\frac{M_{z,Ed}}{M_{z,Rk}/\\gamma_{M1}} \\leq 1",
+          "variables": [
+            {
+              "symbol": "k_{zy}",
+              "value": 0.984639438804341,
+              "unit": "-"
+            },
+            {
+              "symbol": "k_{zz}",
+              "value": 1.0714457258080294,
+              "unit": "-"
+            },
+            {
+              "symbol": "C_{my}",
+              "value": 0.46439967966488016,
+              "unit": "-"
+            },
+            {
+              "symbol": "C_{mz}",
+              "value": 1.0,
+              "unit": "-"
+            },
+            {
+              "symbol": "C_{mLT}",
+              "value": 0.5822317501386065,
+              "unit": "-"
+            }
+          ],
+          "intermediate_values": [
+            {
+              "symbol": "term_N",
+              "value": 0.05103266129144967,
+              "unit": "-"
+            },
+            {
+              "symbol": "term_{M_y}",
+              "value": 1.3167905261616484,
+              "unit": "-"
+            },
+            {
+              "symbol": "term_{M_z}",
+              "value": 0.0,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 1.367823187453098,
+          "unit": "-",
+          "uc": {
+            "ed": 1.367823187453098,
+            "rd": 1.0,
+            "uc": 1.367823187453098,
+            "formula_latex": "Sum of terms"
+          },
+          "status": "NotOk",
+          "notes": [
+            "C_my tabel B.3, rij 1 (alleen eindmomenten, lineair verloop): M = -194,80 kNm en ψ·M met ψ = -0,339 → C_m = 0,6 + 0,4·ψ = 0,464 (ondergrens 0,4).",
+            "C_mz tabel B.3: geen buigend moment over dit veld, C_m = 1,0 aangehouden (rekent niet mee omdat de momentterm nul is).",
+            "C_mLT (kipveld 1 van 1, x = 0–5000 mm) tabel B.3: de momentenlijn loopt monotoon van 66,04 naar -194,80 kNm maar wijkt van de rechte lijn af (grootste afwijking 57,38 kNm); zo'n verloop heeft geen eigen rij. Aangehouden is de grootste van rij 1 (ψ = -0,339, C_m = 0,464) en rij 2 met het gemiddelde moment over het veld als veldmoment (M_s = -93,07 kNm, α_s = 0,478, gelijkmatig verdeelde belasting, C_m = 0,582): C_m = 0,582.",
+            "k_zy volgens tabel B.2 (staaf gevoelig voor vervormingen door torsie: open doorsnede met χ_LT < 1): k_zy = 1 − 0,1·λ̄_z·n_z/(C_mLT − 0,25) ≥ 1 − 0,1·n_z/(C_mLT − 0,25) met λ̄_z = 1,972, n_z = N_Ed/(χ_z·N_Rk/γ_M1) = 0,051 en C_mLT = 0,582 → k_zy = 0,985. k_yy, k_yz en k_zz volgens tabel B.1."
+          ]
+        }
+      }
+    },
+    {
+      "id": "deflection_w_fin",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "deflection_w_fin",
+          "title": "Doorbuiging w_fin (BGT)",
+          "article": "NEN-EN 1990 (BGT)",
+          "force_state": {
+            "combination_id": 0,
+            "position_mm": 0.0,
+            "forces": {
+              "n_ed": 0.0,
+              "vy_ed": 0.0,
+              "vz_ed": 0.0,
+              "mt_ed": 0.0,
+              "my_ed": 0.0,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "w_{fin,z} = w_z + w_{zeeg,z}",
+          "variables": [
+            {
+              "symbol": "L",
+              "value": 5000.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "w",
+              "value": 0.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "L/n",
+              "value": 333.0,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 15.015015015015015,
+          "unit": "mm",
+          "uc": {
+            "ed": 0.0,
+            "rd": 15.015015015015015,
+            "uc": 0.0,
+            "formula_latex": "|w| / w_{max}"
+          },
+          "status": "Ok",
+          "notes": []
+        }
+      }
+    },
+    {
+      "id": "deflection_w_add",
+      "kind": {
+        "type": "Resistance",
+        "data": {
+          "id": "deflection_w_add",
+          "title": "Doorbuiging w_add (BGT)",
+          "article": "NEN-EN 1990:2002/NB:2019 A1.4.3(3)",
+          "force_state": {
+            "combination_id": 0,
+            "position_mm": 0.0,
+            "forces": {
+              "n_ed": 0.0,
+              "vy_ed": 0.0,
+              "vz_ed": 0.0,
+              "mt_ed": 0.0,
+              "my_ed": 0.0,
+              "mz_ed": 0.0
+            }
+          },
+          "formula_latex": "w_{add,z} = w_z - w_{BGT,perm,z}",
+          "variables": [
+            {
+              "symbol": "L",
+              "value": 5000.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "w",
+              "value": 0.0,
+              "unit": "mm"
+            },
+            {
+              "symbol": "L/n",
+              "value": 333.3333333333333,
+              "unit": "-"
+            }
+          ],
+          "deelstappen": [],
+          "value": 15.0,
+          "unit": "mm",
+          "uc": {
+            "ed": 0.0,
+            "rd": 15.0,
+            "uc": 0.0,
+            "formula_latex": "|w| / w_{max}"
+          },
+          "status": "Ok",
+          "notes": [
+            "w_add = w_fin − w_BGT,permanent staat voor de som w2 + w3 uit figuur NB.1 bij NEN-EN 1990:2002/NB:2019 A1.4.3(2): de doorbuiging bovenop het deel dat de blijvende belasting al veroorzaakt.",
+            "Grenswaarde: 3/1 000 deel van ℓ_rep, volgens NEN-EN 1990:2002/NB:2019 A1.4.3(3), tweede gedachtestreepje: overige vloeren en daken die intensief door personen worden gebruikt. Met ℓ_rep = 5000 mm is dat 15.0 mm. De norm meet w2 + w3 daar bij de FREQUENTE belastingscombinatie (uitdrukking 6.15b) — controleer dat de doorbuiging waarmee hier is gerekend uit die combinatie komt."
+          ]
+        }
+      }
+    }
+  ],
+  "uc_max": 1.367823187453098,
+  "status": "NotOk",
+  "governing_check_id": "6.3.3_eq_6_62"
+}

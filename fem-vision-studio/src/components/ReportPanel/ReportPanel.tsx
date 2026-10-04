@@ -1,0 +1,411 @@
+﻿/**
+ * ReportPanel — Native Rust PDF preview
+ * Calls Tauri command generate_steel_report_pdf (printpdf-based), receives
+ * PDF bytes, embeds as blob: URL in an iframe — Chrome/WebView2 native viewer.
+ * No html2pdf.js, no HTML rendering.
+ */
+
+import React, { useState, useRef, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { useFEM, isSteelCheckResult } from '../../context/FEMContext';
+import { useI18n } from '../../i18n/i18n';
+import { getEnabledSections, CATEGORY_NAMES, ReportSectionCategory, IReportSection } from '../../core/report/ReportConfig';
+import { FileText, Printer } from 'lucide-react';
+import './ReportPanel.css';
+import { ReportPreview } from './ReportPreview';
+import { printReport } from '../../core/report/ReportGenerator';
+
+export const ReportPanel: React.FC = () => {
+  const { state, dispatch } = useFEM();
+  const { t: _t } = useI18n();
+  const { reportConfig, mesh, projectInfo } = state;
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const generationKey = useRef(0);
+  const nativeRuntime = '__TAURI_INTERNALS__' in window;
+  const [showReportSettings, setShowReportSettings] = useState(() => window.innerWidth >= 1100);
+
+  useEffect(() => {
+    const compact = window.matchMedia('(max-width: 1099px)');
+    const collapseSettings = () => { if (compact.matches) setShowReportSettings(false); };
+    compact.addEventListener('change', collapseSettings);
+    return () => compact.removeEventListener('change', collapseSettings);
+  }, []);
+
+  const enabledSections = getEnabledSections(reportConfig);
+
+  // Group sections by category for navigation
+  const sectionsByCategory = enabledSections.reduce((acc, section) => {
+    if (!acc[section.category]) {
+      acc[section.category] = [];
+    }
+    acc[section.category].push(section);
+    return acc;
+  }, {} as Record<ReportSectionCategory, typeof enabledSections>);
+
+  // Check if we have enough data to show a report
+  const hasData = mesh.getNodeCount() > 0;
+
+  // Generate PDF via native Rust whenever check results or project info change.
+  // De native PDF dekt nu alleen staal (EN 1993); houtresultaten (EN 1995)
+  // worden gefilterd tot er een houtrapport bestaat.
+  const steelResults = state.steelCheckResults?.filter(isSteelCheckResult) ?? [];
+  useEffect(() => {
+    if (!nativeRuntime) return;
+    if (!hasData || steelResults.length === 0) {
+      setPdfBlobUrl(null);
+      return;
+    }
+
+    const myKey = ++generationKey.current;
+    setIsGenerating(true);
+
+    const reportInput = {
+      project_name:        projectInfo.name         || 'Untitled',
+      project_number:      projectInfo.projectNumber || '',
+      engineer:            projectInfo.engineer      || '',
+      company:             projectInfo.company       || '',
+      date:                projectInfo.date          || new Date().toISOString().slice(0, 10),
+      steel_check_results: steelResults,
+    };
+
+    invoke<number[]>('generate_steel_report_pdf', { input: reportInput })
+      .then(bytes => {
+        if (myKey !== generationKey.current) return; // stale
+        const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        setPdfBlobUrl(prev => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
+        setIsGenerating(false);
+      })
+      .catch((err: unknown) => {
+        console.error('PDF generation failed:', err);
+        setIsGenerating(false);
+      });
+  }, [projectInfo, state.steelCheckResults, hasData]);
+
+  // Revoke blob URL on unmount
+  useEffect(() => {
+    return () => {
+      setPdfBlobUrl(prev => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
+  }, []);
+
+  // Section nav — just highlights the active item; scroll inside a PDF blob is handled by the viewer
+  const handleNavClick = (sectionId: string) => {
+    setActiveSection(sectionId);
+    if (!nativeRuntime) document.getElementById(`section-${sectionId}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
+
+  const handlePrintPdf = () => {
+    if (!nativeRuntime) {
+      printReport({ config: reportConfig, mesh, projectInfo, result: state.result,
+        loadCases: state.loadCases, loadCombinations: state.loadCombinations, t: _t,
+        steelCheckResults: steelResults });
+      return;
+    }
+    if (!pdfBlobUrl) return;
+    const win = window.open(pdfBlobUrl, '_blank');
+    if (!win) {
+      // Fallback: trigger download
+      const a = document.createElement('a');
+      a.href = pdfBlobUrl;
+      a.download = `${state.projectInfo.name || 'report'}.pdf`;
+      a.click();
+    }
+  };
+
+  // Settings sidebar handlers
+  const handleSectionToggle = (id: string) => {
+    dispatch({
+      type: 'SET_REPORT_CONFIG',
+      payload: {
+        ...reportConfig,
+        sections: reportConfig.sections.map(s =>
+          s.id === id ? { ...s, enabled: !s.enabled } : s
+        ),
+      },
+    });
+  };
+
+  const handleToggleCategory = (category: ReportSectionCategory, enabled: boolean) => {
+    dispatch({
+      type: 'SET_REPORT_CONFIG',
+      payload: {
+        ...reportConfig,
+        sections: reportConfig.sections.map(s =>
+          s.category === category ? { ...s, enabled } : s
+        ),
+      },
+    });
+  };
+
+  const updateConfig = (updates: Partial<typeof reportConfig>) => {
+    dispatch({
+      type: 'SET_REPORT_CONFIG',
+      payload: { ...reportConfig, ...updates },
+    });
+  };
+
+  // Group sections by category for settings sidebar
+  const settingsSectionsByCategory = reportConfig.sections.reduce((acc, section) => {
+    if (!acc[section.category]) {
+      acc[section.category] = [];
+    }
+    acc[section.category].push(section);
+    return acc;
+  }, {} as Record<ReportSectionCategory, IReportSection[]>);
+
+  const categories: ReportSectionCategory[] = ['header', 'input', 'results'];
+
+  // Settings sidebar component - always visible
+  const SettingsSidebar = () => (
+    <div className="report-settings-sidebar visible">
+      <div className="report-settings-sidebar-header">
+        <h3>Report Settings</h3>
+      </div>
+      <div className="report-settings-sidebar-content">
+        {/* Section toggles */}
+        <div className="settings-group">
+          <h4>Report Sections</h4>
+          {categories.map(category => {
+            const sections = settingsSectionsByCategory[category] || [];
+            const enabledCount = sections.filter(s => s.enabled).length;
+            const allEnabled = enabledCount === sections.length;
+            const noneEnabled = enabledCount === 0;
+
+            return (
+              <div key={category} className="section-category">
+                <div className="section-category-header">
+                  <label className="section-category-toggle">
+                    <input
+                      type="checkbox"
+                      checked={!noneEnabled}
+                      ref={(el) => {
+                        if (el) el.indeterminate = !allEnabled && !noneEnabled;
+                      }}
+                      onChange={e => handleToggleCategory(category, e.target.checked)}
+                    />
+                    <span className="section-category-name">{CATEGORY_NAMES[category]}</span>
+                  </label>
+                  <span className="section-category-count">
+                    {enabledCount}/{sections.length}
+                  </span>
+                </div>
+                <div className="section-items">
+                  {sections
+                    .sort((a, b) => a.order - b.order)
+                    .map(section => (
+                      <label key={section.id} className="section-toggle">
+                        <input
+                          type="checkbox"
+                          checked={section.enabled}
+                          onChange={() => handleSectionToggle(section.id)}
+                        />
+                        <span>{section.name}</span>
+                      </label>
+                    ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Company Info */}
+        <div className="settings-group">
+          <h4>Company Info</h4>
+          <label className="settings-field">
+            <span>Company Name</span>
+            <input
+              type="text"
+              value={reportConfig.companyName}
+              onChange={e => updateConfig({ companyName: e.target.value })}
+            />
+          </label>
+        </div>
+
+        {/* Styling */}
+        <div className="settings-group">
+          <h4>Styling</h4>
+          <div className="settings-row">
+            <label className="settings-field">
+              <span>Primary Color</span>
+              <div className="color-input-wrapper">
+                <input
+                  type="color"
+                  value={reportConfig.primaryColor}
+                  onChange={e => updateConfig({ primaryColor: e.target.value })}
+                />
+                <span className="color-value">{reportConfig.primaryColor}</span>
+              </div>
+            </label>
+            <label className="settings-field">
+              <span>Accent Color</span>
+              <div className="color-input-wrapper">
+                <input
+                  type="color"
+                  value={reportConfig.accentColor}
+                  onChange={e => updateConfig({ accentColor: e.target.value })}
+                />
+                <span className="color-value">{reportConfig.accentColor}</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Content Options */}
+        <div className="settings-group">
+          <h4>Content Options</h4>
+          <label className="settings-checkbox">
+            <input
+              type="checkbox"
+              checked={reportConfig.includeFormulas}
+              onChange={e => updateConfig({ includeFormulas: e.target.checked })}
+            />
+            <span>Include detailed formulas</span>
+          </label>
+          <label className="settings-checkbox">
+            <input
+              type="checkbox"
+              checked={reportConfig.includeGraphics}
+              onChange={e => updateConfig({ includeGraphics: e.target.checked })}
+            />
+            <span>Include diagrams</span>
+          </label>
+          <label className="settings-checkbox">
+            <input
+              type="checkbox"
+              checked={reportConfig.showPageNumbers}
+              onChange={e => updateConfig({ showPageNumbers: e.target.checked })}
+            />
+            <span>Show page numbers</span>
+          </label>
+          <label className="settings-checkbox">
+            <input
+              type="checkbox"
+              checked={reportConfig.showHeader}
+              onChange={e => updateConfig({ showHeader: e.target.checked })}
+            />
+            <span>Show page header</span>
+          </label>
+          <label className="settings-checkbox">
+            <input
+              type="checkbox"
+              checked={reportConfig.showFooter}
+              onChange={e => updateConfig({ showFooter: e.target.checked })}
+            />
+            <span>Show page footer</span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+  );
+
+  if (!hasData) {
+    return (
+      <div className="report-panel">
+        <div className="report-nav">
+          <h3>Report Sections</h3>
+          <p style={{ color: 'var(--theme-fg-subtle)', fontSize: 11 }}>
+            No model data available
+          </p>
+        </div>
+        <div className="report-preview-container">
+          <div className="report-empty">
+            <FileText size={48} />
+            <h3>No Model Data</h3>
+            <p>Create a structural model to generate a report.</p>
+          </div>
+        </div>
+        {showReportSettings && <SettingsSidebar />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="report-panel">
+      {/* Left: Section navigation */}
+      <div className="report-nav">
+        <h3>Report Sections</h3>
+        {(['header', 'input', 'results', 'checks'] as ReportSectionCategory[]).map(category => {
+          const sections = sectionsByCategory[category];
+          if (!sections || sections.length === 0) return null;
+
+          return (
+            <div key={category} className="report-nav-category">
+              <div className="report-nav-category-title">
+                {CATEGORY_NAMES[category]}
+              </div>
+              {sections.map(section => (
+                <a
+                  key={section.id}
+                  className={`report-nav-item ${activeSection === section.id ? 'active' : ''}`}
+                  onClick={() => handleNavClick(section.id)}
+                >
+                  {section.name}
+                </a>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Center: True PDF preview via blob URL */}
+      <div className="report-preview-container" style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Toolbar */}
+        <div className="report-iframe-toolbar">
+          <button
+            className="rp-print-btn"
+            onClick={handlePrintPdf}
+            disabled={nativeRuntime && (!pdfBlobUrl || isGenerating)}
+            title="Open PDF in new window — use browser Save to save the file"
+          >
+            <Printer size={14} style={{ marginRight: 6 }} />
+            Save / Print PDF
+          </button>
+          <span className="rp-wysiwyg-hint">
+            {!nativeRuntime ? 'Print preview' : isGenerating ? 'Generating PDF…' : 'Preview is the actual PDF'}
+          </span>
+          <button className="rp-settings-btn" aria-pressed={showReportSettings}
+            onClick={() => setShowReportSettings(show => !show)}>Report settings</button>
+        </div>
+
+        {/* PDF blob iframe — Chrome/WebView2 renders with native PDF viewer */}
+        {!nativeRuntime ? (
+          <div className="report-web-preview">
+            <ReportPreview config={reportConfig} mesh={mesh} result={state.result} projectInfo={projectInfo}
+              loadCases={state.loadCases} loadCombinations={state.loadCombinations} />
+          </div>
+        ) : pdfBlobUrl ? (
+          <iframe
+            ref={iframeRef}
+            className="report-iframe"
+            src={pdfBlobUrl}
+            title="Report PDF preview"
+          />
+        ) : (
+          <div className="report-empty" style={{ padding: 32, textAlign: 'center' }}>
+            <FileText size={48} />
+            <h3>{isGenerating ? 'Generating PDF…' : 'Run steel checks to generate a PDF'}</h3>
+            {isGenerating && (
+              <p style={{ color: '#666' }}>
+                First generation may take 10â€“20 seconds for large reports.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Right: Settings sidebar - always visible */}
+      {showReportSettings && <SettingsSidebar />}
+    </div>
+  );
+};

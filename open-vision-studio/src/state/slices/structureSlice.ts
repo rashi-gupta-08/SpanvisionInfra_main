@@ -1,0 +1,195 @@
+import type { ActivityCodeType, ActivityCodeValue, CustomFieldDef, CustomFieldType, CustomFieldValue } from '@/types/structure';
+import { assignTaskActivityCode, assignTaskCustomField } from '@/engine/taskMutationRules';
+import { customTaskTypeClashes } from '@/services/taskTypes/customTaskTypeRules';
+import type { CustomTaskType } from '@/types/taskType';
+import { generateId } from '@/utils/id';
+import type { AppSliceFactory } from './types';
+
+/**
+ * Structuurdefinities: activity-code-types en custom fields, per document
+ * (round-trippen door IFC; zitten in undo-snapshots en de document-payloads).
+ * Taak-toewijzingen leven op de taken zelf (task.activityCodes / task.customFields)
+ * en liften daardoor vanzelf mee met snapshot/klembord/IFC-taken.
+ */
+export interface StructureSlice {
+  activityCodeTypes: ActivityCodeType[];
+  customFieldDefs: CustomFieldDef[];
+  /** Projectkopieën van de zelfgekozen taaktypen; bewust per document en IFC-roundtrip. */
+  customTaskTypes: CustomTaskType[];
+
+  addActivityCodeType: (name: string) => string;
+  renameActivityCodeType: (id: string, name: string) => void;
+  /** Verwijdert het type én alle toewijzingen ervan op taken; reset een actieve groepering erop. */
+  removeActivityCodeType: (id: string) => void;
+  addActivityCodeValue: (typeId: string, value: Omit<ActivityCodeValue, 'id'>) => string;
+  updateActivityCodeValue: (typeId: string, valueId: string, patch: Partial<Omit<ActivityCodeValue, 'id'>>) => void;
+  /** Verwijdert de waarde én alle taak-toewijzingen ervan. */
+  removeActivityCodeValue: (typeId: string, valueId: string) => void;
+  /** Wijs een codewaarde toe aan een taak (null = toewijzing weghalen). Max één waarde per type. */
+  setTaskActivityCode: (taskId: string, typeId: string, valueId: string | null) => void;
+
+  addCustomField: (name: string, type: CustomFieldType) => string;
+  renameCustomField: (id: string, name: string) => void;
+  /** Verwijdert het veld én alle waarden ervan op taken. */
+  removeCustomField: (id: string) => void;
+  /** Zet een veldwaarde op een taak (null = waarde weghalen). */
+  setTaskCustomField: (taskId: string, defId: string, value: CustomFieldValue | null) => void;
+  ensureProjectTaskType: (type: CustomTaskType) => void;
+}
+
+export const createStructureSlice: AppSliceFactory<StructureSlice> = (runtime) => (set, get) => ({
+  activityCodeTypes: [],
+  customFieldDefs: [],
+  customTaskTypes: [],
+
+  ensureProjectTaskType: (type) => {
+    set((s) => {
+      const id = type.id.trim();
+      const name = type.name.trim();
+      const { sameId, sameNameOtherId } = customTaskTypeClashes(s.customTaskTypes, { id, name });
+      if (sameId || sameNameOtherId || !id || !name) return;
+      runtime.beginUndoable(s);
+      s.customTaskTypes.push({ id, name });
+      runtime.finishMutation(s);
+    });
+  },
+
+  addActivityCodeType: (name) => {
+    const id = generateId('act');
+    set((s) => {
+      runtime.beginUndoable(s);
+      s.activityCodeTypes.push({ id, name, values: [] });
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+    return id;
+  },
+
+  renameActivityCodeType: (id, name) => {
+    set((s) => {
+      const t = s.activityCodeTypes.find(x => x.id === id);
+      if (!t || t.name === name) return;
+      runtime.beginUndoable(s);
+      t.name = name;
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+  },
+
+  removeActivityCodeType: (id) => {
+    set((s) => {
+      if (!s.activityCodeTypes.some(x => x.id === id)) return;
+      runtime.beginUndoable(s);
+      s.activityCodeTypes = s.activityCodeTypes.filter(x => x.id !== id);
+      for (const task of s.tasks) {
+        if (task.activityCodes && id in task.activityCodes) delete task.activityCodes[id];
+      }
+      // Groep-/sort-niveaus die naar dit type verwezen laten vallen.
+      s.view.group = s.view.group.filter(g => !(g.field.src === 'activityCode' && g.field.typeId === id));
+      s.view.sort = s.view.sort.filter(g => !(g.field.src === 'activityCode' && g.field.typeId === id));
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+  },
+
+  addActivityCodeValue: (typeId, value) => {
+    const id = generateId('acv');
+    set((s) => {
+      const t = s.activityCodeTypes.find(x => x.id === typeId);
+      if (!t) return;
+      runtime.beginUndoable(s);
+      t.values.push({ ...value, id });
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+    return id;
+  },
+
+  updateActivityCodeValue: (typeId, valueId, patch) => {
+    set((s) => {
+      const v = s.activityCodeTypes.find(x => x.id === typeId)?.values.find(x => x.id === valueId);
+      if (!v) return;
+      runtime.beginUndoable(s);
+      Object.assign(v, patch);
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+  },
+
+  removeActivityCodeValue: (typeId, valueId) => {
+    set((s) => {
+      const t = s.activityCodeTypes.find(x => x.id === typeId);
+      if (!t || !t.values.some(v => v.id === valueId)) return;
+      runtime.beginUndoable(s);
+      t.values = t.values.filter(v => v.id !== valueId);
+      for (const task of s.tasks) {
+        if (task.activityCodes?.[typeId] === valueId) delete task.activityCodes[typeId];
+      }
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+  },
+
+  setTaskActivityCode: (taskId, typeId, valueId) => {
+    set((s) => {
+      const task = s.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const current = task.activityCodes?.[typeId];
+      if ((valueId ?? undefined) === current) return;
+      runtime.beginUndoable(s);
+      assignTaskActivityCode(task, typeId, valueId ?? undefined);
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+  },
+
+  addCustomField: (name, type) => {
+    const id = generateId('cfd');
+    set((s) => {
+      runtime.beginUndoable(s);
+      s.customFieldDefs.push({ id, name, type });
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+    return id;
+  },
+
+  renameCustomField: (id, name) => {
+    set((s) => {
+      const d = s.customFieldDefs.find(x => x.id === id);
+      if (!d || d.name === name) return;
+      runtime.beginUndoable(s);
+      d.name = name;
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+  },
+
+  removeCustomField: (id) => {
+    set((s) => {
+      if (!s.customFieldDefs.some(x => x.id === id)) return;
+      runtime.beginUndoable(s);
+      s.customFieldDefs = s.customFieldDefs.filter(x => x.id !== id);
+      for (const task of s.tasks) {
+        if (task.customFields && id in task.customFields) delete task.customFields[id];
+      }
+      s.view.group = s.view.group.filter(g => !(g.field.src === 'customField' && g.field.defId === id));
+      s.view.sort = s.view.sort.filter(g => !(g.field.src === 'customField' && g.field.defId === id));
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+  },
+
+  setTaskCustomField: (taskId, defId, value) => {
+    set((s) => {
+      const task = s.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const current = task.customFields?.[defId];
+      if ((value ?? undefined) === current) return;
+      runtime.beginUndoable(s);
+      assignTaskCustomField(task, defId, value ?? undefined);
+      runtime.finishMutation(s);
+    });
+    get().recomputeViewRows();
+  },
+});

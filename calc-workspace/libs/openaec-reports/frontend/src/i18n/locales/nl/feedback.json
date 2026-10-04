@@ -1,0 +1,16 @@
+{
+  "title": "Feedback / Issue melden",
+  "intro": "Meld een bug, stel een feature voor, of geef algemene feedback. Er wordt een GitHub issue aangemaakt.",
+  "categoryBug": "Bug",
+  "categoryFeature": "Feature",
+  "categoryGeneral": "Algemeen",
+  "issueTitle": "Titel",
+  "issueTitlePlaceholder": "Korte beschrijving van het probleem of voorstel",
+  "issueDescription": "Beschrijving",
+  "descriptionPlaceholder": "Geef een gedetailleerde beschrijving... (minimaal 10 tekens)",
+  "descriptionHeading": "Beschrijving",
+  "categoryLabel": "Categorie",
+  "issueFooter": "Aangemaakt via OpenAEC Reports",
+  "submit": "Aanmaken op GitHub",
+  "ghNote": "Er wordt een nieuw tabblad geopend op GitHub waar je het issue kunt bekijken en indienen. Een GitHub-account is vereist."
+}

@@ -1,0 +1,58 @@
+{
+  "file": "File",
+  "new": "New",
+  "open": "Open",
+  "save": "Save",
+  "saveAs": "Save As...",
+  "print": "Print",
+  "import": "Import",
+  "export": "Export",
+  "preferences": "Preferences",
+  "about": "About",
+  "exit": "Exit",
+  "aboutPanel": {
+    "title": "About",
+    "appName": "Vision Calculation Studio",
+    "version": "Version",
+    "tagline": "Clarity in every calculation.",
+    "description": "Structural calculations, visual design and project reporting by Spanvision Infra.",
+    "companyName": "Spanvision Infra",
+    "companyDescription": "A connected workspace for structural calculations, engineering drawings and clear project reports.",
+    "license": "License",
+    "stichting": "Spanvision Infra",
+    "copyright": "Vision Calculation Studio · Spanvision Infra",
+    "notices": "Open-source notices"
+  },
+  "openPanel": {
+    "browse": "Browse…",
+    "browseDesc": "Open a .cpd or .ifc-calculation file from disk",
+    "title": "Recent files",
+    "noRecent": "No recent files",
+    "clearAll": "Clear all",
+    "justNow": "Just now",
+    "remove": "Remove"
+  },
+  "importPanel": {
+    "title": "Import",
+    "fromFile": "Import from File",
+    "fromFileDesc": "Import data from supported file formats",
+    "fromTemplate": "Import from Template",
+    "fromTemplateDesc": "Load a pre-built template as a starting point"
+  },
+  "extensions": "Extensions",
+  "extInstalled": "Installed",
+  "extBrowse": "Browse Catalog",
+  "extSearchPlaceholder": "Search extensions...",
+  "extInstallFile": "Install from file",
+  "extInstalledBadge": "Installed",
+  "extInstallBtn": "Install",
+  "exportPanel": {
+    "title": "Export",
+    "asPdf": "Export as PDF",
+    "asPdfDesc": "Save the current document as a PDF file",
+    "asImage": "Export as Image",
+    "asImageDesc": "Save as PNG or JPEG image files",
+    "asHtml": "Export as HTML",
+    "asHtmlDesc": "Export the document as an HTML file"
+  }
+}

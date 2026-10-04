@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-03",
+  "brand": "Spanvision infra",
+  "product": "Pointcloud Workspace",
+  "mark": "PW",
+  "browserGroups": 9,
+  "suiteScenarios": 32,
+  "nativeTests": 4,
+  "frontendBuild": "passed",
+  "hubBuild": "passed",
+  "preview": {
+    "id": "pointcloud",
+    "label": "Pointcloud Workspace",
+    "productName": "Pointcloud Workspace",
+    "mark": "PW",
+    "directory": "spanvision-pointcloud-workspace",
+    "dist": "dist",
+    "port": 4250,
+    "path": "/",
+    "description": "Import pointclouds, inspect scans, reconstruct surfaces and export geometry.",
+    "available": true,
+    "message": "Ready to open"
+  },
+  "errors": []
+}

@@ -1,0 +1,3469 @@
+/**
+ * ShapeRenderer - Renders individual shapes
+ */
+
+import type { Shape, DrawingPreview, CurrentStyle, Viewport } from '../types';
+import type { HatchShape, HatchPatternType, ImageShape, WallType, WallSystemType } from '../../../types/geometry';
+import type { CustomHatchPattern, LineFamily, SvgHatchPattern, MaterialHatchSettings } from '../../../types/hatch';
+import { BUILTIN_PATTERNS, isSvgHatchPattern, DEFAULT_MATERIAL_HATCH_SETTINGS } from '../../../types/hatch';
+import { BaseRenderer } from './BaseRenderer';
+import { COLORS, LINE_DASH_PATTERNS, LINE_DASH_REFERENCE_SCALE } from '../types';
+import { DimensionRenderer } from './DimensionRenderer';
+import type { DimensionShape } from '../../../types/dimension';
+import { drawSplinePath } from '../../geometry/SplineUtils';
+import { bulgeToArc, bulgeArcMidpoint } from '../../geometry/GeometryUtils';
+import { svgToImage } from '../../../services/export/svgPatternService';
+import { getGripHover } from '../gripHoverState';
+import { getRotationGizmoVisible, getActiveRotation, getRotationGizmoHovered } from '../rotationGizmoState';
+import { useAppStore } from '../../../state/appStore';
+import { CAD_DEFAULT_FONT } from '../../../constants/cadDefaults';
+import { getElementLabelText, resolveTemplate } from '../../geometry/LabelUtils';
+import type { UnitSettings } from '../../../units/types';
+import { DEFAULT_UNIT_SETTINGS } from '../../../units/types';
+import { formatNumber } from '../../../units/format';
+import { shapeRendererRegistry } from '../../registry/ShapeRendererRegistry';
+import { shapePreviewRegistry } from '../../registry/ShapePreviewRegistry';
+import { shapeHandleRegistry } from '../../registry/ShapeHandleRegistry';
+import type { ShapeRenderContext } from './ShapeRenderContext';
+
+export class ShapeRenderer extends BaseRenderer {
+  private dimensionRenderer: DimensionRenderer;
+  private customPatterns: CustomHatchPattern[] = [];
+  // Cache for loaded SVG pattern images
+  private svgImageCache: Map<string, HTMLImageElement> = new Map();
+  private svgLoadingPromises: Map<string, Promise<HTMLImageElement | null>> = new Map();
+  // Drawing scale for annotation text scaling (default 1:50 = 0.02)
+  private drawingScale: number = 0.02;
+  // Live preview: temporarily override pattern for selected hatch shapes
+  private previewPatternId: string | null = null;
+  private previewSelectedIds: Set<string> = new Set();
+  // Display lineweight: when false, all lines render at 1px screen width
+  private _showLineweight: boolean = true;
+  // Current viewport zoom (needed to compute 1-screen-pixel width in world coords)
+  private _currentZoom: number = 1;
+  // Cache for loaded image elements (keyed by shape ID)
+  private imageCache: Map<string, HTMLImageElement> = new Map();
+  // Wall types for material-based hatch lookup
+  private wallTypes: WallType[] = [];
+  // Wall system types (multi-layered assemblies)
+  private wallSystemTypes: WallSystemType[] = [];
+  // Currently selected wall sub-element for highlighting
+  private selectedWallSubElement: { wallId: string; type: 'stud' | 'panel'; key: string } | null = null;
+  // Material hatch settings from Drawing Standards
+  private materialHatchSettings: MaterialHatchSettings = { ...DEFAULT_MATERIAL_HATCH_SETTINGS };
+  // Whether slab surface (hatch) patterns are enabled for the current drawing context
+  private slabSurfacePatternEnabled: boolean = true;
+  // How slab openings are rendered
+  private openingDisplayStyle: 'cross' | 'diagonal' | 'outline' = 'cross';
+  // Gridline extension distance in model mm (from the per-scale table)
+  private gridlineExtension: number = 1000;
+  // Sea level datum: peil=0 elevation relative to NAP in meters (default 0)
+  private seaLevelDatum: number = 0;
+  // All shapes lookup for linked label text resolution
+  private shapesLookup: Map<string, Shape> = new Map();
+  // Unit settings for number formatting
+  private unitSettings: UnitSettings = DEFAULT_UNIT_SETTINGS;
+  // Whether the canvas is in transparent-background mode
+  private transparentBackground: boolean = false;
+  // Cached render context for extension renderers
+  private _renderCtx: ShapeRenderContext | null = null;
+
+  constructor(ctx: CanvasRenderingContext2D, width: number = 0, height: number = 0, dpr?: number) {
+    super(ctx, width, height, dpr);
+    this.dimensionRenderer = new DimensionRenderer(ctx, width, height, dpr);
+  }
+
+  /**
+   * Set the drawing scale for annotation text scaling
+   * Annotation text (non-model text) will scale inversely with drawing scale
+   * to maintain consistent paper size
+   */
+  setDrawingScale(scale: number): void {
+    this.drawingScale = scale;
+    this.dimensionRenderer.setDrawingScale(scale);
+  }
+
+  /**
+   * Get line dash pattern scaled by drawing scale.
+   * Patterns are defined at reference scale (1:100). At other scales they
+   * are adjusted so dashes stay the same size on paper.
+   */
+  override getLineDash(lineStyle: string): number[] {
+    const pattern = LINE_DASH_PATTERNS[lineStyle] || [];
+    if (pattern.length === 0) return pattern;
+    const scaleFactor = LINE_DASH_REFERENCE_SCALE / this.drawingScale;
+    return pattern.map(v => v * scaleFactor);
+  }
+
+  /**
+   * Set whether to display actual line weights (false = all lines 1px thin)
+   */
+  setShowLineweight(show: boolean): void {
+    this._showLineweight = show;
+  }
+
+  /**
+   * Set the current viewport zoom so line widths can be computed correctly.
+   */
+  setZoom(zoom: number): void {
+    this._currentZoom = zoom;
+  }
+
+  /**
+   * Get the effective stroke width (respects showLineweight toggle).
+   * When lineweight display is off, returns 1 screen pixel in world coords.
+   * When lineweight display is on, applies a multiplier and minimum width
+   * so that line weights are clearly visible and distinguishable.
+   */
+  private getLineWidth(strokeWidth: number): number {
+    if (!this._showLineweight) {
+      return 1 / this._currentZoom;
+    }
+    // Amplify the line weight so differences are clearly visible,
+    // and enforce a minimum of 2 screen pixels (in world coords)
+    const amplified = strokeWidth * 3;
+    const minWidth = 2 / this._currentZoom;
+    return Math.max(amplified, minWidth);
+  }
+
+  /**
+   * Set live preview state for pattern hovering
+   */
+  setPreviewPattern(patternId: string | null, selectedIds: string[]): void {
+    this.previewPatternId = patternId;
+    this.previewSelectedIds = new Set(selectedIds);
+  }
+
+  /**
+   * Set available custom patterns for rendering
+   */
+  setCustomPatterns(userPatterns: CustomHatchPattern[], projectPatterns: CustomHatchPattern[]): void {
+    this.customPatterns = [...userPatterns, ...projectPatterns];
+    // Preload SVG patterns
+    this.preloadSvgPatterns();
+  }
+
+  /**
+   * Set wall types for material-based hatch lookup.
+   * When rendering walls, the renderer will look up the wall type by wallTypeId
+   * and use the material's hatch settings from Drawing Standards.
+   */
+  setWallTypes(wallTypes: WallType[]): void {
+    this.wallTypes = wallTypes;
+  }
+
+  /**
+   * Set wall system types for multi-layered wall rendering.
+   */
+  setWallSystemTypes(types: WallSystemType[]): void {
+    this.wallSystemTypes = types;
+  }
+
+  /**
+   * Set the currently selected wall sub-element for highlight rendering.
+   */
+  setSelectedWallSubElement(sel: { wallId: string; type: 'stud' | 'panel'; key: string } | null): void {
+    this.selectedWallSubElement = sel;
+  }
+
+  /**
+   * Set material hatch settings from Drawing Standards.
+   * These define how each material category (concrete, masonry, etc.) is hatched.
+   */
+  setMaterialHatchSettings(settings: MaterialHatchSettings): void {
+    this.materialHatchSettings = settings;
+  }
+
+  /**
+   * Set whether slab surface (hatch) patterns are enabled.
+   * When false, slabs render outline only (no fill/hatch).
+   */
+  setSlabSurfacePatternEnabled(enabled: boolean): void {
+    this.slabSurfacePatternEnabled = enabled;
+  }
+
+  /**
+   * Set the slab opening display style.
+   */
+  setOpeningDisplayStyle(style: 'cross' | 'diagonal' | 'outline'): void {
+    this.openingDisplayStyle = style;
+  }
+
+  /**
+   * Set the gridline extension distance (mm on paper, scale-relative).
+   * This is how far the gridline extends beyond its start/end points before the bubble circle.
+   */
+  setGridlineExtension(value: number): void {
+    this.gridlineExtension = value;
+  }
+
+  /**
+   * Set the sea level datum (peil=0 relative to NAP) in meters.
+   * Used to display NAP elevations on level markers.
+   */
+  setSeaLevelDatum(value: number): void {
+    this.seaLevelDatum = value;
+  }
+
+  /**
+   * Set unit settings for number formatting in overlays and labels.
+   */
+  setUnitSettings(settings: UnitSettings): void {
+    this.unitSettings = settings;
+  }
+
+  /**
+   * Set whether the canvas is in transparent-background mode.
+   * When true, extension renderers should reduce hatch fill opacity.
+   */
+  setTransparentBackground(value: boolean): void {
+    this.transparentBackground = value;
+  }
+
+  /**
+   * Set the currently selected shape IDs for associative dimension highlighting.
+   * When a dimension's linked element is selected, its text is rendered in green.
+   */
+  setSelectedShapeIds(ids: Set<string>): void {
+    this.dimensionRenderer.setSelectedShapeIds(ids);
+  }
+
+  /**
+   * Set the shapes lookup map for resolving linked label text.
+   * Call this before rendering shapes so linked labels can look up their target element.
+   */
+  setShapesLookup(shapes: Shape[]): void {
+    this.shapesLookup.clear();
+    for (const s of shapes) {
+      this.shapesLookup.set(s.id, s);
+    }
+  }
+
+  /**
+   * Build (or return cached) render context for extension renderers.
+   * Captures current instance state and binds helper methods.
+   */
+  getRenderContext(): ShapeRenderContext {
+    if (!this._renderCtx) {
+      this._renderCtx = {
+        ctx: this.ctx,
+        drawingScale: this.drawingScale,
+        currentZoom: this._currentZoom,
+        showLineweight: this._showLineweight,
+        gridlineExtension: this.gridlineExtension,
+        seaLevelDatum: this.seaLevelDatum,
+        materialHatchSettings: this.materialHatchSettings,
+        slabSurfacePatternEnabled: this.slabSurfacePatternEnabled,
+        openingDisplayStyle: this.openingDisplayStyle,
+        wallTypes: this.wallTypes,
+        wallSystemTypes: this.wallSystemTypes,
+        selectedWallSubElement: this.selectedWallSubElement,
+        unitSettings: this.unitSettings,
+        shapesLookup: this.shapesLookup,
+        customPatterns: this.customPatterns,
+        transparentBackground: this.transparentBackground,
+        getLineDash: this.getLineDash.bind(this),
+        getLineWidth: this.getLineWidth.bind(this),
+        getPatternById: this.getPatternById.bind(this),
+        drawLineFamilySimple: this.drawLineFamilySimple.bind(this),
+        drawCustomPatternLines: this.drawCustomPatternLines.bind(this),
+        drawInsulationZigzag: this.drawInsulationZigzag.bind(this),
+        drawInsulationZigzagArc: this.drawInsulationZigzagArc.bind(this),
+        drawSvgPattern: this.drawSvgPattern.bind(this),
+        renderPatternLayer: this.renderPatternLayer.bind(this),
+      };
+    }
+    // Always update mutable fields
+    this._renderCtx.ctx = this.ctx;
+    this._renderCtx.drawingScale = this.drawingScale;
+    this._renderCtx.currentZoom = this._currentZoom;
+    this._renderCtx.showLineweight = this._showLineweight;
+    this._renderCtx.gridlineExtension = this.gridlineExtension;
+    this._renderCtx.seaLevelDatum = this.seaLevelDatum;
+    this._renderCtx.materialHatchSettings = this.materialHatchSettings;
+    this._renderCtx.slabSurfacePatternEnabled = this.slabSurfacePatternEnabled;
+    this._renderCtx.openingDisplayStyle = this.openingDisplayStyle;
+    this._renderCtx.wallTypes = this.wallTypes;
+    this._renderCtx.wallSystemTypes = this.wallSystemTypes;
+    this._renderCtx.selectedWallSubElement = this.selectedWallSubElement;
+    this._renderCtx.unitSettings = this.unitSettings;
+    this._renderCtx.shapesLookup = this.shapesLookup;
+    this._renderCtx.customPatterns = this.customPatterns;
+    this._renderCtx.transparentBackground = this.transparentBackground;
+    return this._renderCtx;
+  }
+
+  /**
+   * Preload SVG patterns into image cache for faster rendering
+   */
+  private preloadSvgPatterns(): void {
+    for (const pattern of this.customPatterns) {
+      if (isSvgHatchPattern(pattern) && !this.svgImageCache.has(pattern.id)) {
+        this.loadSvgPattern(pattern);
+      }
+    }
+  }
+
+  /**
+   * Load an SVG pattern into the cache
+   */
+  private loadSvgPattern(pattern: SvgHatchPattern): void {
+    // Don't start another load if one is in progress
+    if (this.svgLoadingPromises.has(pattern.id)) return;
+
+    const loadPromise = svgToImage(pattern.svgTile)
+      .then(img => {
+        this.svgImageCache.set(pattern.id, img);
+        this.svgLoadingPromises.delete(pattern.id);
+        return img;
+      })
+      .catch(() => {
+        this.svgLoadingPromises.delete(pattern.id);
+        return null;
+      });
+
+    this.svgLoadingPromises.set(pattern.id, loadPromise);
+  }
+
+  /**
+   * Get cached SVG image for a pattern
+   */
+  private getSvgPatternImage(patternId: string): HTMLImageElement | null {
+    return this.svgImageCache.get(patternId) || null;
+  }
+
+  /**
+   * Look up a pattern by ID (checks builtin, user, and project patterns)
+   */
+  private getPatternById(patternId: string): CustomHatchPattern | undefined {
+    return (
+      BUILTIN_PATTERNS.find(p => p.id === patternId) ||
+      this.customPatterns.find(p => p.id === patternId)
+    );
+  }
+
+  /**
+   * Update dimensions and also update dimension renderer
+   */
+  setDimensions(width: number, height: number): void {
+    super.setDimensions(width, height);
+    this.dimensionRenderer.setDimensions(width, height);
+  }
+
+  /**
+   * Draw a shape with selection state
+   */
+  drawShape(shape: Shape, isSelected: boolean, isHovered: boolean = false, invertColors: boolean = false, hideHandles: boolean = false): void {
+    const ctx = this.ctx;
+    const { style } = shape;
+
+    // Set line style
+    let strokeColor = style.strokeColor;
+    if (invertColors && strokeColor === '#ffffff') {
+      strokeColor = '#000000';
+    }
+    ctx.strokeStyle = isSelected ? COLORS.selection : isHovered ? COLORS.hover : strokeColor;
+    ctx.lineWidth = this.getLineWidth(style.strokeWidth);
+    ctx.setLineDash(this.getLineDash(style.lineStyle));
+
+    if (style.fillColor) {
+      ctx.fillStyle = style.fillColor;
+    }
+
+    switch (shape.type) {
+      case 'line':
+        this.drawLine(shape);
+        break;
+      case 'rectangle':
+        this.drawRectangle(shape);
+        break;
+      case 'circle':
+        this.drawCircle(shape, isSelected);
+        break;
+      case 'arc':
+        this.drawArc(shape, isSelected);
+        break;
+      case 'polyline':
+        this.drawPolyline(shape);
+        break;
+      case 'spline':
+        this.drawSpline(shape);
+        break;
+      case 'ellipse':
+        this.drawEllipse(shape);
+        break;
+      case 'text':
+        this.drawText(shape, isSelected, invertColors);
+        break;
+      case 'dimension':
+        this.dimensionRenderer.drawDimension(shape as DimensionShape, isSelected, isHovered);
+        break;
+      case 'hatch':
+        this.drawHatch(shape as HatchShape, invertColors);
+        break;
+      case 'image':
+        this.drawImage(shape as ImageShape);
+        break;
+      default: {
+        const extRenderer = shapeRendererRegistry.get(shape.type);
+        if (extRenderer) {
+          extRenderer(this.ctx, shape, isSelected, isHovered, invertColors, this.getRenderContext());
+        }
+        break;
+      }
+    }
+
+    // Draw selection handles (hidden during modify tool operations)
+    // Skip for text and dimension shapes - they have their own selection box rendering
+    if (isSelected && !hideHandles && shape.type !== 'text' && shape.type !== 'dimension') {
+      this.drawSelectionHandles(shape);
+    }
+
+
+    // Reset line dash
+    ctx.setLineDash([]);
+  }
+
+  /**
+   * Draw a shape without selection highlighting (for sheet viewports)
+   */
+  drawShapeSimple(shape: Shape, invertColors: boolean = false): void {
+    const ctx = this.ctx;
+    const { style } = shape;
+
+    // Use black stroke for sheet view (paper is white) if color is white
+    let strokeColor = style.strokeColor;
+    if (invertColors && style.strokeColor === '#ffffff') {
+      strokeColor = '#000000';
+    }
+
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = this.getLineWidth(style.strokeWidth);
+    ctx.setLineDash(this.getLineDash(style.lineStyle));
+
+    if (style.fillColor) {
+      ctx.fillStyle = style.fillColor;
+    }
+
+    switch (shape.type) {
+      case 'line':
+        this.drawLine(shape);
+        break;
+      case 'rectangle':
+        this.drawRectangle(shape);
+        break;
+      case 'circle':
+        this.drawCircle(shape);
+        break;
+      case 'arc':
+        this.drawArc(shape);
+        break;
+      case 'polyline':
+        this.drawPolyline(shape);
+        break;
+      case 'spline':
+        this.drawSpline(shape);
+        break;
+      case 'ellipse':
+        this.drawEllipse(shape);
+        break;
+      case 'text':
+        this.drawText(shape, false, invertColors);
+        break;
+      case 'dimension':
+        this.dimensionRenderer.drawDimension(shape as DimensionShape, false);
+        break;
+      case 'hatch':
+        this.drawHatch(shape as HatchShape, invertColors);
+        break;
+      case 'image':
+        this.drawImage(shape as ImageShape);
+        break;
+      default: {
+        const extSimpleRenderer = shapeRendererRegistry.getSimple(shape.type);
+        if (extSimpleRenderer) {
+          extSimpleRenderer(this.ctx, shape, invertColors, this.getRenderContext());
+        }
+        break;
+      }
+    }
+
+    ctx.setLineDash([]);
+  }
+
+  /**
+   * Draw drawing preview
+   */
+  drawPreview(preview: DrawingPreview, style?: CurrentStyle, viewport?: Viewport, invertColors: boolean = false): void {
+    if (!preview) return;
+
+    const ctx = this.ctx;
+
+    // Set preview style - solid lines matching final appearance
+    let strokeColor = style?.strokeColor || '#ffffff';
+    if (invertColors && strokeColor === '#ffffff') {
+      strokeColor = '#000000';
+    }
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = this.getLineWidth(style?.strokeWidth || 1);
+    ctx.setLineDash([]);
+
+    switch (preview.type) {
+      case 'line':
+        ctx.beginPath();
+        ctx.moveTo(preview.start.x, preview.start.y);
+        ctx.lineTo(preview.end.x, preview.end.y);
+        ctx.stroke();
+        // Draw temporary dimension showing line length
+        if (viewport) {
+          this.drawPreviewDimension(preview.start, preview.end, viewport);
+        }
+        break;
+
+      case 'rectangle': {
+        const x = Math.min(preview.start.x, preview.end.x);
+        const y = Math.min(preview.start.y, preview.end.y);
+        const width = Math.abs(preview.end.x - preview.start.x);
+        const height = Math.abs(preview.end.y - preview.start.y);
+        const r = preview.cornerRadius ?? 0;
+        ctx.beginPath();
+        if (r > 0) {
+          const maxR = Math.min(r, width / 2, height / 2);
+          ctx.moveTo(x + maxR, y);
+          ctx.lineTo(x + width - maxR, y);
+          ctx.arcTo(x + width, y, x + width, y + maxR, maxR);
+          ctx.lineTo(x + width, y + height - maxR);
+          ctx.arcTo(x + width, y + height, x + width - maxR, y + height, maxR);
+          ctx.lineTo(x + maxR, y + height);
+          ctx.arcTo(x, y + height, x, y + height - maxR, maxR);
+          ctx.lineTo(x, y + maxR);
+          ctx.arcTo(x, y, x + maxR, y, maxR);
+          ctx.closePath();
+        } else {
+          ctx.rect(x, y, width, height);
+        }
+        ctx.stroke();
+        // Draw temporary dimensions for width and height (always outside the rectangle)
+        if (viewport) {
+          const topLeft = { x, y };
+          const topRight = { x: x + width, y };
+          const bottomRight = { x: x + width, y: y + height };
+          // Width dimension along the top edge, pushed upward (outside)
+          this.drawPreviewDimension(topLeft, topRight, viewport, { x: 0, y: -1 });
+          // Height dimension along the right edge, pushed rightward (outside)
+          this.drawPreviewDimension(bottomRight, topRight, viewport, { x: 1, y: 0 });
+        }
+        break;
+      }
+
+      case 'rotatedRectangle': {
+        const corners = preview.corners;
+        ctx.beginPath();
+        ctx.moveTo(corners[0].x, corners[0].y);
+        ctx.lineTo(corners[1].x, corners[1].y);
+        ctx.lineTo(corners[2].x, corners[2].y);
+        ctx.lineTo(corners[3].x, corners[3].y);
+        ctx.closePath();
+        ctx.stroke();
+        break;
+      }
+
+      case 'circle':
+        ctx.beginPath();
+        ctx.arc(preview.center.x, preview.center.y, preview.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        // Draw temporary radius dimension from center to right quadrant, above the line
+        if (viewport && preview.radius > 0.5) {
+          const radiusEnd = { x: preview.center.x + preview.radius, y: preview.center.y };
+          this.drawPreviewDimension(preview.center, radiusEnd, viewport, { x: 0, y: -1 });
+        }
+        break;
+
+      case 'arc':
+        ctx.beginPath();
+        ctx.arc(preview.center.x, preview.center.y, preview.radius, preview.startAngle, preview.endAngle);
+        ctx.stroke();
+        break;
+
+      case 'polyline':
+        if (preview.points.length > 0) {
+          ctx.beginPath();
+          ctx.moveTo(preview.points[0].x, preview.points[0].y);
+          // Draw completed segments (with bulge arcs)
+          for (let i = 0; i < preview.points.length - 1; i++) {
+            const b = preview.bulges?.[i] ?? 0;
+            if (b !== 0) {
+              const arc = bulgeToArc(preview.points[i], preview.points[i + 1], b);
+              ctx.arc(arc.center.x, arc.center.y, arc.radius, arc.startAngle, arc.endAngle, arc.clockwise);
+            } else {
+              ctx.lineTo(preview.points[i + 1].x, preview.points[i + 1].y);
+            }
+          }
+          // Draw current (in-progress) segment
+          const currentBulge = preview.currentBulge ?? 0;
+          const throughPoint = preview.arcThroughPoint;
+          if (currentBulge !== 0 && throughPoint) {
+            // 3-point arc mode with through point set: draw the arc
+            const lastPt = preview.points[preview.points.length - 1];
+            const arc = bulgeToArc(lastPt, preview.currentPoint, currentBulge);
+            ctx.arc(arc.center.x, arc.center.y, arc.radius, arc.startAngle, arc.endAngle, arc.clockwise);
+          } else if (throughPoint) {
+            // Through point is set but we're showing where the endpoint will be
+            // Draw dashed lines: lastPt -> throughPoint -> currentPoint
+            const lastPt = preview.points[preview.points.length - 1];
+            ctx.stroke(); // Stroke completed segments first
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(lastPt.x, lastPt.y);
+            ctx.lineTo(throughPoint.x, throughPoint.y);
+            ctx.lineTo(preview.currentPoint.x, preview.currentPoint.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // Draw small circle at through point
+            ctx.beginPath();
+            ctx.arc(throughPoint.x, throughPoint.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            return; // Already stroked
+          } else {
+            ctx.lineTo(preview.currentPoint.x, preview.currentPoint.y);
+          }
+          ctx.stroke();
+          // Draw temporary dimension for current segment
+          if (viewport) {
+            const lastPt = preview.points[preview.points.length - 1];
+            this.drawPreviewDimension(lastPt, preview.currentPoint, viewport);
+          }
+        }
+        break;
+
+      case 'spline':
+        if (preview.points.length > 0) {
+          const allPoints = [...preview.points, preview.currentPoint];
+          drawSplinePath(ctx, allPoints);
+          ctx.stroke();
+        }
+        break;
+
+      case 'ellipse':
+        ctx.beginPath();
+        ctx.ellipse(preview.center.x, preview.center.y, preview.radiusX, preview.radiusY, preview.rotation, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+
+      case 'text': {
+        // Draw text cursor indicator
+        const cursorHeight = style?.strokeWidth ? style.strokeWidth * 10 : 14;
+        ctx.beginPath();
+        ctx.moveTo(preview.position.x, preview.position.y);
+        ctx.lineTo(preview.position.x, preview.position.y + cursorHeight);
+        ctx.stroke();
+        // Draw small horizontal lines at top and bottom
+        ctx.beginPath();
+        ctx.moveTo(preview.position.x - 3, preview.position.y);
+        ctx.lineTo(preview.position.x + 3, preview.position.y);
+        ctx.moveTo(preview.position.x - 3, preview.position.y + cursorHeight);
+        ctx.lineTo(preview.position.x + 3, preview.position.y + cursorHeight);
+        ctx.stroke();
+        break;
+      }
+
+      case 'dimension':
+        if (viewport) {
+          this.dimensionRenderer.drawDimensionPreview(preview, viewport);
+        }
+        break;
+
+      case 'hatch':
+        if (preview.points.length > 0) {
+          ctx.beginPath();
+          ctx.moveTo(preview.points[0].x, preview.points[0].y);
+          for (let i = 1; i < preview.points.length; i++) {
+            ctx.lineTo(preview.points[i].x, preview.points[i].y);
+          }
+          ctx.lineTo(preview.currentPoint.x, preview.currentPoint.y);
+          ctx.stroke();
+          // Draw dashed closing line hint
+          if (preview.points.length >= 2) {
+            ctx.save();
+            ctx.setLineDash([4, 4]);
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.moveTo(preview.currentPoint.x, preview.currentPoint.y);
+            ctx.lineTo(preview.points[0].x, preview.points[0].y);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+        break;
+
+
+      case 'leader': {
+        // Draw leader preview: arrow tip → diagonal line → landing line under text area
+        if (preview.points.length > 0) {
+          const arrowTip = preview.points[0];
+          const textPos = preview.currentPoint;
+
+          // Scale sizes proportionally to annotation text (paper mm → drawing units)
+          const previewScaleFactor = 1 / this.drawingScale;
+          const previewLineWeight = 0.18 * previewScaleFactor;
+          const previewArrowSize = 2.5 * previewScaleFactor;
+          const previewLandingWidth = 7.5 * previewScaleFactor; // 3x default font size
+          const previewTextSize = 2.5 * previewScaleFactor;
+
+          ctx.lineWidth = previewLineWeight;
+
+          // Draw diagonal line from text area to arrow tip
+          ctx.beginPath();
+          ctx.moveTo(textPos.x, textPos.y);
+          ctx.lineTo(arrowTip.x, arrowTip.y);
+          ctx.stroke();
+
+          // Draw filled arrow at the arrow tip
+          const arrowAngle = Math.atan2(arrowTip.y - textPos.y, arrowTip.x - textPos.x);
+          ctx.beginPath();
+          ctx.moveTo(arrowTip.x, arrowTip.y);
+          ctx.lineTo(
+            arrowTip.x - previewArrowSize * Math.cos(arrowAngle - 0.35),
+            arrowTip.y - previewArrowSize * Math.sin(arrowAngle - 0.35)
+          );
+          ctx.lineTo(
+            arrowTip.x - previewArrowSize * Math.cos(arrowAngle + 0.35),
+            arrowTip.y - previewArrowSize * Math.sin(arrowAngle + 0.35)
+          );
+          ctx.closePath();
+          ctx.fill();
+
+          // Draw horizontal landing line (text underline placeholder)
+          ctx.beginPath();
+          ctx.moveTo(textPos.x, textPos.y);
+          ctx.lineTo(textPos.x + previewLandingWidth, textPos.y);
+          ctx.stroke();
+
+          // Draw "T" text indicator above the landing line
+          ctx.save();
+          ctx.font = `${previewTextSize}px sans-serif`;
+          ctx.fillText('T', textPos.x + previewTextSize * 0.2, textPos.y - previewTextSize * 0.2);
+          ctx.restore();
+        }
+        break;
+      }
+
+
+      case 'modifyPreview':
+        // Draw ghost shapes with higher visibility
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.setLineDash([8, 4]);
+        for (const shape of preview.shapes) {
+          this.drawShape(shape, false, false, invertColors);
+        }
+        ctx.restore();
+        ctx.setLineDash([]);
+        // Draw guide line from base point to current point
+        if (preview.basePoint && preview.currentPoint) {
+          const bp = preview.basePoint;
+          const cp = preview.currentPoint;
+          ctx.save();
+          ctx.strokeStyle = '#00ccff';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([6, 3]);
+          ctx.beginPath();
+          ctx.moveTo(bp.x, bp.y);
+          ctx.lineTo(cp.x, cp.y);
+          ctx.stroke();
+          // Base point crosshair
+          const ch = 6 / (viewport?.zoom ?? 1);
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(bp.x - ch, bp.y); ctx.lineTo(bp.x + ch, bp.y);
+          ctx.moveTo(bp.x, bp.y - ch); ctx.lineTo(bp.x, bp.y + ch);
+          ctx.stroke();
+          // Distance label
+          const dist = Math.hypot(cp.x - bp.x, cp.y - bp.y);
+          if (dist > 0.01) {
+            const midX = (bp.x + cp.x) / 2;
+            const midY = (bp.y + cp.y) / 2;
+            const fontSize = 12 / (viewport?.zoom ?? 1);
+            ctx.font = `${fontSize}px sans-serif`;
+            ctx.fillStyle = '#00ccff';
+            ctx.fillText(formatNumber(dist, 1, this.unitSettings.numberFormat), midX + fontSize * 0.3, midY - fontSize * 0.3);
+          }
+          ctx.restore();
+        }
+        break;
+
+      case 'mirrorAxis':
+        // Draw ghost shapes
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.setLineDash([6, 4]);
+        for (const shape of preview.shapes) {
+          this.drawShape(shape, false, false, false);
+        }
+        ctx.restore();
+        // Draw mirror axis line
+        ctx.save();
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([8, 4]);
+        ctx.beginPath();
+        ctx.moveTo(preview.start.x, preview.start.y);
+        ctx.lineTo(preview.end.x, preview.end.y);
+        ctx.stroke();
+        ctx.restore();
+        ctx.setLineDash([]);
+        break;
+
+      case 'rotateGuide': {
+        // Draw ghost shapes
+        if (preview.shapes.length > 0) {
+          ctx.save();
+          ctx.globalAlpha = 0.5;
+          ctx.setLineDash([6, 4]);
+          for (const shape of preview.shapes) {
+            this.drawShape(shape, false, false, false);
+          }
+          ctx.restore();
+        }
+
+        const { center, startRay, endRay, angle } = preview;
+
+        // Draw center crosshair
+        ctx.save();
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 1;
+        const cross = 6 / (viewport?.zoom || 1);
+        ctx.beginPath();
+        ctx.moveTo(center.x - cross, center.y);
+        ctx.lineTo(center.x + cross, center.y);
+        ctx.moveTo(center.x, center.y - cross);
+        ctx.lineTo(center.x, center.y + cross);
+        ctx.stroke();
+        ctx.restore();
+
+        // Draw start ray (fixed, if set)
+        if (startRay) {
+          ctx.save();
+          ctx.strokeStyle = '#00ff00';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([8, 4]);
+          ctx.beginPath();
+          ctx.moveTo(center.x, center.y);
+          ctx.lineTo(startRay.x, startRay.y);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Draw current ray
+        ctx.save();
+        ctx.strokeStyle = '#00ccff';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([8, 4]);
+        ctx.beginPath();
+        ctx.moveTo(center.x, center.y);
+        ctx.lineTo(endRay.x, endRay.y);
+        ctx.stroke();
+        ctx.restore();
+
+        // Draw angle arc between start and end rays
+        if (startRay && angle !== undefined) {
+          const startAngle = Math.atan2(startRay.y - center.y, startRay.x - center.x);
+          const endAngle = Math.atan2(endRay.y - center.y, endRay.x - center.x);
+          const arcRadius = Math.min(
+            30 / (viewport?.zoom || 1),
+            Math.hypot(startRay.x - center.x, startRay.y - center.y) * 0.4,
+            Math.hypot(endRay.x - center.x, endRay.y - center.y) * 0.4
+          );
+
+          ctx.save();
+          ctx.strokeStyle = '#ffcc00';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, arcRadius, startAngle, endAngle, angle < 0);
+          ctx.stroke();
+
+          // Draw angle text
+          const midAngle = (startAngle + endAngle) / 2;
+          const textRadius = arcRadius + 10 / (viewport?.zoom || 1);
+          const textX = center.x + textRadius * Math.cos(midAngle);
+          const textY = center.y + textRadius * Math.sin(midAngle);
+          const fontSize = 11 / (viewport?.zoom || 1);
+          ctx.fillStyle = '#ffcc00';
+          ctx.font = `${fontSize}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          let displayAngle = angle % 360;
+          if (displayAngle > 180) displayAngle -= 360;
+          if (displayAngle < -180) displayAngle += 360;
+          ctx.fillText(`${formatNumber(displayAngle, 1, this.unitSettings.numberFormat)}\u00B0`, textX, textY);
+          ctx.restore();
+        }
+
+        ctx.setLineDash([]);
+        break;
+      }
+
+      case 'scaleGuide': {
+        const { origin, refPoint, currentPoint, factor, shapes } = preview;
+        const zoom = viewport?.zoom || 1;
+
+        // Draw ghost shapes
+        if (shapes.length > 0) {
+          ctx.save();
+          ctx.globalAlpha = 0.5;
+          ctx.setLineDash([6, 4]);
+          for (const shape of shapes) {
+            this.drawShape(shape, false, false, false);
+          }
+          ctx.restore();
+        }
+
+        // Draw origin crosshair
+        ctx.save();
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 1;
+        const cross = 6 / zoom;
+        ctx.beginPath();
+        ctx.moveTo(origin.x - cross, origin.y);
+        ctx.lineTo(origin.x + cross, origin.y);
+        ctx.moveTo(origin.x, origin.y - cross);
+        ctx.lineTo(origin.x, origin.y + cross);
+        ctx.stroke();
+        ctx.restore();
+
+        // Draw reference line (fixed, green dashed)
+        if (refPoint) {
+          ctx.save();
+          ctx.strokeStyle = '#00ff00';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([8, 4]);
+          ctx.beginPath();
+          ctx.moveTo(origin.x, origin.y);
+          ctx.lineTo(refPoint.x, refPoint.y);
+          ctx.stroke();
+          ctx.restore();
+
+          // Reference distance label
+          const refDist = Math.hypot(refPoint.x - origin.x, refPoint.y - origin.y);
+          const refMidX = (origin.x + refPoint.x) / 2;
+          const refMidY = (origin.y + refPoint.y) / 2;
+          const fontSize = 11 / zoom;
+          ctx.save();
+          ctx.fillStyle = '#00ff00';
+          ctx.font = `${fontSize}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(formatNumber(refDist, 1, this.unitSettings.numberFormat), refMidX, refMidY - 4 / zoom);
+          ctx.restore();
+        }
+
+        // Draw current line (cyan dashed)
+        ctx.save();
+        ctx.strokeStyle = '#00ccff';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([8, 4]);
+        ctx.beginPath();
+        ctx.moveTo(origin.x, origin.y);
+        ctx.lineTo(currentPoint.x, currentPoint.y);
+        ctx.stroke();
+        ctx.restore();
+
+        // Current distance label
+        const curDist = Math.hypot(currentPoint.x - origin.x, currentPoint.y - origin.y);
+        const curMidX = (origin.x + currentPoint.x) / 2;
+        const curMidY = (origin.y + currentPoint.y) / 2;
+        const fontSize2 = 11 / zoom;
+        ctx.save();
+        ctx.fillStyle = '#00ccff';
+        ctx.font = `${fontSize2}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(formatNumber(curDist, 1, this.unitSettings.numberFormat), curMidX, curMidY + 4 / zoom);
+        ctx.restore();
+
+        // Scale factor label near origin
+        if (factor !== undefined) {
+          const factorFontSize = 12 / zoom;
+          ctx.save();
+          ctx.fillStyle = '#ffcc00';
+          ctx.font = `bold ${factorFontSize}px monospace`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(`\u00D7${formatNumber(factor, 3, this.unitSettings.numberFormat)}`, origin.x + 8 / zoom, origin.y - 8 / zoom);
+          ctx.restore();
+        }
+
+        ctx.setLineDash([]);
+        break;
+      }
+
+      case 'elasticBox': {
+        // Draw green dashed selection box for elastic/stretch tool
+        const { start, end } = preview;
+        const x = Math.min(start.x, end.x);
+        const y = Math.min(start.y, end.y);
+        const w = Math.abs(end.x - start.x);
+        const h = Math.abs(end.y - start.y);
+
+        ctx.save();
+        // Green fill (semi-transparent)
+        ctx.fillStyle = 'rgba(0, 200, 0, 0.12)';
+        ctx.fillRect(x, y, w, h);
+
+        // Green dashed border
+        ctx.strokeStyle = 'rgba(0, 200, 0, 0.85)';
+        ctx.lineWidth = 1.5 / (viewport?.zoom || 1);
+        ctx.setLineDash([8 / (viewport?.zoom || 1), 4 / (viewport?.zoom || 1)]);
+        ctx.strokeRect(x, y, w, h);
+
+        ctx.setLineDash([]);
+        ctx.restore();
+        break;
+      }
+      default: {
+        const extPreviewRenderer = shapePreviewRegistry.get((preview as any).type);
+        if (extPreviewRenderer) {
+          extPreviewRenderer(this.ctx, preview, style, viewport, invertColors, this.getRenderContext());
+        }
+        break;
+      }
+    }
+  }
+
+  /**
+   * Draw a temporary dimension on a preview line.
+   * Includes extension lines, an offset parallel dimension line with tick marks,
+   * and centered text with a gap in the dimension line.
+   */
+  private drawPreviewDimension(start: { x: number; y: number }, end: { x: number; y: number }, viewport: Viewport, outwardDir?: { x: number; y: number }): void {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.hypot(dx, dy);
+
+    // Don't show dimension for very short lines
+    if (length < 0.5) return;
+
+    const ctx = this.ctx;
+    const zoom = viewport.zoom;
+
+    // Line angle and perpendicular direction
+    const angle = Math.atan2(dy, dx);
+    let perpX = -Math.sin(angle);
+    let perpY = Math.cos(angle);
+    if (outwardDir) {
+      // Use caller-specified outward direction: flip perpendicular if it points away from desired side
+      const dot = perpX * outwardDir.x + perpY * outwardDir.y;
+      if (dot < 0) {
+        perpX = -perpX;
+        perpY = -perpY;
+      }
+    } else {
+      // Default: ensure dimension appears above the line (negative Y in screen coords)
+      if (perpY > 0 || (perpY === 0 && perpX < 0)) {
+        perpX = -perpX;
+        perpY = -perpY;
+      }
+    }
+
+    // All sizes scale inversely with zoom so they stay consistent on screen
+    const dimOffset = 20 / zoom;        // Distance from drawn line to dimension line
+    const extGap = 3 / zoom;            // Gap between drawn line and start of extension line
+    const extOvershoot = 4 / zoom;      // How far extension line extends past dimension line
+    const tickSize = 5 / zoom;          // Length of tick mark
+    const fontSize = 11 / zoom;
+    const textPadding = 3 / zoom;
+
+    // --- Extension line endpoints ---
+    // Extension lines run perpendicular from near the drawn line to past the dimension line
+    const extStartBottom = {
+      x: start.x + perpX * extGap,
+      y: start.y + perpY * extGap,
+    };
+    const extStartTop = {
+      x: start.x + perpX * (dimOffset + extOvershoot),
+      y: start.y + perpY * (dimOffset + extOvershoot),
+    };
+    const extEndBottom = {
+      x: end.x + perpX * extGap,
+      y: end.y + perpY * extGap,
+    };
+    const extEndTop = {
+      x: end.x + perpX * (dimOffset + extOvershoot),
+      y: end.y + perpY * (dimOffset + extOvershoot),
+    };
+
+    // --- Dimension line endpoints (parallel to drawn line, offset by dimOffset) ---
+    const dimStart = {
+      x: start.x + perpX * dimOffset,
+      y: start.y + perpY * dimOffset,
+    };
+    const dimEnd = {
+      x: end.x + perpX * dimOffset,
+      y: end.y + perpY * dimOffset,
+    };
+    const dimMid = {
+      x: (dimStart.x + dimEnd.x) / 2,
+      y: (dimStart.y + dimEnd.y) / 2,
+    };
+
+    // --- Prepare text metrics for gap calculation ---
+    const displayText = formatNumber(length, 2, this.unitSettings.numberFormat);
+    ctx.font = `${fontSize}px ${CAD_DEFAULT_FONT}`;
+    const textMetrics = ctx.measureText(displayText);
+    const textGap = textMetrics.width + textPadding * 2;
+    const halfGap = textGap / 2;
+
+    // Gap start/end points along the dimension line
+    const gapStart = {
+      x: dimMid.x - Math.cos(angle) * halfGap,
+      y: dimMid.y - Math.sin(angle) * halfGap,
+    };
+    const gapEnd = {
+      x: dimMid.x + Math.cos(angle) * halfGap,
+      y: dimMid.y + Math.sin(angle) * halfGap,
+    };
+
+    ctx.save();
+    ctx.strokeStyle = '#00bfff';
+    ctx.fillStyle = '#00bfff';
+    ctx.lineWidth = 1 / zoom;
+    ctx.setLineDash([]);
+
+    // --- Draw extension lines ---
+    ctx.beginPath();
+    ctx.moveTo(extStartBottom.x, extStartBottom.y);
+    ctx.lineTo(extStartTop.x, extStartTop.y);
+    ctx.moveTo(extEndBottom.x, extEndBottom.y);
+    ctx.lineTo(extEndTop.x, extEndTop.y);
+    ctx.stroke();
+
+    // --- Draw dimension line (two segments with text gap) ---
+    ctx.beginPath();
+    ctx.moveTo(dimStart.x, dimStart.y);
+    ctx.lineTo(gapStart.x, gapStart.y);
+    ctx.moveTo(gapEnd.x, gapEnd.y);
+    ctx.lineTo(dimEnd.x, dimEnd.y);
+    ctx.stroke();
+
+    // --- Draw tick marks (45° diagonal) ---
+    const tickAngle = angle + Math.PI / 4; // 45° from the dimension line
+    const halfTick = tickSize * 0.7;
+
+    // Tick at dimension start
+    ctx.beginPath();
+    ctx.moveTo(
+      dimStart.x - Math.cos(tickAngle) * halfTick,
+      dimStart.y - Math.sin(tickAngle) * halfTick
+    );
+    ctx.lineTo(
+      dimStart.x + Math.cos(tickAngle) * halfTick,
+      dimStart.y + Math.sin(tickAngle) * halfTick
+    );
+    ctx.stroke();
+
+    // Tick at dimension end
+    ctx.beginPath();
+    ctx.moveTo(
+      dimEnd.x - Math.cos(tickAngle) * halfTick,
+      dimEnd.y - Math.sin(tickAngle) * halfTick
+    );
+    ctx.lineTo(
+      dimEnd.x + Math.cos(tickAngle) * halfTick,
+      dimEnd.y + Math.sin(tickAngle) * halfTick
+    );
+    ctx.stroke();
+
+    // --- Draw dimension text centered in the gap ---
+    ctx.save();
+    ctx.translate(dimMid.x, dimMid.y);
+
+    // Rotate text to align with the line, but keep readable (not upside down)
+    let textAngle = angle;
+    if (textAngle > Math.PI / 2) textAngle -= Math.PI;
+    if (textAngle < -Math.PI / 2) textAngle += Math.PI;
+    ctx.rotate(textAngle);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Background for readability
+    ctx.fillStyle = 'rgba(26, 26, 46, 0.9)';
+    ctx.fillRect(
+      -textMetrics.width / 2 - textPadding,
+      -fontSize / 2 - textPadding / 2,
+      textMetrics.width + textPadding * 2,
+      fontSize + textPadding
+    );
+
+    // Text
+    ctx.fillStyle = '#00bfff';
+    ctx.fillText(displayText, 0, 0);
+
+    ctx.restore();
+    ctx.restore();
+  }
+
+  // Private shape drawing methods
+  private drawLine(shape: Shape): void {
+    if (shape.type !== 'line') return;
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.moveTo(shape.start.x, shape.start.y);
+    ctx.lineTo(shape.end.x, shape.end.y);
+    ctx.stroke();
+  }
+
+  private drawRectangle(shape: Shape): void {
+    if (shape.type !== 'rectangle') return;
+    const ctx = this.ctx;
+    ctx.save();
+
+    if (shape.rotation) {
+      ctx.translate(shape.topLeft.x, shape.topLeft.y);
+      ctx.rotate(shape.rotation);
+      ctx.translate(-shape.topLeft.x, -shape.topLeft.y);
+    }
+
+    const r = shape.cornerRadius ?? 0;
+    ctx.beginPath();
+    if (r > 0) {
+      // Clamp radius so it doesn't exceed half the smallest side
+      const maxR = Math.min(r, shape.width / 2, shape.height / 2);
+      const x = shape.topLeft.x;
+      const y = shape.topLeft.y;
+      const w = shape.width;
+      const h = shape.height;
+      ctx.moveTo(x + maxR, y);
+      ctx.lineTo(x + w - maxR, y);
+      ctx.arcTo(x + w, y, x + w, y + maxR, maxR);
+      ctx.lineTo(x + w, y + h - maxR);
+      ctx.arcTo(x + w, y + h, x + w - maxR, y + h, maxR);
+      ctx.lineTo(x + maxR, y + h);
+      ctx.arcTo(x, y + h, x, y + h - maxR, maxR);
+      ctx.lineTo(x, y + maxR);
+      ctx.arcTo(x, y, x + maxR, y, maxR);
+      ctx.closePath();
+    } else {
+      ctx.rect(shape.topLeft.x, shape.topLeft.y, shape.width, shape.height);
+    }
+
+    if (shape.style.fillColor) {
+      ctx.fill();
+    }
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  private drawCircle(shape: Shape, isSelected: boolean = false): void {
+    if (shape.type !== 'circle') return;
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.arc(shape.center.x, shape.center.y, shape.radius, 0, Math.PI * 2);
+
+    if (shape.style.fillColor) {
+      ctx.fill();
+    }
+    ctx.stroke();
+
+    if (isSelected && shape.showCenterMark !== false) {
+      this.drawCenterMark(ctx, shape.center, shape.radius);
+    }
+  }
+
+  private drawArc(shape: Shape, isSelected: boolean = false): void {
+    if (shape.type !== 'arc') return;
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.arc(shape.center.x, shape.center.y, shape.radius, shape.startAngle, shape.endAngle);
+    ctx.stroke();
+
+    if (isSelected && shape.showCenterMark !== false) {
+      this.drawCenterMark(ctx, shape.center, shape.radius);
+    }
+  }
+
+  private drawCenterMark(ctx: CanvasRenderingContext2D, center: { x: number; y: number }, radius: number): void {
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1 / this._currentZoom;
+    ctx.beginPath();
+    ctx.moveTo(center.x - radius, center.y);
+    ctx.lineTo(center.x + radius, center.y);
+    ctx.moveTo(center.x, center.y - radius);
+    ctx.lineTo(center.x, center.y + radius);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  private drawPolyline(shape: Shape): void {
+    if (shape.type !== 'polyline') return;
+    const ctx = this.ctx;
+    const { points, closed, bulge } = shape;
+
+    if (points.length < 2) return;
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+
+    for (let i = 0; i < points.length - 1; i++) {
+      const b = bulge?.[i] ?? 0;
+      if (b !== 0) {
+        const arc = bulgeToArc(points[i], points[i + 1], b);
+        ctx.arc(arc.center.x, arc.center.y, arc.radius, arc.startAngle, arc.endAngle, arc.clockwise);
+      } else {
+        ctx.lineTo(points[i + 1].x, points[i + 1].y);
+      }
+    }
+
+    if (closed) {
+      const lastB = bulge?.[points.length - 1] ?? 0;
+      if (lastB !== 0) {
+        const arc = bulgeToArc(points[points.length - 1], points[0], lastB);
+        ctx.arc(arc.center.x, arc.center.y, arc.radius, arc.startAngle, arc.endAngle, arc.clockwise);
+      } else {
+        ctx.closePath();
+      }
+      if (shape.style.fillColor) {
+        ctx.fill();
+      }
+    }
+
+    ctx.stroke();
+  }
+
+  private drawSpline(shape: Shape): void {
+    if (shape.type !== 'spline') return;
+    if (shape.points.length < 2) return;
+    const ctx = this.ctx;
+    drawSplinePath(ctx, shape.points);
+    ctx.stroke();
+  }
+
+  private drawEllipse(shape: Shape): void {
+    if (shape.type !== 'ellipse') return;
+    const ctx = this.ctx;
+    const startAngle = shape.startAngle ?? 0;
+    const endAngle = shape.endAngle ?? Math.PI * 2;
+    const isPartial = shape.startAngle !== undefined && shape.endAngle !== undefined;
+    ctx.beginPath();
+    ctx.ellipse(shape.center.x, shape.center.y, shape.radiusX, shape.radiusY, shape.rotation, startAngle, isPartial ? endAngle : Math.PI * 2);
+
+    if (shape.style.fillColor && !isPartial) {
+      ctx.fill();
+    }
+    ctx.stroke();
+  }
+
+  private drawText(shape: Shape, isSelected: boolean, invertColors: boolean = false): void {
+    if (shape.type !== 'text') return;
+    const ctx = this.ctx;
+
+    const {
+      position,
+      text: storedText,
+      fontSize,
+      fontFamily,
+      rotation,
+      alignment,
+      verticalAlignment,
+      bold,
+      italic,
+      underline,
+      strikethrough = false,
+      color,
+      lineHeight = 1.2,
+      isModelText = false,
+      backgroundMask = false,
+      backgroundColor = '#1a1a2e',
+      backgroundPadding = 0.5,
+      // Advanced formatting
+      letterSpacing = 1,
+      widthFactor = 1,
+      obliqueAngle = 0,
+      textCase = 'none',
+      paragraphSpacing = 0,
+    } = shape;
+
+    // For linked labels: resolve text from linked element at render time
+    let text = storedText;
+    if (shape.linkedShapeId) {
+      const linkedShape = this.shapesLookup.get(shape.linkedShapeId);
+      if (linkedShape) {
+        if (shape.labelTemplate) {
+          // Use template-based resolution: {Name}, {Area}, {Thickness}, etc.
+          text = resolveTemplate(shape.labelTemplate, linkedShape, this.wallTypes, this.unitSettings);
+        } else {
+          text = getElementLabelText(linkedShape, this.wallTypes, this.unitSettings);
+        }
+      }
+    }
+
+    // =========================================================================
+    // Span arrow rendering (overspanningspijl) for slab labels
+    // Draws a double-headed arrow with text centered in the middle.
+    // =========================================================================
+    if (shape.spanArrow && shape.spanDirection !== undefined && shape.spanLength) {
+      this.drawSpanArrow(shape, text, invertColors);
+      return;
+    }
+
+    ctx.save();
+
+    // Apply rotation around position
+    if (rotation !== 0) {
+      ctx.translate(position.x, position.y);
+      ctx.rotate(rotation);
+      ctx.translate(-position.x, -position.y);
+    }
+
+    // Calculate effective font size:
+    // - Annotation text (default): fontSize is in paper mm, divide by drawingScale to get drawing units
+    // - Model text: uses fontSize directly in model units
+    const effectiveFontSize = isModelText
+      ? fontSize
+      : fontSize / this.drawingScale;
+
+    // Build font string
+    const fontStyle = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}`;
+    ctx.font = `${fontStyle}${effectiveFontSize}px ${fontFamily}`;
+
+    // Set text color - invert white to black for sheet mode
+    let textColor = color || shape.style.strokeColor;
+    if (invertColors && textColor === '#ffffff') {
+      textColor = '#000000';
+    }
+    ctx.fillStyle = textColor;
+
+    // Set alignment
+    ctx.textAlign = alignment;
+    ctx.textBaseline = verticalAlignment === 'middle' ? 'middle' :
+                       verticalAlignment === 'bottom' ? 'bottom' : 'top';
+
+    // Handle multi-line text with optional word wrapping
+    const actualLineHeight = effectiveFontSize * lineHeight;
+    // Calculate extra spacing for paragraph breaks
+    const paragraphExtra = paragraphSpacing * actualLineHeight;
+
+    // If fixedWidth is set, wrap text to fit within that width
+    const fixedWidth = shape.fixedWidth;
+    let lines: string[];
+
+    if (fixedWidth && fixedWidth > 0) {
+      // Word wrap text to fit within fixedWidth
+      lines = [];
+      const paragraphs = text.split('\n');
+      for (const paragraph of paragraphs) {
+        if (paragraph === '') {
+          lines.push('');
+          continue;
+        }
+
+        const words = paragraph.split(' ');
+        let currentLine = '';
+
+        for (const word of words) {
+          // Check if the word itself is too long and needs character-level breaking
+          const wordMetrics = ctx.measureText(word);
+          if (wordMetrics.width > fixedWidth) {
+            // Push current line if it has content
+            if (currentLine) {
+              lines.push(currentLine);
+              currentLine = '';
+            }
+            // Break the word character by character
+            let charLine = '';
+            for (const char of word) {
+              const testCharLine = charLine + char;
+              const charMetrics = ctx.measureText(testCharLine);
+              if (charMetrics.width > fixedWidth && charLine) {
+                lines.push(charLine);
+                charLine = char;
+              } else {
+                charLine = testCharLine;
+              }
+            }
+            currentLine = charLine;
+          } else {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const metrics = ctx.measureText(testLine);
+
+            if (metrics.width > fixedWidth && currentLine) {
+              lines.push(currentLine);
+              currentLine = word;
+            } else {
+              currentLine = testLine;
+            }
+          }
+        }
+
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+      }
+    } else {
+      lines = text.split('\n');
+    }
+
+    // Draw background mask if enabled
+    if (backgroundMask && lines.length > 0) {
+      // Apply text case transformation for measuring
+      const transformTextForMeasure = (t: string): string => {
+        switch (textCase) {
+          case 'uppercase': return t.toUpperCase();
+          case 'lowercase': return t.toLowerCase();
+          case 'capitalize': return t.replace(/\b\w/g, c => c.toUpperCase());
+          default: return t;
+        }
+      };
+
+      // Calculate text bounds (considering width factor and letter spacing)
+      let maxWidth = 0;
+      for (const line of lines) {
+        const displayLine = transformTextForMeasure(line);
+        let lineWidth: number;
+        if (letterSpacing !== 1) {
+          let totalWidth = 0;
+          for (const char of displayLine.split('')) {
+            totalWidth += ctx.measureText(char).width * letterSpacing;
+          }
+          if (displayLine.length > 0) {
+            totalWidth -= ctx.measureText(displayLine[displayLine.length - 1]).width * (letterSpacing - 1);
+          }
+          lineWidth = totalWidth;
+        } else {
+          lineWidth = ctx.measureText(displayLine).width;
+        }
+        lineWidth *= widthFactor;
+        if (lineWidth > maxWidth) maxWidth = lineWidth;
+      }
+
+      // Calculate total height including paragraph spacing
+      let totalHeight = 0;
+      for (let i = 0; i < lines.length; i++) {
+        totalHeight += actualLineHeight;
+        if (i > 0 && lines[i - 1] === '') {
+          totalHeight += paragraphExtra;
+        }
+      }
+      const padding = backgroundPadding * (isModelText ? 1 : (1 / this.drawingScale));
+
+      // Calculate background rectangle position based on alignment
+      let bgX = position.x - padding;
+      if (alignment === 'center') bgX = position.x - maxWidth / 2 - padding;
+      else if (alignment === 'right') bgX = position.x - maxWidth - padding;
+
+      let bgY = position.y - padding;
+      if (verticalAlignment === 'middle') bgY = position.y - actualLineHeight / 2 - padding;
+      else if (verticalAlignment === 'bottom') bgY = position.y - actualLineHeight - padding;
+
+      const bgWidth = maxWidth + padding * 2;
+      const bgHeight = totalHeight + padding * 2;
+
+      // Draw background
+      let bgColor = backgroundColor;
+      if (invertColors && bgColor === '#1a1a2e') {
+        bgColor = '#ffffff';
+      }
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
+      // Draw border if showBorder is enabled
+      if (shape.showBorder) {
+        let borderStroke = shape.borderColor || textColor;
+        if (invertColors && borderStroke === '#ffffff') {
+          borderStroke = '#000000';
+        }
+        ctx.strokeStyle = borderStroke;
+        ctx.lineWidth = this.getLineWidth(shape.style.strokeWidth) * 0.8;
+        ctx.setLineDash([]);
+        ctx.strokeRect(bgX, bgY, bgWidth, bgHeight);
+      }
+
+      // Reset fill style for text
+      ctx.fillStyle = textColor;
+    }
+
+    // Apply text case transformation
+    const transformText = (t: string): string => {
+      switch (textCase) {
+        case 'uppercase': return t.toUpperCase();
+        case 'lowercase': return t.toLowerCase();
+        case 'capitalize': return t.replace(/\b\w/g, c => c.toUpperCase());
+        default: return t;
+      }
+    };
+
+    // Calculate cumulative Y offset with paragraph spacing
+    let cumulativeY = 0;
+
+    // Draw text lines
+    for (let i = 0; i < lines.length; i++) {
+      const originalLine = lines[i];
+      const displayLine = transformText(originalLine);
+      const y = position.y + cumulativeY;
+
+      // Check if this is a paragraph break (empty line or following empty line)
+      const isParagraphBreak = i > 0 && lines[i - 1] === '';
+
+      ctx.save();
+
+      // Apply width factor and oblique angle transforms
+      if (widthFactor !== 1 || obliqueAngle !== 0) {
+        // Calculate transform origin based on alignment
+        let transformOriginX = position.x;
+        if (alignment === 'center') {
+          const metrics = ctx.measureText(displayLine);
+          transformOriginX = position.x - metrics.width / 2;
+        } else if (alignment === 'right') {
+          const metrics = ctx.measureText(displayLine);
+          transformOriginX = position.x - metrics.width;
+        }
+
+        ctx.translate(transformOriginX, y);
+        // Apply skew (oblique angle) - convert from degrees to radians
+        const skewAngle = (obliqueAngle * Math.PI) / 180;
+        // Apply width factor and oblique transforms
+        // Matrix: [widthFactor, 0, tan(skew), 1, 0, 0]
+        ctx.transform(widthFactor, 0, Math.tan(skewAngle), 1, 0, 0);
+        ctx.translate(-transformOriginX, -y);
+      }
+
+      // Draw text with letter spacing
+      if (letterSpacing !== 1 && displayLine.length > 0) {
+        // Manual character-by-character rendering for letter spacing
+        const chars = displayLine.split('');
+        let currentX = position.x;
+
+        // Adjust starting position for alignment
+        if (alignment === 'center' || alignment === 'right') {
+          let totalWidth = 0;
+          for (const char of chars) {
+            totalWidth += ctx.measureText(char).width * letterSpacing;
+          }
+          // Remove extra spacing at the end
+          totalWidth -= ctx.measureText(chars[chars.length - 1]).width * (letterSpacing - 1);
+          if (alignment === 'center') currentX -= totalWidth / 2;
+          else if (alignment === 'right') currentX -= totalWidth;
+        }
+
+        for (let c = 0; c < chars.length; c++) {
+          ctx.fillText(chars[c], currentX, y);
+          const charWidth = ctx.measureText(chars[c]).width;
+          currentX += charWidth * letterSpacing;
+        }
+      } else {
+        ctx.fillText(displayLine, position.x, y);
+      }
+
+      ctx.restore();
+
+      // Calculate line width for underline/strikethrough
+      const metrics = ctx.measureText(displayLine);
+      let lineWidth = metrics.width * widthFactor;
+      if (letterSpacing !== 1) {
+        // Recalculate width with letter spacing
+        let totalWidth = 0;
+        for (const char of displayLine.split('')) {
+          totalWidth += ctx.measureText(char).width * letterSpacing;
+        }
+        if (displayLine.length > 0) {
+          totalWidth -= ctx.measureText(displayLine[displayLine.length - 1]).width * (letterSpacing - 1);
+        }
+        lineWidth = totalWidth * widthFactor;
+      }
+
+      // Calculate starting X for decorations
+      let startX = position.x;
+      if (alignment === 'center') startX -= lineWidth / 2;
+      else if (alignment === 'right') startX -= lineWidth;
+
+      // Draw underline if enabled
+      if (underline && displayLine.length > 0) {
+        ctx.strokeStyle = textColor;
+        ctx.lineWidth = Math.max(1, effectiveFontSize * 0.05);
+        ctx.beginPath();
+        ctx.moveTo(startX, y + effectiveFontSize + 2);
+        ctx.lineTo(startX + lineWidth, y + effectiveFontSize + 2);
+        ctx.stroke();
+      }
+
+      // Draw strikethrough if enabled
+      if (strikethrough && displayLine.length > 0) {
+        ctx.strokeStyle = textColor;
+        ctx.lineWidth = Math.max(1, effectiveFontSize * 0.05);
+        ctx.beginPath();
+        // Position strikethrough at roughly middle of the text
+        const strikethroughY = y + effectiveFontSize * 0.35;
+        ctx.moveTo(startX, strikethroughY);
+        ctx.lineTo(startX + lineWidth, strikethroughY);
+        ctx.stroke();
+      }
+
+      // Update cumulative Y position
+      cumulativeY += actualLineHeight;
+      // Add extra spacing after paragraph breaks
+      if (isParagraphBreak) {
+        cumulativeY += paragraphExtra;
+      }
+    }
+
+    ctx.restore();
+
+    // Draw leader lines if present (skip for linked labels -- they have no leader line)
+    if (!shape.linkedShapeId &&
+        ((shape.leaderPoints && shape.leaderPoints.length > 0) ||
+         (shape.leaders && shape.leaders.length > 0))) {
+      ctx.save();
+      const leaderConfig = shape.leaderConfig;
+      let leaderColor = leaderConfig?.color || color || shape.style.strokeColor;
+      if (invertColors && leaderColor === '#ffffff') {
+        leaderColor = '#000000';
+      }
+      ctx.strokeStyle = leaderColor;
+      ctx.fillStyle = leaderColor;
+      // Leader line and arrow sizes are proportional to effective font size
+      // so they remain visible and well-proportioned at any scale/zoom.
+      // lineWeight as fraction of font size (default ~7%), arrowSize as fraction (~100%)
+      const configLineWeight = leaderConfig?.lineWeight ?? 0.18;
+      const configArrowSize = leaderConfig?.arrowSize ?? 2.5;
+      // Scale the same way as fontSize: paper mm → drawing units
+      const leaderScaleFactor = isModelText ? 1 : (1 / this.drawingScale);
+      ctx.lineWidth = configLineWeight * leaderScaleFactor;
+      ctx.setLineDash([]);
+
+      const arrowType = leaderConfig?.arrowType ?? 'filled-arrow';
+      const arrowSize = configArrowSize * leaderScaleFactor;
+      const hasLanding = leaderConfig?.hasLanding ?? true;
+
+      // Calculate text width for the landing (underline) line
+      // Re-set the font to measure correctly (ctx.restore was called above)
+      const ldrFontStyle = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}`;
+      ctx.font = `${ldrFontStyle}${effectiveFontSize}px ${fontFamily}`;
+
+      let textWidth = 0;
+      const displayLines = text.split('\n');
+      for (const dl of displayLines) {
+        const w = ctx.measureText(dl).width * widthFactor;
+        if (w > textWidth) textWidth = w;
+      }
+      // Minimum landing width when text is empty
+      const minLandingWidth = effectiveFontSize * 3;
+      const landingWidth = Math.max(textWidth, minLandingWidth);
+
+      // Landing line Y: at the bottom of the text block
+      const totalTextHeight = Math.max(displayLines.length, 1) * effectiveFontSize * lineHeight;
+      const landingY = position.y + totalTextHeight;
+
+      // Landing line X range: from text left edge to text left + landingWidth
+      let landingLeftX = position.x;
+      if (alignment === 'center') {
+        landingLeftX = position.x - landingWidth / 2;
+      } else if (alignment === 'right') {
+        landingLeftX = position.x - landingWidth;
+      }
+      const landingRightX = landingLeftX + landingWidth;
+
+      // Draw the landing (underline) line under the text
+      if (hasLanding) {
+        ctx.beginPath();
+        ctx.moveTo(landingLeftX, landingY);
+        ctx.lineTo(landingRightX, landingY);
+        ctx.stroke();
+      }
+
+      // Helper to draw an arrow terminator at a point
+      const drawArrow = (tip: { x: number; y: number }, prev: { x: number; y: number }) => {
+        const angle = Math.atan2(tip.y - prev.y, tip.x - prev.x);
+        switch (arrowType) {
+          case 'arrow':
+            ctx.beginPath();
+            ctx.moveTo(tip.x, tip.y);
+            ctx.lineTo(tip.x - arrowSize * Math.cos(angle - 0.4), tip.y - arrowSize * Math.sin(angle - 0.4));
+            ctx.moveTo(tip.x, tip.y);
+            ctx.lineTo(tip.x - arrowSize * Math.cos(angle + 0.4), tip.y - arrowSize * Math.sin(angle + 0.4));
+            ctx.stroke();
+            break;
+          case 'filled-arrow':
+            ctx.beginPath();
+            ctx.moveTo(tip.x, tip.y);
+            ctx.lineTo(tip.x - arrowSize * Math.cos(angle - 0.35), tip.y - arrowSize * Math.sin(angle - 0.35));
+            ctx.lineTo(tip.x - arrowSize * Math.cos(angle + 0.35), tip.y - arrowSize * Math.sin(angle + 0.35));
+            ctx.closePath();
+            ctx.fill();
+            break;
+          case 'dot':
+            ctx.beginPath();
+            ctx.arc(tip.x, tip.y, arrowSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          case 'slash': {
+            const sLen = arrowSize / 1.5;
+            const pAngle = angle + Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(tip.x + sLen * Math.cos(pAngle), tip.y + sLen * Math.sin(pAngle));
+            ctx.lineTo(tip.x - sLen * Math.cos(pAngle), tip.y - sLen * Math.sin(pAngle));
+            ctx.stroke();
+            break;
+          }
+          case 'none':
+            break;
+        }
+      };
+
+      // Helper to draw a single leader line from a set of waypoints
+      const drawLeaderLine = (leaderPts: { x: number; y: number }[]) => {
+        if (leaderPts.length === 0) return;
+        // Arrow tip is the last point in leaderPoints
+        const arrowTip = leaderPts[leaderPts.length - 1];
+        // Pick connection side: leader connects to the closer end of the landing line
+        const connectX = (arrowTip.x < (landingLeftX + landingRightX) / 2) ? landingLeftX : landingRightX;
+        const connectPt = { x: connectX, y: landingY };
+
+        // Draw line from landing endpoint through waypoints to arrow tip
+        ctx.beginPath();
+        ctx.moveTo(connectPt.x, connectPt.y);
+        for (const pt of leaderPts) {
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+
+        // Draw arrow terminator at the tip
+        const prevPt = leaderPts.length > 1
+          ? leaderPts[leaderPts.length - 2]
+          : connectPt;
+        drawArrow(arrowTip, prevPt);
+      };
+
+      // Draw primary leader (leaderPoints)
+      if (shape.leaderPoints && shape.leaderPoints.length > 0) {
+        drawLeaderLine(shape.leaderPoints);
+      }
+
+      // Draw additional leaders (leaders[] array)
+      if (shape.leaders) {
+        for (const leader of shape.leaders) {
+          drawLeaderLine(leader.points);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    // Draw selection box if selected
+    if (isSelected) {
+      this.drawTextSelectionBox(shape);
+    }
+  }
+
+  /**
+   * Draw a span arrow (overspanningspijl) for slab labels.
+   * Renders a double-headed arrow with the label text centered on it.
+   * The arrow is oriented along the slab's span direction (shorter dimension).
+   */
+  private drawSpanArrow(shape: Shape & { type: 'text' }, text: string, invertColors: boolean): void {
+    const ctx = this.ctx;
+    const {
+      position,
+      fontSize,
+      fontFamily,
+      bold,
+      italic,
+      color,
+      isModelText = false,
+      backgroundMask = false,
+      backgroundColor = '#1a1a2e',
+      backgroundPadding = 0.5,
+      textCase = 'none',
+      widthFactor = 1,
+      spanDirection = 0,
+      spanLength = 500,
+    } = shape;
+
+    // Effective font size (same logic as drawText)
+    const effectiveFontSize = isModelText
+      ? fontSize
+      : fontSize / this.drawingScale;
+
+    // Resolve text color
+    let textColor = color || shape.style.strokeColor;
+    if (invertColors && textColor === '#ffffff') {
+      textColor = '#000000';
+    }
+
+    // Apply text case
+    let displayText = text;
+    switch (textCase) {
+      case 'uppercase': displayText = text.toUpperCase(); break;
+      case 'lowercase': displayText = text.toLowerCase(); break;
+      case 'capitalize': displayText = text.replace(/\b\w/g, c => c.toUpperCase()); break;
+    }
+
+    ctx.save();
+
+    // Translate to position and rotate to span direction
+    ctx.translate(position.x, position.y);
+    ctx.rotate(spanDirection);
+
+    // Set font for text measurement
+    const fontStyle = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}`;
+    ctx.font = `${fontStyle}${effectiveFontSize}px ${fontFamily}`;
+
+    // Measure text width
+    const textMetrics = ctx.measureText(displayText);
+    const textWidth = textMetrics.width * widthFactor;
+
+    // Arrow extends from -halfLen to +halfLen along the local X axis
+    const halfLen = spanLength / 2;
+
+    // Arrowhead dimensions (proportional to font size)
+    const arrowHeadLength = effectiveFontSize * 1.2;
+    const arrowHeadWidth = effectiveFontSize * 0.6;
+
+    // Line weight for the arrow
+    const arrowLineWidth = this.getLineWidth(shape.style.strokeWidth) * 1.2;
+
+    // Gap around text (padding on each side)
+    const textGap = effectiveFontSize * 0.6;
+    const halfTextZone = textWidth / 2 + textGap;
+
+    // Draw the arrow line (two segments with a gap for text)
+    ctx.strokeStyle = textColor;
+    ctx.lineWidth = arrowLineWidth;
+    ctx.setLineDash([]);
+
+    // Left segment: from left arrowhead tip to the text gap
+    const leftLineStart = -halfLen + arrowHeadLength;
+    const leftLineEnd = -halfTextZone;
+    if (leftLineStart < leftLineEnd) {
+      ctx.beginPath();
+      ctx.moveTo(leftLineStart, 0);
+      ctx.lineTo(leftLineEnd, 0);
+      ctx.stroke();
+    }
+
+    // Right segment: from text gap to right arrowhead tip
+    const rightLineStart = halfTextZone;
+    const rightLineEnd = halfLen - arrowHeadLength;
+    if (rightLineStart < rightLineEnd) {
+      ctx.beginPath();
+      ctx.moveTo(rightLineStart, 0);
+      ctx.lineTo(rightLineEnd, 0);
+      ctx.stroke();
+    }
+
+    // Draw left arrowhead (pointing left, at -halfLen)
+    ctx.fillStyle = textColor;
+    ctx.beginPath();
+    ctx.moveTo(-halfLen, 0);
+    ctx.lineTo(-halfLen + arrowHeadLength, -arrowHeadWidth);
+    ctx.lineTo(-halfLen + arrowHeadLength, arrowHeadWidth);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw right arrowhead (pointing right, at +halfLen)
+    ctx.beginPath();
+    ctx.moveTo(halfLen, 0);
+    ctx.lineTo(halfLen - arrowHeadLength, -arrowHeadWidth);
+    ctx.lineTo(halfLen - arrowHeadLength, arrowHeadWidth);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw background behind text if enabled
+    if (backgroundMask) {
+      const padding = backgroundPadding * (isModelText ? 1 : (1 / this.drawingScale));
+      let bgColor = backgroundColor;
+      if (invertColors && bgColor === '#1a1a2e') {
+        bgColor = '#ffffff';
+      }
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(
+        -textWidth / 2 - padding,
+        -effectiveFontSize / 2 - padding,
+        textWidth + padding * 2,
+        effectiveFontSize + padding * 2
+      );
+    }
+
+    // Draw centered text
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(displayText, 0, 0);
+
+    ctx.restore();
+  }
+
+  private drawTextSelectionBox(shape: Shape): void {
+    if (shape.type !== 'text') return;
+    const ctx = this.ctx;
+
+    const { position, text, fontSize, fontFamily, rotation, alignment, verticalAlignment, bold, italic, lineHeight = 1.2, isModelText = false, fixedWidth } = shape;
+
+    // Get zoom BEFORE applying rotation (rotation affects getTransform().a)
+    const zoom = ctx.getTransform().a / this.dpr;
+
+    ctx.save();
+
+    // Apply rotation around position (same as drawText)
+    if (rotation !== 0) {
+      ctx.translate(position.x, position.y);
+      ctx.rotate(rotation);
+      ctx.translate(-position.x, -position.y);
+    }
+
+    // Calculate effective font size (same as drawText)
+    const effectiveFontSize = isModelText
+      ? fontSize
+      : fontSize / this.drawingScale;
+
+    // Set font and baseline to match drawText rendering
+    const fontStyle = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}`;
+    ctx.font = `${fontStyle}${effectiveFontSize}px ${fontFamily}`;
+    ctx.textBaseline = verticalAlignment === 'middle' ? 'middle' :
+                       verticalAlignment === 'bottom' ? 'bottom' : 'top';
+
+    const actualLineHeight = effectiveFontSize * lineHeight;
+
+    // Calculate wrapped lines if fixedWidth is set (same logic as drawText)
+    let lines: string[];
+    if (fixedWidth && fixedWidth > 0) {
+      lines = [];
+      const paragraphs = text.split('\n');
+      for (const paragraph of paragraphs) {
+        if (paragraph === '') {
+          lines.push('');
+          continue;
+        }
+
+        const words = paragraph.split(' ');
+        let currentLine = '';
+
+        for (const word of words) {
+          // Check if the word itself is too long and needs character-level breaking
+          const wordMetrics = ctx.measureText(word);
+          if (wordMetrics.width > fixedWidth) {
+            // Push current line if it has content
+            if (currentLine) {
+              lines.push(currentLine);
+              currentLine = '';
+            }
+            // Break the word character by character
+            let charLine = '';
+            for (const char of word) {
+              const testCharLine = charLine + char;
+              const charMetrics = ctx.measureText(testCharLine);
+              if (charMetrics.width > fixedWidth && charLine) {
+                lines.push(charLine);
+                charLine = char;
+              } else {
+                charLine = testCharLine;
+              }
+            }
+            currentLine = charLine;
+          } else {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > fixedWidth && currentLine) {
+              lines.push(currentLine);
+              currentLine = word;
+            } else {
+              currentLine = testLine;
+            }
+          }
+        }
+
+        if (currentLine) lines.push(currentLine);
+      }
+    } else {
+      lines = text.split('\n');
+    }
+
+    // Use actual font metrics for accurate bounds
+    let maxWidth = fixedWidth || 0;
+    let maxAscent = 0;
+    let maxDescent = 0;
+    for (const line of lines) {
+      const metrics = ctx.measureText(line);
+      if (!fixedWidth && metrics.width > maxWidth) maxWidth = metrics.width;
+      if (metrics.actualBoundingBoxAscent > maxAscent) maxAscent = metrics.actualBoundingBoxAscent;
+      if (metrics.actualBoundingBoxDescent > maxDescent) maxDescent = metrics.actualBoundingBoxDescent;
+    }
+
+    // First line top/bottom from actual metrics, remaining lines offset by lineHeight
+    const topY = position.y - maxAscent;
+    const bottomY = position.y + maxDescent + (lines.length - 1) * actualLineHeight;
+    const boxHeight = bottomY - topY;
+
+    // Calculate bounding box based on alignment
+    let minX = position.x;
+    if (alignment === 'center') minX -= maxWidth / 2;
+    else if (alignment === 'right') minX -= maxWidth;
+
+    // Draw selection rectangle
+    ctx.strokeStyle = COLORS.selection;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(minX - 2, topY - 2, maxWidth + 4, boxHeight + 4);
+    ctx.setLineDash([]);
+
+    // Draw resize handles on left and right edges
+    const handleSize = 6 / zoom;
+    const midY = topY + boxHeight / 2;
+
+    ctx.fillStyle = COLORS.selectionHandle;
+    ctx.strokeStyle = COLORS.selectionHandleStroke;
+    ctx.lineWidth = 1 / zoom;
+
+    // Left resize handle (horizontal bar style for width resize)
+    const leftHandleX = minX - 2;
+    ctx.fillRect(leftHandleX - handleSize / 2, midY - handleSize, handleSize, handleSize * 2);
+    ctx.strokeRect(leftHandleX - handleSize / 2, midY - handleSize, handleSize, handleSize * 2);
+    // Draw X-axis only arrow on left handle (pointing left to indicate resize direction)
+    this.drawXAxisArrow({ x: leftHandleX, y: midY }, zoom, 'left');
+
+    // Right resize handle
+    const rightHandleX = minX + maxWidth + 2;
+    ctx.fillRect(rightHandleX - handleSize / 2, midY - handleSize, handleSize, handleSize * 2);
+    ctx.strokeRect(rightHandleX - handleSize / 2, midY - handleSize, handleSize, handleSize * 2);
+    // Draw X-axis only arrow on right handle (pointing right to indicate resize direction)
+    this.drawXAxisArrow({ x: rightHandleX, y: midY }, zoom, 'right');
+
+    // Draw move handle at center of text box
+    const centerX = minX + maxWidth / 2;
+    ctx.fillRect(centerX - handleSize / 2, midY - handleSize / 2, handleSize, handleSize);
+    ctx.strokeRect(centerX - handleSize / 2, midY - handleSize / 2, handleSize, handleSize);
+
+    // Draw axis arrows on move handle
+    this.drawAxisArrows({ x: centerX, y: midY }, zoom);
+
+    // Draw rotation handle above the text box
+    const rotationHandleDistance = 25 / zoom; // Distance from top of box to rotation handle
+    const rotationHandleY = topY - 2 - rotationHandleDistance;
+    const rotationHandleRadius = handleSize * 0.6;
+
+    // Draw connecting line from top center to rotation handle
+    ctx.strokeStyle = COLORS.selection;
+    ctx.lineWidth = 1 / zoom;
+    ctx.beginPath();
+    ctx.moveTo(centerX, topY - 2);
+    ctx.lineTo(centerX, rotationHandleY);
+    ctx.stroke();
+
+    // Draw circular rotation handle
+    ctx.fillStyle = '#90EE90'; // Light green for rotation
+    ctx.strokeStyle = COLORS.selectionHandleStroke;
+    ctx.beginPath();
+    ctx.arc(centerX, rotationHandleY, rotationHandleRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw rotation arrow icon inside the handle
+    ctx.strokeStyle = '#006400'; // Dark green
+    ctx.lineWidth = 1.5 / zoom;
+    const iconRadius = rotationHandleRadius * 0.6;
+    ctx.beginPath();
+    ctx.arc(centerX, rotationHandleY, iconRadius, -Math.PI * 0.7, Math.PI * 0.3);
+    ctx.stroke();
+    // Arrowhead
+    const arrowTipAngle = Math.PI * 0.3;
+    const arrowTipX = centerX + iconRadius * Math.cos(arrowTipAngle);
+    const arrowTipY = rotationHandleY + iconRadius * Math.sin(arrowTipAngle);
+    const arrowHeadSize = 3 / zoom;
+    ctx.beginPath();
+    ctx.moveTo(arrowTipX, arrowTipY);
+    ctx.lineTo(arrowTipX - arrowHeadSize, arrowTipY - arrowHeadSize);
+    ctx.moveTo(arrowTipX, arrowTipY);
+    ctx.lineTo(arrowTipX + arrowHeadSize * 0.5, arrowTipY - arrowHeadSize);
+    ctx.stroke();
+
+    // Draw leader line selection highlights and grip handles (skip for linked labels)
+    if (!shape.linkedShapeId &&
+        ((shape.leaderPoints && shape.leaderPoints.length > 0) ||
+         (shape.leaders && shape.leaders.length > 0))) {
+      // Undo the rotation transform for leader drawing (leaders are in world space)
+      ctx.restore();
+      ctx.save();
+
+      const leaderConfig = shape.leaderConfig;
+      const hasLanding = leaderConfig?.hasLanding ?? true;
+
+      // Recalculate landing geometry (same as drawText)
+      const ldrFontStyle = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}`;
+      ctx.font = `${ldrFontStyle}${effectiveFontSize}px ${fontFamily}`;
+
+      let textWidth = 0;
+      const ldrLines = text.split('\n');
+      for (const dl of ldrLines) {
+        const w = ctx.measureText(dl).width;
+        if (w > textWidth) textWidth = w;
+      }
+      const minLandingWidth = effectiveFontSize * 3;
+      const landingWidth = Math.max(textWidth, minLandingWidth);
+      const totalTextHeight = Math.max(ldrLines.length, 1) * effectiveFontSize * (lineHeight);
+      const landingY = position.y + totalTextHeight;
+
+      let landingLeftX = position.x;
+      if (alignment === 'center') landingLeftX = position.x - landingWidth / 2;
+      else if (alignment === 'right') landingLeftX = position.x - landingWidth;
+      const landingRightX = landingLeftX + landingWidth;
+
+      // Draw selection highlight over leader lines
+      // Use a width slightly thicker than the actual leader line so the highlight is visible
+      const selScaleFactor = shape.isModelText ? 1 : (1 / this.drawingScale);
+      const selLineWidth = (shape.leaderConfig?.lineWeight ?? 0.18) * selScaleFactor;
+      ctx.strokeStyle = COLORS.selection;
+      ctx.lineWidth = Math.max(selLineWidth * 1.5, 2 / zoom);
+      ctx.setLineDash([]);
+
+      const highlightLeader = (leaderPts: { x: number; y: number }[]) => {
+        if (leaderPts.length === 0) return;
+        const arrowTip = leaderPts[leaderPts.length - 1];
+        const connectX = (arrowTip.x < (landingLeftX + landingRightX) / 2) ? landingLeftX : landingRightX;
+        const connectPt = { x: connectX, y: landingY };
+
+        // Highlight leader line
+        ctx.beginPath();
+        ctx.moveTo(connectPt.x, connectPt.y);
+        for (const pt of leaderPts) {
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+      };
+
+      // Highlight landing line
+      if (hasLanding) {
+        ctx.beginPath();
+        ctx.moveTo(landingLeftX, landingY);
+        ctx.lineTo(landingRightX, landingY);
+        ctx.stroke();
+      }
+
+      // Highlight primary leader
+      if (shape.leaderPoints && shape.leaderPoints.length > 0) {
+        highlightLeader(shape.leaderPoints);
+      }
+      // Highlight additional leaders
+      if (shape.leaders) {
+        for (const leader of shape.leaders) {
+          highlightLeader(leader.points);
+        }
+      }
+
+      // Draw grip squares at leader waypoints
+      ctx.fillStyle = COLORS.selectionHandle;
+      ctx.strokeStyle = COLORS.selectionHandleStroke;
+      ctx.lineWidth = 1 / zoom;
+
+      const drawGrip = (pt: { x: number; y: number }) => {
+        ctx.fillRect(pt.x - handleSize / 2, pt.y - handleSize / 2, handleSize, handleSize);
+        ctx.strokeRect(pt.x - handleSize / 2, pt.y - handleSize / 2, handleSize, handleSize);
+      };
+
+      if (shape.leaderPoints) {
+        for (const pt of shape.leaderPoints) {
+          drawGrip(pt);
+        }
+      }
+      if (shape.leaders) {
+        for (const leader of shape.leaders) {
+          for (const pt of leader.points) {
+            drawGrip(pt);
+          }
+        }
+      }
+    }
+
+    ctx.restore();
+  }
+
+  private drawSelectionHandles(shape: Shape): void {
+    const ctx = this.ctx;
+    // Keep handles at a constant screen-pixel size, but never smaller than the shape's stroke
+    const zoom = ctx.getTransform().a / this.dpr;
+    const screenSize = 6 / zoom;
+    const strokeWidth = shape.style?.strokeWidth ?? 1;
+    const handleSize = Math.max(screenSize, strokeWidth + 4 / zoom);
+
+    ctx.fillStyle = COLORS.selectionHandle;
+    ctx.strokeStyle = COLORS.selectionHandleStroke;
+    ctx.lineWidth = 1 / zoom;
+
+    const points = this.getShapeHandlePoints(shape);
+
+    const hover = getGripHover();
+    // Check if a specific grip is selected via box selection (endpoint editing mode)
+    const selectedGrip = useAppStore.getState().selectedGrip;
+    const isGripSelected = selectedGrip && selectedGrip.shapeId === shape.id;
+
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      // Highlight the box-selected grip with a distinct color (bright cyan, larger)
+      const isThisGripSelected = isGripSelected && selectedGrip.gripIndex === i;
+      if (isThisGripSelected) {
+        const highlightSize = handleSize * 1.4;
+        ctx.fillStyle = '#00ffff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2 / zoom;
+        ctx.fillRect(point.x - highlightSize / 2, point.y - highlightSize / 2, highlightSize, highlightSize);
+        ctx.strokeRect(point.x - highlightSize / 2, point.y - highlightSize / 2, highlightSize, highlightSize);
+      } else {
+        ctx.fillStyle = COLORS.selectionHandle;
+        ctx.strokeStyle = COLORS.selectionHandleStroke;
+        ctx.lineWidth = 1 / zoom;
+        ctx.fillRect(point.x - handleSize / 2, point.y - handleSize / 2, handleSize, handleSize);
+        ctx.strokeRect(point.x - handleSize / 2, point.y - handleSize / 2, handleSize, handleSize);
+      }
+      // Skip axis arrows on arc midpoint grip and image corner/side grips (only center grip 8 gets arrows)
+      if (!(shape.type === 'arc' && i === 3) && !(shape.type === 'image' && i !== 8)) {
+        // For line/beam midpoint (index 2), align axes along/perpendicular to the shape
+        let angle = 0;
+        if (i === 2 && (shape.type === 'line' || shape.type === 'beam' || shape.type === 'gridline' || shape.type === 'wall')) {
+          angle = Math.atan2(shape.end.y - shape.start.y, shape.end.x - shape.start.x);
+        }
+        // Determine which axis is hovered for highlighting
+        const hoveredAxis = (hover && hover.shapeId === shape.id && hover.gripIndex === i) ? hover.axis : null;
+        this.drawAxisArrows(point, zoom, angle, hoveredAxis);
+      }
+    }
+
+    // Draw rotation gizmo handle if enabled (skip text, pile, cpt — these don't support rotation)
+    if (getRotationGizmoVisible() && shape.type !== 'text' && shape.type !== 'pile' && shape.type !== 'cpt') {
+      this.drawRotationGizmo(shape, points, zoom);
+    }
+  }
+
+  /**
+   * Draw rotation gizmo: an outer rotation ring around the shape with a
+   * small handle, hover highlighting, and angle feedback during active rotation.
+   */
+  private drawRotationGizmo(shape: Shape, handlePoints: { x: number; y: number }[], zoom: number): void {
+    const ctx = this.ctx;
+
+    // Calculate shape center (centroid) from handle points
+    let cx = 0, cy = 0;
+    for (const pt of handlePoints) {
+      cx += pt.x;
+      cy += pt.y;
+    }
+    cx /= handlePoints.length;
+    cy /= handlePoints.length;
+
+    // Fixed world-space ring radius: 50mm (100mm diameter circle)
+    const ringRadius = 50;
+
+    const isHovered = getRotationGizmoHovered();
+    const activeRot = getActiveRotation();
+    const isActiveForThisShape = activeRot !== null && activeRot.shapeId === shape.id;
+
+    ctx.save();
+
+    // --- Draw the outer rotation ring (thin & subtle, fixed world-space size) ---
+    const ringColor = isHovered || isActiveForThisShape
+      ? 'rgba(0, 200, 255, 0.45)'
+      : 'rgba(0, 180, 255, 0.15)';
+    // 1px line width in screen space
+    const ringLineWidth = 1 / zoom;
+
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = ringLineWidth;
+    ctx.setLineDash([4 / zoom, 3 / zoom]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // --- Draw the rotation handle at the top of the ring ---
+    const handleAngle = -Math.PI / 2; // Top position
+    const handleX = cx + ringRadius * Math.cos(handleAngle);
+    const handleY = cy + ringRadius * Math.sin(handleAngle);
+    const handleRadius = isHovered ? 4 / zoom : 3 / zoom;
+
+    // Handle fill
+    ctx.fillStyle = isHovered
+      ? 'rgba(0, 220, 255, 1.0)'
+      : 'rgba(0, 180, 255, 0.85)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 1 / zoom;
+    ctx.beginPath();
+    ctx.arc(handleX, handleY, handleRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw rotation arrow icon inside the handle
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = 0.8 / zoom;
+    const iconR = handleRadius * 0.55;
+    ctx.beginPath();
+    ctx.arc(handleX, handleY, iconR, -Math.PI * 0.8, Math.PI * 0.4);
+    ctx.stroke();
+    // Arrow tip
+    const tipA = Math.PI * 0.4;
+    const tipX = handleX + iconR * Math.cos(tipA);
+    const tipY = handleY + iconR * Math.sin(tipA);
+    const arrowSz = handleRadius * 0.35;
+    ctx.beginPath();
+    ctx.moveTo(tipX + arrowSz * Math.cos(tipA - 0.5), tipY + arrowSz * Math.sin(tipA - 0.5));
+    ctx.lineTo(tipX, tipY);
+    ctx.lineTo(tipX + arrowSz * Math.cos(tipA + 1.5), tipY + arrowSz * Math.sin(tipA + 1.5));
+    ctx.stroke();
+
+    // --- Draw angle feedback during active rotation ---
+    if (isActiveForThisShape) {
+      const rot = activeRot!;
+      const deltaAngle = rot.deltaAngle;
+      // Reference line (from center upward = 0 degrees)
+      const refAngle = -Math.PI / 2;
+      const guideLen = ringRadius + 6 / zoom;
+
+      // Draw reference line (dashed, dimmer)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1 / zoom;
+      ctx.setLineDash([4 / zoom, 3 / zoom]);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + guideLen * Math.cos(refAngle), cy + guideLen * Math.sin(refAngle));
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw current angle line (solid, bright)
+      const currentAngle = refAngle + deltaAngle;
+      ctx.strokeStyle = rot.isSnapped ? 'rgba(0, 255, 128, 0.8)' : 'rgba(0, 200, 255, 0.8)';
+      ctx.lineWidth = 1.5 / zoom;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + guideLen * Math.cos(currentAngle), cy + guideLen * Math.sin(currentAngle));
+      ctx.stroke();
+
+      // Draw arc sweep between reference and current angle
+      if (Math.abs(deltaAngle) > 0.001) {
+        const sweepRadius = ringRadius * 0.4;
+        ctx.fillStyle = rot.isSnapped ? 'rgba(0, 255, 128, 0.1)' : 'rgba(0, 200, 255, 0.1)';
+        ctx.strokeStyle = rot.isSnapped ? 'rgba(0, 255, 128, 0.5)' : 'rgba(0, 200, 255, 0.5)';
+        ctx.lineWidth = 1.5 / zoom;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        if (deltaAngle > 0) {
+          ctx.arc(cx, cy, sweepRadius, refAngle, refAngle + deltaAngle);
+        } else {
+          ctx.arc(cx, cy, sweepRadius, refAngle + deltaAngle, refAngle);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // Draw angle label
+      const angleDeg = (deltaAngle * 180) / Math.PI;
+      const labelAngle = refAngle + deltaAngle / 2;
+      const labelDist = ringRadius + 14 / zoom;
+      const labelX = cx + labelDist * Math.cos(labelAngle);
+      const labelY = cy + labelDist * Math.sin(labelAngle);
+
+      const fontSize = 12 / zoom;
+      ctx.font = `bold ${fontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Background for label
+      const labelText = `${formatNumber(angleDeg, 1, this.unitSettings.numberFormat)}\u00B0`;
+      const metrics = ctx.measureText(labelText);
+      const padX = 4 / zoom;
+      const padY = 2 / zoom;
+      ctx.fillStyle = rot.isSnapped ? 'rgba(0, 100, 50, 0.85)' : 'rgba(0, 50, 80, 0.85)';
+      ctx.fillRect(
+        labelX - metrics.width / 2 - padX,
+        labelY - fontSize / 2 - padY,
+        metrics.width + padX * 2,
+        fontSize + padY * 2
+      );
+
+      // Label text
+      ctx.fillStyle = rot.isSnapped ? '#00ff80' : '#00ccff';
+      ctx.fillText(labelText, labelX, labelY);
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw X (red) and Y (green) axis-constraint arrows at a grip point.
+   * Arrow length is constant in screen space (~20px).
+   * When angle is provided, axes are rotated to align along/perpendicular to the shape.
+   * When hoveredAxis is provided, that arrow is drawn highlighted (brighter, thicker).
+   */
+  private drawAxisArrows(point: { x: number; y: number }, zoom: number, angle: number = 0, hoveredAxis: 'x' | 'y' | null = null): void {
+    const ctx = this.ctx;
+    const arrowLen = 20 / zoom;
+    const headLen = 5 / zoom;
+    const headWidth = 3 / zoom;
+
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+
+    // Perpendicular direction (rotated 90 degrees CCW)
+    const cosP = Math.cos(angle - Math.PI / 2);
+    const sinP = Math.sin(angle - Math.PI / 2);
+
+    ctx.save();
+
+    // Along-shape axis arrow (red, along the shape direction)
+    const xHovered = hoveredAxis === 'x';
+    ctx.strokeStyle = xHovered ? '#ff8888' : COLORS.axisX;
+    ctx.fillStyle = xHovered ? '#ff8888' : COLORS.axisX;
+    ctx.lineWidth = (xHovered ? 2.5 : 1.5) / zoom;
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(point.x + cosA * arrowLen, point.y + sinA * arrowLen);
+    ctx.stroke();
+    // Arrowhead
+    ctx.beginPath();
+    ctx.moveTo(point.x + cosA * arrowLen, point.y + sinA * arrowLen);
+    ctx.lineTo(
+      point.x + cosA * (arrowLen - headLen) - sinA * headWidth,
+      point.y + sinA * (arrowLen - headLen) + cosA * headWidth
+    );
+    ctx.lineTo(
+      point.x + cosA * (arrowLen - headLen) + sinA * headWidth,
+      point.y + sinA * (arrowLen - headLen) - cosA * headWidth
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    // Perpendicular axis arrow (green, perpendicular to the shape direction)
+    const yHovered = hoveredAxis === 'y';
+    ctx.strokeStyle = yHovered ? '#88ff88' : COLORS.axisY;
+    ctx.fillStyle = yHovered ? '#88ff88' : COLORS.axisY;
+    ctx.lineWidth = (yHovered ? 2.5 : 1.5) / zoom;
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(point.x + cosP * arrowLen, point.y + sinP * arrowLen);
+    ctx.stroke();
+    // Arrowhead
+    ctx.beginPath();
+    ctx.moveTo(point.x + cosP * arrowLen, point.y + sinP * arrowLen);
+    ctx.lineTo(
+      point.x + cosP * (arrowLen - headLen) - sinP * headWidth,
+      point.y + sinP * (arrowLen - headLen) + cosP * headWidth
+    );
+    ctx.lineTo(
+      point.x + cosP * (arrowLen - headLen) + sinP * headWidth,
+      point.y + sinP * (arrowLen - headLen) - cosP * headWidth
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw a single X-axis arrow for text resize handles.
+   * Direction can be 'left' or 'right' to indicate resize direction.
+   */
+  private drawXAxisArrow(point: { x: number; y: number }, zoom: number, direction: 'left' | 'right'): void {
+    const ctx = this.ctx;
+    const arrowLen = 15 / zoom;
+    const headLen = 4 / zoom;
+    const headWidth = 2.5 / zoom;
+
+    ctx.save();
+
+    ctx.strokeStyle = COLORS.axisX;
+    ctx.fillStyle = COLORS.axisX;
+    ctx.lineWidth = 1.5 / zoom;
+
+    if (direction === 'right') {
+      // Arrow pointing right
+      ctx.beginPath();
+      ctx.moveTo(point.x, point.y);
+      ctx.lineTo(point.x + arrowLen, point.y);
+      ctx.stroke();
+      // Arrowhead
+      ctx.beginPath();
+      ctx.moveTo(point.x + arrowLen, point.y);
+      ctx.lineTo(point.x + arrowLen - headLen, point.y - headWidth);
+      ctx.lineTo(point.x + arrowLen - headLen, point.y + headWidth);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Arrow pointing left
+      ctx.beginPath();
+      ctx.moveTo(point.x, point.y);
+      ctx.lineTo(point.x - arrowLen, point.y);
+      ctx.stroke();
+      // Arrowhead
+      ctx.beginPath();
+      ctx.moveTo(point.x - arrowLen, point.y);
+      ctx.lineTo(point.x - arrowLen + headLen, point.y - headWidth);
+      ctx.lineTo(point.x - arrowLen + headLen, point.y + headWidth);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  private getShapeHandlePoints(shape: Shape): { x: number; y: number }[] {
+    switch (shape.type) {
+      case 'line':
+        return [
+          shape.start,
+          shape.end,
+          { x: (shape.start.x + shape.end.x) / 2, y: (shape.start.y + shape.end.y) / 2 },
+        ];
+      case 'rectangle': {
+        const tl = shape.topLeft;
+        const w = shape.width;
+        const h = shape.height;
+        const rot = shape.rotation || 0;
+        const cos = Math.cos(rot);
+        const sin = Math.sin(rot);
+        // topLeft is the rotation origin; offsets are in local space
+        const toWorld = (lx: number, ly: number) => ({
+          x: tl.x + lx * cos - ly * sin,
+          y: tl.y + lx * sin + ly * cos,
+        });
+        return [
+          toWorld(0, 0),
+          toWorld(w, 0),
+          toWorld(w, h),
+          toWorld(0, h),
+          toWorld(w / 2, 0),
+          toWorld(w, h / 2),
+          toWorld(w / 2, h),
+          toWorld(0, h / 2),
+          toWorld(w / 2, h / 2),
+        ];
+      }
+      case 'circle':
+        return [
+          shape.center,
+          { x: shape.center.x + shape.radius, y: shape.center.y },
+          { x: shape.center.x - shape.radius, y: shape.center.y },
+          { x: shape.center.x, y: shape.center.y + shape.radius },
+          { x: shape.center.x, y: shape.center.y - shape.radius },
+        ];
+      case 'arc': {
+        // Arc handles: center, start point, end point, midpoint (on curve)
+        const midAngle = shape.startAngle + ((shape.endAngle - shape.startAngle + 2 * Math.PI) % (2 * Math.PI)) / 2;
+        return [
+          shape.center,
+          { x: shape.center.x + shape.radius * Math.cos(shape.startAngle), y: shape.center.y + shape.radius * Math.sin(shape.startAngle) },
+          { x: shape.center.x + shape.radius * Math.cos(shape.endAngle), y: shape.center.y + shape.radius * Math.sin(shape.endAngle) },
+          { x: shape.center.x + shape.radius * Math.cos(midAngle), y: shape.center.y + shape.radius * Math.sin(midAngle) },
+        ];
+      }
+      case 'ellipse': {
+        const rot = shape.rotation || 0;
+        const cos = Math.cos(rot);
+        const sin = Math.sin(rot);
+        const cx = shape.center.x;
+        const cy = shape.center.y;
+        // Transform local ellipse coordinates to world coordinates
+        const toWorld = (lx: number, ly: number) => ({
+          x: cx + lx * cos - ly * sin,
+          y: cy + lx * sin + ly * cos,
+        });
+        return [
+          shape.center,                                    // Center grip
+          toWorld(shape.radiusX, 0),                       // Right grip
+          toWorld(-shape.radiusX, 0),                      // Left grip
+          toWorld(0, shape.radiusY),                       // Bottom grip
+          toWorld(0, -shape.radiusY),                      // Top grip
+        ];
+      }
+      case 'polyline': {
+        const pts: { x: number; y: number }[] = [...shape.points];
+        const segCount = shape.closed ? shape.points.length : shape.points.length - 1;
+        for (let i = 0; i < segCount; i++) {
+          const j = (i + 1) % shape.points.length;
+          const b = shape.bulge?.[i] ?? 0;
+          if (b !== 0) {
+            pts.push(bulgeArcMidpoint(shape.points[i], shape.points[j], b));
+          } else {
+            pts.push({
+              x: (shape.points[i].x + shape.points[j].x) / 2,
+              y: (shape.points[i].y + shape.points[j].y) / 2,
+            });
+          }
+        }
+        return pts;
+      }
+      case 'spline': {
+        const pts: { x: number; y: number }[] = [...shape.points];
+        const segCount = shape.closed ? shape.points.length : shape.points.length - 1;
+        for (let i = 0; i < segCount; i++) {
+          const j = (i + 1) % shape.points.length;
+          pts.push({
+            x: (shape.points[i].x + shape.points[j].x) / 2,
+            y: (shape.points[i].y + shape.points[j].y) / 2,
+          });
+        }
+        return pts;
+      }
+      case 'text':
+        // Text uses selection box instead of handles
+        return [shape.position];
+      case 'hatch': {
+        const pts: { x: number; y: number }[] = [...shape.points];
+        // Add edge midpoints
+        for (let i = 0; i < shape.points.length; i++) {
+          const j = (i + 1) % shape.points.length;
+          pts.push({
+            x: (shape.points[i].x + shape.points[j].x) / 2,
+            y: (shape.points[i].y + shape.points[j].y) / 2,
+          });
+        }
+        return pts;
+      }
+      case 'image': {
+        const imgShape = shape as ImageShape;
+        const tl = imgShape.position;
+        const w = imgShape.width;
+        const h = imgShape.height;
+        const rot = imgShape.rotation || 0;
+        const cos = Math.cos(rot);
+        const sin = Math.sin(rot);
+        const toWorld = (lx: number, ly: number) => ({
+          x: tl.x + lx * cos - ly * sin,
+          y: tl.y + lx * sin + ly * cos,
+        });
+        return [
+          toWorld(0, 0),
+          toWorld(w, 0),
+          toWorld(w, h),
+          toWorld(0, h),
+          toWorld(w / 2, 0),
+          toWorld(w, h / 2),
+          toWorld(w / 2, h),
+          toWorld(0, h / 2),
+          toWorld(w / 2, h / 2),
+        ];
+      }
+      case 'dimension': {
+        const dim = shape as import('../../../types/dimension').DimensionShape;
+        return dim.points ? [...dim.points] : [];
+      }
+      default: {
+        const extHandleFn = shapeHandleRegistry.get(shape.type);
+        return extHandleFn ? extHandleFn(shape) : [];
+      }
+    }
+  }
+
+  private drawImage(shape: ImageShape): void {
+    const ctx = this.ctx;
+    let img = this.imageCache.get(shape.id);
+
+    if (!img) {
+      // Create and cache the image element
+      img = new Image();
+      img.src = shape.imageData;
+      this.imageCache.set(shape.id, img);
+      // Request a re-render once the image loads
+      img.onload = () => {
+        // The canvas render loop will pick it up on next frame
+      };
+    }
+
+    // Only draw if image has loaded
+    if (!img.complete || img.naturalWidth === 0) return;
+
+    ctx.save();
+
+    // Apply opacity
+    if (shape.opacity !== undefined && shape.opacity < 1) {
+      ctx.globalAlpha = shape.opacity;
+    }
+
+    // Apply rotation around the top-left corner
+    if (shape.rotation) {
+      ctx.translate(shape.position.x, shape.position.y);
+      ctx.rotate(shape.rotation);
+      ctx.drawImage(img, 0, 0, shape.width, shape.height);
+    } else {
+      ctx.drawImage(img, shape.position.x, shape.position.y, shape.width, shape.height);
+    }
+
+    ctx.restore();
+  }
+
+  private drawHatch(shape: HatchShape, invertColors: boolean = false): void {
+    const ctx = this.ctx;
+
+    // Apply live preview override if this shape is selected and a preview pattern is active
+    let effectiveShape = shape;
+    if (this.previewPatternId && this.previewSelectedIds.has(shape.id)) {
+      const previewPattern = BUILTIN_PATTERNS.find(p => p.id === this.previewPatternId)
+        || this.customPatterns.find(p => p.id === this.previewPatternId);
+      if (previewPattern) {
+        const isBuiltin = BUILTIN_PATTERNS.some(p => p.id === previewPattern.id);
+        effectiveShape = {
+          ...shape,
+          patternType: isBuiltin ? previewPattern.id as HatchPatternType : 'custom',
+          customPatternId: isBuiltin ? undefined : previewPattern.id,
+        };
+      }
+    }
+
+    const { points, bulge, patternType, patternAngle, patternScale, fillColor, backgroundColor, customPatternId } = effectiveShape;
+    const boundaryVisible = effectiveShape.boundaryVisible ?? true;
+    const innerLoops = effectiveShape.innerLoops;
+
+    if (points.length < 3) return;
+
+    // Build outer boundary path (supports bulge/arc segments like polyline)
+    const buildOuterPath = () => {
+      ctx.moveTo(points[0].x, points[0].y);
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const b = bulge?.[i] ?? 0;
+        if (b !== 0) {
+          const arc = bulgeToArc(points[i], points[i + 1], b);
+          ctx.arc(arc.center.x, arc.center.y, arc.radius, arc.startAngle, arc.endAngle, arc.clockwise);
+        } else {
+          ctx.lineTo(points[i + 1].x, points[i + 1].y);
+        }
+      }
+
+      // Close path (handle last segment bulge)
+      const lastB = bulge?.[points.length - 1] ?? 0;
+      if (lastB !== 0) {
+        const arc = bulgeToArc(points[points.length - 1], points[0], lastB);
+        ctx.arc(arc.center.x, arc.center.y, arc.radius, arc.startAngle, arc.endAngle, arc.clockwise);
+      } else {
+        ctx.closePath();
+      }
+    };
+
+    // Build full path with inner loops (holes) using evenodd winding rule
+    const buildPath = () => {
+      ctx.beginPath();
+      buildOuterPath();
+
+      // Add inner loops (drawn in reverse winding for evenodd cutout)
+      if (innerLoops && innerLoops.length > 0) {
+        for (const loop of innerLoops) {
+          if (loop.length < 3) continue;
+          ctx.moveTo(loop[0].x, loop[0].y);
+          for (let i = 1; i < loop.length; i++) {
+            ctx.lineTo(loop[i].x, loop[i].y);
+          }
+          ctx.closePath();
+        }
+      }
+    };
+
+    // Step 1: Fill solid background if masking is on or backgroundColor is set
+    if (backgroundColor) {
+      buildPath();
+      ctx.fillStyle = backgroundColor;
+      ctx.fill('evenodd');
+    }
+
+    // Get bounding box
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of points) {
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    }
+
+    // Step 2: Render background pattern layer (if set)
+    if (shape.bgPatternType) {
+      const bgScale = shape.bgPatternScale ?? 1;
+      const bgAngle = shape.bgPatternAngle ?? 0;
+      let bgColor = shape.bgFillColor ?? '#808080';
+      if (invertColors && bgColor === '#ffffff') bgColor = '#000000';
+
+      ctx.save();
+      buildPath();
+      ctx.clip('evenodd');
+
+      this.renderPatternLayer(
+        shape.bgPatternType, bgAngle, bgScale, bgColor,
+        shape.bgCustomPatternId, shape.style.strokeWidth,
+        minX, minY, maxX, maxY
+      );
+
+      ctx.restore();
+    }
+
+    // Step 3: Render foreground pattern layer
+    let patternColor = fillColor;
+    if (invertColors && patternColor === '#ffffff') {
+      patternColor = '#000000';
+    }
+
+    ctx.save();
+    buildPath();
+    ctx.clip('evenodd');
+
+    this.renderPatternLayer(
+      patternType, patternAngle, patternScale, patternColor,
+      customPatternId, shape.style.strokeWidth,
+      minX, minY, maxX, maxY
+    );
+
+    ctx.restore();
+
+    // Step 4: Stroke boundary (only if visible)
+    if (boundaryVisible) {
+      ctx.beginPath();
+      buildOuterPath();
+      ctx.stroke();
+
+      // Also stroke inner loops
+      if (innerLoops && innerLoops.length > 0) {
+        for (const loop of innerLoops) {
+          if (loop.length < 3) continue;
+          ctx.beginPath();
+          ctx.moveTo(loop[0].x, loop[0].y);
+          for (let i = 1; i < loop.length; i++) {
+            ctx.lineTo(loop[i].x, loop[i].y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  /**
+   * Render a single pattern layer within the current clip region
+   */
+  private renderPatternLayer(
+    pType: HatchPatternType,
+    pAngle: number,
+    pScale: number,
+    pColor: string,
+    pCustomId: string | undefined,
+    strokeWidth: number,
+    minX: number, minY: number, maxX: number, maxY: number
+  ): void {
+    const ctx = this.ctx;
+
+    if (pType === 'custom' && pCustomId) {
+      const customPattern = this.getPatternById(pCustomId);
+      if (customPattern) {
+        if (isSvgHatchPattern(customPattern)) {
+          this.drawSvgPattern(customPattern, minX, minY, maxX, maxY, pScale, pAngle);
+        } else if (customPattern.lineFamilies.length > 0) {
+          // Special case: insulation patterns get zigzag rendering (NEN standard)
+          if (pCustomId === 'nen47-isolatie' || pCustomId === 'insulation') {
+            this.drawInsulationZigzag(minX, minY, maxX, maxY, pScale, pAngle, pColor, strokeWidth);
+          } else {
+            this.drawCustomPatternLines(customPattern.lineFamilies, minX, minY, maxX, maxY, pScale, pAngle, pColor, strokeWidth);
+          }
+        } else {
+          ctx.fillStyle = pColor;
+          ctx.fill();
+        }
+      }
+    } else if (pType === 'solid') {
+      ctx.fillStyle = pColor;
+      ctx.fill();
+    } else if (pType === 'dots') {
+      const spacing = 10 * pScale;
+      const dotRadius = 1 * pScale;
+      ctx.fillStyle = pColor;
+      for (let x = minX; x <= maxX; x += spacing) {
+        for (let y = minY; y <= maxY; y += spacing) {
+          ctx.beginPath();
+          ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    } else {
+      const spacing = 10 * pScale;
+      const angles: number[] = [];
+
+      switch (pType) {
+        case 'horizontal':
+          angles.push(0);
+          break;
+        case 'vertical':
+          angles.push(90);
+          break;
+        case 'diagonal':
+          angles.push(pAngle);
+          break;
+        case 'crosshatch':
+          angles.push(pAngle);
+          angles.push(pAngle + 90);
+          break;
+      }
+
+      ctx.strokeStyle = pColor;
+      ctx.lineWidth = strokeWidth * 0.5;
+      ctx.setLineDash([]);
+
+      for (const angleDeg of angles) {
+        this.drawLineFamilySimple(angleDeg, spacing, minX, minY, maxX, maxY);
+      }
+    }
+  }
+
+
+  /**
+   * Draw an SVG-based pattern using canvas pattern fill
+   */
+  private drawSvgPattern(
+    pattern: SvgHatchPattern,
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number,
+    scale: number,
+    rotationOffset: number
+  ): void {
+    const ctx = this.ctx;
+    const img = this.getSvgPatternImage(pattern.id);
+
+    if (!img) {
+      // Image not loaded yet - trigger load and draw placeholder
+      this.loadSvgPattern(pattern);
+      // Draw a light gray placeholder
+      ctx.fillStyle = 'rgba(128, 128, 128, 0.1)';
+      ctx.fill();
+      return;
+    }
+
+    // Calculate scaled tile dimensions
+    const tileWidth = pattern.tileWidth * scale;
+    const tileHeight = pattern.tileHeight * scale;
+
+    // Create off-screen canvas for the scaled tile
+    const tileCanvas = document.createElement('canvas');
+    tileCanvas.width = tileWidth;
+    tileCanvas.height = tileHeight;
+    const tileCtx = tileCanvas.getContext('2d');
+
+    if (!tileCtx) {
+      ctx.fillStyle = 'rgba(128, 128, 128, 0.1)';
+      ctx.fill();
+      return;
+    }
+
+    // Draw the SVG image scaled to tile size
+    tileCtx.drawImage(img, 0, 0, tileWidth, tileHeight);
+
+    // Create canvas pattern
+    const canvasPattern = ctx.createPattern(tileCanvas, 'repeat');
+    if (!canvasPattern) {
+      ctx.fillStyle = 'rgba(128, 128, 128, 0.1)';
+      ctx.fill();
+      return;
+    }
+
+    // Apply rotation if needed
+    if (rotationOffset !== 0) {
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+
+      // Transform the pattern (rotateSelf uses degrees)
+      const matrix = new DOMMatrix()
+        .translateSelf(cx, cy)
+        .rotateSelf(rotationOffset)
+        .translateSelf(-cx, -cy);
+      canvasPattern.setTransform(matrix);
+    }
+
+    ctx.fillStyle = canvasPattern;
+    ctx.fill();
+  }
+
+  /**
+   * Draw simple line family (for built-in patterns)
+   */
+  private drawLineFamilySimple(angleDeg: number, spacing: number, minX: number, minY: number, maxX: number, maxY: number): void {
+    const ctx = this.ctx;
+    const angleRad = (angleDeg * Math.PI) / 180;
+    const cosA = Math.cos(angleRad);
+    const sinA = Math.sin(angleRad);
+
+    // Expand bounding box to cover rotated lines
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const diagonal = Math.sqrt((maxX - minX) ** 2 + (maxY - minY) ** 2);
+    const halfDiag = diagonal / 2 + spacing;
+
+    // Draw parallel lines perpendicular to the angle direction
+    const numLines = Math.ceil((halfDiag * 2) / spacing);
+
+    ctx.beginPath();
+    for (let i = -numLines; i <= numLines; i++) {
+      const offset = i * spacing;
+      // Line perpendicular offset from center
+      const ox = cx + offset * (-sinA);
+      const oy = cy + offset * cosA;
+      // Line extends along the angle direction
+      const x1 = ox - halfDiag * cosA;
+      const y1 = oy - halfDiag * sinA;
+      const x2 = ox + halfDiag * cosA;
+      const y2 = oy + halfDiag * sinA;
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+    }
+    ctx.stroke();
+  }
+
+  /**
+   * Draw NEN-standard insulation zigzag hatch pattern.
+   * Renders connected zigzag (V-shape) lines at 60 degrees, filling the
+   * bounding area. Each row is a continuous zigzag path running horizontally
+   * (relative to the rotation offset), with segments alternating between
+   * +60 and -60 degrees.
+   */
+  private drawInsulationZigzag(
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number,
+    scale: number,
+    rotationOffset: number,
+    color: string,
+    defaultStrokeWidth: number,
+    wallThickness?: number
+  ): void {
+    const ctx = this.ctx;
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = defaultStrokeWidth * 0.5;
+    ctx.setLineDash([]);
+
+    // Rotate the coordinate system around the center of the bounding box
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const rotRad = (rotationOffset * Math.PI) / 180;
+
+    ctx.translate(cx, cy);
+    ctx.rotate(rotRad);
+    ctx.translate(-cx, -cy);
+
+    if (wallThickness && wallThickness > 0) {
+      // ── Wall-specific insulation zigzag ──
+      // A single continuous zigzag line that bounces between the inner and
+      // outer wall edges at 60 degrees from the wall direction.
+      //
+      // In the rotated coordinate system the wall runs along the X-axis.
+      // The wall strip is centred on cy with total height = wallThickness.
+      //   innerEdgeY = cy - wallThickness / 2   (top in canvas coords)
+      //   outerEdgeY = cy + wallThickness / 2   (bottom in canvas coords)
+      //
+      // Each leg of the zigzag travels from one edge to the other.
+      // At 60 degrees from the wall direction the horizontal step per leg is:
+      //   dx = wallThickness / tan(60°)
+
+      const halfThick = wallThickness / 2;
+      const innerEdgeY = cy - halfThick;
+      const outerEdgeY = cy + halfThick;
+
+      const tan60 = Math.tan((60 * Math.PI) / 180); // ~1.732
+      const dx = wallThickness / tan60; // horizontal step per zigzag leg
+
+      // We need to cover the full diagonal extent along X so the clipped
+      // region is completely filled regardless of wall rotation.
+      const diagonal = Math.sqrt((maxX - minX) ** 2 + (maxY - minY) ** 2);
+      const halfDiag = diagonal / 2;
+      const startX = cx - halfDiag - dx; // start well before the visible area
+      const endX = cx + halfDiag + dx;   // end well after
+
+      // Number of zigzag legs needed
+      const numLegs = Math.ceil((endX - startX) / dx) + 2;
+
+      ctx.beginPath();
+      // Start at the inner edge (top)
+      let curX = startX;
+      let onInner = true;
+      ctx.moveTo(curX, onInner ? innerEdgeY : outerEdgeY);
+
+      for (let i = 0; i < numLegs; i++) {
+        curX += dx;
+        // Alternate between outer and inner edge
+        onInner = !onInner;
+        ctx.lineTo(curX, onInner ? innerEdgeY : outerEdgeY);
+      }
+      ctx.stroke();
+    } else {
+      // ── Fallback for non-wall shapes (slabs, generic) ──
+      // Uses scale-based parameters with multiple rows of zigzag.
+      const zigzagSpacing = 1.5 * scale;
+      const zigzagAmplitude = zigzagSpacing * 0.5;
+      const zigzagAngleRad = (60 * Math.PI) / 180;
+      const legHorizontal = zigzagAmplitude / Math.tan(zigzagAngleRad);
+      const wavelength = legHorizontal * 2;
+      const halfWavelength = wavelength / 2;
+
+      // After rotation, we need to cover a larger area to fill the original bbox
+      const diagonal = Math.sqrt((maxX - minX) ** 2 + (maxY - minY) ** 2);
+      const halfDiag = diagonal / 2;
+      const aMinX = cx - halfDiag;
+      const aMaxX = cx + halfDiag;
+      const aMinY = cy - halfDiag;
+      const aMaxY = cy + halfDiag;
+
+      // Number of zigzag rows needed
+      const numRows = Math.ceil((aMaxY - aMinY) / zigzagSpacing) + 2;
+      // Number of V segments per row
+      const numSegments = Math.ceil((aMaxX - aMinX) / wavelength) + 2;
+
+      ctx.beginPath();
+      for (let row = -1; row <= numRows; row++) {
+        const rowY = aMinY + row * zigzagSpacing;
+
+        // Start the zigzag row
+        const startX = aMinX - wavelength;
+        ctx.moveTo(startX, rowY);
+
+        for (let seg = 0; seg <= numSegments + 1; seg++) {
+          const segStartX = startX + seg * wavelength;
+          // Go up to peak
+          ctx.lineTo(segStartX + halfWavelength, rowY - zigzagAmplitude);
+          // Go down to trough
+          ctx.lineTo(segStartX + wavelength, rowY);
+        }
+      }
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Draw an insulation zigzag that follows an arc wall.
+   * The zigzag is a single continuous line whose vertices alternate between
+   * the inner and outer arc radii, producing peaks that always touch the
+   * wall edges.  The angular step is chosen so that each leg of the zigzag
+   * makes a 60-degree angle with the tangent direction at the midpoint.
+   */
+  private drawInsulationZigzagArc(
+    center: { x: number; y: number },
+    innerR: number,
+    outerR: number,
+    startAngle: number,
+    endAngle: number,
+    clockwise: boolean,
+    color: string,
+    strokeWidth: number
+  ): void {
+    const ctx = this.ctx;
+
+    const wallThickness = outerR - innerR;
+    if (wallThickness <= 0) return;
+
+    // The midpoint radius is used to compute the angular step.
+    // Each zigzag leg spans the wall thickness radially.
+    // At 60 degrees from the tangent direction, the arc-length per leg
+    // (measured at the mid-radius) equals: wallThickness / tan(60deg).
+    const midR = (innerR + outerR) / 2;
+    if (midR <= 0) return;
+
+    const tan60 = Math.tan((60 * Math.PI) / 180); // ~1.732
+    const arcLengthPerLeg = wallThickness / tan60;
+    const angularStep = arcLengthPerLeg / midR; // radians per leg
+
+    // Determine total angular sweep
+    let totalSweep: number;
+    if (clockwise) {
+      totalSweep = startAngle - endAngle;
+      if (totalSweep < 0) totalSweep += Math.PI * 2;
+    } else {
+      totalSweep = endAngle - startAngle;
+      if (totalSweep < 0) totalSweep += Math.PI * 2;
+    }
+
+    const numLegs = Math.ceil(totalSweep / angularStep);
+    const direction = clockwise ? -1 : 1;
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeWidth * 0.5;
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+
+    // Start on the inner arc at startAngle
+    let onInner = true;
+    let angle = startAngle;
+    ctx.moveTo(
+      center.x + innerR * Math.cos(angle),
+      center.y + innerR * Math.sin(angle)
+    );
+
+    for (let i = 0; i < numLegs; i++) {
+      angle += direction * angularStep;
+      onInner = !onInner;
+      const r = onInner ? innerR : outerR;
+      ctx.lineTo(
+        center.x + r * Math.cos(angle),
+        center.y + r * Math.sin(angle)
+      );
+    }
+
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /**
+   * Draw custom pattern line families with full support for origins, offsets, and dash patterns
+   */
+  private drawCustomPatternLines(
+    lineFamilies: LineFamily[],
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number,
+    scale: number,
+    rotationOffset: number,
+    defaultColor: string,
+    defaultStrokeWidth: number
+  ): void {
+    const ctx = this.ctx;
+
+    for (const family of lineFamilies) {
+      // Apply scale to all dimensions
+      const spacing = (family.deltaY || 10) * scale;
+      const deltaX = (family.deltaX || 0) * scale;
+      const originX = (family.originX || 0) * scale;
+      const originY = (family.originY || 0) * scale;
+      const angleDeg = family.angle + rotationOffset;
+      const strokeWidth = family.strokeWidth ?? defaultStrokeWidth * 0.5;
+      const strokeColor = family.strokeColor ?? defaultColor;
+
+      // Set line style
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = strokeWidth;
+
+      // Handle dash pattern
+      if (family.dashPattern && family.dashPattern.length > 0) {
+        // Convert dash pattern with scale
+        const scaledDashPattern = family.dashPattern.map(d => Math.abs(d) * scale);
+        // Check for dot (0 value means dot)
+        if (family.dashPattern.includes(0)) {
+          // Render as dots
+          this.drawLineFamilyDots(angleDeg, spacing, deltaX, originX, originY, minX, minY, maxX, maxY, scale, strokeColor);
+          continue;
+        }
+        ctx.setLineDash(scaledDashPattern);
+      } else {
+        ctx.setLineDash([]);
+      }
+
+      // Draw the line family
+      this.drawLineFamilyWithOffset(angleDeg, spacing, deltaX, originX, originY, minX, minY, maxX, maxY);
+    }
+
+    // Reset dash
+    ctx.setLineDash([]);
+  }
+
+  /**
+   * Draw a line family with origin offset and stagger (deltaX)
+   */
+  private drawLineFamilyWithOffset(
+    angleDeg: number,
+    spacing: number,
+    deltaX: number,
+    originX: number,
+    originY: number,
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number
+  ): void {
+    const ctx = this.ctx;
+    const angleRad = (angleDeg * Math.PI) / 180;
+    const cosA = Math.cos(angleRad);
+    const sinA = Math.sin(angleRad);
+
+    // Calculate coverage area
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const diagonal = Math.sqrt((maxX - minX) ** 2 + (maxY - minY) ** 2);
+    const halfDiag = diagonal / 2 + spacing * 2;
+
+    // Number of lines needed
+    const numLines = Math.ceil((halfDiag * 2) / spacing) + 2;
+
+    ctx.beginPath();
+    for (let i = -numLines; i <= numLines; i++) {
+      // Perpendicular offset from center
+      const perpOffset = i * spacing;
+
+      // Apply stagger (deltaX) - shifts line along its direction based on perpendicular position
+      const staggerOffset = deltaX !== 0 ? (i * deltaX) : 0;
+
+      // Calculate line origin point
+      // Start from center, move perpendicular to line direction
+      const baseX = cx + perpOffset * (-sinA);
+      const baseY = cy + perpOffset * cosA;
+
+      // Apply origin offset and stagger
+      const ox = baseX + originX + staggerOffset * cosA;
+      const oy = baseY + originY + staggerOffset * sinA;
+
+      // Line endpoints extend along the angle direction
+      const x1 = ox - halfDiag * cosA;
+      const y1 = oy - halfDiag * sinA;
+      const x2 = ox + halfDiag * cosA;
+      const y2 = oy + halfDiag * sinA;
+
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+    }
+    ctx.stroke();
+  }
+
+  /**
+   * Draw dots for line families with dash pattern containing 0 (dot indicator)
+   */
+  private drawLineFamilyDots(
+    angleDeg: number,
+    spacing: number,
+    deltaX: number,
+    originX: number,
+    originY: number,
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number,
+    scale: number,
+    color: string
+  ): void {
+    const ctx = this.ctx;
+    const angleRad = (angleDeg * Math.PI) / 180;
+    const cosA = Math.cos(angleRad);
+    const sinA = Math.sin(angleRad);
+
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const diagonal = Math.sqrt((maxX - minX) ** 2 + (maxY - minY) ** 2);
+    const halfDiag = diagonal / 2 + spacing * 2;
+
+    const dotRadius = 1 * scale;
+    const numLines = Math.ceil((halfDiag * 2) / spacing) + 2;
+    const dotsPerLine = Math.ceil((halfDiag * 2) / (deltaX || spacing)) + 2;
+    const dotSpacing = deltaX || spacing;
+
+    ctx.fillStyle = color;
+
+    for (let i = -numLines; i <= numLines; i++) {
+      const perpOffset = i * spacing;
+      const baseX = cx + perpOffset * (-sinA);
+      const baseY = cy + perpOffset * cosA;
+
+      for (let j = -dotsPerLine; j <= dotsPerLine; j++) {
+        const alongOffset = j * dotSpacing;
+        const dx = baseX + originX + alongOffset * cosA;
+        const dy = baseY + originY + alongOffset * sinA;
+
+        ctx.beginPath();
+        ctx.arc(dx, dy, dotRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+}

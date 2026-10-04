@@ -1,0 +1,334 @@
+{
+  "cad": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(0, 0, 0)",
+    "header": "rgb(0, 0, 0)",
+    "selectors": [],
+    "text": "◐\nLight\nDark",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "cad2d": {
+    "mode": "light",
+    "theme": "light",
+    "control": false,
+    "body": "rgba(0, 0, 0, 0)",
+    "header": "rgba(0, 0, 0, 0)",
+    "selectors": [
+      "HEADER.web-start-brand"
+    ],
+    "text": "Untitled - 2D CAD · Spanvision Infra\nFile\nHome\nModify\nView\nIFC\nSelect\nPan\nSelect All\nDeselect\nFind/Replace\nSEL",
+    "errors": []
+  },
+  "bim": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(0, 0, 0)",
+    "header": "rgba(0, 0, 0, 0)",
+    "selectors": [
+      "HEADER.brand-header"
+    ],
+    "text": "SPANVISION\nINFRA\nHow it works\nAccount\nOpen workspace\n↗\n◐\nLight\nDark\n\nA SPANVISION INFRA TOOL\n\nConfidence in\nev",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "pdf": {
+    "mode": "light",
+    "theme": "light",
+    "control": false,
+    "body": "rgb(245, 245, 245)",
+    "header": "rgb(245, 245, 245)",
+    "selectors": [
+      "DIV.left-panel-header",
+      "DIV.left-panel-header",
+      "DIV.left-panel-header",
+      "DIV.left-panel-header",
+      "DIV.left-panel-header",
+      "DIV.left-panel-header",
+      "DIV.left-panel-header",
+      "DIV.left-panel-header",
+      "DIV.left-panel-header",
+      "DIV.left-panel-header"
+    ],
+    "text": "SpanvisionInfra · PDF · Spanvision infra v2026.39.0\nSend Feedback\nFile\nHome\nView\nDrawing\nAnnotation\nEdit & Com",
+    "errors": []
+  },
+  "ifc": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(245, 246, 248)",
+    "header": "rgba(0, 0, 0, 0)",
+    "selectors": [
+      "HEADER._header_18bvy_1"
+    ],
+    "text": "SpanvisionInfra · IFC\nby Spanvision infra\nEN\n◐\nLight\nDark\nSEQUENCE PARAMETER\n-- Load an IFC file first --\nUniq",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "calc": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgba(0, 0, 0, 0)",
+    "header": "rgb(250, 250, 249)",
+    "selectors": [
+      "DIV.titlebar",
+      "DIV.titlebar-drag",
+      "DIV.titlebar-left",
+      "DIV.titlebar-icon",
+      "DIV.titlebar-quick-access",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn disabled",
+      "BUTTON.titlebar-quick-btn disabled",
+      "BUTTON.titlebar-quick-btn",
+      "SPAN.titlebar-title"
+    ],
+    "text": "Sample estimate - SpanvisionInfra · Calc v0.13.0\n◐\nLight\nDark\nFile\nBudget\nQuotation\nReports\nSpreadsheet\n3D\nPDF",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgba(0, 0, 0, 0)"
+    }
+  },
+  "planner": {
+    "mode": "light",
+    "theme": "light",
+    "control": false,
+    "body": "rgb(229, 229, 232)",
+    "header": "rgb(229, 229, 232)",
+    "selectors": [
+      "DIV.task-grid-header-row",
+      "DIV.task-grid-column-header",
+      "DIV.task-grid-column-header",
+      "DIV.task-grid-column-header"
+    ],
+    "text": "Spanvision infra\nAutoSave\nOpen Vision Studio v2026.9.0\nNew schedule\nFile\nHome\nPlanning\nResources\nView\nSettings",
+    "errors": []
+  },
+  "fem": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(0, 0, 0)",
+    "header": "rgb(0, 0, 0)",
+    "selectors": [
+      "DIV.titlebar",
+      "DIV.titlebar-drag",
+      "DIV.titlebar-left",
+      "DIV.titlebar-icon",
+      "DIV.titlebar-quick-access",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "SPAN.titlebar-title",
+      "SPAN.titlebar-version"
+    ],
+    "text": "SI\nFEM Vision Studio\nSpanvision Infra\nUntitled Projectv1.0.0\n◐\nLight\nDark\nFile\nHome\nGeometry\nLoads\nAnalyze\nChe",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "frame": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(245, 245, 245)",
+    "header": "rgb(212, 209, 204)",
+    "selectors": [
+      "DIV.titlebar svelte-1bkb0uk",
+      "DIV.titlebar-left svelte-1bkb0uk",
+      "DIV.titlebar-sep svelte-1bkb0uk",
+      "BUTTON.titlebar-action svelte-1bkb0uk",
+      "BUTTON.titlebar-action svelte-1bkb0uk",
+      "DIV.titlebar-center svelte-1bkb0uk",
+      "DIV.panel-header svelte-1n46o8q",
+      "DIV.panel-header tabbed svelte-1n46o8q"
+    ],
+    "text": "Spanvision infra\nFrame Vision Studio v0.6.0\n◐\nLight\nDark\nFILE\nHOME\nINSERT\nIFC / EXPORT\nPRODUCTION\nVIEW\nTEMPLAT",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "calculation": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(0, 0, 0)",
+    "header": "rgb(255, 255, 255)",
+    "selectors": [
+      "DIV.titlebar",
+      "DIV.titlebar-drag",
+      "DIV.titlebar-left",
+      "DIV.titlebar-icon",
+      "SPAN.titlebar-organization",
+      "DIV.titlebar-quick-access",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn"
+    ],
+    "text": "Spanvision Infra\nVision Calculation Studiov0.1.5\n◐\nLight\nDark\nFile\nHome\nIFC\nNew\nBrowse…\nSave\nFILE\nUndo\nRedo\nED",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "geo": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgba(0, 0, 0, 0)",
+    "header": "rgb(255, 255, 255)",
+    "selectors": [
+      "DIV.titlebar titlebar-browser",
+      "DIV.titlebar-drag",
+      "DIV.titlebar-left",
+      "DIV.titlebar-icon",
+      "DIV.titlebar-quick-access",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn"
+    ],
+    "text": "SpanvisionInfra · GeotechnicalSpanvision infra\n⚙\nSend Feedback\n◐\nLight\nDark\nFile\nHome\nMap\nReport\nSite plan\nCal",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgba(0, 0, 0, 0)"
+    }
+  },
+  "speech": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(238, 238, 238)",
+    "header": "rgb(238, 238, 238)",
+    "selectors": [
+      "HEADER.titlebar",
+      "A.titlebar-lockup",
+      "DIV.titlebar-title",
+      "SPAN.titlebar-version",
+      "DIV.titlebar-buttons",
+      "A.titlebar-link",
+      "A.titlebar-link"
+    ],
+    "text": "speech workspace\nSpanvision infra\nv0.12.0\nSuggestions\nAccount preview\n◐\nLight\nDark\nWorkspace\nSuggestions\nAbout",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "stl": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(238, 238, 238)",
+    "header": "rgb(238, 238, 238)",
+    "selectors": [
+      "HEADER.",
+      "DIV.header-controls"
+    ],
+    "text": "Skip to settings\nSTL-3D map workspace\nSpanvision infra\nv1.1.1\nTheme\nSpanvision Mono\nDark\nLight\nSystem\nAbout\n◐\n",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "field": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgb(250, 250, 249)",
+    "header": "rgb(250, 250, 249)",
+    "selectors": [
+      "DIV.inspectie-header",
+      "DIV.modal-header",
+      "DIV.modal-header",
+      "DIV.modal-header",
+      "DIV.modal-header",
+      "DIV.modal-header",
+      "DIV.modal-header"
+    ],
+    "text": "Field Workspace\nSpanvision infra\ni\nEN\n◐\nLight\nDark\nProject\nFloor Plans\n3D BIM\nSurvey\nInspection\nHandover\nDashb",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgb(0, 0, 0)"
+    }
+  },
+  "pointcloud": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgba(0, 0, 0, 0)",
+    "header": "rgb(245, 245, 245)",
+    "selectors": [
+      "DIV.titlebar h-8 bg-cad-surface border-b border-cad-border flex items-center select-none"
+    ],
+    "text": "Pointcloud WorkspaceSpanvision infra\nv0.3.0\n◐\nLight\nDark\nHome\nEdit\nTools\nImport\nExport\nFILE\nRGB\nElevation\nClas",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgba(0, 0, 0, 0)"
+    }
+  },
+  "pile": {
+    "mode": "light",
+    "theme": "light",
+    "control": true,
+    "body": "rgba(0, 0, 0, 0)",
+    "header": "rgb(255, 255, 255)",
+    "selectors": [
+      "DIV.titlebar",
+      "DIV.titlebar-left",
+      "DIV.titlebar-icon",
+      "DIV.titlebar-quick-access",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "BUTTON.titlebar-quick-btn",
+      "SPAN.titlebar-title",
+      "SMALL.titlebar-organization"
+    ],
+    "text": "Pile Plane WorkspaceSpanvision infraALPHA\nSend Feedback\n◐\nLight\nDark\nFile\nPlan\nView\nProject information\nPROJEC",
+    "errors": [],
+    "dark": {
+      "mode": "dark",
+      "theme": "spanvision-mono",
+      "body": "rgba(0, 0, 0, 0)"
+    }
+  }
+}

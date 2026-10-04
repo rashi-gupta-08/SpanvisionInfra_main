@@ -1,0 +1,243 @@
+/* Spanvision Mono: the existing semantic component contract, in grayscale. */
+:root:not([data-theme]), [data-theme="spanvision-mono"] {
+  color-scheme: dark;
+  --sv-page: #000000;
+  --sv-panel: #121212;
+  --sv-canvas: #1B1B1B;
+  --sv-elevated: #202020;
+  --sv-selected: #333333;
+  --sv-white: #FFFFFF;
+  --sv-text: #EEEEEE;
+  --sv-muted: #999999;
+  --sv-border: rgba(255, 255, 255, 0.16);
+  --sv-hover: rgba(255, 255, 255, 0.09);
+  --sv-focus: rgba(255, 255, 255, 0.65);
+  --canvas-bg: var(--sv-canvas);
+  --border: var(--sv-border);
+  --text: var(--sv-text);
+  --text-muted: var(--sv-muted);
+  --theme-bg: var(--sv-panel);
+  --theme-bg-lighter: var(--sv-panel);
+  --theme-bg-surface: var(--sv-panel);
+  --theme-bg-canvas: var(--sv-canvas);
+  --theme-docbar-bg: var(--sv-panel);
+  --theme-surface: var(--sv-elevated);
+  --theme-surface-2: var(--sv-elevated);
+  --theme-surface-hover: var(--sv-hover);
+  --theme-border: var(--sv-border);
+  --theme-border-subtle: var(--sv-border);
+  --theme-text: var(--sv-text);
+  --theme-text-secondary: var(--sv-muted);
+  --theme-text-muted: var(--sv-muted);
+  --theme-text-faint: var(--sv-muted);
+  --theme-accent: var(--sv-white);
+  --theme-accent-hover: var(--sv-text);
+  --theme-accent-text: var(--sv-page);
+  --theme-accent-soft: var(--sv-hover);
+  --theme-accent-tint: var(--sv-text);
+  --theme-hover: var(--sv-hover);
+  --theme-hover-strong: var(--sv-selected);
+  --theme-active: var(--sv-selected);
+  --theme-focus-color: var(--sv-focus);
+  --theme-danger-color: var(--sv-text);
+  --theme-danger-hover: var(--sv-white);
+  --theme-dialog-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+  --theme-panel-shadow: 2px 0 16px rgba(0, 0, 0, 0.4);
+  --theme-popover-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --theme-file-tab-bg: var(--sv-white);
+  --theme-file-tab-hover: var(--sv-text);
+  --theme-file-tab-text: var(--sv-page);
+  --theme-content-bg: var(--sv-canvas);
+  --theme-placeholder-icon: var(--sv-muted);
+  --theme-placeholder-heading: var(--sv-text);
+  --theme-placeholder-text: var(--sv-muted);
+  --theme-ribbon-btn-hover: var(--sv-hover);
+  --theme-ribbon-btn-hover-border: var(--sv-border);
+  --theme-ribbon-btn-active-bg: var(--sv-selected);
+  --theme-ribbon-btn-active-border: var(--sv-focus);
+  --theme-ribbon-btn-active-text: var(--sv-white);
+  --theme-ribbon-icon-active: var(--sv-white);
+  --theme-ribbon-text-hover: var(--sv-white);
+  --theme-ribbon-group-separator: var(--sv-border);
+  --theme-ribbon-group-label: var(--sv-muted);
+  --theme-status-bg: var(--sv-panel);
+  --theme-status-border: var(--sv-border);
+  --theme-status-text: var(--sv-muted);
+  --theme-status-text-label: var(--sv-muted);
+  --theme-status-hover: var(--sv-hover);
+  --theme-status-separator: var(--sv-border);
+  --theme-backstage-item-shortcut: var(--sv-muted);
+  --theme-backstage-item-shortcut-hover: var(--sv-text);
+  --theme-dialog-overlay: rgba(0, 0, 0, 0.75);
+  --theme-dialog-bg: var(--sv-elevated);
+  --theme-dialog-border: var(--sv-border);
+  --theme-dialog-header-bg: var(--sv-elevated);
+  --theme-dialog-header-text: var(--sv-white);
+  --theme-dialog-sidebar-bg: var(--sv-panel);
+  --theme-dialog-sidebar-border: var(--sv-border);
+  --theme-dialog-tab-text: var(--sv-text);
+  --theme-dialog-tab-hover: var(--sv-hover);
+  --theme-dialog-tab-hover-text: var(--sv-white);
+  --theme-dialog-tab-active-bg: var(--sv-selected);
+  --theme-dialog-tab-active-text: var(--sv-white);
+  --theme-dialog-tab-active-accent: var(--sv-white);
+  --theme-dialog-content-bg: var(--sv-elevated);
+  --theme-dialog-content-text: var(--sv-text);
+  --theme-dialog-content-secondary: var(--sv-muted);
+  --theme-dialog-input-bg: var(--sv-canvas);
+  --theme-dialog-input-border: var(--sv-border);
+  --theme-dialog-input-text: var(--sv-text);
+  --theme-dialog-btn-bg: var(--sv-white);
+  --theme-dialog-btn-text: var(--sv-page);
+  --theme-dialog-btn-hover: var(--sv-text);
+  --theme-dialog-section-border: var(--sv-border);
+  --theme-btn-primary-bg: var(--sv-white);
+  --theme-btn-primary-text: var(--sv-page);
+  --theme-btn-primary-border: var(--sv-white);
+  --theme-btn-primary-hover-bg: var(--sv-text);
+  --theme-btn-primary-hover-text: var(--sv-page);
+  --theme-btn-secondary-bg: var(--sv-elevated);
+  --theme-btn-secondary-text: var(--sv-text);
+  --theme-btn-secondary-hover-bg: var(--sv-selected);
+  --theme-btn-secondary-hover-border: var(--sv-focus);
+}
+
+[data-theme="spanvision-mono"] body,
+[data-theme="spanvision-mono"] #root { background: var(--sv-page); }
+[data-theme="spanvision-mono"] .main-view { background: var(--sv-canvas); }
+[data-theme="spanvision-mono"] .titlebar { background: var(--sv-page); border-bottom: 1px solid var(--sv-border); }
+.titlebar-organization { font-family: var(--font-heading); font-size: 11px; font-weight: 600; margin-left: 6px; white-space: nowrap; }
+.titlebar-icon svg { width: 24px; height: 24px; }
+.titlebar-icon { width: 26px; height: 26px; }
+.titlebar-quick-access { border-left-color: var(--theme-border); }
+[data-theme="spanvision-mono"] :is(button, input, select, textarea, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--sv-focus);
+  outline-offset: 2px;
+}
+[data-theme="spanvision-mono"] :is(input, select, textarea) {
+  color: var(--sv-text);
+  background-color: var(--sv-canvas);
+  border-color: var(--sv-border);
+  accent-color: var(--sv-white);
+}
+[data-theme="spanvision-mono"] input::placeholder { color: var(--sv-muted); opacity: 1; }
+[data-theme="spanvision-mono"] .split-tabs { background: var(--sv-panel); }
+[data-theme="spanvision-mono"] :is(.split-tab.active, .gd-tab.active, .load-case-tab.active) { background: var(--sv-selected); border-color: var(--sv-focus); color: var(--sv-white); }
+[data-theme="spanvision-mono"] .split-tab:hover { border-color: var(--sv-focus); background: var(--sv-hover); }
+[data-theme="spanvision-mono"] :is(.modal-header, .modal-footer) { background: var(--sv-elevated); }
+[data-theme="spanvision-mono"] :is(.modal-close-btn, .titlebar-close):hover { background: var(--sv-selected); color: var(--sv-white); }
+[data-theme="spanvision-mono"] .theme-dropdown-menu { background: var(--sv-elevated); }
+[data-theme="spanvision-mono"] .theme-dropdown-item.active { background: var(--sv-selected); }
+[data-theme="spanvision-mono"] .vd-toggle.aan .vd-toggle-knop { background: var(--sv-page); }
+[data-theme="spanvision-mono"] .vd-ontwerp button { color: var(--sv-page); background: var(--sv-white); }
+[data-theme="spanvision-mono"] .vd-layout-thumb { background: var(--sv-elevated); border-color: var(--sv-border); }
+[data-theme="spanvision-mono"] .vd-layout-thumb.active { background: var(--sv-selected); border-color: var(--sv-focus); }
+[data-theme="spanvision-mono"] .av-balk button.av-primair { color: var(--sv-page); }
+[data-theme="spanvision-mono"] .tree-item-onuitgegeven .tree-item-label { opacity: 1; }
+[data-theme="spanvision-mono"] .vd-layout-num { color: var(--sv-text); }
+[data-theme="spanvision-mono"] .calc-preview-content .ifc-calc { color: var(--sv-text); }
+[data-theme="spanvision-mono"] .calc-preview-content :is(h1, h2, h3, h4, h5, h6) { color: var(--sv-text); border-color: var(--sv-border); }
+[data-theme="spanvision-mono"] .calc-preview-content :is(.calc-select, .calc-input-prompt, .calc-gef-upload, .calc-gef-filename, .calc-gef-values) { color: var(--sv-text); background: var(--sv-elevated); border-color: var(--sv-border); }
+[data-theme="spanvision-mono"] .calc-preview-content :is(.calc-select-label, .calc-input-label, .calc-gef-values strong) { color: var(--sv-text); }
+[data-theme="spanvision-mono"] .calc-preview-content :is(.calc-input-unit, .calc-gef-text) { color: var(--sv-muted); }
+[data-theme="spanvision-mono"] :is(.vd-dim-num, .vd-force-num) { color: var(--sv-text); }
+[data-theme="spanvision-mono"] :is(.vd-dim-num, .vd-force-num):hover { background: var(--sv-selected); outline-color: var(--sv-focus); }
+[data-theme="spanvision-mono"] .vd-dim-ro { color: var(--sv-muted) !important; }
+.titlebar-quick-btn:disabled { opacity: 0.4; cursor: default; }
+.compact-workspace { height: 100%; display: flex; flex-direction: column; }
+.compact-pane-tabs { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--theme-border); background: var(--theme-bg); padding: 4px 10px; gap: 8px; }
+.compact-pane-tabs button { min-height: 36px; padding: 4px 12px; background: transparent; color: var(--theme-text-secondary); border: 1px solid transparent; border-radius: 4px; font-size: 12px; cursor: pointer; }
+.compact-pane-tabs button[aria-selected="true"] { color: var(--theme-text); background: var(--theme-hover-strong); border-color: var(--theme-border); }
+.compact-pane { flex: 1; min-height: 0; overflow: hidden; }
+[data-theme="spanvision-mono"] .vd-compact label > :is(input, select):focus { border-color: var(--sv-focus); box-shadow: 0 0 0 2px var(--sv-border); }
+[data-theme="spanvision-mono"] :is(.calc-editor, .calc-editor .cm-editor) { background: var(--sv-canvas); }
+[data-theme="spanvision-mono"] :is(.calc-editor .cm-tooltip, .calc-editor .cm-panels) { background: var(--sv-elevated); color: var(--sv-text); border-color: var(--sv-border); }
+[data-theme="spanvision-mono"] .cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--sv-selected); color: var(--sv-white); }
+/* Keep semantic result/drawing colors and print-paper styling. */
+[data-theme="spanvision-mono"] .calc-preview-content :is(.calc-heading, .calc-text, .calc-equation) { color: var(--sv-text); }
+[data-theme="spanvision-mono"] .calc-preview-content :is(.calc-comment, .calc-unit) { color: var(--sv-muted); }
+.exemplaar-rij:focus-within .exemplaar-acties { display: flex; }
+.tree-item:focus-within .tree-item-plus { opacity: 1; }
+
+/* Workspace responsiveness also applies to retained user-selected themes. */
+.ribbon-content-wrapper { overflow-x: auto; overflow-y: hidden; }
+.ribbon-groups { width: max-content; min-width: 100%; }
+.ribbon-panel { min-width: max-content; }
+.modal-dialog { max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); }
+.vd-panel { container-type: inline-size; }
+.vd-head { flex-wrap: wrap; }
+.vd-preview { min-width: 0; max-width: 100%; }
+.vd-preview > svg { max-width: 100%; height: auto; }
+.vd-body { min-width: 0; }
+.vd-panel > .vd-body { flex: 0 0 auto !important; min-height: auto !important; }
+.vd-foot { flex-shrink: 0; }
+.vd-canvases:not(.print-opmaak *) { height: clamp(340px, calc(100dvh - 290px), 720px); align-self: flex-start; }
+.vd-controls { max-width: 100%; }
+.calc-preview-content .katex-display { overflow-x: auto; }
+.calc-preview-content table { display: block; max-width: 100%; overflow-x: auto; }
+@container (max-width: 520px) {
+  .vd-body { flex-direction: column; align-items: stretch; gap: 14px; }
+  .vd-controls { width: 100%; }
+  .vd-preview { align-self: stretch; overflow-x: auto; }
+  .vd-canvases { border-left: 0 !important; padding-left: 0 !important; }
+  .vd-canvases:not(.print-opmaak *) { order: -1; flex: none !important; width: 100%; }
+}
+@media (max-width: 1100px) {
+  .titlebar-organization { display: none; }
+}
+@media (max-width: 900px) {
+  .main-view { position: relative; }
+  .project-browser { position: absolute; inset: 0 auto 0 0; z-index: 25; box-shadow: var(--theme-panel-shadow); }
+  .project-browser.collapsed { box-shadow: none; }
+  .main-view > div { margin-left: 36px; }
+  .split-pane-handle { width: 100%; height: 6px; cursor: row-resize; }
+  .titlebar-title { max-width: 50vw; }
+  .ribbon-tabs { overflow-x: auto; overflow-y: hidden; }
+  .ribbon-tab { flex-shrink: 0; }
+  .split-tabs { overflow-x: auto; }
+  .split-tab { flex-shrink: 0; white-space: nowrap; }
+  .status-bar { min-width: 0; overflow-x: auto; }
+  .status-bar-center { min-width: 0; flex: 1; overflow: hidden; }
+  .status-bar-center span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status-bar-left, .status-bar-right { flex: 0 0 auto; }
+  .ifc-viewer-panel { flex-direction: column; overflow-y: auto; }
+  .ifc-structure-pane { width: 100%; min-width: 0; flex: 0 0 180px; }
+  .ifc-viewer-pane { flex: 0 0 300px; }
+  .ifc-viewer-divider { width: 100%; height: 1px; }
+}
+@media (max-width: 600px) {
+  .titlebar-quick-access { margin-left: auto; border: 0; }
+  .titlebar-quick-btn { width: 32px; height: 30px; }
+  .titlebar-quick-btn:not(:last-child) { display: none; }
+  .titlebar-title { font-size: 11px; max-width: calc(100vw - 100px); }
+  .titlebar-left { width: 100%; padding-right: 8px; }
+  .ribbon-tab { min-height: 30px; }
+  .modal-header { min-height: 40px; }
+  .modal-body { min-height: 0; overflow: auto; }
+  .modal-close-btn { width: 40px; }
+  .settings-body { flex-direction: column; }
+  .settings-sidebar { width: 100%; display: flex; flex-direction: row; overflow-x: auto; flex-shrink: 0; border-right: 0; border-bottom: 1px solid var(--theme-border); }
+  .settings-tab { flex-shrink: 0; min-height: 40px; }
+  .settings-content { padding: 16px; }
+  .settings-row { flex-wrap: wrap; gap: 8px; }
+  .modal-footer { flex-wrap: wrap; gap: 8px; padding: 10px; }
+  .settings-footer-right { gap: 8px; }
+  .settings-btn { min-height: 36px; }
+  .backstage-sidebar { width: 136px; min-width: 136px; }
+  .backstage-content { min-width: 0; width: calc(100vw - 136px); max-width: calc(100vw - 136px); overflow: auto; padding: 16px; }
+  .bs-about-app { flex-wrap: wrap; }
+  .bs-about-app-name { overflow-wrap: anywhere; }
+  .calc-preview-content { padding: 16px; }
+  .calc-preview-content .ifc-calc { padding: 0; }
+  .calc-preview-content :is(.calc-select, .calc-input-prompt) { flex-wrap: wrap; }
+  .calc-preview-content .calc-select-input { min-width: 0; max-width: 100%; width: 100%; }
+  .status-bar-center { display: none; }
+  .vd-body { padding: 12px; }
+  .pg-panel { padding: 16px; }
+  .av-balk { flex-wrap: wrap; gap: 8px; }
+  .vd-controls :is(input, select), .vd-toggle-row { min-height: 34px; }
+  .project-browser-toggle { width: 30px; height: 30px; }
+  .tree-item, .tree-category-header, .exemplaar-open { min-height: 32px; }
+  .exemplaar-acties { display: flex; }
+  .exemplaar-acties button { width: 24px; height: 28px; }
+}

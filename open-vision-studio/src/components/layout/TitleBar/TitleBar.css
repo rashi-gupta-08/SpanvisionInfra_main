@@ -1,0 +1,212 @@
+/* Title Bar — height per LAYOUTS.md §3.1 (32px) */
+.title-bar {
+  background: var(--theme-titlebar-bg);
+  border-bottom: 1px solid var(--theme-border);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--titlebar-height);
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  user-select: none;
+  cursor: default;
+  position: relative;
+  z-index: var(--z-navbar);
+}
+
+.title-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.title-bar-app-icon {
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Quick Access Toolbar */
+.quick-access-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+  height: 100%;
+}
+
+.quick-access-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--theme-text-dim);
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.quick-access-btn:hover {
+  background: var(--theme-titlebar-btn-hover);
+  color: var(--theme-text);
+}
+
+.quick-access-btn:active {
+  background: var(--theme-titlebar-btn-active);
+}
+
+.quick-access-btn:disabled {
+  color: var(--theme-text-muted);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quick-access-btn:disabled:hover {
+  background: transparent;
+  color: var(--theme-text-muted);
+  opacity: 0.5;
+}
+
+/* Compact Word-achtig AutoSave-bedieningsvlak: doelbewust bovenin bij Opslaan, niet in instellingen. */
+.title-bar-autosave {
+  -webkit-app-region: no-drag;
+  height: 24px; display: inline-flex; align-items: center; gap: 5px; padding: 0 5px;
+  border: none; border-radius: var(--radius-md); background: transparent; color: var(--theme-text-dim);
+  font: inherit; font-size: var(--text-body); cursor: pointer;
+}
+.title-bar-autosave:hover { background: var(--theme-titlebar-btn-hover); color: var(--theme-text); }
+.title-bar-autosave:disabled { opacity: .55; cursor: not-allowed; }
+.title-bar-autosave:disabled:hover { background: transparent; color: var(--theme-text-dim); }
+.title-bar-autosave-track { width: 25px; height: 14px; border-radius: 99px; padding: 2px; box-sizing: border-box; background: var(--theme-control-border); transition: background .12s; }
+.title-bar-autosave-track > span { display: block; width: 10px; height: 10px; border-radius: 99px; background: var(--theme-surface); transition: transform .12s; }
+.title-bar-autosave.active { color: var(--theme-text); }
+.title-bar-autosave.active .title-bar-autosave-track { background: var(--theme-accent); }
+.title-bar-autosave.active .title-bar-autosave-track > span { transform: translateX(11px); }
+
+.quick-access-separator {
+  width: 1px;
+  height: 16px;
+  background: var(--theme-border);
+  margin: 0 4px;
+}
+
+/* Title Bar Center */
+/* Écht paginacentraal (position:absolute, left:50%), met aan beide kanten een reservering
+   ter grootte van het BREEDSTE zijcluster (`--title-bar-side-reserve`, gemeten door
+   TitleBar.tsx met een ResizeObserver: links icon + snelkoppelingen + AutoSave + het
+   roterende feedbacklabel, rechts de vensterknoppen in Tauri). Zo blijft de titel exact in
+   het midden zolang hij past, en kort hij in (ellipsis) zodra hij een cluster zou raken —
+   in elke taal en bij elk label, zonder hier een getal te hoeven raden. De fallback van
+   390px geldt alleen vóór de eerste meting. */
+.title-bar-center {
+  --title-bar-center-gap: 12px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max(0px, calc(100% - 2 * var(--title-bar-side-reserve, 390px) - 2 * var(--title-bar-center-gap)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  pointer-events: none;
+  container-type: inline-size;
+  container-name: titlebar-center;
+}
+
+/* De appnaam kort nooit in ("Open Planner Stu…" oogt kapot); de projectnaam wel. */
+.title-bar-app-name {
+  font-size: var(--text-large);
+  font-weight: 600;
+  color: var(--theme-text);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.title-bar-file-name {
+  font-size: var(--text-body);
+  color: var(--theme-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+/* Wordt de beschikbare middenruimte krap, dan wijkt eerst de appnaam (de versie staat ook
+   in Backstage → Help) zodat de projectnaam de ruimte krijgt; onder ~120px is ook een
+   afgekapte projectnaam onleesbaar en verdwijnt hij — hij blijft zichtbaar in de
+   documenttabbalk eronder. Alleen de tekst-spans, NIET de hele .title-bar-center, zodat de
+   SwitcherPill-chrome-stijl (die óók in de center leeft) ongemoeid blijft. */
+@container titlebar-center (max-width: 400px) {
+  .title-bar-app-name { display: none; }
+}
+@container titlebar-center (max-width: 120px) {
+  .title-bar-file-name { display: none; }
+}
+
+/* Feedback-tekstknop (rechts, vlak vóór de vensterknoppen) */
+.title-bar-feedback-btn {
+  -webkit-app-region: no-drag;
+  height: 24px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--theme-text-dim);
+  font-family: inherit;
+  font-size: var(--text-large);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.title-bar-feedback-btn:hover {
+  background: var(--theme-titlebar-btn-hover);
+  color: var(--theme-text);
+  border-color: var(--theme-border);
+}
+
+.title-bar-feedback-btn:active {
+  background: var(--theme-titlebar-btn-active);
+}
+
+/* Window Controls */
+.window-controls {
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
+.window-btn {
+  width: 40px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: var(--theme-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.window-btn:hover {
+  background: var(--theme-titlebar-btn-hover);
+  color: var(--theme-text);
+}
+
+.window-btn-close:hover {
+  background: #e81123;
+  color: white;
+}

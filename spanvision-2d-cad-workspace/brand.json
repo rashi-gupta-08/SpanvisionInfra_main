@@ -1,0 +1,11 @@
+{
+  "id": "spanvision-2d-cad-workspace",
+  "version": "0.35.0",
+  "ifcIdentifier": "Spanvision2D",
+  "ifcPropertyPrefix": "SpanvisionInfra",
+  "organization": "Spanvision Infra",
+  "product": "2D CAD",
+  "mark": "CAD",
+  "initials": "CAD",
+  "theme": "spanvision-mono"
+}

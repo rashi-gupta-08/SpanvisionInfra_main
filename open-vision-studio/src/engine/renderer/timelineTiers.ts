@@ -1,0 +1,179 @@
+import { addCalendarDays, getMonthStart, getWeekStartFor, utcDayStart } from '@/utils/dateUtils';
+import type { TimeScale } from '@/types/view';
+
+/**
+ * Tijdschaal-presets: een dropdown-keuze mapt naar een zoom (px/dag). De presets
+ * landen midden in de bijbehorende `pickTiers`-band, zodat `scaleFromZoom` round-trip-stabiel de
+ * gekozen schaal teruggeeft. `view.timeScale` is GEEN bron van waarheid — `pickTiers`/`zoom`
+ * zijn dat; de getoonde schaal wordt afgeleid via `scaleFromZoom`.
+ */
+export const TIMESCALE_ZOOM: Record<TimeScale, number> = {
+  year: 3,
+  quarter: 8,
+  month: 18,
+  week: 45,
+  day: 100,
+  // Een uurcel is `zoom / 24` pixels breed. Bij 350px/dag krijgt een label als “08:00” slechts
+  // 14,6px ruimte en onderdrukt de overlapbeveiliging hem altijd. 1000px/dag geeft elke uurcel
+  // genoeg plaats voor een werkelijk leesbaar label.
+  hour: 1000,
+};
+
+/** Maximum zonder de expliciete kwartierinstelling: dagweergave blijft de fijnste schaal. */
+export const MAX_DAY_ZOOM = 400;
+/** Uurweergave zonder kwartierlabels: één uurcel is bij 1000px/dag breed genoeg voor `08:00`. */
+export const MAX_HOUR_ZOOM = 1000;
+/**
+ * Minimum om alle kwartierlabels zonder overlap te kunnen tonen: een label als `08:15` heeft
+ * circa 30px plus de binnenmarges nodig; 4000px/dag levert 41,7px per kwartier.
+ */
+export const MAX_QUARTER_HOUR_ZOOM = 4000;
+
+export function maxGanttZoom(enableQuarterHourZoom: boolean, enableHourPlanning = false): number {
+  if (enableQuarterHourZoom) return MAX_QUARTER_HOUR_ZOOM;
+  return enableHourPlanning ? MAX_HOUR_ZOOM : MAX_DAY_ZOOM;
+}
+
+/**
+ * Leidt de getoonde tijdschaal af uit de zoom. Leest dezelfde banden als `pickTiers`.
+ * De 'hour'-schaal verschijnt ALLEEN als `hourPlanningEnabled` (de hoofdschakelaar
+ * Urenplanning) aan staat; anders blijft de reeks dag-granulair (label 'day' bij
+ * ver inzoomen). De uur/kwartier-tiers zelf worden nog steeds door `pickTiers` getekend — dit raakt
+ * alleen het schaal-LABEL (dropdown + statusbalk).
+ */
+export function scaleFromZoom(zoom: number, hourPlanningEnabled = false): TimeScale {
+  if (zoom < 4) return 'year';
+  if (zoom < 10) return 'quarter';
+  if (zoom < 25) return 'month';
+  if (zoom < 80) return 'week';
+  if (hourPlanningEnabled && zoom >= 300) return 'hour';
+  return 'day'; // >=80: dag/uur-tiers; label 'day' tenzij urenplanning aan én ver ingezoomd
+}
+
+export type TimelineTier =
+  | 'year'
+  | 'quarter'
+  | 'month'
+  | 'week'
+  | 'day'
+  | 'hour'
+  | 'quarterHour';
+
+export interface TierConfig {
+  tier: TimelineTier;
+  /** Minimum pixel width a label of this tier needs to be readable. Used as a defensive skip-rule. */
+  minLabelWidth: number;
+  /**
+   * Step from one tick to the next, in fractional days.
+   * For tiers larger than a day this is approximate (months/years vary); the renderer
+   * uses the date-based "next boundary" function instead. For sub-day tiers it's exact.
+   */
+  stepDays: number;
+}
+
+export const TIER_CONFIG: Record<TimelineTier, TierConfig> = {
+  year:        { tier: 'year',        minLabelWidth: 60, stepDays: 365 },
+  quarter:     { tier: 'quarter',     minLabelWidth: 40, stepDays: 90 },
+  month:       { tier: 'month',       minLabelWidth: 50, stepDays: 30 },
+  week:        { tier: 'week',        minLabelWidth: 28, stepDays: 7 },
+  day:         { tier: 'day',         minLabelWidth: 18, stepDays: 1 },
+  hour:        { tier: 'hour',        minLabelWidth: 28, stepDays: 1 / 24 },
+  quarterHour: { tier: 'quarterHour', minLabelWidth: 28, stepDays: 1 / 96 },
+};
+
+/**
+ * Kiest de tier-combinatie voor de gegeven zoom (px/dag). De QH-tier wordt alleen gebruikt
+ * als enableQuarterHour aan staat.
+ * In de dagweergave-band (25≤zoom<80) wordt een `mid`-tier ('week') meegegeven, zodat
+ * weeknummers als extra middenrij tussen maand en dag getekend worden. De andere banden hebben
+ * geen `mid`, behalve de dag-granulaire band ≥80 zonder urenplanning (zie daar).
+ */
+export function pickTiers(
+  zoom: number,
+  enableQuarterHour: boolean,
+  enableHourTiers = false
+): { major: TimelineTier; mid?: TimelineTier; minor: TimelineTier } {
+  if (zoom < 4) return { major: 'year', minor: 'quarter' };
+  // Geen year/month: het maandlabel bevat het jaartal al ('Jul 2026'), dus een jaar-rij is
+  // grotendeels leeg en bij uitzoomen verspringt het maandfont van major (bold) naar minor.
+  // Met month als major blijft de maand de bold rij én blijven weeknummers zichtbaar tot
+  // zoom 4 (7·4=28px = precies minLabelWidth van de week-tier; drawTierLabels vangt de krapste af).
+  if (zoom < 10) return { major: 'month', minor: 'week' };
+  if (zoom < 25) return { major: 'month', minor: 'week' };
+  // Dagweergave — voeg de weeknummer-middenrij toe (mid:'week').
+  if (zoom < 80) return { major: 'month', mid: 'week', minor: 'day' };
+  // Geen fontsprong naar de uurband zonder urenplanning: zonder de hoofdschakelaar Urenplanning
+  // blijft de band ≥80 dag-granulair: dezelfde 3-rijen-opbouw als 25–80 (month/week/day), zodat de
+  // daglabels klein onderaan blijven i.p.v. bold naar de major-rij
+  // te verspringen — én er geen lege uur-rij ontstaat (uurlabels passen fysiek niet: een uurcel is
+  // zoom/24 px, pas bij extreme zoom breed genoeg voor minLabelWidth 28). Pas met urenplanning aan
+  // geldt het uur-gedrag: day/hour, resp. hour/quarterHour bij kwartier-zoom.
+  if (!enableHourTiers) return { major: 'month', mid: 'week', minor: 'day' };
+  if (zoom < 400 || !enableQuarterHour) return { major: 'day', minor: 'hour' };
+  return { major: 'hour', minor: 'quarterHour' };
+}
+
+/**
+ * Given a starting date and a tier, return the date of the next tick boundary
+ * (e.g. for 'month', the first of next month). For sub-day tiers, returns
+ * `from + stepDays`.
+ */
+export function nextTickBoundary(from: Date, tier: TimelineTier): Date {
+  switch (tier) {
+    case 'year':
+      return new Date(Date.UTC(from.getUTCFullYear() + 1, 0, 1));
+    case 'quarter': {
+      const m = from.getUTCMonth();
+      const nextQ = Math.floor(m / 3) * 3 + 3;
+      if (nextQ >= 12) return new Date(Date.UTC(from.getUTCFullYear() + 1, 0, 1));
+      return new Date(Date.UTC(from.getUTCFullYear(), nextQ, 1));
+    }
+    case 'month': {
+      const m = from.getUTCMonth();
+      if (m === 11) return new Date(Date.UTC(from.getUTCFullYear() + 1, 0, 1));
+      return new Date(Date.UTC(from.getUTCFullYear(), m + 1, 1));
+    }
+    case 'week':
+      return addCalendarDays(from, 7);
+    case 'day':
+      return addCalendarDays(from, 1);
+    case 'hour': {
+      const r = new Date(from.getTime());
+      r.setUTCHours(r.getUTCHours() + 1, 0, 0, 0);
+      return r;
+    }
+    case 'quarterHour': {
+      const r = new Date(from.getTime());
+      r.setUTCMinutes(r.getUTCMinutes() + 15, 0, 0);
+      return r;
+    }
+  }
+}
+
+/** Snap a date back to the start of its current tick (e.g. start of month). */
+export function snapToTickStart(date: Date, tier: TimelineTier, weekStartDay: 'monday' | 'sunday' = 'monday'): Date {
+  switch (tier) {
+    case 'year':
+      return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    case 'quarter': {
+      const m = date.getUTCMonth();
+      return new Date(Date.UTC(date.getUTCFullYear(), Math.floor(m / 3) * 3, 1));
+    }
+    case 'month':
+      return getMonthStart(date);
+    case 'week':
+      return utcDayStart(getWeekStartFor(date, weekStartDay));
+    case 'day':
+      return utcDayStart(date);
+    case 'hour': {
+      const r = new Date(date.getTime());
+      r.setUTCMinutes(0, 0, 0);
+      return r;
+    }
+    case 'quarterHour': {
+      const r = new Date(date.getTime());
+      r.setUTCMinutes(Math.floor(r.getUTCMinutes() / 15) * 15, 0, 0);
+      return r;
+    }
+  }
+}

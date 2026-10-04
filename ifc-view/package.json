@@ -1,0 +1,25 @@
+{
+  "name": "@spanvision-infra/ifc-view-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "geptechniek workspace · IFC by Spanvision infra",
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "pnpm --filter @spanvision-infra/ifc-view-desktop dev",
+    "build": "pnpm --filter @spanvision-infra/ifc-view-desktop build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint apps packages",
+    "test": "vitest run",
+    "brand:validate": "node scripts/validate-brand.mjs",
+    "check": "pnpm brand:validate && pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "tauri": "pnpm --filter @spanvision-infra/ifc-view-desktop tauri"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,86 @@
+name: calc-workspace
+base: core22
+# Distribution version; update with package.json when releasing.
+version: '0.13.0'
+title: geptechniek workspace · Calc
+summary: Construction cost estimating with BasCalc, WPCalc, and IFC support
+description: |
+  geptechniek workspace · Calc is a desktop application for construction cost estimating: a
+  free, open replacement for legacy Dutch estimating tools (BasCalc, WPCalc),
+  built with an open, human-readable file format — no vendor lock-in.
+
+  Estimating:
+  - Hierarchical estimate structure (chapter -> cost item -> line item)
+  - Cascading markup calculation (subcontractor surcharge, overhead,
+    guarantees, preparation, risk, profit, insurance, VAT, rounding)
+  - Resource classification (labor / material / equipment / subcontractor /
+    other) with productivity norms per line
+  - Rate groups with configurable hourly rates
+  - Estimate variants (a git-like branching model)
+  - Scale an hours total (overall, per rate group, or per chapter) and the
+    underlying norms scale with it
+  - Embedded spreadsheets for sub-calculations, with cell formulas
+  - Snapshots/versions of an estimate, and silent autosave
+
+  Import & export:
+  - BasCalc and WPCalc (legacy Dutch estimating formats), including
+    round-trip read/write for WPCalc
+  - IBIS-TRAD (SQLite) import, including resources and wage codes
+  - IFC 4.x (IfcCostSchedule/IfcCostItem) import and export
+  - CUF-XML, TRADXML, and RAW RSX export
+  - Excel (.xlsx) import
+  - Its own open, human-readable format (.ocs / .ifcCalc)
+
+  Reporting:
+  - Seven report views (work description, main contract, subcontract,
+    tender schedule, actual-cost, and two Dutch industry-standard formats)
+  - Live print preview and PDF export
+
+  Also included:
+  - Office-style ribbon UI, multi-document support, Spanvision Mono and alternate themes, fully
+    keyboard-operable
+  - An MCP server for driving estimates from an AI assistant, plus a plugin
+    architecture for custom importers
+
+  geptechniek workspace · Calc is free and open source (MIT), part of the Spanvision infra
+  distribution, and built with Tauri for a small,
+  native footprint.
+
+grade: stable
+confinement: strict
+
+apps:
+  calc-workspace:
+    # Snapnaam == appnaam, dus het commando is gewoon `calc-workspace`.
+    command: usr/bin/calc-workspace
+    # De gnome-extensie wired GTK3 + WebKitGTK uit het GNOME-platform-snap en voegt
+    # zelf de desktop/wayland/x11/opengl/gsettings-plugs toe (auto-connected).
+    extensions: [gnome]
+    desktop: usr/share/applications/calc-workspace.desktop
+    plugs:
+      # Alleen de plugs die de gnome-extensie niet al levert:
+      - home            # begrotingen openen/opslaan/exporteren in de home-map
+      - removable-media # idem op externe schijven/USB
+      - network         # local API and optional user-configured tools
+      - browser-support # WebKit-rendering/sandbox
+
+parts:
+  calc-workspace:
+    plugin: nil
+    # De CI-stap kopieert de gepubliceerde release-deb naar de project-root als
+    # `calc-workspace.deb`; we herverpakken die i.p.v. opnieuw te bouwen.
+    override-build: |
+      set -eu
+      dpkg-deb -x "${CRAFT_PROJECT_DIR}/calc-workspace.deb" "${CRAFT_PART_INSTALL}"
+      # Tauri's hoofdbinary en desktop-file hebben spaties in de bestandsnaam
+      # ("geptechniek workspace · Calc"); hernoem naar stabiele paden zodat `command:` en
+      # de `desktop:`-sleutel hierboven kloppen. snapd herschrijft de Exec=
+      # regel van een geïnstalleerd desktop-bestand zelf, dus die hoeft niet
+      # aangepast te worden.
+      mv "${CRAFT_PART_INSTALL}/usr/bin/geptechniek workspace · Calc" \
+         "${CRAFT_PART_INSTALL}/usr/bin/calc-workspace"
+      mv "${CRAFT_PART_INSTALL}/usr/share/applications/geptechniek workspace · Calc.desktop" \
+         "${CRAFT_PART_INSTALL}/usr/share/applications/calc-workspace.desktop"
+    # stage-packages bewust leeg: GTK3 + WebKitGTK komen uit de gnome-runtime.
+    # Ontbreekt er bij de verificatie-run toch een lib, dan voegen we 'm hier toe
+    # (itereren via de workflow_dispatch-route, niet gokken).

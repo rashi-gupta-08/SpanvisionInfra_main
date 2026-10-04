@@ -1,0 +1,240 @@
+[
+  {
+    "id": "deceuninck-elegant-76",
+    "name": "Deceuninck Elegant 76",
+    "manufacturer": "Deceuninck",
+    "series": "Elegant 76",
+    "material": "pvc",
+    "materialSubtype": "6_kamer",
+    "width": 76,
+    "depth": 76,
+    "chambers": 6,
+    "sealingLevels": 3,
+    "sightline": 57,
+    "glazingRebate": 26,
+    "steelReinforced": true,
+    "wallThicknessVisible": 2.8,
+    "wallThicknessOther": 2.5,
+    "crossSection": [
+      [0, 0],
+      [76, 0],
+      [76, 15],
+      [73.3, 25],
+      [56, 25],
+      [56, 21],
+      [53, 21],
+      [53, 25],
+      [50, 25],
+      [50, 68],
+      [47, 68],
+      [47, 73],
+      [50, 73],
+      [50, 76],
+      [0, 76]
+    ],
+    "ufValue": 0.88,
+    "applicableAs": [
+      "frame",
+      "sash"
+    ],
+    "finishes": [
+      "wit",
+      "folie",
+      "acrylcolor"
+    ],
+    "colors": [
+      "wit",
+      "creme",
+      "antraciet",
+      "houtdecor"
+    ],
+    "sponning": {
+      "width": 15,
+      "depth": 26,
+      "type": "binnensponning"
+    },
+    "unverifiedFields": [
+      "sightline",
+      "glazingRebate",
+      "sponning.depth",
+      "ufValue",
+      "sealingLevels"
+    ],
+    "dataNotes": [
+      "maxGlassThickness verwijderd: de eerdere waarde 70 mm is fysiek onmogelijk in 76 mm bouwdiepte (6 mm rest voor beide schalen); fabriekswaarde nog niet geverifieerd — niet gegokt",
+      "Deceuninck deze onderzoeksronde niet fabrieksgeverifieerd"
+    ],
+    "innerWalls": [
+      [
+        [2.8, 2.8],
+        [47.2, 2.8],
+        [47.2, 9.6],
+        [2.8, 9.6]
+      ],
+      [
+        [2.8, 12.4],
+        [47.2, 12.4],
+        [47.2, 19.1],
+        [2.8, 19.1]
+      ],
+      [
+        [2.8, 21.9],
+        [47.2, 21.9],
+        [47.2, 44.5],
+        [2.8, 44.5]
+      ],
+      [
+        [4.8, 42.5],
+        [4.8, 23.9],
+        [45.2, 23.9],
+        [45.2, 42.5],
+        [43.7, 42.5],
+        [43.7, 25.4],
+        [6.3, 25.4],
+        [6.3, 42.5]
+      ],
+      [
+        [2.8, 47.3],
+        [47.2, 47.3],
+        [47.2, 54.1],
+        [2.8, 54.1]
+      ],
+      [
+        [2.8, 56.9],
+        [47.2, 56.9],
+        [47.2, 63.6],
+        [2.8, 63.6]
+      ],
+      [
+        [2.8, 66.4],
+        [44.2, 66.4],
+        [44.2, 73.2],
+        [2.8, 73.2]
+      ],
+      [
+        [52.8, 2.8],
+        [70.5, 2.8],
+        [70.5, 19],
+        [52.8, 19]
+      ]
+    ]
+  },
+  {
+    "id": "deceuninck-eforte-84",
+    "name": "Deceuninck Eforte 84",
+    "manufacturer": "Deceuninck (Inoutic)",
+    "series": "Eforte",
+    "material": "pvc",
+    "materialSubtype": "6_kamer",
+    "width": 84,
+    "depth": 84,
+    "chambers": 6,
+    "sealingLevels": 3,
+    "sightline": 63,
+    "glazingRebate": 28,
+    "maxGlassThickness": 56,
+    "steelReinforced": true,
+    "wallThicknessVisible": 2.8,
+    "wallThicknessOther": 2.5,
+    "crossSection": [
+      [0, 0],
+      [84, 0],
+      [84, 15],
+      [81.3, 25],
+      [62, 25],
+      [62, 21],
+      [59, 21],
+      [59, 25],
+      [56, 25],
+      [56, 76],
+      [53, 76],
+      [53, 81],
+      [56, 81],
+      [56, 84],
+      [0, 84]
+    ],
+    "ufValue": 0.95,
+    "applicableAs": [
+      "frame",
+      "sash"
+    ],
+    "finishes": [
+      "wit",
+      "folie"
+    ],
+    "colors": [
+      "wit",
+      "creme",
+      "antraciet"
+    ],
+    "sponning": {
+      "width": 15,
+      "depth": 28,
+      "type": "binnensponning"
+    },
+    "unverifiedFields": [
+      "sightline",
+      "glazingRebate",
+      "sponning.depth",
+      "ufValue",
+      "maxGlassThickness"
+    ],
+    "dataNotes": [
+      "Eforte deze onderzoeksronde niet fabrieksgeverifieerd"
+    ],
+    "innerWalls": [
+      [
+        [2.8, 2.8],
+        [53.2, 2.8],
+        [53.2, 10.5],
+        [2.8, 10.5]
+      ],
+      [
+        [2.8, 13.3],
+        [53.2, 13.3],
+        [53.2, 21.1],
+        [2.8, 21.1]
+      ],
+      [
+        [2.8, 23.9],
+        [53.2, 23.9],
+        [53.2, 49.6],
+        [2.8, 49.6]
+      ],
+      [
+        [4.8, 47.6],
+        [4.8, 25.9],
+        [51.2, 25.9],
+        [51.2, 47.6],
+        [49.7, 47.6],
+        [49.7, 27.4],
+        [6.3, 27.4],
+        [6.3, 47.6]
+      ],
+      [
+        [2.8, 52.4],
+        [53.2, 52.4],
+        [53.2, 60.1],
+        [2.8, 60.1]
+      ],
+      [
+        [2.8, 62.9],
+        [53.2, 62.9],
+        [53.2, 70.7],
+        [2.8, 70.7]
+      ],
+      [
+        [2.8, 73.5],
+        [50.2, 73.5],
+        [50.2, 81.2],
+        [2.8, 81.2]
+      ],
+      [
+        [58.8, 2.8],
+        [78.5, 2.8],
+        [78.5, 19],
+        [58.8, 19]
+      ]
+    ]
+  }
+]

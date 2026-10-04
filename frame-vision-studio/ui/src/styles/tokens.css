@@ -1,0 +1,349 @@
+/* Spanvision infra Design System Tokens v0.4 */
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/SpaceGrotesk-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/SpaceGrotesk-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/Inter-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/Inter-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/Inter-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/Inter-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+
+:root {
+  /* Colors — Primary */
+  --amber: #FFFFFF;
+  --deep-forge: #121212;
+  --signal-orange: #EEEEEE;
+  --warm-gold: #EEEEEE;
+  --scaffold-gray: #999999;
+
+  /* Colors — Background */
+  --blueprint-white: #FAFAF9;
+  --concrete: #F5F5F4;
+  --night-build: #000000;
+
+  /* Colors — Semantic */
+  --success: #EEEEEE;
+  --error: #EEEEEE;
+  --warning: #EEEEEE;
+  --info: #EEEEEE;
+
+  /* Typography */
+  --font-heading: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-code: "JetBrains Mono", monospace;
+
+  /* Spacing (4px base) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+  /* Borders */
+  --border-default: 1px solid var(--border-color);
+  --border-hover: 1px solid var(--focus-color);
+  --border-featured: 2px solid var(--amber);
+
+  /* Gradient */
+  --gradient-accent: linear-gradient(90deg, #FFFFFF 0%, #999999 100%);
+
+  /* Spanvision Mono — interface tokens are separate from drawing colors. */
+  color-scheme: dark;
+  --bg-app: #000000;
+  --bg-surface: #121212;
+  --bg-surface-alt: #202020;
+  --bg-ribbon: #121212;
+  --bg-titlebar: #000000;
+  --bg-statusbar: #121212;
+  --bg-input: #1B1B1B;
+  --bg-elevated: #202020;
+  --bg-selected: #333333;
+  --border-color: rgba(255, 255, 255, 0.16);
+  --hover-overlay: rgba(255, 255, 255, 0.09);
+  --focus-color: rgba(255, 255, 255, 0.65);
+  --state-overlay: rgba(255, 255, 255, 0.09);
+  --text-primary: #EEEEEE;
+  --text-secondary: #999999;
+  --text-muted: #999999;
+  --text-on-dark: #EEEEEE;
+  --text-accent: #FFFFFF;
+  --action-bg: #FFFFFF;
+  --action-text: #000000;
+  --action-hover: #EEEEEE;
+  --editor-bg: #1B1B1B;
+  --bg-canvas: var(--editor-bg);
+  --editor-grid: #292929;
+  --editor-frame: #D6D3D1;
+  --editor-glass: #1E3A5F;
+  --editor-glass-stroke: #3B82F6;
+  --editor-panel: #44403C;
+  --editor-door: #7C2D12;
+  --editor-selected: #D97706;
+  --editor-dimension: #999999;
+}
+
+
+/* Saved theme choices remain available; storage keys are unchanged. */
+[data-theme="default"], [data-theme="light"], [data-theme="dark"],
+[data-theme="blue"], [data-theme="amber-navy"], [data-theme="warm-ember"], [data-theme="highContrast"] {
+  --amber: #D97706;
+  --deep-forge: #36363E;
+  --signal-orange: #EA580C;
+  --warm-gold: #F59E0B;
+  --night-build: #2A2A32;
+  --success: #16A34A;
+  --error: #DC2626;
+  --warning: #F59E0B;
+  --info: #2563EB;
+  --bg-input: var(--bg-surface-alt);
+  --bg-selected: var(--bg-surface-alt);
+  --action-bg: var(--amber);
+  --action-text: #000000;
+  --action-hover: var(--warm-gold);
+}
+[data-theme="light"] { color-scheme: light; --hover-overlay: rgba(0,0,0,0.06); --focus-color: rgba(0,0,0,0.65); }
+:root[data-sv-mode] {
+  --amber:var(--sv-accent);--warm-gold:var(--sv-text-soft);--text-accent:var(--sv-accent);
+  --action-bg:var(--sv-accent);--action-text:var(--sv-on-accent);--action-hover:var(--sv-text-soft);
+  --editor-selected:var(--sv-accent);
+}
+:root[data-sv-mode="light"] {--editor-grid:#bcc5d1;}
+:root[data-sv-mode="dark"] {--editor-grid:#454b55;}
+[data-theme="default"] {
+  /* Theme — Default (Warm Dark with Amber accent) */
+  --bg-app: #36363E;
+  --bg-surface: #44444C;
+  --bg-surface-alt: #3E3E46;
+  --bg-ribbon: #44444C;
+  --bg-titlebar: #36363E;
+  --bg-statusbar: #36363E;
+  --border-color: rgba(217, 119, 6, 0.25);
+
+  --text-primary: #FAFAF9;
+  --text-secondary: rgba(250, 250, 249, 0.7);
+  --text-muted: rgba(250, 250, 249, 0.5);
+  --text-on-dark: #FAFAF9;
+  --text-accent: var(--amber);
+
+  --editor-bg: #36363E;
+  --editor-grid: #3E3E46;
+  --editor-frame: #D6D3D1;
+  --editor-glass: #1E3A5F;
+  --editor-glass-stroke: #3B82F6;
+  --editor-panel: #44403C;
+  --editor-door: #7C2D12;
+  --editor-selected: #D97706;
+  --editor-dimension: rgba(250, 250, 249, 0.5);
+}
+
+/* Light */
+[data-theme="light"] {
+  --bg-app: #f5f5f5;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f0f0f0;
+  --bg-ribbon: #e8e6e3;
+  --bg-titlebar: #d4d1cc;
+  --bg-statusbar: #e8e6e3;
+  --border-color: #d6d3d1;
+
+  --text-primary: #1f2937;
+  --text-secondary: #57534E;
+  --text-muted: #9ca3af;
+  --text-on-dark: #1f2937;
+
+  --editor-bg: #FFFFFF;
+  --editor-grid: #F0EFED;
+  --editor-frame: var(--deep-forge);
+  --editor-glass: #DBEAFE;
+  --editor-glass-stroke: #93C5FD;
+  --editor-panel: #E7E5E4;
+  --editor-door: #FED7AA;
+  --editor-selected: #D97706;
+  --editor-dimension: var(--scaffold-gray);
+}
+
+/* Dark */
+[data-theme="dark"] {
+  --bg-app: #1a1a2e;
+  --bg-surface: #16213e;
+  --bg-surface-alt: #1e2a4a;
+  --bg-ribbon: #16213e;
+  --bg-titlebar: #0f1629;
+  --bg-statusbar: #16213e;
+  --border-color: rgba(168, 45, 110, 0.25);
+
+  --text-primary: #eaeaea;
+  --text-secondary: rgba(234, 234, 234, 0.7);
+  --text-muted: rgba(234, 234, 234, 0.45);
+  --text-on-dark: #eaeaea;
+
+  --editor-bg: #1a1a2e;
+  --editor-grid: #1e2a4a;
+  --editor-frame: #D6D3D1;
+  --editor-glass: #1E3A5F;
+  --editor-glass-stroke: #3B82F6;
+  --editor-panel: #2a2a4a;
+  --editor-door: #5a2040;
+  --editor-selected: #a82d6e;
+  --editor-dimension: rgba(234, 234, 234, 0.45);
+}
+
+/* Blue */
+[data-theme="blue"] {
+  --bg-app: #0d1b2a;
+  --bg-surface: #1b263b;
+  --bg-surface-alt: #1f3050;
+  --bg-ribbon: #1b263b;
+  --bg-titlebar: #0a1420;
+  --bg-statusbar: #1b263b;
+  --border-color: rgba(0, 119, 182, 0.3);
+
+  --text-primary: #e0e1dd;
+  --text-secondary: rgba(224, 225, 221, 0.7);
+  --text-muted: rgba(224, 225, 221, 0.45);
+  --text-on-dark: #e0e1dd;
+
+  --editor-bg: #0d1b2a;
+  --editor-grid: #152238;
+  --editor-frame: #e0e1dd;
+  --editor-glass: #0a3d62;
+  --editor-glass-stroke: #0077b6;
+  --editor-panel: #1b3050;
+  --editor-door: #2c5282;
+  --editor-selected: #0077b6;
+  --editor-dimension: rgba(224, 225, 221, 0.45);
+}
+
+/* Amber Navy */
+[data-theme="amber-navy"] {
+  --bg-app: #1a1a2e;
+  --bg-surface: #242445;
+  --bg-surface-alt: #2a2a50;
+  --bg-ribbon: #242445;
+  --bg-titlebar: #141428;
+  --bg-statusbar: #242445;
+  --border-color: rgba(217, 119, 6, 0.3);
+
+  --text-primary: #C4B199;
+  --text-secondary: rgba(196, 177, 153, 0.7);
+  --text-muted: rgba(196, 177, 153, 0.45);
+  --text-on-dark: #C4B199;
+
+  --editor-bg: #1a1a2e;
+  --editor-grid: #22223a;
+  --editor-frame: #C4B199;
+  --editor-glass: #1a2a50;
+  --editor-glass-stroke: #D97706;
+  --editor-panel: #2a2a4a;
+  --editor-door: #6b4a1a;
+  --editor-selected: #D97706;
+  --editor-dimension: rgba(196, 177, 153, 0.45);
+}
+
+/* Warm Ember */
+[data-theme="warm-ember"] {
+  --bg-app: #3E3636;
+  --bg-surface: #4a4242;
+  --bg-surface-alt: #524a4a;
+  --bg-ribbon: #4a4242;
+  --bg-titlebar: #342e2e;
+  --bg-statusbar: #4a4242;
+  --border-color: rgba(217, 119, 6, 0.3);
+
+  --text-primary: #F5F0EB;
+  --text-secondary: rgba(245, 240, 235, 0.7);
+  --text-muted: rgba(245, 240, 235, 0.45);
+  --text-on-dark: #F5F0EB;
+
+  --editor-bg: #3E3636;
+  --editor-grid: #463e3e;
+  --editor-frame: #F5F0EB;
+  --editor-glass: #3a2a1a;
+  --editor-glass-stroke: #D97706;
+  --editor-panel: #524a42;
+  --editor-door: #7C2D12;
+  --editor-selected: #D97706;
+  --editor-dimension: rgba(245, 240, 235, 0.45);
+}
+
+/* High Contrast */
+[data-theme="highContrast"] {
+  --bg-app: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-surface-alt: #141414;
+  --bg-ribbon: #0a0a0a;
+  --bg-titlebar: #000000;
+  --bg-statusbar: #000000;
+  --border-color: #ffff00;
+
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --text-muted: #cccccc;
+  --text-on-dark: #ffffff;
+
+  --editor-bg: #000000;
+  --editor-grid: #1a1a1a;
+  --editor-frame: #ffffff;
+  --editor-glass: #000066;
+  --editor-glass-stroke: #ffff00;
+  --editor-panel: #333333;
+  --editor-door: #ff6600;
+  --editor-selected: #ffff00;
+  --editor-dimension: #cccccc;
+}

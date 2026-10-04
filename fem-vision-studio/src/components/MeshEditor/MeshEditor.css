@@ -1,0 +1,306 @@
+﻿.mesh-editor {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--theme-bg);
+}
+
+.mesh-editor canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+.command-indicator {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: rgba(59, 130, 246, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dimension-input {
+  width: 76px;
+  padding: 2px 6px;
+  background: var(--theme-bg);
+  border: 2px solid var(--theme-accent);
+  border-radius: 4px;
+  color: var(--theme-fg);
+  font: bold 11px sans-serif;
+  text-align: center;
+  z-index: 200;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--theme-accent-subtle), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.beam-length-input-overlay {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--theme-bg);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--theme-accent);
+  border-radius: 6px;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.beam-length-input-overlay label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fbbf24;
+  white-space: nowrap;
+}
+
+/* Plate polygon toolbar */
+.plate-polygon-toolbar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--theme-bg);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--theme-accent);
+  border-radius: 6px;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.plate-polygon-toolbar-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--theme-fg-muted);
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.plate-polygon-toolbar-btn {
+  padding: 5px 14px;
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.plate-polygon-toolbar-btn.void-btn {
+  background: rgba(233, 69, 96, 0.15);
+  border-color: #e94560;
+  color: #e94560;
+}
+
+.plate-polygon-toolbar-btn.void-btn:hover {
+  background: rgba(233, 69, 96, 0.3);
+}
+
+.plate-polygon-toolbar-btn.finish-btn {
+  background: var(--theme-accent);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent-text);
+}
+
+.plate-polygon-toolbar-btn.finish-btn:hover {
+  background: var(--theme-accent-hover);
+}
+
+.plate-polygon-toolbar-btn.cancel-btn {
+  background: var(--theme-bg-subtle);
+  color: var(--theme-fg-muted);
+}
+
+.plate-polygon-toolbar-btn.cancel-btn:hover {
+  background: var(--theme-bg-elevated);
+}
+
+/* Plate draw toolbar (shown during outline drawing) */
+.plate-draw-toolbar {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--theme-bg);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--theme-accent);
+  border-radius: 6px;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.plate-draw-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--theme-bg-subtle);
+  color: var(--theme-fg-muted);
+  transition: all 0.15s;
+}
+
+.plate-draw-btn:hover {
+  background: var(--theme-bg-elevated);
+  border-color: var(--theme-accent);
+}
+
+.plate-draw-btn.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
+}
+
+.plate-draw-info {
+  font-size: 11px;
+  color: var(--theme-fg-subtle);
+  padding-left: 8px;
+  border-left: 1px solid var(--theme-border);
+}
+
+/* Floating "+" button for adding void to selected plate */
+.plate-add-void-floating-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid #e94560;
+  border-radius: 50%;
+  background: rgba(233, 69, 96, 0.9);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.15s ease;
+}
+
+.plate-add-void-floating-btn:hover {
+  transform: scale(1.15);
+  background: #e94560;
+  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.5);
+}
+
+/* Zoom controls */
+.zoom-controls {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: var(--theme-bg);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.zoom-control-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--theme-bg-subtle);
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  color: var(--theme-fg);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.zoom-control-btn:hover {
+  background: var(--theme-bg-elevated);
+  border-color: var(--theme-accent);
+}
+
+.zoom-level {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--theme-fg-muted);
+  min-width: 36px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.mesh-tooltip {
+  position: absolute;
+  background: var(--theme-bg-elevated);
+  color: var(--theme-fg);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+  border: 1px solid var(--theme-border);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  min-width: 160px;
+  background: var(--theme-bg-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.context-menu-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  color: var(--theme-fg);
+  transition: background 0.15s;
+}
+
+.context-menu-item:hover {
+  background: var(--theme-accent-subtle);
+}
+
+.context-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}

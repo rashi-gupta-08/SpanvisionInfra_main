@@ -1,0 +1,346 @@
+// Taak B1+B2 — per-staaf toetsconfiguratie (Beam.checkConfig) + projectbestand v2.
+//
+// Verifieert dat:
+//  (a) de builders ZONDER checkConfig exact de huidige gedocumenteerde
+//      defaults leveren (kniklengte = systeemlengte, geen kipsteunen,
+//      vloer/333, geen zeeg; hout Sc1/MediumTerm, fin 250 / add 333);
+//  (b) een gezette checkConfig 1-op-1 in BeamCheckInput / TimberBeamCheckInput
+//      terechtkomt (kniklengtes, kipsteunfracties gesorteerd+gefilterd,
+//      doorbuigingsklasse incl. custom L/n, zeeg; klimaatklasse, duurklasse);
+//  (c) projectbestand v2 round-tript (serialize → deserialize → identiek,
+//      inclusief combinaties met Map-factoren en stramien) en v1-bestanden
+//      (voorbeelden/houten-raamwerk.ifcfem2d) zonder fouten laden.
+//
+// Stijl: test-doorbuiging-toets.mjs. Draaien met: npx tsx test-checkconfig.mjs
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const { solve } = await import("./src/components/fem/solver/engine.ts");
+const { defaultCombinations, combineResults } = await import(
+  "./src/components/fem/solver/combinations.ts"
+);
+const { buildSteelCheckInputs } = await import("./src/lib/steelCheckBuilder.ts");
+const { buildTimberCheckInputs } = await import("./src/lib/timberCheckBuilder.ts");
+const {
+  serializeProject, deserializeProject,
+  combinationsToFile, combinationsFromFile,
+  PROJECT_FORMAT_VERSION,
+} = await import("./src/io/projectFile.ts");
+
+let passed = 0, failed = 0;
+const log = (s) => process.stdout.write(s + "\n");
+
+function check(name, actual, expected) {
+  const ok = Object.is(actual, expected) || actual === expected;
+  if (ok) { passed++; log(`  ✓ ${name}: ${JSON.stringify(actual)}`); }
+  else    { failed++; log(`  ✗ ${name}: ${JSON.stringify(actual)} ≠ ${JSON.stringify(expected)}`); }
+}
+
+function checkDeep(name, actual, expected) {
+  const a = JSON.stringify(actual), e = JSON.stringify(expected);
+  if (a === e) { passed++; log(`  ✓ ${name}`); }
+  else         { failed++; log(`  ✗ ${name}:\n      actual:   ${a}\n      expected: ${e}`); }
+}
+
+function checkTrue(name, cond) {
+  if (cond) { passed++; log(`  ✓ ${name}`); }
+  else      { failed++; log(`  ✗ ${name}`); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Fixture: doorgaande ligger met een staalstaaf (1) en een houtstaaf (2).
+//   nodes 1(0,0) — 2(6000,0) — 3(12000,0); q = -5 kN/m in G en Q.
+// ─────────────────────────────────────────────────────────────────────────
+const L = 6000;
+const nodes = [
+  { id: 1, x: 0, z: 0 },
+  { id: 2, x: L, z: 0 },
+  { id: 3, x: 2 * L, z: 0 },
+];
+const solverBeams = [
+  { id: 1, from: 1, to: 2, E: 210000, A: 3877, I: 1e8 },
+  { id: 2, from: 2, to: 3, E: 11000,  A: 43200, I: 7.29e8 },
+];
+const supports = [
+  { nodeId: 1, type: "pinned" },
+  { nodeId: 2, type: "zRoller" },
+  { nodeId: 3, type: "zRoller" },
+];
+const loads = [
+  { beamId: 1, q: -5 },
+  { beamId: 2, q: -5 },
+];
+const perCase = new Map([
+  [1, solve({ nodes, beams: solverBeams, supports, loads })],
+  [2, solve({ nodes, beams: solverBeams, supports, loads })],
+]);
+const combos = defaultCombinations();
+// De vier startgevallen waar `defaultCombinations()` bij hoort. Alleen G en Q
+// hebben hier een werkzame last (de solve heeft ze allebei); S en W zijn leeg.
+const STANDAARD_GEVALLEN = [
+  { id: 1, name: "Permanent (G)", type: "dead" },
+  { id: 2, name: "Variabel (Q)", type: "live" },
+  { id: 3, name: "Sneeuw (S)", type: "snow" },
+  { id: 4, name: "Wind (W)", type: "wind" },
+];
+const combinationResults = new Map(combos.map((c) => [c.id, combineResults(c, perCase)]));
+
+const profileDb = new Map([["HEA160", { geometry: { h: 152 } }]]);
+
+const steelBeamNoCfg  = { id: 1, from: 1, to: 2, material: "S235", profile: "HEA160" };
+const timberBeamNoCfg = { id: 2, from: 2, to: 3, material: "C24",  profile: "96x450" };
+
+// ─────────────────────────────────────────────────────────────────────────
+log("\n[1] Staal ZONDER checkConfig → gedocumenteerde defaults");
+{
+  const { inputs, skipped } = buildSteelCheckInputs({
+    nodes, beams: [steelBeamNoCfg, timberBeamNoCfg],
+    combinations: combos, combinationResults, profileDb,
+  });
+  checkTrue("1 staal-input, 0 skipped", inputs.length === 1 && skipped.length === 0);
+  const i = inputs[0];
+  // 0 = niet opgegeven: de REKENKERN kiest de terugval en zet de herkomst in de
+  // toets (test-zwakke-as.mjs). Tot september 2026 vulde de bouwer hier zelf de
+  // systeemlengte in, en kon de toets een terugval niet van een opgave onderscheiden.
+  check("buckling_length_y_m = 0 (kern kiest)", i.buckling_length_y_m, 0);
+  check("buckling_length_z_m = 0 (kern kiest)", i.buckling_length_z_m, 0);
+  checkDeep("geen kipsteunen", i.lateral_bracing.top_flange_positions, []);
+  check("deflection_limit_class Floor", i.deflection_limit_class, "Floor");
+  check("deflection_limit_numerator 333", i.deflection_limit_numerator, 333);
+  // 0 = de kern leidt de w_add-noemer af uit de klasse (NEN-EN 1990:2002/
+  // NB:2019 A1.4.3(3)). Tot september 2026 zat die noemer als vaste 150 in de
+  // kern; hij hoort niet uit de bouwer te komen tenzij de gebruiker hem geeft.
+  check("deflection_add_limit_numerator 0 (= NB-waarde bij de klasse)",
+    i.deflection_add_limit_numerator, 0);
+  check("is_cantilever false", i.is_cantilever, false);
+  check("pre_camber_mm 0", i.pre_camber_mm, 0);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+log("\n[2] Staal MET checkConfig → waarden 1-op-1 doorgegeven");
+{
+  const steelCfg = {
+    ...steelBeamNoCfg,
+    checkConfig: {
+      bucklingLengthY_m: 12,
+      bucklingLengthZ_m: 3,
+      // Ongeldige fracties (≤0, ≥1) worden gefilterd; rest gesorteerd.
+      lateralRestraints: [0.75, 0.25, 1.5, -0.1, 0.5, 0, 1],
+      deflectionClass: "custom",
+      deflectionLimitNumerator: 500,
+      preCamber_mm: -10,
+    },
+  };
+  const { inputs } = buildSteelCheckInputs({
+    nodes, beams: [steelCfg],
+    combinations: combos, combinationResults, profileDb,
+  });
+  const i = inputs[0];
+  check("buckling_length_y_m 12", i.buckling_length_y_m, 12);
+  check("buckling_length_z_m 3", i.buckling_length_z_m, 3);
+  checkDeep("kipsteunfracties gefilterd + gesorteerd", i.lateral_bracing.top_flange_positions, [0.25, 0.5, 0.75]);
+  checkDeep("onderflens blijft leeg", i.lateral_bracing.bottom_flange_positions, []);
+  check("deflection_limit_class Custom", i.deflection_limit_class, "Custom");
+  check("deflection_limit_numerator 500", i.deflection_limit_numerator, 500);
+  check("pre_camber_mm -10", i.pre_camber_mm, -10);
+}
+
+log("\n[2b] Staal doorbuigingsklassen mappen op de Rust-enum");
+{
+  const mk = (deflectionClass) => ({ ...steelBeamNoCfg, checkConfig: { deflectionClass } });
+  // De klassen zijn de categorieën van NEN-EN 1990:2002/NB:2019 A1.4.3(3)
+  // voor de bijkomende doorbuiging w2 + w3 (= w_add).
+  for (const [ui, rust, cant] of [
+    ["floor", "Floor", false],
+    ["floorBrittle", "FloorBrittlePartitions", false],
+    ["roof", "Roof", false],
+    ["cantilever", "Cantilever", true],
+  ]) {
+    const { inputs } = buildSteelCheckInputs({
+      nodes, beams: [mk(ui)], combinations: combos, combinationResults, profileDb,
+    });
+    check(`"${ui}" → ${rust}`, inputs[0].deflection_limit_class, rust);
+    check(`"${ui}" → is_cantilever ${cant}`, inputs[0].is_cantilever, cant);
+  }
+}
+
+log("\n[2c] Staal: losse w_add-noemer overschrijft de klassewaarde");
+{
+  // De escape voor een externe referentie-uitwerking die met een vaste L/150
+  // rekent. Zonder dit veld zou die niet meer na te rekenen zijn.
+  const { inputs } = buildSteelCheckInputs({
+    nodes,
+    beams: [{ ...steelBeamNoCfg, checkConfig: { deflectionAddLimitNumerator: 150 } }],
+    combinations: combos, combinationResults, profileDb,
+  });
+  check("deflection_add_limit_numerator 150", inputs[0].deflection_add_limit_numerator, 150);
+  check("klasse blijft Floor", inputs[0].deflection_limit_class, "Floor");
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+log("\n[3] Hout ZONDER checkConfig → gedocumenteerde defaults");
+{
+  const { inputs, skipped } = buildTimberCheckInputs({
+    nodes, beams: [steelBeamNoCfg, timberBeamNoCfg],
+    combinations: combos, combinationResults,
+  });
+  checkTrue("1 hout-input, 0 skipped", inputs.length === 1 && skipped.length === 0);
+  const i = inputs[0];
+  check("service_class Sc1", i.service_class, "Sc1");
+  // Zonder `loadCases` (zoals hier) blijft de oude terugval: één klasse,
+  // middellang, voor alle combinaties, en géén lijst per combinatie. De app en
+  // check_fem_model geven de belastinggevallen wél mee — zie [3b] en
+  // test-hout-kmod-combinatie.mjs.
+  check("zonder loadCases: load_duration MediumTerm (terugval)", i.load_duration, "MediumTerm");
+  check("zonder loadCases: geen belastingduur per combinatie", JSON.stringify(i.load_duration_per_combination), "[]");
+  check("deflection_limit_fin 250", i.deflection_limit_fin, 250);
+  check("deflection_limit_add 333", i.deflection_limit_add, 333);
+  check("buckling_length_y_m = 0 (kern kiest)", i.buckling_length_y_m, 0);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+log("\n[3b] Hout ZONDER checkConfig, MET belastinggevallen → k_mod per combinatie");
+{
+  // EN 1995-1-1 3.1.3(2): de kortste belastingsduur per UGT-combinatie. Met G en
+  // Q (categorie A) gevuld en S en W leeg: de combinaties zonder Q (en die met
+  // een leeg S- of W-geval) zijn blijvend, die met Q middellang.
+  const { inputs } = buildTimberCheckInputs({
+    nodes, beams: [timberBeamNoCfg], combinations: combos, combinationResults,
+    loadCases: STANDAARD_GEVALLEN, gevallenMetLast: [1, 2],
+  });
+  const lijst = inputs[0].load_duration_per_combination;
+  check("één klasse per UGT-combinatie", lijst.length, combos.filter((c) => c.type === "uls").length);
+  checkDeep("alleen blijvend en middellang",
+    [...new Set(lijst.map((c) => c.load_duration))].sort(), ["MediumTerm", "Permanent"]);
+  check("terugval load_duration = de langste klasse", inputs[0].load_duration, "Permanent");
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+log("\n[4] Hout MET checkConfig → klimaatklasse/duurklasse/doorbuiging 1-op-1");
+{
+  const mk = (checkConfig) => ({ ...timberBeamNoCfg, checkConfig });
+  const run = (cfg) => buildTimberCheckInputs({
+    nodes, beams: [mk(cfg)], combinations: combos, combinationResults,
+  }).inputs[0];
+
+  const a = run({ serviceClass: 3, loadDuration: "long" });
+  check("serviceClass 3 → Sc3", a.service_class, "Sc3");
+  check('zonder loadCases: loadDuration "long" → LongTerm (terugval, 1-op-1)', a.load_duration, "LongTerm");
+
+  const durMap = [
+    ["permanent", "Permanent"], ["long", "LongTerm"], ["medium", "MediumTerm"],
+    ["short", "ShortTerm"], ["instantaneous", "Instantaneous"],
+  ];
+  for (const [ui, rust] of durMap) {
+    check(`zonder loadCases: duurklasse "${ui}" → ${rust}`, run({ loadDuration: ui }).load_duration, rust);
+  }
+  // Met belastinggevallen is een opgegeven klasse een ONDERGRENS: zij verlengt,
+  // maar maakt geen combinatie korter dan de belasting erin (3.1.3(2)). Een
+  // opgegeven "short" op 1,35·G was precies de fout uit de audit.
+  const metGevallen = (cfg) => buildTimberCheckInputs({
+    nodes, beams: [mk(cfg)], combinations: combos, combinationResults,
+    loadCases: STANDAARD_GEVALLEN, gevallenMetLast: [1, 2],
+  }).inputs[0].load_duration_per_combination;
+  checkTrue('met loadCases: "short" maakt geen enkele combinatie kort',
+    metGevallen({ loadDuration: "short" }).every((c) => c.load_duration !== "ShortTerm"));
+  const lang = metGevallen({ loadDuration: "long" });
+  checkTrue('met loadCases: "long" verlengt middellang tot lang, blijvend blijft blijvend',
+    lang.some((c) => c.load_duration === "LongTerm") &&
+    lang.some((c) => c.load_duration === "Permanent") &&
+    lang.every((c) => ["Permanent", "LongTerm"].includes(c.load_duration)));
+
+  // NB-categorieën uit NEN-EN 1990:2002/NB:2019 A1.4.3(3) voor w_add (w2 + w3),
+  // met A1.4.3(4) (w_max ≤ ℓ_rep/250) voor w_fin.
+  const roof = run({ deflectionClass: "roof" });
+  check("roof → fin 250", roof.deflection_limit_fin, 250);
+  check("roof → add 250 (3e streepje: overige daken)", roof.deflection_limit_add, 250);
+
+  const brittle = run({ deflectionClass: "floorBrittle" });
+  check("floorBrittle → fin 250", brittle.deflection_limit_fin, 250);
+  check("floorBrittle → add 500 (1e streepje: scheurgevoelige scheidingswanden)",
+    brittle.deflection_limit_add, 500);
+
+  const cant = run({ deflectionClass: "cantilever" });
+  check("cantilever → fin 125", cant.deflection_limit_fin, 125);
+  check("cantilever → add 167", cant.deflection_limit_add, 167);
+
+  const cust = run({ deflectionClass: "custom", deflectionLimitNumerator: 400 });
+  check("custom 400 → fin 400", cust.deflection_limit_fin, 400);
+  check("custom 400 → add 400", cust.deflection_limit_add, 400);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+log("\n[5] Projectbestand v2: round-trip serialize → deserialize → identiek");
+{
+  const grid = {
+    enabled: true,
+    xAxes: [{ id: "A", label: "A", position: 0 }, { id: "B", label: "B", position: 7500 }],
+    zAxes: [{ id: "1", label: "1", position: 0 }],
+  };
+  const state = {
+    nodes,
+    beams: [
+      { ...steelBeamNoCfg, checkConfig: { bucklingLengthY_m: 9, lateralRestraints: [0.5], deflectionClass: "roof", preCamber_mm: 5 } },
+      // Bestandsinhoud: "short" blijft zo in het bestand staan. De toetsing
+      // leest een opgegeven klasse sinds september 2026 als ondergrens.
+      { ...timberBeamNoCfg, checkConfig: { serviceClass: 2, loadDuration: "short" } },
+    ],
+    supports, plates: [], loads: [{ id: 1, type: "lineLoad", caseId: 1, beamId: 1, q: -5 }],
+    loadCases: [{ id: 1, name: "Permanent (G)", type: "dead" }],
+    activeLoadCaseId: 1,
+    selfWeightEnabled: true,
+    nonlinearEnabled: false,
+    combinations: combinationsToFile(combos),
+    structuralGrid: grid,
+  };
+  const text = serializeProject(state);
+  const parsed = deserializeProject(text);
+
+  check("PROJECT_FORMAT_VERSION = 2", PROJECT_FORMAT_VERSION, 2);
+  check("version in bestand = 2", parsed.version, 2);
+  checkDeep("beams (incl. checkConfig) identiek", parsed.beams, state.beams);
+  checkDeep("combinations identiek", parsed.combinations, state.combinations);
+  checkDeep("structuralGrid identiek", parsed.structuralGrid, state.structuralGrid);
+  checkDeep("nodes identiek", parsed.nodes, state.nodes);
+
+  // Map-conversie: combinationsFromFile(combinationsToFile(x)) ≡ x
+  const back = combinationsFromFile(parsed.combinations);
+  checkTrue("combinations terug naar Map-vorm: zelfde aantal", back.length === combos.length);
+  const eq = combos.every((c, k) => {
+    const b = back[k];
+    return b.id === c.id && b.name === c.name && b.type === c.type && b.formula === c.formula
+      && b.factors instanceof Map
+      && b.factors.size === c.factors.size
+      && [...c.factors].every(([caseId, f]) => b.factors.get(caseId) === f);
+  });
+  checkTrue("factors-Map per combinatie identiek (ids numeriek)", eq);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+log("\n[6] v1-migratie: bestaand v1-bestand laadt zonder fouten");
+{
+  const v1Path = fileURLToPath(new URL("../voorbeelden/houten-raamwerk.ifcfem2d", import.meta.url));
+  const text = readFileSync(v1Path, "utf8");
+  let parsed = null, err = null;
+  try { parsed = deserializeProject(text); } catch (e) { err = e; }
+  checkTrue("geen fout bij deserialiseren", err === null);
+  check("version = 1 blijft leesbaar", parsed?.version, 1);
+  checkTrue("combinations ontbreekt (v1)", parsed?.combinations === undefined);
+  checkTrue("structuralGrid ontbreekt (v1)", parsed?.structuralGrid === undefined);
+  checkTrue("combinationsFromFile(undefined) → undefined (store pakt defaults)",
+    combinationsFromFile(undefined) === undefined);
+  checkTrue("beams zonder checkConfig blijven geldig",
+    Array.isArray(parsed?.beams) && parsed.beams.every((b) => b.checkConfig === undefined));
+
+  // Nieuwere versie dan de app kent → duidelijke fout (bestaand gedrag).
+  const future = JSON.stringify({ ...JSON.parse(text), version: PROJECT_FORMAT_VERSION + 1 });
+  let futureErr = null;
+  try { deserializeProject(future); } catch (e) { futureErr = e; }
+  checkTrue("toekomstige versie geeft nette fout", futureErr instanceof Error);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+log(`\n${"─".repeat(60)}`);
+log(`Totaal: ${passed + failed} checks — ${passed} geslaagd, ${failed} gefaald`);
+if (failed > 0) process.exit(1);

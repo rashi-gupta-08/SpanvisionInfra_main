@@ -1,0 +1,50 @@
+.contextMenu {
+    position: fixed;
+    background: var(--dialog-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 6px 0;
+    min-width: 180px;
+    z-index: 100;
+    box-shadow: var(--shadow-lg), var(--inset-highlight);
+    display: none;
+}
+
+.visible {
+    display: block;
+}
+
+.contextMenuItem {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    transition: background 0.15s;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.contextMenuItem:hover {
+    background: var(--command-hover);
+}
+
+.contextMenuItem:active {
+    background: var(--command-active);
+}
+
+.icon {
+    width: 20px;
+    text-align: center;
+    filter: grayscale(1);
+}
+
+.contextMenuDivider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 0;
+}

@@ -1,0 +1,68 @@
+{
+  "file": "Bestand",
+  "new": "Nieuw",
+  "open": "Openen",
+  "save": "Opslaan",
+  "saveAs": "Opslaan als...",
+  "import": "Importeren",
+  "export": "Exporteren",
+  "projects": "Projecten",
+  "preferences": "Instellingen",
+  "account": "Account",
+  "feedback": "Feedback",
+  "about": "Over",
+  "admin": "Beheer",
+  "logout": "Uitloggen",
+  "aboutPanel": {
+    "title": "Over",
+    "appName": "OpenAEC Reports",
+    "version": "Versie",
+    "tagline": "Professionele engineering rapporten",
+    "description": "Modulaire rapport generator voor constructieve berekeningen, daglichtanalyses, bouwbesluittoetsen en meer. Genereert PDF rapporten in huisstijl.",
+    "companyName": "OpenAEC Foundation",
+    "companyDescription": "Open source tools voor de bouwsector. Transparant, professioneel, en samenwerkend.",
+    "website": "Website",
+    "github": "GitHub"
+  },
+  "importPanel": {
+    "title": "Importeren",
+    "fromFile": "Importeren uit JSON-bestand",
+    "fromFileDesc": "Laad een eerder geëxporteerd rapport",
+    "fromTemplate": "Importeren uit sjabloon",
+    "fromTemplateDesc": "Start met een vooraf ingevuld sjabloon"
+  },
+  "exportPanel": {
+    "title": "Exporteren",
+    "asJson": "Exporteren als JSON",
+    "asJsonDesc": "Sla het rapport op als JSON-bestand",
+    "asPdf": "Exporteren als PDF",
+    "asPdfDesc": "Genereer en download het rapport als PDF"
+  },
+  "saveAsDialog": {
+    "server": "Op server opslaan",
+    "serverDesc": "Sla het rapport op in de cloud, gekoppeld aan je project",
+    "local": "Lokaal opslaan (JSON)",
+    "localDesc": "Download het rapport als JSON-bestand op je computer"
+  },
+  "openDialog": {
+    "server": "Van server openen",
+    "serverDesc": "Open een eerder opgeslagen rapport vanuit de projectbrowser",
+    "local": "Lokaal bestand openen",
+    "localDesc": "Laad een JSON-rapport vanaf je computer"
+  },
+  "fromServer": "Van server",
+  "localFile": "Lokaal bestand (.json)",
+  "toServer": "Naar server",
+  "localExport": "Lokaal export",
+  "close": "Sluiten",
+  "exit": "Afsluiten",
+  "projectNamePrompt": "Voer een projectnaam in:",
+  "savedToServer": "Rapport opgeslagen op server",
+  "savedLocally": "Rapport lokaal opgeslagen",
+  "savedLocallyNotLoggedIn": "Lokaal opgeslagen — je bent niet ingelogd",
+  "opened": "Rapport geopend",
+  "newProject": "Nieuw rapport aangemaakt",
+  "closed": "Rapport gesloten",
+  "importError": "Fout bij importeren",
+  "saveError": "Fout bij opslaan"
+}

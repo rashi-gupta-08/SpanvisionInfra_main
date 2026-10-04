@@ -1,0 +1,13 @@
+{
+  "id": "spanvision",
+  "organizationName": "Spanvision Infra",
+  "productName": "Spanvision Infra · IFC",
+  "ownershipLabel": "by Spanvision Infra",
+  "description": "Spanvision Infra · IFC by Spanvision Infra",
+  "version": "0.1.0",
+  "bundleIdentifier": "com.spanvisioninfra.ifcview",
+  "executableName": "ifc-view",
+  "windowTitle": "Spanvision Infra · IFC — Spanvision Infra",
+  "mark": "GW",
+  "theme": "spanvision-mono"
+}

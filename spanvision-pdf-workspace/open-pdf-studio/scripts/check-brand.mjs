@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const read = name => JSON.parse(fs.readFileSync(new URL(name,import.meta.url),'utf8'));
+const brand=read('../../brand.json'), pkg=read('../package.json'), config=read('../src-tauri/tauri.conf.json');
+assert.equal(pkg.name,brand.packageName); assert.equal(pkg.author,brand.organization);
+assert.equal(config.productName,brand.product); assert.equal(config.identifier,brand.identifier);
+assert.equal(config.mainBinaryName,brand.executable);
+assert.equal(config.bundle.publisher,brand.organization);
+assert.equal(config.bundle.fileAssociations[0].name,brand.executable+'.pdf');
+assert.equal(config.bundle.createUpdaterArtifacts,brand.updater.enabled);
+if (!brand.updater.enabled) assert.equal(config.plugins.updater,undefined);
+console.log('Spanvision branding and manifests agree.');

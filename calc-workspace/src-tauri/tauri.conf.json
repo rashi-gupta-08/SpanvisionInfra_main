@@ -1,0 +1,77 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Spanvision Infra · Calc",
+  "version": "0.13.0",
+  "identifier": "com.spanvisioninfra.calcworkspace",
+  "mainBinaryName": "Calc workspace",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:4200"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Spanvision Infra · Calc — Spanvision Infra",
+        "width": 1400,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false,
+        "shadow": true
+      }
+    ],
+    "withGlobalTauri": true,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "WebView2Loader.dll",
+      "icons/icon.png",
+      "resources/wpcalc-template.calc",
+      "../mcp-server/dist/ocs-mcp.mjs"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "ifcCalc"
+        ],
+        "name": "Spanvision Infra · Calc estimate",
+        "description": "Spanvision Infra · Calc estimate file",
+        "role": "Editor",
+        "mimeType": "application/x-ifccalc"
+      },
+      {
+        "ext": [
+          "calc"
+        ],
+        "name": "WpCalc begroting",
+        "description": "WpCalc / CW begrotingsbestand",
+        "role": "Editor",
+        "mimeType": "application/x-wpcalc"
+      }
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      }
+    },
+    "macOS": {
+      "signingIdentity": "-"
+    },
+    "publisher": "Spanvision Infra"
+  }
+}

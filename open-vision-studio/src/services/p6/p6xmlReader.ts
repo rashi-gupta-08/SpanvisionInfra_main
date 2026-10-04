@@ -1,0 +1,872 @@
+import { Task, TaskConstraint, ConstraintType } from '@/types/task';
+import type { P6DurationType } from '@/types/task';
+import { createDefaultTaskTime } from '@/utils/taskDefaults';
+import { Sequence, SequenceType } from '@/types/sequence';
+import { Resource, ResourceAssignment, ResourceType, ResourceCurve } from '@/types/resource';
+import { Project } from '@/types/project';
+import { WorkCalendar, Holiday } from '@/types/calendar';
+import { createDefaultCalendar } from '@/engine/calendar/defaultCalendar';
+import { generateId } from '@/utils/id';
+import { parseInstant, localTodayIso } from '@/utils/dateUtils';
+import { normalizeImportedProgress, deriveImportedWorkRules, reconstructResourceIds } from '@/services/importNormalize';
+import { flattenOrder } from '@/utils/wbs';
+import { emptyMissingScheduleDates, importDateTime, isoDatePrefixOrToday, parseImportedInstant, resolveMissingScheduleDates } from '@/services/importDates';
+import { directChildText, toInt, toFloat } from '@/services/xmlDom';
+import type { ImportResult } from '@/services/importTypes';
+import type { CustomTaskType } from '@/types/taskType';
+import type { TaskTimephasedContour } from '@/types/task';
+import { CalendarEngine } from '@/engine/scheduler/CalendarEngine';
+import { resolveCalendar } from '@/engine/scheduler/resolveCalendar';
+import { calendarForEngine } from '@/utils/effectiveWorkTime';
+import { isFlatCurveValues, matchCurveValues, normalizeCurveValues } from '@/engine/contour/contourEngine';
+import { attachContours, axisOffsetMinutes, collectContour, p6SpreadToContourPeriods } from '@/services/contourIo';
+import { importedWorkFields } from '@/engine/work/workRuleMapping';
+import { taskWorkMinutes } from '@/engine/contour/contourEngine';
+import { buildRecordedTime, recordedFloatDays, type RecordedTime } from '@/engine/scheduler/recordedDates';
+import {
+  OPS_CUSTOM_TASK_TYPE_UDF_TITLE,
+  P6_DAY_NAMES,
+  P6_LINK_TYPE,
+  P6_NAME_TO_CURVE,
+} from './p6xmlWriter';
+import { invertRecord } from '@/utils/collections';
+import {
+  DAY_TIME_ANCHOR, decodeCustomTaskType, isTaskDurationUnit, OPS_DURATION_UNIT_NAME, statusDateFromXml,
+} from '@/services/xmlInterchange';
+import {
+  canonicalizeBands, clockToMinutes, hasNonAnchorTime, isSubDayMinutes,
+  promoteHourCalendars, registerCalendarBands,
+} from '@/services/subdayIo';
+
+// De rauwe-bandenregistry en `synth*BandsFromScalar` staan in subdayIo. P6_NAME_TO_CURVE (P6-curvenaam
+// → OPS-curve) komt uit p6xmlWriter, waar beide (bewust asymmetrische) richtingen naast elkaar staan.
+
+// P6 onderscheidt Nonlabor niet verder in Equipment/Subcontractor — zonder verdere hint komt
+// Nonlabor terug als EQUIPMENT (geaccepteerd verlies).
+function resourceTypeFromP6(p6Type: string): ResourceType {
+  if (p6Type === 'Material') return 'MATERIAL';
+  if (p6Type === 'Nonlabor') return 'EQUIPMENT';
+  return 'LABOR';
+}
+
+// Dunne lokale wrappers rond de gedeelde XML-primitieven. P6 leest UITSLUITEND directe kinderen
+// (anders pikt hij geneste subbomen met dezelfde tag op, bv. binnen een Relationship); die scope-keuze
+// — het verschil met MSPDI's descendant-search — blijft hiermee per formaat bewaard.
+function getElementText(parent: Element, tagName: string): string {
+  return directChildText(parent, tagName);
+}
+
+function getElementInt(parent: Element, tagName: string, fallback = 0): number {
+  return toInt(getElementText(parent, tagName), fallback);
+}
+
+function getElementFloat(parent: Element, tagName: string, fallback = 0): number {
+  return toFloat(getElementText(parent, tagName), fallback);
+}
+
+/** P6-datum in DAG-modus (`2026-03-09T08:00:00` → `2026-03-09`); gedeeld met MSPDI. */
+function parseP6Date(s: string): string {
+  return isoDatePrefixOrToday(s);
+}
+
+const SEQUENCE_TYPE_BY_P6: Partial<Record<string, SequenceType>> = invertRecord(P6_LINK_TYPE);
+
+function p6HoursToDays(hours: number, hoursPerDay: number): number {
+  if (hoursPerDay <= 0) hoursPerDay = 8;
+  return Math.round(hours / hoursPerDay);
+}
+
+/**
+ * P6 `CS_*`-code → OPS-constraint (spiegel van `p6ConstraintCode` in de writer). De harde
+ * `CS_MANDSTART`/`CS_MANDFIN` komen terug als `MSO`/`MFO` mét `hard:true`; de soft-typen als hun
+ * OPS-equivalent. Onbekende code ⇒ `undefined` (veld afwezig).
+ */
+function p6CodeToConstraint(code: string): { type: ConstraintType; hard?: boolean } | undefined {
+  switch (code) {
+    case 'CS_MSO': return { type: 'MSO' };
+    case 'CS_MSOA': return { type: 'SNET' };
+    case 'CS_MSOB': return { type: 'SNLT' };
+    case 'CS_MEO': return { type: 'MFO' };
+    case 'CS_MEOA': return { type: 'FNET' };
+    case 'CS_MEOB': return { type: 'FNLT' };
+    case 'CS_ALAP': return { type: 'ALAP' };
+    case 'CS_MANDSTART': return { type: 'MSO', hard: true };
+    case 'CS_MANDFIN': return { type: 'MFO', hard: true };
+    default: return undefined;
+  }
+}
+
+// P6-XML (PMXML) draagt `<DurationType>` als Engels label, niet als het XER-token
+// (`DT_FixedDrtn`/`DT_FixedDUR2`/`DT_FixedRate`/`DT_FixedQty`) — zelfde vier canonieke P6-waarden,
+// andere schrijfwijze. Labels geverifieerd tegen MPXJ `DurationTypeHelper` en Oracle's
+// PMXML-schemadocumentatie. Oracle's XER-datamap (P6 EPPM XER Import/Export Data Map Guide,
+// TASK.duration_type): DT_FixedDrtn = "Fixed Duration and Units/Time", DT_FixedDUR2 = "Fixed Duration
+// and Units", DT_FixedQty = "Fixed Units", DT_FixedRate = "Fixed Units/Time" — dezelfde paren als
+// `workRuleMapping.ts` (`XER_DURATION_TYPE_TOKEN` ↔ `P6_DURATION_TYPE_NAME`). Valkuil: de twee
+// Fixed-Duration-labels worden makkelijk verwisseld.
+const P6_XML_DURATION_TYPE_BY_LABEL: Readonly<Record<string, P6DurationType>> = {
+  'Fixed Duration and Units': 'DT_FixedDUR2',
+  'Fixed Duration and Units/Time': 'DT_FixedDrtn',
+  'Fixed Units/Time': 'DT_FixedRate',
+  'Fixed Units': 'DT_FixedQty',
+};
+
+/**
+ * `<DurationType>` → `p6DurationType`, dat via `deriveImportedWorkRules` de werkregel voedt (net als
+ * bij de XER-lezer). Onbekend/leeg label ⇒ veld AFWEZIG, nooit een aanname; de onbekende waarde wordt
+ * gerapporteerd zodat een vreemd PMXML-label zichtbaar blijft.
+ */
+function p6DurationTypeFromXml(raw: string): P6DurationType | undefined {
+  const label = raw.trim();
+  if (!label) return undefined;
+  const known = P6_XML_DURATION_TYPE_BY_LABEL[label];
+  if (known) return known;
+  console.warn(`P6-XML-import: onbekende <DurationType>-waarde '${label}' — p6DurationType blijft afwezig.`);
+  return undefined;
+}
+
+/** Werkweek teruglezen (spiegel van `writeStandardWorkWeek`): per `<StandardWorkHour>` de dagnaam
+ *  terugmappen naar een ISO-dagnummer via `P6_DAY_NAMES`; een dag telt als werkdag zodra hij een
+ *  `<WorkTime>`-blok heeft. `workStartHour`/`workEndHour` komen van het LAATST gevonden werktijdblok
+ *  (één scalar per kalender). Golden rule: geen `<StandardWorkWeek>` (ander tool / oud bestand) ⇒
+ *  lege workDays, de aanroeper valt terug op de `createDefaultCalendar()`-defaults. */
+export function parseP6StandardWorkWeek(calEl: Element): {
+  workDays: number[]; workStartHour?: number; workEndHour?: number;
+  rawByWeekday: Partial<Record<1 | 2 | 3 | 4 | 5 | 6 | 7, { start: number; end: number }[]>>;
+} {
+  const wwEl = calEl.getElementsByTagName('StandardWorkWeek')[0];
+  const workDays: number[] = [];
+  let workStartHour: number | undefined;
+  let workEndHour: number | undefined;
+  const rawByWeekday: Partial<Record<1 | 2 | 3 | 4 | 5 | 6 | 7, { start: number; end: number }[]>> = {};
+  if (!wwEl) return { workDays, rawByWeekday };
+
+  for (let i = 0; i < wwEl.children.length; i++) {
+    const dayEl = wwEl.children[i];
+    if (dayEl.localName !== 'StandardWorkHour' && dayEl.tagName !== 'StandardWorkHour') continue;
+    const dayName = getElementText(dayEl, 'DayOfWeek');
+    const isoDay = P6_DAY_NAMES.indexOf(dayName); // index == ISO-dagnummer (array begint met '' op 0)
+    // ALLE <WorkTime>-banden van deze dag lezen; elke band → minuten-vanaf-middernacht.
+    const wts = dayEl.getElementsByTagName('WorkTime');
+    const dayBands: { start: number; end: number }[] = [];
+    for (let k = 0; k < wts.length; k++) {
+      const wt = wts[k];
+      const s = clockToMinutes(getElementText(wt, 'Start'));
+      const e = clockToMinutes(getElementText(wt, 'Finish'));
+      if (s == null || e == null) continue;
+      dayBands.push({ start: s, end: e });
+      // Scalar (laatst gevonden blok) voor het dag-pad.
+      workStartHour = Math.floor(s / 60);
+      workEndHour = Math.floor(e / 60);
+    }
+    if (dayBands.length === 0 || isoDay <= 0) continue;
+    workDays.push(isoDay);
+    rawByWeekday[isoDay as 1] = dayBands;
+  }
+  return { workDays, workStartHour, workEndHour, rawByWeekday };
+}
+
+/** Canonicaliseer de rauwe banden en registreer ze + de afwijking (a/b) op de kalender. */
+function registerP6Bands(cal: WorkCalendar, rawByWeekday: Partial<Record<1 | 2 | 3 | 4 | 5 | 6 | 7, { start: number; end: number }[]>>): void {
+  const { bands, deviates } = canonicalizeBands(rawByWeekday);
+  registerCalendarBands(cal, { canonical: bands, deviates });
+}
+
+/** Feestdagen/exceptions teruglezen (spiegel van `writeHolidayOrExceptions`). */
+function parseP6HolidayOrExceptions(calEl: Element): Holiday[] {
+  const hoEl = calEl.getElementsByTagName('HolidayOrExceptions')[0];
+  if (!hoEl) return [];
+  const holidays: Holiday[] = [];
+  for (let i = 0; i < hoEl.children.length; i++) {
+    const hEl = hoEl.children[i];
+    if (hEl.localName !== 'HolidayOrException' && hEl.tagName !== 'HolidayOrException') continue;
+    const date = getElementText(hEl, 'Date');
+    if (!date) continue;
+    const name = getElementText(hEl, 'Name') || 'Feestdag';
+    const finishDate = getElementText(hEl, 'FinishDate') || date;
+    holidays.push({ name, startDate: parseP6Date(date), endDate: parseP6Date(finishDate) });
+  }
+  return holidays;
+}
+
+function getAllByLocalName(doc: Document, localName: string): Element[] {
+  const results: Element[] = [];
+  const root = doc.documentElement;
+  for (let i = 0; i < root.children.length; i++) {
+    const child = root.children[i];
+    if (child.localName === localName) {
+      results.push(child);
+    }
+  }
+  return results;
+}
+
+export function readP6XML(content: string): ImportResult {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(content, 'application/xml');
+
+  const parserError = doc.getElementsByTagName('parsererror')[0];
+  if (parserError) {
+    throw new Error('Invalid XML: ' + parserError.textContent);
+  }
+
+  // Parse calendar first for hoursPerDay
+  const calendar = parseCalendar(doc);
+  const hoursPerDay = calendar.hoursPerDay;
+
+  // Resourcekalenders: elke <Calendar> met Type=Resource, behalve de eerste (die is altijd de
+  // projectkalender, zelfde aanname als parseCalendar).
+  const calElements = getAllByLocalName(doc, 'Calendar');
+  const calObjIdToId = new Map<number, string>();
+  const resourceCalendars: WorkCalendar[] = [];
+  for (let i = 1; i < calElements.length; i++) {
+    const calEl = calElements[i];
+    if (getElementText(calEl, 'Type') !== 'Resource') continue;
+    const objId = getElementInt(calEl, 'ObjectId', -1);
+    if (objId < 0) continue;
+    const cal = readP6Calendar(calEl);
+    cal.id = generateId('rescal');
+    calObjIdToId.set(objId, cal.id);
+    resourceCalendars.push(cal);
+  }
+
+  // Resources
+  const resourceElements = getAllByLocalName(doc, 'Resource');
+  const resources: Resource[] = [];
+  const resObjIdToId = new Map<number, string>();
+  const pendingParents: { resId: string; parentObjId: number }[] = [];
+
+  for (const resEl of resourceElements) {
+    const objId = getElementInt(resEl, 'ObjectId', -1);
+    if (objId < 0) continue;
+    const id = generateId('res');
+    resObjIdToId.set(objId, id);
+
+    const name = getElementText(resEl, 'Name') || 'Resource';
+    const p6Type = getElementText(resEl, 'ResourceType');
+    const maxUnitsPerTime = getElementFloat(resEl, 'MaxUnitsPerTime');
+    const calObjId = getElementInt(resEl, 'CalendarObjectId', -1);
+    const unitOfMeasure = getElementText(resEl, 'UnitOfMeasureAbbreviation');
+    const parentObjId = getElementInt(resEl, 'ParentObjectId', -1);
+
+    const resource: Resource = {
+      id,
+      name,
+      type: resourceTypeFromP6(p6Type),
+      description: '',
+      // MaxUnitsPerTime is in P6-XML een dimensieloze fractie (1.0 = 100%), geen uren/dag (zie
+      // p6xmlWriter), dus 1:1 overnemen.
+      maxUnits: maxUnitsPerTime > 0 ? maxUnitsPerTime : 1,
+    };
+    if (unitOfMeasure) resource.unitOfMeasure = unitOfMeasure;
+    if (calObjId >= 0 && calObjIdToId.has(calObjId)) resource.calendarId = calObjIdToId.get(calObjId);
+    resources.push(resource);
+    if (parentObjId >= 0) pendingParents.push({ resId: id, parentObjId });
+  }
+  for (const { resId, parentObjId } of pendingParents) {
+    const parentId = resObjIdToId.get(parentObjId);
+    if (!parentId) continue;
+    const resource = resources.find(r => r.id === resId);
+    if (resource) resource.parentId = parentId;
+  }
+
+  // ResourceRates: top-level <ResourceRate>-elementen (siblings van <Resource>, spiegel van
+  // p6xmlWriter) — PricePerUnit is het uurtarief. Bij meerdere rijen per resource (effective-dated
+  // staffel, P6-native) wint de rij met de vroegste EffectiveDate als ons ene vlakke `costPerHour`.
+  const rateElements = getAllByLocalName(doc, 'ResourceRate');
+  const earliestRate = new Map<string, { effective: string; price: number }>();
+  for (const rateEl of rateElements) {
+    const rateResObjId = getElementInt(rateEl, 'ResourceObjectId', -1);
+    const resId = resObjIdToId.get(rateResObjId);
+    if (!resId) continue;
+    const priceText = getElementText(rateEl, 'PricePerUnit');
+    const price = parseFloat(priceText);
+    if (!priceText || !Number.isFinite(price)) continue;
+    const effective = getElementText(rateEl, 'EffectiveDate'); // '' sorteert vóór elke datum
+    const current = earliestRate.get(resId);
+    if (!current || effective < current.effective) {
+      earliestRate.set(resId, { effective, price });
+    }
+  }
+  for (const [resId, rate] of earliestRate) {
+    const resource = resources.find(r => r.id === resId);
+    if (resource) resource.costPerHour = rate.price;
+  }
+
+  // Parse project
+  const project = parseProject(doc);
+  // Ontbrekende geplande datums (gedeelde regel `resolveMissingScheduleDates`, vóór de voortgang-
+  // invarianten). Zonder <PlannedStartDate> op het project dragen ook de WBS-samenvattingen (die op
+  // de projectstart worden aangemaakt) de vandaag-plaatshouder — die tellen dan mee als ontbrekend.
+  const projEl = getAllByLocalName(doc, 'Project')[0];
+  const projectStartRaw = projEl ? getElementText(projEl, 'PlannedStartDate') : '';
+  const missingDates = emptyMissingScheduleDates();
+
+  // Parse WBS elements
+  const wbsElements = getAllByLocalName(doc, 'WBS');
+  const wbsObjIdToId = new Map<number, string>();
+  const wbsTasks: Task[] = [];
+
+  for (const wbsEl of wbsElements) {
+    const objId = getElementInt(wbsEl, 'ObjectId', -1);
+    if (objId < 0) continue;
+
+    const id = generateId('task');
+    wbsObjIdToId.set(objId, id);
+
+    const code = getElementText(wbsEl, 'Code');
+    const name = getElementText(wbsEl, 'Name') || 'WBS';
+
+    wbsTasks.push({
+      id,
+      name,
+      description: '',
+      wbsCode: code,
+      taskType: 'CONSTRUCTION',
+      status: 'NOT_STARTED',
+      isMilestone: false,
+      priority: 500,
+      parentId: null, // resolved later
+      childIds: [],
+      time: createDefaultTaskTime(project.startDate, 0),
+      resourceIds: [],
+    });
+    if (!projectStartRaw) { missingDates.start.add(id); missingDates.finish.add(id); }
+  }
+
+  // Broer/zus-volgorde uit `SequenceNumber` (de writer schrijft hem, dus de lezer honoreert hem).
+  // Stabiele sortering; zonder het element blijft de documentvolgorde gelden. `flattenOrder` leest de
+  // kindvolgorde uit de array-volgorde.
+  const seqNrByObjId = new Map<number, number>();
+  for (const wbsEl of wbsElements) {
+    const objId = getElementInt(wbsEl, 'ObjectId', -1);
+    const raw = getElementText(wbsEl, 'SequenceNumber');
+    if (objId >= 0 && raw) { const n = toInt(raw, NaN); if (Number.isFinite(n)) seqNrByObjId.set(objId, n); }
+  }
+  if (seqNrByObjId.size > 0) {
+    const idToObjId = new Map<string, number>([...wbsObjIdToId].map(([o, id]) => [id, o]));
+    const indexOf = new Map(wbsTasks.map((t, i) => [t.id, i]));
+    wbsTasks.sort((a, b) => {
+      const sa = seqNrByObjId.get(idToObjId.get(a.id)!);
+      const sb = seqNrByObjId.get(idToObjId.get(b.id)!);
+      if (sa !== undefined && sb !== undefined && sa !== sb) return sa - sb;
+      return indexOf.get(a.id)! - indexOf.get(b.id)!;
+    });
+  }
+
+  // Resolve WBS parent-child
+  for (const wbsEl of wbsElements) {
+    const objId = getElementInt(wbsEl, 'ObjectId', -1);
+    const parentObjId = getElementInt(wbsEl, 'ParentObjectId', -1);
+    if (parentObjId < 0 || objId < 0) continue;
+
+    const childId = wbsObjIdToId.get(objId);
+    const parentId = wbsObjIdToId.get(parentObjId);
+    if (childId && parentId) {
+      const child = wbsTasks.find(t => t.id === childId);
+      const parent = wbsTasks.find(t => t.id === parentId);
+      if (child && parent) {
+        child.parentId = parentId;
+        if (!parent.childIds.includes(childId)) {
+          parent.childIds.push(childId);
+        }
+      }
+    }
+  }
+
+  // Parse activities
+  const activityElements = getAllByLocalName(doc, 'Activity');
+  const actObjIdToId = new Map<number, string>();
+  const leafTasks: Task[] = [];
+  const customTaskTypes = new Map<string, CustomTaskType>();
+  const taskHourById = new Map<string, boolean>(); // taak-id → uur-modus (voor lag-eenheid)
+
+  // PMXML bewaart UDF's als top-level objecten. Selecteer uitsluitend onze benoemde definitie en
+  // marker, zodat een toevallig JSON-object in een vreemde vrije tekst nooit taaktype-data wordt.
+  const opsUdfTypeIds = new Set<number>();
+  for (const udfType of getAllByLocalName(doc, 'UDFType')) {
+    if (getElementText(udfType, 'Title') !== OPS_CUSTOM_TASK_TYPE_UDF_TITLE) continue;
+    const objectId = getElementInt(udfType, 'ObjectId', -1);
+    if (objectId >= 0) opsUdfTypeIds.add(objectId);
+  }
+  const customTaskTypeByActivityObjectId = new Map<number, { id: string; name?: string }>();
+  for (const udfValue of getAllByLocalName(doc, 'UDFValue')) {
+    if (!opsUdfTypeIds.has(getElementInt(udfValue, 'UDFTypeObjectId', -1))) continue;
+    const foreignObjectId = getElementInt(udfValue, 'ForeignObjectId', -1);
+    // Oracle noemt het tekstveld `Text`. `TextValue` wordt tolerant ook gelezen, voor oudere
+    // OPS-builds die dat veld schreven.
+    const parsed = decodeCustomTaskType(
+      getElementText(udfValue, 'Text') || getElementText(udfValue, 'TextValue'),
+    );
+    if (foreignObjectId >= 0 && parsed && !customTaskTypeByActivityObjectId.has(foreignObjectId)) {
+      customTaskTypeByActivityObjectId.set(foreignObjectId, parsed);
+    }
+  }
+
+  // PlannedDuration is in P6 altijd een hoeveelheid uren en zegt dus niet of OPS die taak als
+  // werkdagen of als exacte werkuren moet behandelen. Alleen onze exact benoemde Activity-Text-UDF
+  // is expliciet; zonder definitie blijven vreemde/legacy bestanden op de bestaande
+  // kalenderprecisie-regel. Losse UDFValue-tags worden bewust niet vertrouwd.
+  const durationUnitUdfIds = new Set<number>();
+  for (const udfType of getAllByLocalName(doc, 'UDFType')) {
+    if (getElementText(udfType, 'SubjectArea') !== 'Activity') continue;
+    if (getElementText(udfType, 'DataType') !== 'Text') continue;
+    if (getElementText(udfType, 'Title') !== OPS_DURATION_UNIT_NAME) continue;
+    const objectId = getElementInt(udfType, 'ObjectId', -1);
+    if (objectId >= 0) durationUnitUdfIds.add(objectId);
+  }
+  const explicitUnitByActivityObjectId = new Map<number, 'days' | 'hours'>();
+  if (durationUnitUdfIds.size > 0) {
+    for (const udfValue of getAllByLocalName(doc, 'UDFValue')) {
+      if (!durationUnitUdfIds.has(getElementInt(udfValue, 'UDFTypeObjectId', -1))) continue;
+      const foreignObjectId = getElementInt(udfValue, 'ForeignObjectId', -1);
+      const value = getElementText(udfValue, 'Text');
+      if (foreignObjectId >= 0 && isTaskDurationUnit(value)) {
+        explicitUnitByActivityObjectId.set(foreignObjectId, value);
+      }
+    }
+  }
+
+  // Uur-modus-beslissing per kalender (discriminator a/b/c) vóór het bouwen van de taken. `calById`
+  // mapt de projectkalender én de bibliotheekkalenders; `effCalIdOf` geeft per activity de effectieve
+  // kalender-id (CalendarObjectId 1/ontbrekend = projectkalender).
+  const calById = new Map<string, WorkCalendar>([calendar, ...resourceCalendars].map(c => [c.id, c]));
+  const effCalIdOf = (calObjId: number): string => (calObjId > 1 && calObjIdToId.get(calObjId)) || calendar.id;
+
+  const cSignalCalIds = new Set<string>();
+  for (const actEl of activityElements) {
+    const calId = effCalIdOf(getElementInt(actEl, 'CalendarObjectId', 1));
+    const cal = calById.get(calId);
+    if (!cal) continue;
+    const durHours = getElementFloat(actEl, 'PlannedDuration');
+    const durSignal = durHours > 0 && isSubDayMinutes(Math.round(durHours * 60), cal.hoursPerDay);
+    const dateSignal = hasNonAnchorTime(getElementText(actEl, 'PlannedStartDate'), DAY_TIME_ANCHOR)
+      || hasNonAnchorTime(getElementText(actEl, 'PlannedFinishDate'), DAY_TIME_ANCHOR);
+    if (durSignal || dateSignal) cSignalCalIds.add(calId);
+  }
+  // P6 valt terug op de scalar-synth zodra de geregistreerde canonical geen werkdag draagt
+  // (preferCanonicalWhenEmpty = false) — zie `promoteHourCalendar`.
+  const hourModeCalIds = promoteHourCalendars(calById, id => cSignalCalIds.has(id), false);
+
+  // "Datums zoals opgeslagen" voor P6 XML: P6's EIGEN rekenuitvoer per activiteit —
+  // `EarlyStartDate`/`EarlyFinishDate` (terugval `StartDate`/`FinishDate`), `LateStartDate`/
+  // `LateFinishDate`, `TotalFloat`/`FreeFloat` (uren) en `IsCritical` — als apart kanaal
+  // (`ImportResult.recordedTimes`), nooit als solverinvoer: `task.time` krijgt de geplande datums.
+  // Ontbrekende assen ontbreken, nooit een terugval.
+  const recordedTimes: Record<string, RecordedTime> = {};
+
+  for (const actEl of activityElements) {
+    const objId = getElementInt(actEl, 'ObjectId', -1);
+    if (objId < 0) continue;
+
+    const id = generateId('task');
+    actObjIdToId.set(objId, id);
+
+    const actId = getElementText(actEl, 'Id');
+    const name = getElementText(actEl, 'Name') || 'Activity';
+    const p6Type = getElementText(actEl, 'Type');
+    const p6DurationType = p6DurationTypeFromXml(getElementText(actEl, 'DurationType'));
+    const plannedDuration = getElementFloat(actEl, 'PlannedDuration');
+    const plannedStartRaw = getElementText(actEl, 'PlannedStartDate');
+    const plannedFinishRaw = getElementText(actEl, 'PlannedFinishDate');
+    const percentComplete = getElementFloat(actEl, 'PhysicalPercentComplete');
+    const description = getElementText(actEl, 'Description');
+    const customTaskType = customTaskTypeByActivityObjectId.get(objId);
+    if (customTaskType?.name && !customTaskTypes.has(customTaskType.id)) {
+      customTaskTypes.set(customTaskType.id, { id: customTaskType.id, name: customTaskType.name });
+    }
+    const wbsObjId = getElementInt(actEl, 'WBSObjectId', -1);
+    // Taakkalender: effectieve <CalendarObjectId> → task.calendarId. ObjectId 1 (of ontbrekend) =
+    // projectkalender ⇒ undefined.
+    const calObjId = getElementInt(actEl, 'CalendarObjectId', 1);
+    const taskCalendarId = calObjId > 1 ? calObjIdToId.get(calObjId) : undefined;
+
+    // Uur- vs dag-modus voor deze taak.
+    const effCalId = effCalIdOf(calObjId);
+    const explicitUnit = explicitUnitByActivityObjectId.get(objId);
+    const isHour = explicitUnit ? explicitUnit === 'hours' : hourModeCalIds.has(effCalId);
+    // Datumprecisie volgt de KALENDER, niet de duureenheid — zoals mspdiReader en de IFC-lezer: een
+    // dagtaak op een urenkalender blijft een dagtaak (eenheid uit de OPS-marker), maar haar datums
+    // (ook de actuals) houden hun echte tijd.
+    const hourDates = hourModeCalIds.has(effCalId);
+    const effHpd = calById.get(effCalId)?.hoursPerDay ?? hoursPerDay;
+    // Datum-parser: uur ⇒ echte tijd (`parseInstant`+`formatInstant`), dag ⇒ tijd-strippen.
+    const plannedStart = importDateTime(plannedStartRaw, hourDates);
+    const plannedFinish = importDateTime(plannedFinishRaw, hourDates);
+    if (!plannedStartRaw) missingDates.start.add(id);
+    if (!plannedFinishRaw) missingDates.finish.add(id);
+
+    {
+      const recordedDate = (raw: string): string | undefined =>
+        raw ? importDateTime(raw, isHour) : undefined;
+      const floatDays = (raw: string): number | undefined => {
+        if (!raw) return undefined;
+        const hours = Number.parseFloat(raw);
+        return Number.isFinite(hours) ? recordedFloatDays(hours * 60, effHpd * 60) : undefined;
+      };
+      const criticalRaw = getElementText(actEl, 'IsCritical');
+      const recorded = buildRecordedTime({
+        start: recordedDate(getElementText(actEl, 'EarlyStartDate') || getElementText(actEl, 'StartDate')),
+        finish: recordedDate(getElementText(actEl, 'EarlyFinishDate') || getElementText(actEl, 'FinishDate')),
+        lateStart: recordedDate(getElementText(actEl, 'LateStartDate')),
+        lateFinish: recordedDate(getElementText(actEl, 'LateFinishDate')),
+        totalFloat: floatDays(getElementText(actEl, 'TotalFloat')),
+        freeFloat: floatDays(getElementText(actEl, 'FreeFloat')),
+        isCritical: criticalRaw === 'true' || criticalRaw === '1' ? true
+          : criticalRaw === 'false' || criticalRaw === '0' ? false : undefined,
+      });
+      if (recorded) recordedTimes[id] = recorded;
+    }
+
+    // Actuals — leeg ⇒ undefined (invarianten via normalizeImportedProgress).
+    const actualStartRaw = getElementText(actEl, 'ActualStartDate');
+    const actualFinishRaw = getElementText(actEl, 'ActualFinishDate');
+    const remainingRaw = getElementText(actEl, 'RemainingDuration');
+    const actualStart = actualStartRaw ? importDateTime(actualStartRaw, hourDates) : undefined;
+    const actualFinish = actualFinishRaw ? importDateTime(actualFinishRaw, hourDates) : undefined;
+    // RemainingDuration: uur ⇒ minuten (`uren × 60`, geen afronding); dag ⇒ het dag-pad.
+    const remainingMinutes = isHour && remainingRaw ? Math.round(parseFloat(remainingRaw) * 60) : undefined;
+    // Zelfde `effHpd` als de duur hieronder — symmetrisch met de writer.
+    const remainingTime = !isHour && remainingRaw ? p6HoursToDays(parseFloat(remainingRaw), effHpd) : undefined;
+
+    // Duur: uur ⇒ minuten (`uren × 60`) als bron van waarheid; dag ⇒ `Math.round(uren/hpd)`.
+    const durationMinutes = isHour ? Math.round(plannedDuration * 60) : undefined;
+    const durationDays = isHour ? (effHpd > 0 ? durationMinutes! / (effHpd * 60) : 0) : p6HoursToDays(plannedDuration, effHpd);
+    const isMilestone = p6Type.includes('Milestone');
+    // P6 onderscheidt Start/Finish Milestone — bewaar de soort expliciet.
+    const milestoneKind = !isMilestone ? undefined
+      : p6Type.includes('Finish') ? 'FINISH' as const
+      : 'START' as const;
+
+    const parentId = wbsObjId >= 0 ? wbsObjIdToId.get(wbsObjId) || null : null;
+
+    // Datumconstraints: primair + secundair uit de `CS_*`-codes. Secundair is altijd soft
+    // (P6-invariant) ⇒ `hard` wordt gedropt. Datum: uur ⇒ echte tijd, dag ⇒ tijd-strippen.
+    const parseCstrDate = (raw: string): string => importDateTime(raw, hourDates);
+    let constraint: TaskConstraint | undefined;
+    const primCode = getElementText(actEl, 'PrimaryConstraintType');
+    if (primCode) {
+      const mapped = p6CodeToConstraint(primCode);
+      if (mapped) {
+        const cdateRaw = getElementText(actEl, 'PrimaryConstraintDate');
+        constraint = {
+          type: mapped.type,
+          ...(mapped.hard ? { hard: true } : {}),
+          ...(cdateRaw ? { date: parseCstrDate(cdateRaw) } : {}),
+        };
+      }
+    }
+    let constraint2: TaskConstraint | undefined;
+    const secCode = getElementText(actEl, 'SecondaryConstraintType');
+    if (secCode) {
+      const mapped2 = p6CodeToConstraint(secCode);
+      if (mapped2) {
+        const cdate2Raw = getElementText(actEl, 'SecondaryConstraintDate');
+        constraint2 = {
+          type: mapped2.type,
+          ...(cdate2Raw ? { date: parseCstrDate(cdate2Raw) } : {}),
+        };
+      }
+    }
+
+    const task: Task = {
+      id,
+      name,
+      description,
+      wbsCode: actId,
+      taskType: customTaskType ? 'USERDEFINED' : 'CONSTRUCTION',
+      ...(customTaskType ? { customTaskTypeId: customTaskType.id } : {}),
+      ...(p6DurationType ? { p6DurationType } : {}),
+      status: 'NOT_STARTED', // afgeleid door normalizeImportedProgress uit completion/actuals
+      isMilestone,
+      ...(milestoneKind ? { milestoneKind } : {}),
+      priority: 500,
+      parentId,
+      childIds: [],
+      ...(constraint ? { constraint } : {}),
+      ...(constraint2 ? { constraint2 } : {}),
+      time: {
+        durationType: 'WORKTIME',
+        durationUnit: isHour ? 'hours' : 'days',
+        scheduleDuration: durationDays,
+        ...(durationMinutes != null ? { durationMinutes } : {}),
+        scheduleStart: plannedStart,
+        scheduleFinish: plannedFinish,
+        earlyStart: plannedStart,
+        earlyFinish: plannedFinish,
+        lateStart: plannedStart,
+        lateFinish: plannedFinish,
+        freeFloat: 0,
+        totalFloat: 0,
+        isCritical: false,
+        actualStart,
+        actualFinish,
+        remainingTime,
+        ...(remainingMinutes != null ? { remainingMinutes } : {}),
+        completion: percentComplete / 100,
+      },
+      resourceIds: [],
+      ...(taskCalendarId ? { calendarId: taskCalendarId } : {}),
+    };
+
+    leafTasks.push(task);
+    taskHourById.set(id, isHour);
+
+    // Add to parent's children
+    if (parentId) {
+      const parent = wbsTasks.find(t => t.id === parentId);
+      if (parent && !parent.childIds.includes(id)) {
+        parent.childIds.push(id);
+      }
+    }
+  }
+
+  // Combine tasks: WBS (summary) + leaf activities — in BOOMVOLGORDE (diepte-eerst, zoals de andere
+  // lezers); "samenvattingen eerst, dan bladen" brak de hiërarchie in de MSPDI-export.
+  const tasks = [...flattenOrder([...wbsTasks, ...leafTasks])];
+
+  // Anker = projectstart uit het bestand, anders de vroegste aanwezige activiteitstart; finish uit
+  // start + duur op de effectieve kalender (P6 levert elke kalender mee, dus eenduidig voor hele
+  // werkdagen).
+  project.startDate = resolveMissingScheduleDates(tasks, missingDates, projectStartRaw ? project.startDate : '',
+    (task) => resolveCalendar(task.calendarId, resourceCalendars, calendar));
+
+  // Voortgang-invarianten op de rauw ingelezen actuals.
+  normalizeImportedProgress(tasks, project.statusDate);
+  deriveImportedWorkRules(tasks); // werkregel uit <DurationType>
+
+  // Parse relationships
+  const relElements = getAllByLocalName(doc, 'Relationship');
+  const sequences: Sequence[] = [];
+
+  for (const relEl of relElements) {
+    const predObjId = getElementInt(relEl, 'PredecessorActivityObjectId', -1);
+    const succObjId = getElementInt(relEl, 'SuccessorActivityObjectId', -1);
+    if (predObjId < 0 || succObjId < 0) continue;
+
+    const predId = actObjIdToId.get(predObjId);
+    const succId = actObjIdToId.get(succObjId);
+    if (!predId || !succId) continue;
+
+    const p6Type = getElementText(relEl, 'Type');
+    const lagHours = getElementFloat(relEl, 'Lag');
+
+    // Een uur-opvolger ⇒ lag minuut-precies (`uren × 60`, geen dag-afronding); anders het dag-pad.
+    const lagHourMode = taskHourById.get(succId) ?? false;
+    const seq: Sequence = {
+      id: generateId('seq'),
+      predecessorId: predId,
+      successorId: succId,
+      type: SEQUENCE_TYPE_BY_P6[p6Type] ?? 'FINISH_START',
+      lagDays: lagHourMode ? 0 : p6HoursToDays(lagHours, hoursPerDay),
+    };
+    if (lagHourMode) seq.lagMinutes = Math.round(lagHours * 60);
+    sequences.push(seq);
+  }
+
+  // `<ResourceCurve>`-catalogus: P6's resourcecurves als 21 waarden (`Value0`..`Value100`, MPXJ
+  // `XmlContextReader.processWorkContour`), gekeyd op ObjectId. Een toewijzing verwijst ernaar via
+  // `<ResourceCurveObjectId>`.
+  const curveByObjId = new Map<number, { name: string; values: number[] }>();
+  for (const curveEl of getAllByLocalName(doc, 'ResourceCurve')) {
+    const objId = getElementInt(curveEl, 'ObjectId', -1);
+    if (objId < 0) continue;
+    const valuesEl = curveEl.getElementsByTagName('Values')[0];
+    if (!valuesEl) continue;
+    const raw: number[] = [];
+    for (let pct = 0; pct <= 100; pct += 5) raw.push(getElementFloat(valuesEl, `Value${pct}`, NaN));
+    const values = normalizeCurveValues(raw);
+    if (!values) continue;
+    curveByObjId.set(objId, { name: getElementText(curveEl, 'Name'), values });
+  }
+
+  // Kalender-engine per taakkalender voor de as-vertaling van de spreidingsstrings.
+  const taskById = new Map(tasks.map(t => [t.id, t] as const));
+  const engineCache = new Map<string, CalendarEngine>();
+  const engineForTask = (task: Task): CalendarEngine => {
+    const key = task.calendarId ?? '';
+    let eng = engineCache.get(key);
+    if (!eng) {
+      eng = new CalendarEngine(calendarForEngine(resolveCalendar(task.calendarId, resourceCalendars, calendar)));
+      engineCache.set(key, eng);
+    }
+    return eng;
+  };
+  const contoursByTaskId = new Map<string, TaskTimephasedContour[]>();
+
+  // ResourceAssignments
+  const asgnElements = getAllByLocalName(doc, 'ResourceAssignment');
+  const assignments: ResourceAssignment[] = [];
+  for (const asgnEl of asgnElements) {
+    const actObjId = getElementInt(asgnEl, 'ActivityObjectId', -1);
+    const resObjId = getElementInt(asgnEl, 'ResourceObjectId', -1);
+    if (actObjId < 0 || resObjId < 0) continue;
+    const taskId = actObjIdToId.get(actObjId);
+    const resourceId = resObjIdToId.get(resObjId);
+    if (!taskId || !resourceId) continue;
+
+    const plannedUnitsPerTime = getElementFloat(asgnEl, 'PlannedUnitsPerTime');
+
+    // De CURVE. Schema-native: `<ResourceCurveObjectId>` → catalogus; de 21 waarden zijn de exacte
+    // data (`curveValues`), `curve` is de OPS-benadering: een exacte tabelmatch, anders de
+    // P6-curvenaam (`P6_NAME_TO_CURVE`), anders geen OPS-vorm. Een vlakke curve is geen curve.
+    // COMPAT: oudere OPS-exports schreven de curveNAAM in `<PlannedCurve>` (daar hoort een
+    // spreidingsstring `"werkuren:periodeuren;…"`, MPXJ `TimephasedHelper`); een `<PlannedCurve>`
+    // zonder `:` wordt daarom nog als naam gelezen.
+    const plannedCurveRaw = getElementText(asgnEl, 'PlannedCurve');
+    const curveObjId = getElementInt(asgnEl, 'ResourceCurveObjectId', -1);
+    const catalogCurve = curveObjId >= 0 ? curveByObjId.get(curveObjId) : undefined;
+    let curve: ResourceCurve | undefined;
+    let curveValues: number[] | undefined;
+    if (catalogCurve && !isFlatCurveValues(catalogCurve.values)) {
+      curve = matchCurveValues(catalogCurve.values) ?? P6_NAME_TO_CURVE[catalogCurve.name];
+      curveValues = catalogCurve.values;
+    } else if (plannedCurveRaw && plannedCurveRaw.indexOf(':') === -1) {
+      curve = P6_NAME_TO_CURVE[plannedCurveRaw];
+    }
+
+    // PlannedUnitsPerTime is een fractie (1.0 = 100%), geen uren/dag (spiegel van p6xmlWriter) —
+    // 1:1 overnemen.
+    const unitsPerDay = plannedUnitsPerTime > 0 ? plannedUnitsPerTime : 1;
+    // <PlannedUnits>/<ActualUnits>/<RemainingUnits> in UREN → minuten, alleen bewaard wanneer ze
+    // afwijken van `duur × inzet/tijd` (`importedWorkFields`).
+    const workTask = taskById.get(taskId);
+    const derivedWork = workTask ? taskWorkMinutes(workTask.time, engineForTask(workTask).hoursPerDay) * unitsPerDay : 0;
+    const unitsMinutes = (tag: string): number | undefined => {
+      const raw = getElementText(asgnEl, tag);
+      if (!raw.trim()) return undefined;
+      const hours = parseFloat(raw);
+      return Number.isFinite(hours) ? hours * 60 : undefined;
+    };
+    const workFields = importedWorkFields({
+      plannedMinutes: unitsMinutes('PlannedUnits'),
+      actualMinutes: unitsMinutes('ActualUnits'),
+      remainingMinutes: unitsMinutes('RemainingUnits'),
+    }, derivedWork);
+    assignments.push({
+      id: generateId('asgn'),
+      taskId,
+      resourceId,
+      unitsPerDay,
+      ...(curve && curve !== 'UNIFORM' ? { curve } : {}),
+      ...(curveValues ? { curveValues } : {}),
+      ...workFields,
+    });
+
+    // De SPREIDING: `<ActualCurve>` (verricht, anker `ActualStartDate`) en `<RemainingCurve>`
+    // (resterend, anker `RemainingStartDate`) hebben voorrang; zonder die twee geldt `<PlannedCurve>`
+    // (anker `PlannedStartDate`) als resterend werk — MPXJ `XmlProjectReader` leest exact deze drie
+    // met deze ankers. Ankers worden op de taak-as gezet via de taakkalender (`axisOffsetMinutes`);
+    // ontbreekt een anker, dan geldt de taakstart.
+    const task = taskById.get(taskId);
+    if (task && task.time.scheduleStart && task.childIds.length === 0) {
+      const engine = engineForTask(task);
+      const taskStart = parseInstant(task.time.scheduleStart);
+      const anchorOffset = (tag: string): number => {
+        const raw = getElementText(asgnEl, tag);
+        return raw ? axisOffsetMinutes(engine, taskStart, parseImportedInstant(raw), false) : 0;
+      };
+      const actualSpread = getElementText(asgnEl, 'ActualCurve');
+      const remainingSpread = getElementText(asgnEl, 'RemainingCurve');
+      let periods = [
+        ...p6SpreadToContourPeriods(actualSpread, anchorOffset('ActualStartDate'), 'actual'),
+        ...p6SpreadToContourPeriods(remainingSpread, anchorOffset('RemainingStartDate'), 'remaining'),
+      ];
+      if (periods.length === 0 && plannedCurveRaw.indexOf(':') >= 0) {
+        periods = p6SpreadToContourPeriods(plannedCurveRaw, anchorOffset('PlannedStartDate'), 'remaining');
+      }
+      if (periods.length > 1 && periods.some(p => p.workMinutes > 0)) {
+        collectContour(contoursByTaskId, taskId, { resourceUid: null, resourceId, periods });
+      }
+    }
+  }
+  // Contouren + afgeleide werkonderbrekingen op de taken (zelfde afleiding als de .mpp-/MSPDI-lezer).
+  attachContours(taskById, contoursByTaskId);
+  reconstructResourceIds(tasks, assignments);
+
+  return {
+    project,
+    calendar,
+    tasks,
+    sequences,
+    resources,
+    assignments,
+    resourceCalendars,
+    customTaskTypes: [...customTaskTypes.values()],
+    // Rekenprofielen: P6-XML opent als OPS — de lezer zet geen opties, en onder het P6-profiel zouden
+    // A12/A13/A16/A17/A20/B2 aangaan zonder orakel.
+    suggestedProfileId: 'ops',
+    ...(Object.keys(recordedTimes).length > 0 ? { recordedTimes, recordedTimesOrigin: 'p6xml' as const } : {}),
+  };
+}
+
+function parseProject(doc: Document): Project {
+  const projElements = getAllByLocalName(doc, 'Project');
+  const projEl = projElements[0];
+
+  if (!projEl) {
+    return {
+      id: generateId('proj'),
+      name: 'P6 Import',
+      description: '',
+      startDate: localTodayIso(),
+      endDate: '',
+      calendarId: 'cal-default',
+      createdAt: new Date().toISOString(),
+      modifiedAt: new Date().toISOString(),
+      author: '',
+      company: '',
+    };
+  }
+
+  // MustFinishByDate is in P6 een optionele eis, geen berekend einde: ontbreekt hij, dan blijft de
+  // einddatum leeg (zoals de writer hem voor een project zonder einddatum weglaat).
+  const mustFinishRaw = getElementText(projEl, 'MustFinishByDate');
+  const project: Project = {
+    id: generateId('proj'),
+    name: getElementText(projEl, 'Name') || 'P6 Import',
+    description: getElementText(projEl, 'Description'),
+    startDate: parseP6Date(getElementText(projEl, 'PlannedStartDate')),
+    endDate: mustFinishRaw ? parseP6Date(mustFinishRaw) : '',
+    calendarId: 'cal-default',
+    createdAt: new Date().toISOString(),
+    modifiedAt: new Date().toISOString(),
+    author: '',
+    company: '',
+  };
+  // Data date → project.statusDate. Alleen wanneer aanwezig.
+  const dataDateRaw = getElementText(projEl, 'DataDate');
+  if (dataDateRaw) project.statusDate = statusDateFromXml(dataDateRaw);
+  return project;
+}
+
+/** De projectkalender is altijd de eerste <Calendar> van het bestand. */
+function parseCalendar(doc: Document): WorkCalendar {
+  const calElements = getAllByLocalName(doc, 'Calendar');
+  return calElements.length === 0 ? createDefaultCalendar() : readP6Calendar(calElements[0]);
+}
+
+/** Eén P6-<Calendar> → WorkCalendar (project- of resourcekalender; de id kiest de aanroeper). */
+function readP6Calendar(calEl: Element): WorkCalendar {
+  const calendar = createDefaultCalendar();
+  calendar.name = getElementText(calEl, 'Name') || calendar.name;
+  // P6 kent geen regelset-herkomst — createDefaultCalendar() zet 'm altijd; een uit P6 gelezen
+  // kalender is dat niet.
+  delete calendar.generation;
+
+  const hpd = getElementFloat(calEl, 'HoursPerDay');
+  if (hpd > 0) calendar.hoursPerDay = hpd; // authoritatief — StandardWorkWeek-uren overschrijven dit niet
+
+  // Werkweek + feestdagen — golden rule: geen <StandardWorkWeek>/<HolidayOrExceptions> (ander tool /
+  // oud bestand) ⇒ createDefaultCalendar()-defaults blijven staan.
+  const ww = parseP6StandardWorkWeek(calEl);
+  if (ww.workDays.length > 0) calendar.workDays = ww.workDays.sort((a, b) => a - b);
+  if (ww.workStartHour !== undefined) calendar.workStartHour = ww.workStartHour;
+  if (ww.workEndHour !== undefined) calendar.workEndHour = ww.workEndHour;
+  registerP6Bands(calendar, ww.rawByWeekday);
+
+  const holidays = parseP6HolidayOrExceptions(calEl);
+  if (holidays.length > 0) calendar.holidays = holidays;
+
+  return calendar;
+}

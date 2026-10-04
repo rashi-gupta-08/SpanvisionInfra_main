@@ -1,0 +1,12 @@
+{
+  "base": "http://127.0.0.1:4220/",
+  "passed": true,
+  "checks": [
+    "Start and browser title use Spanvision branding",
+    "About is Spanvision branded; source attribution remains accessible",
+    "IFC dashboard producer metadata uses Spanvision branding",
+    "No upstream brand service requests or uncaught browser errors",
+    "Downloaded IFC file identifies Spanvision Infra and 2D CAD Workspace",
+    "WeFC, generated IFC property sets, and MCP identity use the organization configuration"
+  ]
+}

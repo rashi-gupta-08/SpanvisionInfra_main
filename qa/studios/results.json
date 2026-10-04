@@ -1,0 +1,65 @@
+{
+  "results": [
+    {
+      "scenario": "All four current studio builds, source notices, CAD and BIM are available",
+      "passed": true
+    },
+    {
+      "scenario": "Main overview, Tools and Assistant links fit the viewport",
+      "passed": true,
+      "width": 320
+    },
+    {
+      "scenario": "Main overview, Tools and Assistant links fit the viewport",
+      "passed": true,
+      "width": 390
+    },
+    {
+      "scenario": "Main overview, Tools and Assistant links fit the viewport",
+      "passed": true,
+      "width": 820
+    },
+    {
+      "scenario": "Main overview, Tools and Assistant links fit the viewport",
+      "passed": true,
+      "width": 1440
+    },
+    {
+      "scenario": "Hub launches the existing studio at desktop, tablet and phone sizes",
+      "passed": true,
+      "module": "planner"
+    },
+    {
+      "scenario": "Construction schedule imports tasks and exports an IFC project",
+      "passed": true
+    },
+    {
+      "scenario": "Hub launches the existing studio at desktop, tablet and phone sizes",
+      "passed": true,
+      "module": "fem"
+    },
+    {
+      "scenario": "FEM browser solver computes the included structural model",
+      "passed": true
+    },
+    {
+      "scenario": "Hub launches the existing studio at desktop, tablet and phone sizes",
+      "passed": true,
+      "module": "frame"
+    },
+    {
+      "scenario": "Bundled frame engine creates a frame and preserves edit/undo behavior",
+      "passed": true
+    },
+    {
+      "scenario": "Hub launches the existing studio at desktop, tablet and phone sizes",
+      "passed": true,
+      "module": "calculation"
+    },
+    {
+      "scenario": "Calculation designer evaluates a document and downloads its project",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

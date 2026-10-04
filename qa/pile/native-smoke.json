@@ -1,0 +1,19 @@
+{
+  "method": "Packaged executable with process-local WebView2 CDP for QA only",
+  "results": [
+    {
+      "name": "Native adapter sample startup and branded title",
+      "status": "passed",
+      "evidence": {
+        "url": "http://tauri.localhost/",
+        "theme": "spanvision-mono",
+        "startup": "Explorer\nPROJECT\nSample Project\nIFCPP\nINPUT SOURCES\nLoad points\n328 rows\nCPTs\n77 rows\nFoundation advice\n2340 rows\nPILE PLANS\nBase plan\n€207,111\nNew pile plan"
+      }
+    },
+    {
+      "name": "Native open-source notices",
+      "status": "passed"
+    }
+  ],
+  "errors": []
+}

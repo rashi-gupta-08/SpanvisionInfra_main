@@ -1,0 +1,363 @@
+/* Wapeningskorf en M-N-κ-diagram — thema-volgend via de theme-tokens. */
+
+.beton-paneel-container {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.beton-paneel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  color: var(--theme-text);
+  font-size: 12px;
+}
+
+@container (min-width: 600px) {
+  .beton-paneel {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  }
+}
+
+.beton-kolom-invoer,
+.beton-kolom-uitvoer {
+  min-width: 0;
+}
+
+/* ── Formulier ─────────────────────────────────────────────────────────── */
+
+.beton-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.beton-groep {
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  padding: 8px 10px 10px;
+  background: var(--theme-surface);
+}
+
+.beton-groep-kop {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+  margin-bottom: 6px;
+}
+
+.beton-rij {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  /* Een rij mag een toelichting onder zich krijgen (de zijstaven leggen uit
+     dat hun aantal PER ZIJKANT telt). Die staat op een eigen regel en duwt de
+     invoer dus niet uit het midden. */
+  flex-wrap: wrap;
+}
+
+.beton-rij-toelichting {
+  flex-basis: 100%;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--theme-text-muted);
+  padding-bottom: 2px;
+}
+
+.beton-label {
+  color: var(--theme-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.beton-invoer {
+  width: 128px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 3px 6px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-dialog-input-text, var(--theme-text));
+  background: var(--theme-dialog-input-bg, var(--theme-bg));
+  border: 1px solid var(--theme-dialog-input-border, var(--theme-border));
+  border-radius: 4px;
+}
+
+.beton-invoer:focus {
+  outline: 2px solid var(--theme-focus-color);
+  outline-offset: 1px;
+}
+
+.beton-invoer-kort {
+  width: 58px;
+}
+
+.beton-invoer-met-eenheid,
+.beton-invoer-groep {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.beton-invoer-met-eenheid .beton-invoer {
+  width: 90px;
+}
+
+.beton-eenheid {
+  color: var(--theme-text-muted);
+  min-width: 22px;
+}
+
+.beton-hint {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--theme-text-muted);
+  padding: 2px 0 4px;
+}
+
+/* ── Dekking per zijde (4.4.1.1(1)P) ───────────────────────────────────────
+   De kolom is smal, dus dit blok moet zich gedragen: één regel per zijde, met
+   de klassekiezer die de resterende breedte krijgt en een kort dekkingsveld
+   ernaast. Dichtgeklapt kost het één regel. */
+
+.beton-zijden {
+  padding: 2px 0 4px;
+}
+
+.beton-zijden-knop {
+  display: block;
+  width: 100%;
+  padding: 2px 0;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  color: var(--theme-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.beton-zijden-knop:hover {
+  color: var(--theme-text);
+}
+
+.beton-zijden-knop:focus-visible {
+  outline: 2px solid var(--theme-focus-color);
+  outline-offset: 1px;
+}
+
+.beton-zijden-lijst {
+  padding: 2px 0 0 10px;
+}
+
+.beton-zijde-rij {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+
+.beton-zijde-naam {
+  flex: 0 0 46px;
+  font-size: 11px;
+  color: var(--theme-text-secondary);
+}
+
+/* De klassekiezer blijft bedienbaar; in smalle panelen mag de rij ombreken. */
+.beton-invoer-zijde {
+  flex: 1 1 120px;
+  min-width: 100px;
+  width: auto;
+}
+
+.beton-zijde-rij .beton-invoer-kort {
+  flex: 0 0 52px;
+}
+
+/* Wat er werkelijk gaat gelden: de klasse en de dekking ná de terugval op het
+   element. Zonder dat getal is een leeg veld niet van een ingevuld veld te
+   onderscheiden. */
+.beton-zijde-uitkomst {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-text-muted);
+  white-space: nowrap;
+}
+
+.beton-zijde-uitleg {
+  margin: 6px 0 0;
+}
+
+/* ── Uitvoer ───────────────────────────────────────────────────────────── */
+
+.beton-tekening-blok {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 12px;
+  align-items: start;
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--theme-surface);
+}
+
+.beton-tekening {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.beton-kerngetallen {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 3px;
+  align-content: start;
+}
+
+.beton-kerngetallen dt {
+  color: var(--theme-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.beton-kerngetallen dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.beton-waarschuwing {
+  color: var(--theme-danger-color);
+}
+
+.beton-grafiek-blok {
+  margin-top: 12px;
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  padding: 8px 10px 10px;
+  background: var(--theme-surface);
+}
+
+.beton-grafiek-kop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.beton-bezig {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--theme-text-muted);
+}
+
+.beton-grafiek {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  display: block;
+  cursor: crosshair;
+}
+
+.beton-grafiek-samenvatting {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--theme-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.beton-fout {
+  overflow-wrap: anywhere;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--theme-danger-color);
+  color: var(--theme-danger-color);
+  background: var(--theme-surface);
+  font-size: 11.5px;
+}
+
+/* De vindplaatsen bij de dekkingstoets: normteksten die de kern meestuurt.
+   Ze staan ingeklapt, want ze zijn lang en je hebt ze pas nodig als je wilt
+   weten wáárom er 45 mm staat. */
+.beton-notities {
+  margin-top: 6px;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.beton-notities summary {
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.beton-notities ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
+
+.beton-notities li {
+  margin-bottom: 4px;
+}
+
+.beton-tabel {
+  overflow-x: auto;
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+.beton-tabel summary {
+  cursor: pointer;
+  color: var(--theme-text-muted);
+}
+
+.beton-tabel table {
+  margin-top: 6px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.beton-tabel th,
+.beton-tabel td {
+  text-align: right;
+  padding: 2px 10px 2px 0;
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+
+.beton-tabel th {
+  color: var(--theme-text-muted);
+  font-weight: 500;
+}
+
+/* Klikbare rijlabels in de doorsnedetekening, en de rij-invoer die erbij
+   hoort (RijBewerker) — gedeeld door het betonvenster en de profielkiezer. */
+.beton-rijlabel-klikbaar:hover { text-decoration: underline; }
+.beton-rijbewerker {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin: 6px 0 4px; padding: 6px 8px;
+  border: 1px solid var(--theme-border, #ddd); border-radius: 4px;
+  background: var(--theme-surface-2, #fafafa); font-size: 12px;
+}
+.beton-rijbewerker-titel { font-weight: 600; width: 100%; }
+.beton-rijbewerker label { display: inline-flex; align-items: center; gap: 4px; }
+.beton-rijbewerker input[type="number"] { width: 56px; }
+.beton-rijbewerker-fout { color: var(--theme-danger, #b91c1c); }
+/* "2 per zijkant, dus 4 in de doorsnede" — het getal dat de gebruiker anders
+   verkeerd leest, meteen naast het veld. */
+.beton-rijbewerker-hint { width: 100%; color: var(--theme-text-muted); font-size: 11px; }
+
+/* De "−"/"+" naast een rijlabel in de doorsnedetekening: één staaf minder of meer. */
+.beton-rijknop { opacity: 0.55; }
+.beton-rijknop:hover { opacity: 1; }

@@ -1,0 +1,115 @@
+/* Spanvision Field Workspace: presentation only; document and model colors are independent. */
+.brand-name small { display:block; font:500 10px/1.4 var(--font-body); letter-spacing:.06em; color:#999; }
+.logo img { width:32px; height:32px; flex:none; }
+.title-bar-icon img { width:22px; height:22px; }
+.about-button { width:32px; height:32px; border:1px solid rgba(255,255,255,.32); border-radius:6px; background:transparent; color:#eee; cursor:pointer; font:600 16px var(--font-body); }
+.field-notices { margin:auto; width:min(640px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:28px; border:1px solid rgba(255,255,255,.32); border-radius:12px; background:#121212; color:#eee; }
+.field-notices::backdrop { background:rgba(0,0,0,.78); }
+.field-notices h2 { color:#fff; margin-bottom:12px; }
+.field-notices p { margin:12px 0; }
+.field-notices a { color:#eee; text-underline-offset:3px; }
+.field-notices .notices-close { min-height:44px; padding:8px 18px; background:#eee; color:#000; border:1px solid #eee; border-radius:6px; cursor:pointer; }
+:focus-visible { outline:2px solid rgba(255,255,255,.58); outline-offset:3px; }
+[data-theme="light"] :focus-visible { outline-color:rgba(0,0,0,.65); }
+[data-theme="spanvision-mono"] .title-bar,
+[data-theme="spanvision-mono"] .app-toolbar,
+[data-theme="spanvision-mono"] .tab-strip,
+[data-theme="spanvision-mono"] .status-bar { background:#000; border-color:var(--sv-border); color:#999; }
+[data-theme="spanvision-mono"] .main-content { background:#000; }
+[data-theme="spanvision-mono"] .tab-content,
+[data-theme="spanvision-mono"] .section,
+[data-theme="spanvision-mono"] .modal-content,
+[data-theme="spanvision-mono"] .modal-footer,
+[data-theme="spanvision-mono"] .stat-card,
+[data-theme="spanvision-mono"] .dashboard-panel,
+[data-theme="spanvision-mono"] .checklist-item,
+[data-theme="spanvision-mono"] .checklist-btn,
+[data-theme="spanvision-mono"] .checklist-item-detail textarea,
+[data-theme="spanvision-mono"] .manual-section { background:#121212; border-color:var(--sv-border); color:#eee; }
+[data-theme="spanvision-mono"] .tab-strip .nav-btn { color:#999; }
+[data-theme="spanvision-mono"] .tab-strip .nav-btn.active { background:#202020; color:#fff; border-bottom-color:#fff; }
+[data-theme="spanvision-mono"] .btn-primary,
+[data-theme="spanvision-mono"] .btn-success,
+[data-theme="spanvision-mono"] .btn-danger,
+[data-theme="spanvision-mono"] .checklist-choice.selected,
+[data-theme="spanvision-mono"] .tool-btn.active { background:#eee; color:#000; border-color:#eee; }
+[data-theme="spanvision-mono"] .btn-primary:hover,
+[data-theme="spanvision-mono"] .btn-success:hover,
+[data-theme="spanvision-mono"] .btn-danger:hover { background:#fff; color:#000; }
+[data-theme="spanvision-mono"] .btn-secondary,
+[data-theme="spanvision-mono"] .btn-outline,
+[data-theme="spanvision-mono"] .tool-btn,
+[data-theme="spanvision-mono"] .verdict-btn,
+[data-theme="spanvision-mono"] .checklist-choice,
+[data-theme="spanvision-mono"] .modal-close { background:#202020; color:#eee; border-color:rgba(255,255,255,.32); }
+[data-theme="spanvision-mono"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+[data-theme="spanvision-mono"] textarea,
+[data-theme="spanvision-mono"] select { background:#202020; color:#eee; border-color:rgba(255,255,255,.32); }
+[data-theme="spanvision-mono"] input::placeholder,
+[data-theme="spanvision-mono"] textarea::placeholder { color:#999; opacity:1; }
+[data-theme="spanvision-mono"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+[data-theme="spanvision-mono"] textarea:focus,
+[data-theme="spanvision-mono"] select:focus { border-color:rgba(255,255,255,.58); box-shadow:0 0 0 3px rgba(255,255,255,.1); }
+[data-theme="spanvision-mono"] :is(.theme-toggle-btn,.about-button,.quick-access-btn,.tb-lang-toggle,.tb-lang-option,.tool-btn,.btn-secondary,.btn-outline,.checklist-choice,.modal-close,.verdict-btn):hover { background:#333; color:#fff; border-color:rgba(255,255,255,.58); }
+[data-theme="spanvision-mono"] :is(.verdict-btn.selected,.checklist-btn.active) { background:#eee; color:#000; border-color:#fff; }
+[data-theme="spanvision-mono"] :is(.checklist-btn.selected,.nen-score.selected) { background:#eee; color:#000; border-color:#fff; }
+[data-theme="spanvision-mono"] .tb-lang-menu { background:#121212; border-color:var(--sv-border); }
+[data-theme="spanvision-mono"] .tb-lang-option { color:#eee; }
+[data-theme="spanvision-mono"] .tb-lang-option.active { color:#fff; background:#202020; }
+[data-theme="spanvision-mono"] .window-btn-close:hover { background:#333; }
+[data-theme="spanvision-mono"] .modal-overlay { background:rgba(0,0,0,.78); }
+[data-theme="spanvision-mono"] :is(.upload-zone,.photo-upload-zone,.export-preview,.summary-item,.ho-signature-block,.ho-doc-item,.chart-bar-track,.comment-input) { background:#202020; color:#eee; border-color:var(--sv-border); }
+[data-theme="spanvision-mono"] .upload-zone:hover,
+[data-theme="spanvision-mono"] .photo-upload-zone:hover { background:#292929; border-color:rgba(255,255,255,.58); }
+[data-theme="spanvision-mono"] :is(.status-badge,.priority-badge,.notification,.chart-bar-fill) { background:#333 !important; color:#eee !important; }
+[data-theme="spanvision-mono"] .status-completed { border:1px solid #999; }
+[data-theme="spanvision-mono"] .status-verified { background:#eee !important; color:#000 !important; }
+[data-theme="spanvision-mono"] :is(.priority-high,.priority-medium,.priority-low) { border-left-color:#999; }
+[data-theme="spanvision-mono"] :is(.floor-plan-item,.point-item,.ticket-item,.contact-card,.inspection-card,.handover-card,.connector-card) { background:#121212; color:#eee; border-color:var(--sv-border); }
+[data-theme="spanvision-mono"] :is(.floor-plan-item,.point-item,.ticket-item,.connector-card):hover { background:#202020; }
+[data-theme="spanvision-mono"] :is(.floor-plan-item.active,.point-item.active,.ticket-item.active) { background:#202020; border-color:#eee; }
+[data-theme="spanvision-mono"] :is(.photo-viewer-close,.photo-viewer-nav,.photo-viewer-caption) { background:#202020; color:#eee; }
+.canvas-container { background:var(--fw-canvas,#1B1B1B) !important; }
+#ifc-canvas-container { background:var(--fw-canvas,#1B1B1B) !important; }
+button:disabled { opacity:.45; cursor:not-allowed; }
+.main-content,.tab-content,.opname-container,.canvas-wrapper,.sidebar { min-width:0; }
+.modal { padding:16px; }
+.modal-content { width:min(100%,600px); max-width:100%; max-height:calc(100dvh - 32px); overflow:hidden; }
+.modal-content.modal-wide { width:min(100%,750px); }
+.modal :is(input,select,textarea) { min-width:0; max-width:100%; }
+.status-bar { min-width:0; overflow:hidden; }
+.status-bar-left { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.handover-card-info { min-width:0; overflow-wrap:anywhere; }
+.notification { max-width:calc(100vw - 32px); overflow-wrap:anywhere; }
+[data-theme="spanvision-mono"] .notification { background:#202020 !important; color:#eee !important; border:1px solid rgba(255,255,255,.32); }
+.notification[data-status="error"]::before { content:'! '; font-weight:700; }
+.notification[data-status="success"]::before { content:'✓ '; }
+[data-theme="spanvision-mono"] :is(.select-btn,.delete-btn,.remove-btn) { background:#202020; color:#eee; border-color:rgba(255,255,255,.32); }
+@media (max-width:820px) {
+  .opname-container { display:flex; flex-direction:column; height:auto; }
+  .sidebar { width:100%; max-height:none; }
+  .canvas-container { min-height:300px; }
+  .canvas-wrapper { width:100%; }
+  .main-content { overflow-x:hidden; }
+  .tab-content { padding:16px; }
+  :is(.btn,.tool-btn,.verdict-btn,.checklist-choice,.tb-lang-toggle,.tb-lang-option,.theme-toggle-btn,.about-button,.tab-strip .nav-btn) { min-height:44px; }
+  :is(.theme-toggle-btn,.about-button) { min-width:44px; }
+  .canvas-toolbar { flex-wrap:wrap; }
+  .handover-card { flex-wrap:wrap; gap:12px; }
+  .handover-card-info { width:100%; flex:1 0 100%; }
+  #ifc-canvas-container { height:55dvh !important; min-height:300px !important; }
+}
+@media (max-width:480px) {
+  .app-toolbar { padding:8px; flex-wrap:wrap; gap:8px; }
+  .app-toolbar .logo { gap:7px; }
+  .app-toolbar .logo h1 { font-size:16px; }
+  .toolbar-right { gap:5px; margin-left:auto; }
+  .main-content { padding:8px; }
+  .tab-content { padding:12px; }
+  :is(.form-grid,.dashboard-grid,.dashboard-panels,.export-options,.ho-participant-row) { grid-template-columns:minmax(0,1fr); }
+  :is(.section-header,.export-actions,.modal-footer,.floor-selector,.ticket-filters) { flex-wrap:wrap; gap:8px; }
+  .floor-selector :is(input,select),.ticket-filters :is(input,select) { width:100%; min-width:0; }
+  .field-notices { padding:20px; }
+  .field-notices h2 { font-size:24px; }
+  :is(.select-btn,.delete-btn,.remove-btn,.modal-close,.checklist-btn) { min-height:44px; min-width:44px; }
+}

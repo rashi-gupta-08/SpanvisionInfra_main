@@ -1,0 +1,143 @@
+/* Frame Vision Studio — Global Styles */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #app {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+}
+
+code, pre {
+  font-family: var(--font-code);
+  font-size: 0.875rem;
+}
+
+button {
+  cursor: default;
+  font-family: var(--font-body);
+  font-weight: 600;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, select {
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+/* Interface controls share one palette. Drawing SVG fills stay independent. */
+html body :is(input:not([type="color"]):not([type="range"]):not([type="checkbox"]), select, textarea) {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  min-width: 0;
+}
+
+html body option { background: var(--bg-elevated); color: var(--text-primary); }
+::placeholder { color: var(--text-muted); opacity: 1; }
+button, select, a { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), select, a { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+html body #app :is(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: -2px;
+}
+html body #app :is(input, select, textarea):focus-visible { border-color: var(--focus-color); }
+a { color: var(--text-primary); text-underline-offset: 3px; }
+a:hover { color: var(--text-accent); }
+html[data-theme="spanvision-mono"] body :is(button.active, button.selected, .nav-item.active, .tool-btn.active) {
+  background: var(--bg-selected);
+  color: var(--text-primary);
+}
+html[data-theme="spanvision-mono"] body :is(.card.active, .card.selected) { background: var(--bg-selected); }
+html[data-theme="spanvision-mono"] body button:hover:not(:disabled):not(.file-tab):not(.send-btn):not(.save-btn):not(.btn-primary):not(.action-btn.primary):not(.card.primary):not(.ribbon-btn.primary) {
+  background-color: var(--hover-overlay);
+}
+html[data-theme="spanvision-mono"] body :is(.ribbon-btn.primary, .btn-primary, .action-btn.primary, .card.primary) {
+  background: var(--action-bg);
+  color: var(--action-text);
+}
+html[data-theme="spanvision-mono"] body :is(.ribbon-btn.primary, .btn-primary, .action-btn.primary, .card.primary):hover:not(:disabled) {
+  background: var(--action-hover);
+  color: var(--action-text);
+}
+html[data-theme="spanvision-mono"] body .rating { color: var(--action-text); }
+html[data-theme="spanvision-mono"] body .card.primary :is(.card-title, svg) { color: var(--action-text); stroke: var(--action-text); }
+html[data-theme="spanvision-mono"] body .card.primary .card-shortcut { color: var(--action-text); background: rgba(0,0,0,.09); border-color: rgba(0,0,0,.16); }
+html[data-theme="spanvision-mono"] body .message.user {
+  background: var(--bg-selected);
+  color: var(--text-primary);
+  border: var(--border-default);
+}
+html[data-theme="spanvision-mono"] body :is(.op-badge, .cat-badge, .status-badge, .coupling-badge, .badge.pass, .badge.fail, .badge.neutral) {
+  background: var(--bg-selected);
+  color: var(--text-primary);
+  border: var(--border-default);
+}
+
+@media (max-width: 1023px) {
+  html body :is(input:not([type="checkbox"]):not([type="color"]):not([type="range"]), select, textarea) { font-size: 16px; }
+  html body :is(.ribbon-btn, .tab, .ws-tab, .suggestion, .menu-item) { min-height: 40px; }
+  html body :is(.ribbon-tabs, .ribbon-content) { overflow-x: auto; flex-wrap: nowrap; max-width: 100%; }
+  html body :is(.ribbon-group, .ribbon-divider, .ribbon-tabs .tab) { flex-shrink: 0; }
+  html body .ribbon-content { min-height: 76px; }
+  html body .toast-container { max-width: calc(100vw - 24px); }
+  html body .workspace > div { min-width: 0; max-width: 100%; }
+  html body .profile-toolbar { overflow-x: auto; }
+  html body .profile-toolbar .tool-group { flex-shrink: 0; }
+  html body :is(.view-header, .header-actions, .toolbar-actions, .filter-row) { flex-wrap: wrap; }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-surface-alt);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scaffold-gray);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Application layout */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-width: 0;
+}

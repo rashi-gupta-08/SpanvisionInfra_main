@@ -1,0 +1,482 @@
+import { useCallback, useRef, useState } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
+import { useLatestRef } from '@/hooks/useLatestRef';
+import { editableSplitPieces, useBarDrag } from './useBarDrag';
+import { usePan } from './usePan';
+import { useBoxSelect } from './useBoxSelect';
+import { useDependencyDraw } from './useDependencyDraw';
+import { useSplitGesture } from './useSplitGesture';
+import { canSplitTask } from '@/engine/scheduler/splitEdit';
+import { isSummaryTask } from '@/engine/scheduler/relationRules';
+import type { Task } from '@/types/task';
+import type { GanttRenderer } from '@/engine/renderer/GanttRenderer';
+import type {
+  GanttContextMenuState,
+  GanttPointerCoordinatorInput,
+  GanttPointerCoordinatorOutput,
+  GanttRelationPopoverState,
+  GanttTooltipState,
+} from './ganttCoordinatorTypes';
+
+/**
+ * Enige eigenaar van de pointerprioriteit op het primaire tijdlijncanvas. De DOM-grid links bezit
+ * rijselectie, disclosure, rijsleep en de workspace-splitter; deze hook coördineert uitsluitend
+ * balken, relaties, pannen en kaderselectie binnen de lokale canvascoördinaten.
+ */
+export function useGanttPointerCoordinator(
+  input: GanttPointerCoordinatorInput,
+): GanttPointerCoordinatorOutput {
+  const {
+    host,
+    viewport,
+    tasks,
+    calendar,
+    effectiveCalendarByTaskId,
+    selectedTaskIds,
+    headerHeight,
+    dependencyMode,
+    splitMode,
+    scrollMode,
+    enableQuarterHourZoom,
+    enableHourPlanning,
+    compressNonWorkdays,
+    selectTask,
+    selectTasks,
+    deselectAll,
+    updateTask,
+    setTaskSplits,
+    undo,
+    setScroll,
+    openTask,
+    clearHistogramTooltip,
+    startVerticalRowDrag,
+    isStartDrivenByPredecessor,
+    notify,
+    dateNotation,
+  } = input;
+  const canvasRef = host.primaryCanvasRef;
+  const rendererRef = host.primaryRendererRef;
+  const containerRef = viewport.refs.primaryContainerRef;
+  const view = viewport.effectiveView;
+
+  const justBoxSelectedRef = useRef(false);
+  // Gezet zodra een balkbody-sleep aan de rijsleep van de DOM-grid is overgedragen: de mouseup van
+  // dat gebaar levert op het canvas nog een click op, en die mag de zojuist verplaatste taak niet
+  // her-selecteren of (naast een balk) de selectie wissen. Gewist bij de eerstvolgende mousedown,
+  // want eindigt de sleep boven de grid, dan komt er op het canvas helemaal geen click (zelfde
+  // vangnet als `useTableRowDrag`'s `justDraggedRef`).
+  const justRowDraggedRef = useRef(false);
+  const [hoverCursor, setHoverCursor] = useState('default');
+  const [contextMenu, setContextMenu] = useState<GanttContextMenuState | null>(null);
+  const [relationPopover, setRelationPopover] = useState<GanttRelationPopoverState | null>(null);
+  const [tooltip, setTooltip] = useState<GanttTooltipState | null>(null);
+
+  const latestTasks = useLatestRef(tasks);
+  const getTask = useCallback(
+    (taskId: string) => latestTasks.current.find(candidate => candidate.id === taskId),
+    [latestTasks],
+  );
+  const pan = usePan({ setScroll, justBoxSelectedRef });
+  const boxSelect = useBoxSelect({
+    canvasRef,
+    rendererRef,
+    selectTasks,
+    deselectAll,
+    justBoxSelectedRef,
+  });
+  // Verticale balkbody-sleep ⇒ dezelfde rijsleep als de taakrij links (zie `ganttRowDragBridge`).
+  // `useBarDrag` beslist pas ná de drempel over de richting en roept dit hooguit één keer per
+  // gebaar aan; daarna is zijn eigen dragState al gewist, dus er lopen nooit twee gebaren tegelijk.
+  const onVerticalBodyDrag = useCallback((candidate: {
+    taskId: string;
+    startClientX: number;
+    startClientY: number;
+  }) => {
+    justRowDraggedRef.current = true;
+    startVerticalRowDrag?.(candidate);
+  }, [startVerticalRowDrag]);
+  const barTopOf = useCallback(
+    (taskId: string) => rendererRef.current?.getTaskBarRect(taskId)?.top ?? null,
+    [rendererRef],
+  );
+  const barDrag = useBarDrag({
+    zoom: view.zoom,
+    enableQuarterHourZoom,
+    enableHourPlanning,
+    calendar,
+    effectiveCalById: effectiveCalendarByTaskId,
+    compressNonWorkdays,
+    getTask,
+    updateTask,
+    onVerticalBodyDrag: startVerticalRowDrag ? onVerticalBodyDrag : undefined,
+    axis: viewport.sharedAxis,
+    canvasRef,
+    setTaskSplits,
+    barTopOf,
+    isStartDrivenByPredecessor,
+    notify,
+    dateNotation,
+  });
+  // Het splitsgebaar. Bewust ná `useDependencyDraw` gedeclareerd — beide tekenen op
+  // hetzelfde overlay-canvas, en de twee modi sluiten elkaar uit, dus de laatst gemounte teken-
+  // effectlaag is die van het gebaar dat werkelijk aan kan staan.
+  const splitGesture = useSplitGesture({
+    canvasRef,
+    containerRef,
+    overlayCanvasRef: host.dependencyCanvasRef,
+    rendererRef,
+    axis: viewport.sharedAxis,
+    calendar,
+    effectiveCalById: effectiveCalendarByTaskId,
+    zoom: view.zoom,
+    enableQuarterHourZoom,
+    enableHourPlanning,
+    getTask,
+    setTaskSplits,
+    undo,
+  });
+
+  /** `null` = splitsbaar. De uren-per-dag komen uit dezelfde effectieve taakkalender die de
+   *  renderer en `setTaskSplits` gebruiken, zodat de cursor niet iets anders belooft dan de store
+   *  toestaat. */
+  const splitRefusalFor = useCallback((task: Task) => {
+    const hoursPerDay = (effectiveCalendarByTaskId.get(task.id) ?? calendar).hoursPerDay;
+    return canSplitTask(task, hoursPerDay, isSummaryTask(task));
+  }, [effectiveCalendarByTaskId, calendar]);
+
+  /**
+   * De hit van `getTaskBarBounds` zoals de BALKSLEEP hem moet lezen. Een
+   * gesplitste balk waarvan de stukken niet bewerkbaar zijn (alleen-lezen importsplit, niet
+   * splitsbaar, of een onzichtbare pauze — zie `editableSplitPieces`) sleept als ÉÉN balk: de
+   * rechterrand van een tussenstuk is dan gewoon body, alleen het laatste stuk houdt de duurgreep.
+   * Zo belooft de cursor nooit een greep die de sleep daarna weigert.
+   */
+  const dragHit = useCallback((hit: NonNullable<ReturnType<GanttRenderer['getTaskBarBounds']>>) => {
+    if (hit.segmentCount <= 1) return hit;
+    const cal = effectiveCalendarByTaskId.get(hit.task.id) ?? calendar;
+    if (editableSplitPieces(hit.task, cal, hit.segmentCount)) return hit;
+    const last = hit.segmentIndex === hit.segmentCount - 1;
+    return {
+      ...hit,
+      edge: hit.edge === 'right' && !last ? 'body' as const : hit.edge,
+      segmentIndex: 0,
+      segmentCount: 1,
+    };
+  }, [effectiveCalendarByTaskId, calendar]);
+
+  const onRelationDrawn = useCallback((sourceTaskId: string, targetTaskId: string, x: number, y: number) => {
+    setRelationPopover({ sourceTaskId, targetTaskId, x, y });
+  }, []);
+  const dependencyDraw = useDependencyDraw({
+    canvasRef,
+    containerRef,
+    depLineCanvasRef: host.dependencyCanvasRef,
+    rendererRef,
+    onRelationDrawn,
+  });
+
+  const onClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    if (justBoxSelectedRef.current) {
+      justBoxSelectedRef.current = false;
+      return;
+    }
+    if (justRowDraggedRef.current) {
+      justRowDraggedRef.current = false;
+      return;
+    }
+    clearHistogramTooltip();
+    const canvas = canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (y < headerHeight) return;
+
+    const task = renderer.getRelationSourceAt(x, y);
+    if (!task) {
+      deselectAll();
+      return;
+    }
+    if (event.shiftKey) selectTask(task.id, false, true);
+    else if (event.ctrlKey || event.metaKey) selectTask(task.id, true, false);
+    else selectTask(task.id, false, false);
+  }, [canvasRef, rendererRef, clearHistogramTooltip, headerHeight, deselectAll, selectTask]);
+
+  const onDoubleClick = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const task = renderer.getRelationSourceAt(x, y);
+    if (task) openTask(task.id);
+  }, [canvasRef, rendererRef, openTask]);
+
+  const onContextMenu = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    setTooltip(null);
+    clearHistogramTooltip();
+    const canvas = canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (y < headerHeight) return;
+    const task = renderer.getRelationSourceAt(x, y);
+    if (!task) return;
+    if (task && !selectedTaskIds.includes(task.id)) selectTask(task.id, false);
+    // Welke pauze "Onderbreking opheffen" bedoelt — de pauze onder de cursor,
+    // anders die vóór het aangeklikte stuk. Alleen op een bewerkbare split met evenveel getekende
+    // stukken als werkstukken; anders wijst de index naar de verkeerde pauze.
+    let splitGapIndex: number | null = null;
+    if (task.splitGaps && task.splitGaps.length > 0) {
+      const gap = renderer.getSplitGapAt(x, y);
+      const bounds = gap ? null : renderer.getTaskBarBounds(x, y);
+      const index = gap?.task.id === task.id
+        ? gap.gapIndex
+        : bounds?.task.id === task.id && bounds.segmentIndex > 0 ? bounds.segmentIndex - 1 : null;
+      const drawn = gap?.segmentCount ?? bounds?.segmentCount ?? 0;
+      const cal = effectiveCalendarByTaskId.get(task.id) ?? calendar;
+      if (index !== null && editableSplitPieces(task, cal, drawn)) splitGapIndex = index;
+    }
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      task,
+      barHit: true,
+      group: null,
+      splitGapIndex,
+    });
+  }, [canvasRef, rendererRef, clearHistogramTooltip, headerHeight, selectedTaskIds, selectTask, effectiveCalendarByTaskId, calendar]);
+
+  const beginPan = useCallback((event: ReactMouseEvent<HTMLCanvasElement>, button: number) => {
+    pan.startPan({
+      button,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      originScrollX: view.scrollX,
+      originScrollY: view.scrollY,
+    });
+  }, [pan, view.scrollX, view.scrollY]);
+
+  /*
+   * De karakteriseringsmatrix bewaakt deze ene volgorde:
+   * 1 actief gebaar weigert een tweede; 2 middelklik pant overal; 3 header stopt; 4 relatie wint
+   * van balkdrag; 4b splits-modus kaapt de balk en valt nooit door naar de balkdrag;
+   * 5 Ctrl/Cmd-balk blijft selectie; 6 balkbody/rand sleept; 7 drag-achtergrond pant;
+   * 8 iedere overige achtergrondroute start kaderselectie.
+   */
+  const onMouseDown = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    // Een nieuwe mousedown is onmiskenbaar een nieuwe interactie: een eventueel blijven hangen
+    // rijsleep-vlag (sleep geëindigd boven de grid, dus zonder canvas-click) vervalt hier.
+    justRowDraggedRef.current = false;
+    // 1–2. Middelklik pant alleen wanneer geen enkel ander gebaar actief is.
+    if (event.button === 1) {
+      event.preventDefault();
+      if (barDrag.active || dependencyDraw.active || splitGesture.active || boxSelect.active || pan.active) return;
+      beginPan(event, 1);
+      return;
+    }
+    if (event.button !== 0 || pan.active) return;
+
+    const canvas = canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    // 3. Onder de timelineheader bestaat geen taakgebaar.
+    if (y < headerHeight) return;
+
+    // 4. Shift/dependency-mode gebruikt uitsluitend de publieke relatiehittest en wint van drag.
+    if (event.shiftKey || dependencyMode) {
+      const source = renderer.getRelationSourceAt(x, y);
+      if (source) {
+        event.preventDefault();
+        dependencyDraw.startDepDraw({
+          sourceTaskId: source.id,
+          sourceX: event.clientX,
+          sourceY: event.clientY,
+          currentX: event.clientX,
+          currentY: event.clientY,
+        });
+        return;
+      }
+    }
+
+    const hit = renderer.getTaskBarBounds(x, y);
+
+    // 4b. Splits-modus kaapt de balk vóór elk sleepgebaar. Is de taak niet splitsbaar
+    // (mijlpaal, verzameltaak, te kort, …) of valt de klik in een bestaande pauze, dan gebeurt er
+    // niets: de verbodscursor heeft dat al gezegd. Nooit doorvallen naar de balksleep — in deze
+    // modus mag een klik op een balk geen datum verzetten.
+    if (splitMode && hit) {
+      if (splitRefusalFor(hit.task) === null) {
+        event.preventDefault();
+        if (splitGesture.startSplitGesture({ taskId: hit.task.id, startClientX: event.clientX })) {
+          selectTask(hit.task.id, false);
+        }
+      }
+      return;
+    }
+    // Een pauze is geen grijpvlak (`getTaskBarBounds` geeft er `null`), maar
+    // hoort in de splits-modus nog steeds bij de balk: een klik erin doet niets,
+    // in plaats van een kaderselectie te starten.
+    if (splitMode && renderer.getSplitGapAt(x, y)) {
+      event.preventDefault();
+      return;
+    }
+    // Ook buiten de modus is een pauze van de balk en niet van de achtergrond: een klik erin
+    // selecteert de taak en start géén pan of kaderselectie (anders toont de pauze de pan-cursor
+    // van stap 7 zonder dat er iets gebeurt).
+    const gapHit = hit ? null : renderer.getSplitGapAt(x, y);
+    if (gapHit) {
+      event.preventDefault();
+      selectTask(gapHit.task.id, false);
+      return;
+    }
+
+    if (hit) {
+      // 5. Ctrl/Cmd op een balk is selectie; de latere click-handler voert de toggle uit.
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        return;
+      }
+      // 6. Gewone balkbody/rand start precies één tijdlijngebaar. Op een gesplitste balk zegt het
+      // stuk welke (zie `useBarDrag`).
+      event.preventDefault();
+      const grip = dragHit(hit);
+      barDrag.startBarDrag({
+        taskId: hit.task.id,
+        edge: grip.edge,
+        segmentIndex: grip.segmentIndex,
+        segmentCount: grip.segmentCount,
+        startX: event.clientX,
+        startY: event.clientY,
+        originalStart: hit.task.time.earlyStart || hit.task.time.scheduleStart,
+        originalFinish: hit.task.time.earlyFinish || hit.task.time.scheduleFinish,
+        originalDuration: hit.task.time.scheduleDuration,
+        originalDurationMinutes: hit.task.time.durationMinutes,
+      });
+      selectTask(hit.task.id, false);
+      return;
+    }
+
+    // 7. Kale chartachtergrond pant in drag-mode, behalve met Ctrl/Cmd.
+    if (scrollMode === 'drag' && !(event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      beginPan(event, 0);
+      return;
+    }
+    // 8. Iedere overige achtergrondroute start boxselectie.
+    event.preventDefault();
+    boxSelect.startBoxSelect({ startClientX: event.clientX, startClientY: event.clientY });
+  }, [barDrag, dependencyDraw, splitGesture, boxSelect, pan.active, beginPan, canvasRef, rendererRef, headerHeight, dependencyMode, splitMode, splitRefusalFor, dragHit, selectTask, scrollMode]);
+
+  const onMouseMove = useCallback((event: ReactMouseEvent<HTMLCanvasElement>) => {
+    if (barDrag.active || dependencyDraw.active || splitGesture.active || pan.active || boxSelect.active || contextMenu) {
+      setTooltip(null);
+      return;
+    }
+    const canvas = canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (y < headerHeight) {
+      setHoverCursor('default');
+      setTooltip(null);
+      return;
+    }
+    const hit = renderer.getTaskBarBounds(x, y);
+    // In de splits-modus staat de gewone taak-tooltip uit: de geleidelijn met datum IS de
+    // terugkoppeling, en twee zwevende doosjes boven elkaar leest niemand.
+    if (splitMode) {
+      setTooltip(null);
+      if (!hit) {
+        splitGesture.clearHover();
+        setHoverCursor(renderer.getSplitGapAt(x, y) ? 'not-allowed' : 'default');
+        return;
+      }
+      const splittable = splitRefusalFor(hit.task) === null;
+      setHoverCursor(splittable ? 'col-resize' : 'not-allowed');
+      if (splittable) splitGesture.updateHover(event.clientX, event.clientY);
+      else splitGesture.clearHover();
+      return;
+    }
+    if (hit) {
+      const grip = dragHit(hit);
+      if (event.shiftKey || dependencyMode) setHoverCursor('crosshair');
+      else if (grip.edge === 'left' || grip.edge === 'right') setHoverCursor('ew-resize');
+      else setHoverCursor('grab');
+      setTooltip({ x: event.clientX, y: event.clientY, task: hit.task });
+      return;
+    }
+    const hoveredTask = renderer.getRelationSourceAt(x, y);
+    if (hoveredTask) {
+      setTooltip({ x: event.clientX, y: event.clientY, task: hoveredTask });
+    } else {
+      setTooltip(null);
+    }
+    // Een pauze is geen grijpvlak én geen achtergrond: gewone cursor, geen pan-grijphand.
+    if (renderer.getSplitGapAt(x, y)) {
+      setHoverCursor('default');
+      return;
+    }
+    if (scrollMode === 'drag') {
+      setHoverCursor(event.ctrlKey || event.metaKey ? 'crosshair' : 'grab');
+      return;
+    }
+    setHoverCursor('default');
+  }, [barDrag.active, dependencyDraw.active, splitGesture, pan.active, boxSelect.active, contextMenu, canvasRef, rendererRef, headerHeight, dependencyMode, splitMode, splitRefusalFor, dragHit, scrollMode]);
+
+  const onMouseLeave = useCallback(() => {
+    setTooltip(null);
+    splitGesture.clearHover();
+  }, [splitGesture]);
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+  const closeRelationPopover = useCallback(() => setRelationPopover(null), []);
+
+  const cursor = pan.panState
+      ? 'grabbing'
+      : splitGesture.active
+        ? 'col-resize'
+      : barDrag.dragState
+          ? (barDrag.dragState.edge === 'body' ? 'grabbing' : 'ew-resize')
+        : dependencyDraw.active
+          ? 'crosshair'
+          : boxSelect.boxSelectState
+            ? 'crosshair'
+            : dependencyMode && (hoverCursor === 'grab' || hoverCursor === 'ew-resize')
+              ? 'crosshair'
+              : hoverCursor;
+
+  return {
+    onClick,
+    onDoubleClick,
+    onContextMenu,
+    onMouseDown,
+    onMouseMove,
+    onMouseLeave,
+    cursor,
+    overlays: {
+      barDrag: barDrag.dragState,
+      barSplitDrag: barDrag.splitLabel,
+      pan: pan.panState,
+      boxSelectCandidate: boxSelect.boxSelectCandidate,
+      boxSelect: boxSelect.boxSelectState,
+      dependency: dependencyDraw.depDragState,
+      split: splitGesture.gestureState,
+    },
+    contextMenu,
+    relationPopover,
+    tooltip,
+    closeContextMenu,
+    closeRelationPopover,
+  };
+}

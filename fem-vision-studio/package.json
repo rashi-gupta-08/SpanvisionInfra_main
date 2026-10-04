@@ -1,0 +1,52 @@
+{
+  "name": "fem-vision-studio",
+  "version": "1.0.0",
+  "description": "FEM Vision Studio by Spanvision Infra — 2D finite element modeling and structural analysis.",
+  "author": "Spanvision Infra (branded adaptation; see THIRD_PARTY_NOTICES.md)",
+  "license": "CC-BY-SA-4.0",
+  "type": "module",
+  "scripts": {
+    "test:branding": "node --experimental-strip-types --test tests/branding.test.mjs",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "mcp:sidecar": "node scripts/mcp-sidecar.mjs",
+    "tauri:build": "node scripts/mcp-sidecar.mjs && tauri build --config src-tauri/tauri.bundel.conf.json",
+    "predev": "node vendor/openaec-style-book/packages/tokens/build.js",
+    "prebuild": "node vendor/openaec-style-book/packages/tokens/build.js"
+  },
+  "dependencies": {
+    "@openaec/design-tokens": "file:vendor/openaec-style-book/packages/tokens",
+    "@openaec/ribbon": "file:vendor/openaec-style-book/packages/ribbon",
+    "@openaec/shell": "file:vendor/openaec-style-book/packages/shell",
+    "@openaec/ui-primitives": "file:vendor/openaec-style-book/packages/ui-primitives",
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-store": "^2.4.3",
+    "@types/katex": "^0.16.8",
+    "@types/leaflet": "^1.9.21",
+    "@types/three": "^0.182.0",
+    "katex": "^0.16.46",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.563.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
+    "three": "^0.182.0",
+    "triangle-wasm": "^1.0.0",
+    "web-ifc": "^0.0.75"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.1",
+    "@types/node": "^26.4.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "playwright": "^1.58.2",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0"
+  }
+}

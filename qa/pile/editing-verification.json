@@ -1,0 +1,32 @@
+{
+  "results": [
+    {
+      "name": "Assignment, undo and redo",
+      "status": "passed",
+      "evidence": {
+        "before": "\t290 mm\t-17.5 m\tOK\t€1,282\t11.4%\tLoad point 15",
+        "after": "\t290 mm\t-17.75 m\tOK\t€1,306\t9.8%\tLoad point 15"
+      }
+    },
+    {
+      "name": "Ungroup, history and regroup",
+      "status": "passed",
+      "evidence": "Load points\nCPTs\n2 load points\nSelection\nUngroup\n2 selected\nPile Options\n64 shown\nColumns\nClear assignment\nThis selection includes 1 group with 2 marked load points in total.\nSymbol\n\t\nSize\n▾\n\t\nTip\n▾\n\t\nStatus\n▾\n\t\nTotal cost\n▾\n\t\nMax use\n▾\n\t\nCritical load point\n▾\n\n\t290 mm\t-17.5 m\tOK\t€1,282\t11.4%\tLoad point 15\n\t290 mm\t-17.75 m\tOK\t€1,306\t9.8%\tLoad point 15\n\t290 mm\t-18 m\tOK\t€1,328\t8.7%\tLoad point 15\n\t290 mm\t-18.25 m\tOK\t€1,352\t8.4%\tLoad point 15\n\t290 mm\t-18.5 m\tOK\t€1,374\t8%\tLoad point 15\n\t290 mm\t-18.75 m\tOK\t€1,396\t7.8%\tLoad point 15\n\t290 mm\t-19 m\tOK\t€1,420\t7.4%\tLoad point 15\n\t290 mm\t-20 m\t\nMissing\n\t€1,512\t-\t-\n\t290 mm\t-20.25 m\t\nMissing\n\t€1,534\t-\t-\n\t2"
+    },
+    {
+      "name": "Manual CPT selection and nearest CPT rule",
+      "status": "passed",
+      "evidence": "Selected - CPTs\nModify\nCPT\tUsed by\tRc;net;d\nCPT 63\t2 / 2 load points\t987 kN"
+    },
+    {
+      "name": "Quick improve optimizer completion",
+      "status": "passed",
+      "evidence": "RESULT · OPTIMIZATION 1\n\nLast calculated result:\n\nWeighted neighbor differences\n\n0\n\nProven optimal\n\nLower is better. Differences in tip level and size between neighbors, weighted using your settings.\n\nActual cost\n€1,282.00\nOptimized locations\n2\n▸\nResult details"
+    },
+    {
+      "name": "Local feedback report download",
+      "status": "passed",
+      "evidence": "Pile-Plane-Workspace-feedback.md"
+    }
+  ]
+}

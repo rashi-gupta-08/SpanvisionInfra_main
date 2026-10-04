@@ -1,0 +1,5019 @@
+{
+  "schema": "ifcx-cpt-0.1",
+  "header": {
+    "originating_system": "geptechniek workspace · Geotechniek",
+    "timestamp": "2026-10-03T03:58:21.790222+00:00",
+    "note": "Placeholder structure (not schema-valid IFC4x3)"
+  },
+  "objects": [
+    {
+      "author": "QA engineer",
+      "client": "QA customer",
+      "date": "2026-10-02",
+      "id": "OGS8a014f3afc21968532d0b140",
+      "location": "Rotterdam",
+      "name": "Spanvision QA ground investigation",
+      "project_number": "SV-QA-01",
+      "type": "IfcProject"
+    },
+    {
+      "id": "OGS17ea48d01749a73c34e782fd",
+      "name": "Site - Rotterdam",
+      "type": "IfcSite"
+    },
+    {
+      "date": "2002-08-16",
+      "ground_level_nap": -1.731,
+      "guid": "OGS31890a8dcdc5e02dbc05a631",
+      "id": "CPT000000036564",
+      "points": [
+        {
+          "depth": 1.009,
+          "depth_nap": -2.74,
+          "fs": 0.006,
+          "inclination": null,
+          "qc": 0.179,
+          "rf": 3.9,
+          "u2": null
+        },
+        {
+          "depth": 1.029,
+          "depth_nap": -2.76,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 3.8,
+          "u2": null
+        },
+        {
+          "depth": 1.049,
+          "depth_nap": -2.7800000000000002,
+          "fs": 0.009,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 4.1,
+          "u2": null
+        },
+        {
+          "depth": 1.069,
+          "depth_nap": -2.8,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.166,
+          "rf": 5.3,
+          "u2": null
+        },
+        {
+          "depth": 1.089,
+          "depth_nap": -2.8200000000000003,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.279,
+          "rf": 5.2,
+          "u2": null
+        },
+        {
+          "depth": 1.109,
+          "depth_nap": -2.84,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.372,
+          "rf": 5.6,
+          "u2": null
+        },
+        {
+          "depth": 1.129,
+          "depth_nap": -2.8600000000000003,
+          "fs": 0.026,
+          "inclination": null,
+          "qc": 0.484,
+          "rf": 6.2,
+          "u2": null
+        },
+        {
+          "depth": 1.149,
+          "depth_nap": -2.88,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 0.484,
+          "rf": 6.8,
+          "u2": null
+        },
+        {
+          "depth": 1.169,
+          "depth_nap": -2.9000000000000004,
+          "fs": 0.036,
+          "inclination": null,
+          "qc": 0.531,
+          "rf": 7.1,
+          "u2": null
+        },
+        {
+          "depth": 1.189,
+          "depth_nap": -2.92,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 0.551,
+          "rf": 7.7,
+          "u2": null
+        },
+        {
+          "depth": 1.209,
+          "depth_nap": -2.9400000000000004,
+          "fs": 0.042,
+          "inclination": null,
+          "qc": 0.564,
+          "rf": 8.2,
+          "u2": null
+        },
+        {
+          "depth": 1.229,
+          "depth_nap": -2.96,
+          "fs": 0.043,
+          "inclination": null,
+          "qc": 0.571,
+          "rf": 8.6,
+          "u2": null
+        },
+        {
+          "depth": 1.249,
+          "depth_nap": -2.9800000000000004,
+          "fs": 0.041,
+          "inclination": null,
+          "qc": 0.537,
+          "rf": 8.7,
+          "u2": null
+        },
+        {
+          "depth": 1.269,
+          "depth_nap": -3.0,
+          "fs": 0.039,
+          "inclination": null,
+          "qc": 0.511,
+          "rf": 8.8,
+          "u2": null
+        },
+        {
+          "depth": 1.289,
+          "depth_nap": -3.02,
+          "fs": 0.036,
+          "inclination": null,
+          "qc": 0.378,
+          "rf": 8.8,
+          "u2": null
+        },
+        {
+          "depth": 1.309,
+          "depth_nap": -3.04,
+          "fs": 0.033,
+          "inclination": null,
+          "qc": 0.345,
+          "rf": 8.9,
+          "u2": null
+        },
+        {
+          "depth": 1.329,
+          "depth_nap": -3.06,
+          "fs": 0.028,
+          "inclination": null,
+          "qc": 0.352,
+          "rf": 8.6,
+          "u2": null
+        },
+        {
+          "depth": 1.349,
+          "depth_nap": -3.08,
+          "fs": 0.024,
+          "inclination": null,
+          "qc": 0.292,
+          "rf": 8.0,
+          "u2": null
+        },
+        {
+          "depth": 1.369,
+          "depth_nap": -3.1,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.299,
+          "rf": 7.5,
+          "u2": null
+        },
+        {
+          "depth": 1.389,
+          "depth_nap": -3.12,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.259,
+          "rf": 6.8,
+          "u2": null
+        },
+        {
+          "depth": 1.409,
+          "depth_nap": -3.14,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.212,
+          "rf": 6.1,
+          "u2": null
+        },
+        {
+          "depth": 1.429,
+          "depth_nap": -3.16,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.259,
+          "rf": 5.5,
+          "u2": null
+        },
+        {
+          "depth": 1.449,
+          "depth_nap": -3.18,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.232,
+          "rf": 5.3,
+          "u2": null
+        },
+        {
+          "depth": 1.469,
+          "depth_nap": -3.2,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.246,
+          "rf": 5.2,
+          "u2": null
+        },
+        {
+          "depth": 1.489,
+          "depth_nap": -3.22,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.252,
+          "rf": 5.3,
+          "u2": null
+        },
+        {
+          "depth": 1.509,
+          "depth_nap": -3.24,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.206,
+          "rf": 5.6,
+          "u2": null
+        },
+        {
+          "depth": 1.529,
+          "depth_nap": -3.26,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.239,
+          "rf": 5.6,
+          "u2": null
+        },
+        {
+          "depth": 1.549,
+          "depth_nap": -3.2800000000000002,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.199,
+          "rf": 5.7,
+          "u2": null
+        },
+        {
+          "depth": 1.569,
+          "depth_nap": -3.3,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.192,
+          "rf": 5.9,
+          "u2": null
+        },
+        {
+          "depth": 1.589,
+          "depth_nap": -3.3200000000000003,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 6.0,
+          "u2": null
+        },
+        {
+          "depth": 1.609,
+          "depth_nap": -3.34,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.232,
+          "rf": 6.2,
+          "u2": null
+        },
+        {
+          "depth": 1.629,
+          "depth_nap": -3.3600000000000003,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.219,
+          "rf": 6.3,
+          "u2": null
+        },
+        {
+          "depth": 1.649,
+          "depth_nap": -3.38,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.206,
+          "rf": 6.0,
+          "u2": null
+        },
+        {
+          "depth": 1.669,
+          "depth_nap": -3.4000000000000004,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.232,
+          "rf": 5.8,
+          "u2": null
+        },
+        {
+          "depth": 1.689,
+          "depth_nap": -3.42,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.212,
+          "rf": 5.7,
+          "u2": null
+        },
+        {
+          "depth": 1.709,
+          "depth_nap": -3.4400000000000004,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.226,
+          "rf": 6.0,
+          "u2": null
+        },
+        {
+          "depth": 1.729,
+          "depth_nap": -3.46,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.239,
+          "rf": 6.0,
+          "u2": null
+        },
+        {
+          "depth": 1.749,
+          "depth_nap": -3.4800000000000004,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.239,
+          "rf": 6.5,
+          "u2": null
+        },
+        {
+          "depth": 1.769,
+          "depth_nap": -3.5,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.239,
+          "rf": 6.8,
+          "u2": null
+        },
+        {
+          "depth": 1.789,
+          "depth_nap": -3.52,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.186,
+          "rf": 7.3,
+          "u2": null
+        },
+        {
+          "depth": 1.809,
+          "depth_nap": -3.54,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.259,
+          "rf": 7.5,
+          "u2": null
+        },
+        {
+          "depth": 1.829,
+          "depth_nap": -3.56,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.219,
+          "rf": 7.8,
+          "u2": null
+        },
+        {
+          "depth": 1.849,
+          "depth_nap": -3.58,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.246,
+          "rf": 7.7,
+          "u2": null
+        },
+        {
+          "depth": 1.869,
+          "depth_nap": -3.6,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.199,
+          "rf": 7.6,
+          "u2": null
+        },
+        {
+          "depth": 1.889,
+          "depth_nap": -3.62,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.252,
+          "rf": 7.5,
+          "u2": null
+        },
+        {
+          "depth": 1.909,
+          "depth_nap": -3.64,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.219,
+          "rf": 7.6,
+          "u2": null
+        },
+        {
+          "depth": 1.929,
+          "depth_nap": -3.66,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.232,
+          "rf": 7.6,
+          "u2": null
+        },
+        {
+          "depth": 1.949,
+          "depth_nap": -3.68,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.212,
+          "rf": 7.6,
+          "u2": null
+        },
+        {
+          "depth": 1.969,
+          "depth_nap": -3.7,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.239,
+          "rf": 7.8,
+          "u2": null
+        },
+        {
+          "depth": 1.989,
+          "depth_nap": -3.72,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.226,
+          "rf": 7.9,
+          "u2": null
+        },
+        {
+          "depth": 2.009,
+          "depth_nap": -3.74,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.232,
+          "rf": 8.1,
+          "u2": null
+        },
+        {
+          "depth": 2.029,
+          "depth_nap": -3.76,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.186,
+          "rf": 8.1,
+          "u2": null
+        },
+        {
+          "depth": 2.049,
+          "depth_nap": -3.7800000000000002,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.219,
+          "rf": 7.8,
+          "u2": null
+        },
+        {
+          "depth": 2.069,
+          "depth_nap": -3.8,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.199,
+          "rf": 8.4,
+          "u2": null
+        },
+        {
+          "depth": 2.089,
+          "depth_nap": -3.8200000000000003,
+          "fs": 0.019,
+          "inclination": null,
+          "qc": 0.206,
+          "rf": 8.2,
+          "u2": null
+        },
+        {
+          "depth": 2.109,
+          "depth_nap": -3.84,
+          "fs": 0.019,
+          "inclination": null,
+          "qc": 0.173,
+          "rf": 7.7,
+          "u2": null
+        },
+        {
+          "depth": 2.129,
+          "depth_nap": -3.8600000000000003,
+          "fs": 0.019,
+          "inclination": null,
+          "qc": 0.226,
+          "rf": 7.3,
+          "u2": null
+        },
+        {
+          "depth": 2.149,
+          "depth_nap": -3.88,
+          "fs": 0.02,
+          "inclination": null,
+          "qc": 0.305,
+          "rf": 7.3,
+          "u2": null
+        },
+        {
+          "depth": 2.169,
+          "depth_nap": -3.9000000000000004,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.345,
+          "rf": 7.3,
+          "u2": null
+        },
+        {
+          "depth": 2.189,
+          "depth_nap": -3.92,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.365,
+          "rf": 7.1,
+          "u2": null
+        },
+        {
+          "depth": 2.209,
+          "depth_nap": -3.9400000000000004,
+          "fs": 0.019,
+          "inclination": null,
+          "qc": 0.338,
+          "rf": 6.5,
+          "u2": null
+        },
+        {
+          "depth": 2.229,
+          "depth_nap": -3.96,
+          "fs": 0.019,
+          "inclination": null,
+          "qc": 0.299,
+          "rf": 6.5,
+          "u2": null
+        },
+        {
+          "depth": 2.249,
+          "depth_nap": -3.9800000000000004,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.279,
+          "rf": 6.5,
+          "u2": null
+        },
+        {
+          "depth": 2.269,
+          "depth_nap": -4.0,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.285,
+          "rf": 6.5,
+          "u2": null
+        },
+        {
+          "depth": 2.289,
+          "depth_nap": -4.0200000000000005,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.232,
+          "rf": 7.2,
+          "u2": null
+        },
+        {
+          "depth": 2.309,
+          "depth_nap": -4.04,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.252,
+          "rf": 7.3,
+          "u2": null
+        },
+        {
+          "depth": 2.329,
+          "depth_nap": -4.0600000000000005,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.259,
+          "rf": 7.7,
+          "u2": null
+        },
+        {
+          "depth": 2.349,
+          "depth_nap": -4.08,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.245,
+          "rf": 8.0,
+          "u2": null
+        },
+        {
+          "depth": 2.369,
+          "depth_nap": -4.1000000000000005,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.192,
+          "rf": 8.3,
+          "u2": null
+        },
+        {
+          "depth": 2.389,
+          "depth_nap": -4.12,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.246,
+          "rf": 8.4,
+          "u2": null
+        },
+        {
+          "depth": 2.409,
+          "depth_nap": -4.14,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.219,
+          "rf": 8.9,
+          "u2": null
+        },
+        {
+          "depth": 2.429,
+          "depth_nap": -4.16,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.219,
+          "rf": 8.7,
+          "u2": null
+        },
+        {
+          "depth": 2.449,
+          "depth_nap": -4.18,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.173,
+          "rf": 8.6,
+          "u2": null
+        },
+        {
+          "depth": 2.469,
+          "depth_nap": -4.2,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.206,
+          "rf": 8.6,
+          "u2": null
+        },
+        {
+          "depth": 2.489,
+          "depth_nap": -4.22,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 8.9,
+          "u2": null
+        },
+        {
+          "depth": 2.509,
+          "depth_nap": -4.24,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.186,
+          "rf": 8.8,
+          "u2": null
+        },
+        {
+          "depth": 2.529,
+          "depth_nap": -4.26,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 8.8,
+          "u2": null
+        },
+        {
+          "depth": 2.549,
+          "depth_nap": -4.28,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.146,
+          "rf": 9.0,
+          "u2": null
+        },
+        {
+          "depth": 2.569,
+          "depth_nap": -4.3,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 8.0,
+          "u2": null
+        },
+        {
+          "depth": 2.589,
+          "depth_nap": -4.32,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.166,
+          "rf": 10.8,
+          "u2": null
+        },
+        {
+          "depth": 2.609,
+          "depth_nap": -4.34,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 10.8,
+          "u2": null
+        },
+        {
+          "depth": 2.629,
+          "depth_nap": -4.36,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.179,
+          "rf": 10.9,
+          "u2": null
+        },
+        {
+          "depth": 2.649,
+          "depth_nap": -4.38,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.146,
+          "rf": 10.5,
+          "u2": null
+        },
+        {
+          "depth": 2.669,
+          "depth_nap": -4.4,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.199,
+          "rf": 10.6,
+          "u2": null
+        },
+        {
+          "depth": 2.689,
+          "depth_nap": -4.42,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.186,
+          "rf": 10.7,
+          "u2": null
+        },
+        {
+          "depth": 2.709,
+          "depth_nap": -4.44,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 11.0,
+          "u2": null
+        },
+        {
+          "depth": 2.729,
+          "depth_nap": -4.46,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.166,
+          "rf": 10.5,
+          "u2": null
+        },
+        {
+          "depth": 2.749,
+          "depth_nap": -4.48,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 11.0,
+          "u2": null
+        },
+        {
+          "depth": 2.769,
+          "depth_nap": -4.5,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.106,
+          "rf": 11.5,
+          "u2": null
+        },
+        {
+          "depth": 2.789,
+          "depth_nap": -4.5200000000000005,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.166,
+          "rf": 11.4,
+          "u2": null
+        },
+        {
+          "depth": 2.809,
+          "depth_nap": -4.54,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 12.0,
+          "u2": null
+        },
+        {
+          "depth": 2.829,
+          "depth_nap": -4.5600000000000005,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 12.1,
+          "u2": null
+        },
+        {
+          "depth": 2.849,
+          "depth_nap": -4.58,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.093,
+          "rf": 11.9,
+          "u2": null
+        },
+        {
+          "depth": 2.869,
+          "depth_nap": -4.6000000000000005,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 12.8,
+          "u2": null
+        },
+        {
+          "depth": 2.889,
+          "depth_nap": -4.62,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.106,
+          "rf": 13.2,
+          "u2": null
+        },
+        {
+          "depth": 2.909,
+          "depth_nap": -4.64,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 13.0,
+          "u2": null
+        },
+        {
+          "depth": 2.929,
+          "depth_nap": -4.66,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 12.3,
+          "u2": null
+        },
+        {
+          "depth": 2.949,
+          "depth_nap": -4.68,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 12.1,
+          "u2": null
+        },
+        {
+          "depth": 2.969,
+          "depth_nap": -4.7,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 12.2,
+          "u2": null
+        },
+        {
+          "depth": 2.989,
+          "depth_nap": -4.72,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 12.7,
+          "u2": null
+        },
+        {
+          "depth": 3.009,
+          "depth_nap": -4.74,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 12.6,
+          "u2": null
+        },
+        {
+          "depth": 3.029,
+          "depth_nap": -4.76,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.146,
+          "rf": 12.9,
+          "u2": null
+        },
+        {
+          "depth": 3.049,
+          "depth_nap": -4.78,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.093,
+          "rf": 13.2,
+          "u2": null
+        },
+        {
+          "depth": 3.069,
+          "depth_nap": -4.8,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.073,
+          "rf": 14.4,
+          "u2": null
+        },
+        {
+          "depth": 3.089,
+          "depth_nap": -4.82,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.113,
+          "rf": 14.8,
+          "u2": null
+        },
+        {
+          "depth": 3.109,
+          "depth_nap": -4.84,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 16.3,
+          "u2": null
+        },
+        {
+          "depth": 3.129,
+          "depth_nap": -4.86,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.106,
+          "rf": 15.7,
+          "u2": null
+        },
+        {
+          "depth": 3.149,
+          "depth_nap": -4.88,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 15.2,
+          "u2": null
+        },
+        {
+          "depth": 3.169,
+          "depth_nap": -4.9,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.113,
+          "rf": 15.0,
+          "u2": null
+        },
+        {
+          "depth": 3.189,
+          "depth_nap": -4.92,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.08,
+          "rf": 15.3,
+          "u2": null
+        },
+        {
+          "depth": 3.209,
+          "depth_nap": -4.94,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 15.7,
+          "u2": null
+        },
+        {
+          "depth": 3.229,
+          "depth_nap": -4.96,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 15.5,
+          "u2": null
+        },
+        {
+          "depth": 3.249,
+          "depth_nap": -4.98,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 15.7,
+          "u2": null
+        },
+        {
+          "depth": 3.269,
+          "depth_nap": -5.0,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.113,
+          "rf": 15.4,
+          "u2": null
+        },
+        {
+          "depth": 3.289,
+          "depth_nap": -5.0200000000000005,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 16.1,
+          "u2": null
+        },
+        {
+          "depth": 3.309,
+          "depth_nap": -5.04,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 15.9,
+          "u2": null
+        },
+        {
+          "depth": 3.329,
+          "depth_nap": -5.0600000000000005,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.08,
+          "rf": 17.1,
+          "u2": null
+        },
+        {
+          "depth": 3.349,
+          "depth_nap": -5.08,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.093,
+          "rf": 17.2,
+          "u2": null
+        },
+        {
+          "depth": 3.369,
+          "depth_nap": -5.1000000000000005,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.073,
+          "rf": 17.7,
+          "u2": null
+        },
+        {
+          "depth": 3.389,
+          "depth_nap": -5.12,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.113,
+          "rf": 19.2,
+          "u2": null
+        },
+        {
+          "depth": 3.409,
+          "depth_nap": -5.14,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.053,
+          "rf": 18.5,
+          "u2": null
+        },
+        {
+          "depth": 3.429,
+          "depth_nap": -5.16,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 19.6,
+          "u2": null
+        },
+        {
+          "depth": 3.449,
+          "depth_nap": -5.18,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.106,
+          "rf": 18.8,
+          "u2": null
+        },
+        {
+          "depth": 3.469,
+          "depth_nap": -5.2,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.066,
+          "rf": 20.6,
+          "u2": null
+        },
+        {
+          "depth": 3.489,
+          "depth_nap": -5.22,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 18.9,
+          "u2": null
+        },
+        {
+          "depth": 3.509,
+          "depth_nap": -5.24,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.066,
+          "rf": 19.7,
+          "u2": null
+        },
+        {
+          "depth": 3.529,
+          "depth_nap": -5.26,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 20.7,
+          "u2": null
+        },
+        {
+          "depth": 3.549,
+          "depth_nap": -5.28,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.053,
+          "rf": 19.7,
+          "u2": null
+        },
+        {
+          "depth": 3.569,
+          "depth_nap": -5.3,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 19.5,
+          "u2": null
+        },
+        {
+          "depth": 3.589,
+          "depth_nap": -5.32,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.04,
+          "rf": 15.7,
+          "u2": null
+        },
+        {
+          "depth": 3.609,
+          "depth_nap": -5.34,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.066,
+          "rf": 20.9,
+          "u2": null
+        },
+        {
+          "depth": 3.629,
+          "depth_nap": -5.36,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 20.7,
+          "u2": null
+        },
+        {
+          "depth": 3.649,
+          "depth_nap": -5.38,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 22.6,
+          "u2": null
+        },
+        {
+          "depth": 3.669,
+          "depth_nap": -5.4,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.08,
+          "rf": 21.9,
+          "u2": null
+        },
+        {
+          "depth": 3.689,
+          "depth_nap": -5.42,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 20.6,
+          "u2": null
+        },
+        {
+          "depth": 3.709,
+          "depth_nap": -5.44,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.073,
+          "rf": 22.3,
+          "u2": null
+        },
+        {
+          "depth": 3.729,
+          "depth_nap": -5.46,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.053,
+          "rf": 25.2,
+          "u2": null
+        },
+        {
+          "depth": 3.749,
+          "depth_nap": -5.48,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.066,
+          "rf": 26.9,
+          "u2": null
+        },
+        {
+          "depth": 3.769,
+          "depth_nap": -5.5,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.08,
+          "rf": 26.2,
+          "u2": null
+        },
+        {
+          "depth": 3.789,
+          "depth_nap": -5.5200000000000005,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.033,
+          "rf": 29.7,
+          "u2": null
+        },
+        {
+          "depth": 3.809,
+          "depth_nap": -5.54,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.027,
+          "rf": 29.9,
+          "u2": null
+        },
+        {
+          "depth": 3.829,
+          "depth_nap": -5.5600000000000005,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.053,
+          "rf": 31.1,
+          "u2": null
+        },
+        {
+          "depth": 3.849,
+          "depth_nap": -5.58,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 36.2,
+          "u2": null
+        },
+        {
+          "depth": 3.869,
+          "depth_nap": -5.6000000000000005,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.02,
+          "rf": 35.2,
+          "u2": null
+        },
+        {
+          "depth": 3.889,
+          "depth_nap": -5.62,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.046,
+          "rf": 35.2,
+          "u2": null
+        },
+        {
+          "depth": 3.909,
+          "depth_nap": -5.64,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": -0.007,
+          "rf": 35.2,
+          "u2": null
+        },
+        {
+          "depth": 3.929,
+          "depth_nap": -5.66,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.033,
+          "rf": 34.0,
+          "u2": null
+        },
+        {
+          "depth": 3.949,
+          "depth_nap": -5.68,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.033,
+          "rf": 32.7,
+          "u2": null
+        },
+        {
+          "depth": 3.969,
+          "depth_nap": -5.7,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.013,
+          "rf": 32.3,
+          "u2": null
+        },
+        {
+          "depth": 3.989,
+          "depth_nap": -5.72,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.053,
+          "rf": 32.8,
+          "u2": null
+        },
+        {
+          "depth": 4.009,
+          "depth_nap": -5.74,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.073,
+          "rf": 33.8,
+          "u2": null
+        },
+        {
+          "depth": 4.029,
+          "depth_nap": -5.76,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.04,
+          "rf": 31.1,
+          "u2": null
+        },
+        {
+          "depth": 4.049,
+          "depth_nap": -5.78,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 26.7,
+          "u2": null
+        },
+        {
+          "depth": 4.069,
+          "depth_nap": -5.8,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.046,
+          "rf": 28.2,
+          "u2": null
+        },
+        {
+          "depth": 4.089,
+          "depth_nap": -5.82,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.027,
+          "rf": 29.6,
+          "u2": null
+        },
+        {
+          "depth": 4.109,
+          "depth_nap": -5.84,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.066,
+          "rf": 32.3,
+          "u2": null
+        },
+        {
+          "depth": 4.129,
+          "depth_nap": -5.859999999999999,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 33.4,
+          "u2": null
+        },
+        {
+          "depth": 4.149,
+          "depth_nap": -5.88,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.027,
+          "rf": 32.7,
+          "u2": null
+        },
+        {
+          "depth": 4.169,
+          "depth_nap": -5.8999999999999995,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.046,
+          "rf": 30.5,
+          "u2": null
+        },
+        {
+          "depth": 4.189,
+          "depth_nap": -5.92,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.007,
+          "rf": 31.8,
+          "u2": null
+        },
+        {
+          "depth": 4.209,
+          "depth_nap": -5.9399999999999995,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.046,
+          "rf": 32.1,
+          "u2": null
+        },
+        {
+          "depth": 4.229,
+          "depth_nap": -5.96,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.046,
+          "rf": 30.6,
+          "u2": null
+        },
+        {
+          "depth": 4.249,
+          "depth_nap": -5.9799999999999995,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.0,
+          "rf": 29.0,
+          "u2": null
+        },
+        {
+          "depth": 4.269,
+          "depth_nap": -6.0,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 23.7,
+          "u2": null
+        },
+        {
+          "depth": 4.289,
+          "depth_nap": -6.02,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.066,
+          "rf": 22.1,
+          "u2": null
+        },
+        {
+          "depth": 4.309,
+          "depth_nap": -6.04,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.046,
+          "rf": 19.6,
+          "u2": null
+        },
+        {
+          "depth": 4.329,
+          "depth_nap": -6.06,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 18.9,
+          "u2": null
+        },
+        {
+          "depth": 4.349,
+          "depth_nap": -6.08,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.106,
+          "rf": 17.0,
+          "u2": null
+        },
+        {
+          "depth": 4.369,
+          "depth_nap": -6.1,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.093,
+          "rf": 16.0,
+          "u2": null
+        },
+        {
+          "depth": 4.389,
+          "depth_nap": -6.12,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 15.6,
+          "u2": null
+        },
+        {
+          "depth": 4.409,
+          "depth_nap": -6.14,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.093,
+          "rf": 15.6,
+          "u2": null
+        },
+        {
+          "depth": 4.429,
+          "depth_nap": -6.16,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 15.9,
+          "u2": null
+        },
+        {
+          "depth": 4.449,
+          "depth_nap": -6.18,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 15.6,
+          "u2": null
+        },
+        {
+          "depth": 4.469,
+          "depth_nap": -6.2,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.093,
+          "rf": 15.5,
+          "u2": null
+        },
+        {
+          "depth": 4.489,
+          "depth_nap": -6.22,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 15.3,
+          "u2": null
+        },
+        {
+          "depth": 4.509,
+          "depth_nap": -6.24,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.113,
+          "rf": 15.7,
+          "u2": null
+        },
+        {
+          "depth": 4.529,
+          "depth_nap": -6.26,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 15.7,
+          "u2": null
+        },
+        {
+          "depth": 4.549,
+          "depth_nap": -6.28,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 15.7,
+          "u2": null
+        },
+        {
+          "depth": 4.569,
+          "depth_nap": -6.3,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 15.5,
+          "u2": null
+        },
+        {
+          "depth": 4.589,
+          "depth_nap": -6.32,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.08,
+          "rf": 17.6,
+          "u2": null
+        },
+        {
+          "depth": 4.609,
+          "depth_nap": -6.34,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.106,
+          "rf": 18.8,
+          "u2": null
+        },
+        {
+          "depth": 4.629,
+          "depth_nap": -6.359999999999999,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 18.7,
+          "u2": null
+        },
+        {
+          "depth": 4.649,
+          "depth_nap": -6.38,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 19.5,
+          "u2": null
+        },
+        {
+          "depth": 4.669,
+          "depth_nap": -6.3999999999999995,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 18.5,
+          "u2": null
+        },
+        {
+          "depth": 4.688,
+          "depth_nap": -6.419,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.08,
+          "rf": 19.1,
+          "u2": null
+        },
+        {
+          "depth": 4.708,
+          "depth_nap": -6.439,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.113,
+          "rf": 18.4,
+          "u2": null
+        },
+        {
+          "depth": 4.728,
+          "depth_nap": -6.459,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.066,
+          "rf": 19.0,
+          "u2": null
+        },
+        {
+          "depth": 4.748,
+          "depth_nap": -6.479,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 19.7,
+          "u2": null
+        },
+        {
+          "depth": 4.768,
+          "depth_nap": -6.499,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.053,
+          "rf": 19.7,
+          "u2": null
+        },
+        {
+          "depth": 4.788,
+          "depth_nap": -6.519,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.113,
+          "rf": 21.9,
+          "u2": null
+        },
+        {
+          "depth": 4.808,
+          "depth_nap": -6.539,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.073,
+          "rf": 21.3,
+          "u2": null
+        },
+        {
+          "depth": 4.828,
+          "depth_nap": -6.559,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.053,
+          "rf": 22.2,
+          "u2": null
+        },
+        {
+          "depth": 4.848,
+          "depth_nap": -6.579,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.073,
+          "rf": 22.9,
+          "u2": null
+        },
+        {
+          "depth": 4.868,
+          "depth_nap": -6.599,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.04,
+          "rf": 25.7,
+          "u2": null
+        },
+        {
+          "depth": 4.888,
+          "depth_nap": -6.619,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 27.6,
+          "u2": null
+        },
+        {
+          "depth": 4.908,
+          "depth_nap": -6.639,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 25.7,
+          "u2": null
+        },
+        {
+          "depth": 4.928,
+          "depth_nap": -6.659,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.04,
+          "rf": 24.0,
+          "u2": null
+        },
+        {
+          "depth": 4.948,
+          "depth_nap": -6.679,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 24.1,
+          "u2": null
+        },
+        {
+          "depth": 4.968,
+          "depth_nap": -6.699,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.04,
+          "rf": 23.1,
+          "u2": null
+        },
+        {
+          "depth": 4.988,
+          "depth_nap": -6.719,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 23.7,
+          "u2": null
+        },
+        {
+          "depth": 5.008,
+          "depth_nap": -6.739,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 21.7,
+          "u2": null
+        },
+        {
+          "depth": 5.028,
+          "depth_nap": -6.7589999999999995,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.04,
+          "rf": 21.7,
+          "u2": null
+        },
+        {
+          "depth": 5.048,
+          "depth_nap": -6.779,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 21.7,
+          "u2": null
+        },
+        {
+          "depth": 5.068,
+          "depth_nap": -6.7989999999999995,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.04,
+          "rf": 21.2,
+          "u2": null
+        },
+        {
+          "depth": 5.088,
+          "depth_nap": -6.819,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.073,
+          "rf": 24.4,
+          "u2": null
+        },
+        {
+          "depth": 5.108,
+          "depth_nap": -6.8389999999999995,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 23.0,
+          "u2": null
+        },
+        {
+          "depth": 5.128,
+          "depth_nap": -6.859,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.027,
+          "rf": 24.8,
+          "u2": null
+        },
+        {
+          "depth": 5.148,
+          "depth_nap": -6.879,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 22.7,
+          "u2": null
+        },
+        {
+          "depth": 5.168,
+          "depth_nap": -6.899,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.02,
+          "rf": 23.6,
+          "u2": null
+        },
+        {
+          "depth": 5.188,
+          "depth_nap": -6.919,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 25.4,
+          "u2": null
+        },
+        {
+          "depth": 5.208,
+          "depth_nap": -6.939,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.046,
+          "rf": 22.3,
+          "u2": null
+        },
+        {
+          "depth": 5.228,
+          "depth_nap": -6.959,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 24.0,
+          "u2": null
+        },
+        {
+          "depth": 5.248,
+          "depth_nap": -6.979,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 22.5,
+          "u2": null
+        },
+        {
+          "depth": 5.268,
+          "depth_nap": -6.999,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.027,
+          "rf": 22.0,
+          "u2": null
+        },
+        {
+          "depth": 5.288,
+          "depth_nap": -7.019,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 23.8,
+          "u2": null
+        },
+        {
+          "depth": 5.308,
+          "depth_nap": -7.039,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 24.0,
+          "u2": null
+        },
+        {
+          "depth": 5.328,
+          "depth_nap": -7.059,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.046,
+          "rf": 23.1,
+          "u2": null
+        },
+        {
+          "depth": 5.348,
+          "depth_nap": -7.079,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 0.066,
+          "rf": 19.0,
+          "u2": null
+        },
+        {
+          "depth": 5.368,
+          "depth_nap": -7.099,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.02,
+          "rf": 17.2,
+          "u2": null
+        },
+        {
+          "depth": 5.388,
+          "depth_nap": -7.119,
+          "fs": 0.016,
+          "inclination": null,
+          "qc": 0.06,
+          "rf": 16.3,
+          "u2": null
+        },
+        {
+          "depth": 5.408,
+          "depth_nap": -7.139,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 15.3,
+          "u2": null
+        },
+        {
+          "depth": 5.428,
+          "depth_nap": -7.159,
+          "fs": 0.02,
+          "inclination": null,
+          "qc": 0.179,
+          "rf": 15.6,
+          "u2": null
+        },
+        {
+          "depth": 5.448,
+          "depth_nap": -7.179,
+          "fs": 0.02,
+          "inclination": null,
+          "qc": 0.179,
+          "rf": 13.9,
+          "u2": null
+        },
+        {
+          "depth": 5.468,
+          "depth_nap": -7.199,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.179,
+          "rf": 13.3,
+          "u2": null
+        },
+        {
+          "depth": 5.488,
+          "depth_nap": -7.219,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.173,
+          "rf": 12.4,
+          "u2": null
+        },
+        {
+          "depth": 5.508,
+          "depth_nap": -7.239,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 12.1,
+          "u2": null
+        },
+        {
+          "depth": 5.528,
+          "depth_nap": -7.2589999999999995,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.186,
+          "rf": 12.4,
+          "u2": null
+        },
+        {
+          "depth": 5.548,
+          "depth_nap": -7.279,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.159,
+          "rf": 12.4,
+          "u2": null
+        },
+        {
+          "depth": 5.568,
+          "depth_nap": -7.2989999999999995,
+          "fs": 0.019,
+          "inclination": null,
+          "qc": 0.199,
+          "rf": 11.6,
+          "u2": null
+        },
+        {
+          "depth": 5.588,
+          "depth_nap": -7.319,
+          "fs": 0.024,
+          "inclination": null,
+          "qc": 0.206,
+          "rf": 15.0,
+          "u2": null
+        },
+        {
+          "depth": 5.608,
+          "depth_nap": -7.3389999999999995,
+          "fs": 0.023,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 14.3,
+          "u2": null
+        },
+        {
+          "depth": 5.628,
+          "depth_nap": -7.359,
+          "fs": 0.022,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 13.4,
+          "u2": null
+        },
+        {
+          "depth": 5.648,
+          "depth_nap": -7.379,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 12.9,
+          "u2": null
+        },
+        {
+          "depth": 5.668,
+          "depth_nap": -7.399,
+          "fs": 0.019,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 12.3,
+          "u2": null
+        },
+        {
+          "depth": 5.688,
+          "depth_nap": -7.419,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.199,
+          "rf": 10.9,
+          "u2": null
+        },
+        {
+          "depth": 5.708,
+          "depth_nap": -7.439,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 0.173,
+          "rf": 10.0,
+          "u2": null
+        },
+        {
+          "depth": 5.728,
+          "depth_nap": -7.459,
+          "fs": 0.013,
+          "inclination": null,
+          "qc": 0.159,
+          "rf": 8.6,
+          "u2": null
+        },
+        {
+          "depth": 5.748,
+          "depth_nap": -7.479,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.166,
+          "rf": 7.7,
+          "u2": null
+        },
+        {
+          "depth": 5.768,
+          "depth_nap": -7.499,
+          "fs": 0.01,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 7.4,
+          "u2": null
+        },
+        {
+          "depth": 5.788,
+          "depth_nap": -7.519,
+          "fs": 0.01,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 7.4,
+          "u2": null
+        },
+        {
+          "depth": 5.808,
+          "depth_nap": -7.539,
+          "fs": 0.01,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 7.6,
+          "u2": null
+        },
+        {
+          "depth": 5.828,
+          "depth_nap": -7.559,
+          "fs": 0.01,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 8.3,
+          "u2": null
+        },
+        {
+          "depth": 5.848,
+          "depth_nap": -7.579,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.146,
+          "rf": 9.3,
+          "u2": null
+        },
+        {
+          "depth": 5.868,
+          "depth_nap": -7.599,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 9.5,
+          "u2": null
+        },
+        {
+          "depth": 5.888,
+          "depth_nap": -7.619,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 0.106,
+          "rf": 9.3,
+          "u2": null
+        },
+        {
+          "depth": 5.908,
+          "depth_nap": -7.639,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.126,
+          "rf": 9.1,
+          "u2": null
+        },
+        {
+          "depth": 5.928,
+          "depth_nap": -7.659,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.086,
+          "rf": 9.1,
+          "u2": null
+        },
+        {
+          "depth": 5.948,
+          "depth_nap": -7.679,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 9.6,
+          "u2": null
+        },
+        {
+          "depth": 5.968,
+          "depth_nap": -7.699,
+          "fs": 0.011,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 8.8,
+          "u2": null
+        },
+        {
+          "depth": 5.988,
+          "depth_nap": -7.719,
+          "fs": 0.01,
+          "inclination": null,
+          "qc": 0.119,
+          "rf": 8.1,
+          "u2": null
+        },
+        {
+          "depth": 6.008,
+          "depth_nap": -7.739,
+          "fs": 0.009,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 7.0,
+          "u2": null
+        },
+        {
+          "depth": 6.028,
+          "depth_nap": -7.7589999999999995,
+          "fs": 0.009,
+          "inclination": null,
+          "qc": 0.106,
+          "rf": 6.5,
+          "u2": null
+        },
+        {
+          "depth": 6.048,
+          "depth_nap": -7.779,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 6.4,
+          "u2": null
+        },
+        {
+          "depth": 6.068,
+          "depth_nap": -7.7989999999999995,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.146,
+          "rf": 5.6,
+          "u2": null
+        },
+        {
+          "depth": 6.088,
+          "depth_nap": -7.819,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 5.0,
+          "u2": null
+        },
+        {
+          "depth": 6.108,
+          "depth_nap": -7.8389999999999995,
+          "fs": 0.006,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 4.4,
+          "u2": null
+        },
+        {
+          "depth": 6.128,
+          "depth_nap": -7.859,
+          "fs": 0.006,
+          "inclination": null,
+          "qc": 0.1,
+          "rf": 4.3,
+          "u2": null
+        },
+        {
+          "depth": 6.148,
+          "depth_nap": -7.879,
+          "fs": 0.006,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 4.5,
+          "u2": null
+        },
+        {
+          "depth": 6.168,
+          "depth_nap": -7.899,
+          "fs": 0.006,
+          "inclination": null,
+          "qc": 0.166,
+          "rf": 4.5,
+          "u2": null
+        },
+        {
+          "depth": 6.188,
+          "depth_nap": -7.919,
+          "fs": 0.006,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 4.6,
+          "u2": null
+        },
+        {
+          "depth": 6.208,
+          "depth_nap": -7.939,
+          "fs": 0.006,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 4.6,
+          "u2": null
+        },
+        {
+          "depth": 6.228,
+          "depth_nap": -7.959,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.113,
+          "rf": 5.0,
+          "u2": null
+        },
+        {
+          "depth": 6.248,
+          "depth_nap": -7.979,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 5.7,
+          "u2": null
+        },
+        {
+          "depth": 6.268,
+          "depth_nap": -7.999,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.139,
+          "rf": 6.0,
+          "u2": null
+        },
+        {
+          "depth": 6.288,
+          "depth_nap": -8.019,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 6.0,
+          "u2": null
+        },
+        {
+          "depth": 6.308,
+          "depth_nap": -8.039,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.153,
+          "rf": 5.7,
+          "u2": null
+        },
+        {
+          "depth": 6.328,
+          "depth_nap": -8.059000000000001,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.133,
+          "rf": 5.4,
+          "u2": null
+        },
+        {
+          "depth": 6.348,
+          "depth_nap": -8.079,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.179,
+          "rf": 5.1,
+          "u2": null
+        },
+        {
+          "depth": 6.368,
+          "depth_nap": -8.099,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.166,
+          "rf": 4.7,
+          "u2": null
+        },
+        {
+          "depth": 6.388,
+          "depth_nap": -8.119,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.159,
+          "rf": 4.3,
+          "u2": null
+        },
+        {
+          "depth": 6.408,
+          "depth_nap": -8.139000000000001,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.199,
+          "rf": 4.0,
+          "u2": null
+        },
+        {
+          "depth": 6.427,
+          "depth_nap": -8.158,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.159,
+          "rf": 4.0,
+          "u2": null
+        },
+        {
+          "depth": 6.447,
+          "depth_nap": -8.178,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.219,
+          "rf": 4.1,
+          "u2": null
+        },
+        {
+          "depth": 6.467,
+          "depth_nap": -8.198,
+          "fs": 0.009,
+          "inclination": null,
+          "qc": 0.232,
+          "rf": 4.2,
+          "u2": null
+        },
+        {
+          "depth": 6.487,
+          "depth_nap": -8.218,
+          "fs": 0.009,
+          "inclination": null,
+          "qc": 0.212,
+          "rf": 4.3,
+          "u2": null
+        },
+        {
+          "depth": 6.507,
+          "depth_nap": -8.238,
+          "fs": 0.01,
+          "inclination": null,
+          "qc": 0.259,
+          "rf": 4.5,
+          "u2": null
+        },
+        {
+          "depth": 6.527,
+          "depth_nap": -8.258000000000001,
+          "fs": 0.01,
+          "inclination": null,
+          "qc": 0.226,
+          "rf": 4.6,
+          "u2": null
+        },
+        {
+          "depth": 6.547,
+          "depth_nap": -8.278,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.252,
+          "rf": 3.4,
+          "u2": null
+        },
+        {
+          "depth": 6.567,
+          "depth_nap": -8.298,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.232,
+          "rf": 3.4,
+          "u2": null
+        },
+        {
+          "depth": 6.587,
+          "depth_nap": -8.318,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 0.192,
+          "rf": 3.4,
+          "u2": null
+        },
+        {
+          "depth": 6.607,
+          "depth_nap": -8.338000000000001,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.219,
+          "rf": 3.2,
+          "u2": null
+        },
+        {
+          "depth": 6.627,
+          "depth_nap": -8.358,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.206,
+          "rf": 2.5,
+          "u2": null
+        },
+        {
+          "depth": 6.647,
+          "depth_nap": -8.378,
+          "fs": 0.007,
+          "inclination": null,
+          "qc": 0.259,
+          "rf": 1.9,
+          "u2": null
+        },
+        {
+          "depth": 6.667,
+          "depth_nap": -8.398,
+          "fs": 0.006,
+          "inclination": null,
+          "qc": 0.259,
+          "rf": 1.4,
+          "u2": null
+        },
+        {
+          "depth": 6.687,
+          "depth_nap": -8.418000000000001,
+          "fs": 0.005,
+          "inclination": null,
+          "qc": 0.292,
+          "rf": 0.9,
+          "u2": null
+        },
+        {
+          "depth": 6.707,
+          "depth_nap": -8.438,
+          "fs": 0.004,
+          "inclination": null,
+          "qc": 0.757,
+          "rf": 0.8,
+          "u2": null
+        },
+        {
+          "depth": 6.727,
+          "depth_nap": -8.458,
+          "fs": 0.003,
+          "inclination": null,
+          "qc": 1.002,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 6.747,
+          "depth_nap": -8.478,
+          "fs": 0.003,
+          "inclination": null,
+          "qc": 0.883,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 6.767,
+          "depth_nap": -8.498000000000001,
+          "fs": 0.003,
+          "inclination": null,
+          "qc": 0.604,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 6.787,
+          "depth_nap": -8.518,
+          "fs": 0.002,
+          "inclination": null,
+          "qc": 0.471,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 6.807,
+          "depth_nap": -8.538,
+          "fs": 0.002,
+          "inclination": null,
+          "qc": 0.305,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 6.827,
+          "depth_nap": -8.558,
+          "fs": 0.002,
+          "inclination": null,
+          "qc": 0.285,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 6.847,
+          "depth_nap": -8.578000000000001,
+          "fs": 0.003,
+          "inclination": null,
+          "qc": 0.239,
+          "rf": 0.9,
+          "u2": null
+        },
+        {
+          "depth": 6.867,
+          "depth_nap": -8.598,
+          "fs": 0.005,
+          "inclination": null,
+          "qc": 0.279,
+          "rf": 1.4,
+          "u2": null
+        },
+        {
+          "depth": 6.887,
+          "depth_nap": -8.618,
+          "fs": 0.005,
+          "inclination": null,
+          "qc": 0.265,
+          "rf": 0.9,
+          "u2": null
+        },
+        {
+          "depth": 6.907,
+          "depth_nap": -8.638,
+          "fs": 0.003,
+          "inclination": null,
+          "qc": 0.299,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 6.927,
+          "depth_nap": -8.658,
+          "fs": 0.003,
+          "inclination": null,
+          "qc": 0.392,
+          "rf": 0.2,
+          "u2": null
+        },
+        {
+          "depth": 6.947,
+          "depth_nap": -8.678,
+          "fs": 0.005,
+          "inclination": null,
+          "qc": 1.221,
+          "rf": 0.3,
+          "u2": null
+        },
+        {
+          "depth": 6.967,
+          "depth_nap": -8.698,
+          "fs": 0.008,
+          "inclination": null,
+          "qc": 1.792,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 6.987,
+          "depth_nap": -8.718,
+          "fs": 0.009,
+          "inclination": null,
+          "qc": 2.27,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.007,
+          "depth_nap": -8.738,
+          "fs": 0.012,
+          "inclination": null,
+          "qc": 2.528,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.027,
+          "depth_nap": -8.758000000000001,
+          "fs": 0.014,
+          "inclination": null,
+          "qc": 2.741,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.047,
+          "depth_nap": -8.778,
+          "fs": 0.015,
+          "inclination": null,
+          "qc": 2.84,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 7.067,
+          "depth_nap": -8.798,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 2.794,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 7.087,
+          "depth_nap": -8.818,
+          "fs": 0.023,
+          "inclination": null,
+          "qc": 2.701,
+          "rf": 0.9,
+          "u2": null
+        },
+        {
+          "depth": 7.107,
+          "depth_nap": -8.838000000000001,
+          "fs": 0.027,
+          "inclination": null,
+          "qc": 2.336,
+          "rf": 1.3,
+          "u2": null
+        },
+        {
+          "depth": 7.127,
+          "depth_nap": -8.858,
+          "fs": 0.028,
+          "inclination": null,
+          "qc": 2.09,
+          "rf": 1.4,
+          "u2": null
+        },
+        {
+          "depth": 7.147,
+          "depth_nap": -8.878,
+          "fs": 0.024,
+          "inclination": null,
+          "qc": 1.818,
+          "rf": 1.3,
+          "u2": null
+        },
+        {
+          "depth": 7.167,
+          "depth_nap": -8.898,
+          "fs": 0.022,
+          "inclination": null,
+          "qc": 1.506,
+          "rf": 1.3,
+          "u2": null
+        },
+        {
+          "depth": 7.187,
+          "depth_nap": -8.918000000000001,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 0.982,
+          "rf": 1.3,
+          "u2": null
+        },
+        {
+          "depth": 7.207,
+          "depth_nap": -8.938,
+          "fs": 0.023,
+          "inclination": null,
+          "qc": 1.088,
+          "rf": 1.5,
+          "u2": null
+        },
+        {
+          "depth": 7.227,
+          "depth_nap": -8.958,
+          "fs": 0.028,
+          "inclination": null,
+          "qc": 1.725,
+          "rf": 2.0,
+          "u2": null
+        },
+        {
+          "depth": 7.247,
+          "depth_nap": -8.978,
+          "fs": 0.024,
+          "inclination": null,
+          "qc": 2.097,
+          "rf": 1.7,
+          "u2": null
+        },
+        {
+          "depth": 7.267,
+          "depth_nap": -8.998000000000001,
+          "fs": 0.02,
+          "inclination": null,
+          "qc": 1.606,
+          "rf": 1.2,
+          "u2": null
+        },
+        {
+          "depth": 7.287,
+          "depth_nap": -9.018,
+          "fs": 0.018,
+          "inclination": null,
+          "qc": 1.175,
+          "rf": 0.9,
+          "u2": null
+        },
+        {
+          "depth": 7.307,
+          "depth_nap": -9.038,
+          "fs": 0.017,
+          "inclination": null,
+          "qc": 0.969,
+          "rf": 0.8,
+          "u2": null
+        },
+        {
+          "depth": 7.327,
+          "depth_nap": -9.058,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 1.38,
+          "rf": 1.0,
+          "u2": null
+        },
+        {
+          "depth": 7.347,
+          "depth_nap": -9.078000000000001,
+          "fs": 0.026,
+          "inclination": null,
+          "qc": 3.079,
+          "rf": 1.2,
+          "u2": null
+        },
+        {
+          "depth": 7.367,
+          "depth_nap": -9.098,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 3.378,
+          "rf": 1.4,
+          "u2": null
+        },
+        {
+          "depth": 7.387,
+          "depth_nap": -9.118,
+          "fs": 0.03,
+          "inclination": null,
+          "qc": 2.887,
+          "rf": 1.2,
+          "u2": null
+        },
+        {
+          "depth": 7.407,
+          "depth_nap": -9.138,
+          "fs": 0.03,
+          "inclination": null,
+          "qc": 2.17,
+          "rf": 1.1,
+          "u2": null
+        },
+        {
+          "depth": 7.427,
+          "depth_nap": -9.158,
+          "fs": 0.026,
+          "inclination": null,
+          "qc": 1.632,
+          "rf": 0.8,
+          "u2": null
+        },
+        {
+          "depth": 7.447,
+          "depth_nap": -9.178,
+          "fs": 0.022,
+          "inclination": null,
+          "qc": 1.759,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 7.467,
+          "depth_nap": -9.198,
+          "fs": 0.021,
+          "inclination": null,
+          "qc": 2.528,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.487,
+          "depth_nap": -9.218,
+          "fs": 0.023,
+          "inclination": null,
+          "qc": 4.141,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.507,
+          "depth_nap": -9.238,
+          "fs": 0.024,
+          "inclination": null,
+          "qc": 5.508,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.527,
+          "depth_nap": -9.258000000000001,
+          "fs": 0.025,
+          "inclination": null,
+          "qc": 6.516,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.547,
+          "depth_nap": -9.278,
+          "fs": 0.028,
+          "inclination": null,
+          "qc": 7.213,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.567,
+          "depth_nap": -9.298,
+          "fs": 0.03,
+          "inclination": null,
+          "qc": 7.544,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.587,
+          "depth_nap": -9.318,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 7.732,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.606,
+          "depth_nap": -9.337,
+          "fs": 0.033,
+          "inclination": null,
+          "qc": 7.996,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.626,
+          "depth_nap": -9.357000000000001,
+          "fs": 0.033,
+          "inclination": null,
+          "qc": 7.989,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.646,
+          "depth_nap": -9.377,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 7.625,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.666,
+          "depth_nap": -9.397,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 6.774,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.686,
+          "depth_nap": -9.417,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 6.822,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.706,
+          "depth_nap": -9.437000000000001,
+          "fs": 0.03,
+          "inclination": null,
+          "qc": 6.642,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.726,
+          "depth_nap": -9.457,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 6.484,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.746,
+          "depth_nap": -9.477,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 6.297,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.766,
+          "depth_nap": -9.497,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 6.258,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.786,
+          "depth_nap": -9.517,
+          "fs": 0.03,
+          "inclination": null,
+          "qc": 6.153,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.806,
+          "depth_nap": -9.537,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 6.204,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.826,
+          "depth_nap": -9.557,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 6.211,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.846,
+          "depth_nap": -9.577,
+          "fs": 0.03,
+          "inclination": null,
+          "qc": 6.217,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.866,
+          "depth_nap": -9.597,
+          "fs": 0.03,
+          "inclination": null,
+          "qc": 6.158,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.886,
+          "depth_nap": -9.617,
+          "fs": 0.029,
+          "inclination": null,
+          "qc": 5.953,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.906,
+          "depth_nap": -9.637,
+          "fs": 0.029,
+          "inclination": null,
+          "qc": 5.72,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.926,
+          "depth_nap": -9.657,
+          "fs": 0.027,
+          "inclination": null,
+          "qc": 5.528,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.946,
+          "depth_nap": -9.677,
+          "fs": 0.025,
+          "inclination": null,
+          "qc": 5.322,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 7.966,
+          "depth_nap": -9.697000000000001,
+          "fs": 0.025,
+          "inclination": null,
+          "qc": 4.983,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 7.986,
+          "depth_nap": -9.717,
+          "fs": 0.025,
+          "inclination": null,
+          "qc": 4.764,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.006,
+          "depth_nap": -9.737,
+          "fs": 0.026,
+          "inclination": null,
+          "qc": 4.553,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.026,
+          "depth_nap": -9.757,
+          "fs": 0.034,
+          "inclination": null,
+          "qc": 4.38,
+          "rf": 0.8,
+          "u2": null
+        },
+        {
+          "depth": 8.046,
+          "depth_nap": -9.777,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 4.002,
+          "rf": 1.1,
+          "u2": null
+        },
+        {
+          "depth": 8.066,
+          "depth_nap": -9.797,
+          "fs": 0.052,
+          "inclination": null,
+          "qc": 3.75,
+          "rf": 1.5,
+          "u2": null
+        },
+        {
+          "depth": 8.086,
+          "depth_nap": -9.817,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 3.311,
+          "rf": 1.6,
+          "u2": null
+        },
+        {
+          "depth": 8.106,
+          "depth_nap": -9.837,
+          "fs": 0.038,
+          "inclination": null,
+          "qc": 2.847,
+          "rf": 1.2,
+          "u2": null
+        },
+        {
+          "depth": 8.126,
+          "depth_nap": -9.857,
+          "fs": 0.033,
+          "inclination": null,
+          "qc": 1.885,
+          "rf": 1.0,
+          "u2": null
+        },
+        {
+          "depth": 8.146,
+          "depth_nap": -9.877,
+          "fs": 0.027,
+          "inclination": null,
+          "qc": 1.6,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 8.166,
+          "depth_nap": -9.897,
+          "fs": 0.027,
+          "inclination": null,
+          "qc": 2.356,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 8.186,
+          "depth_nap": -9.917,
+          "fs": 0.027,
+          "inclination": null,
+          "qc": 4.108,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.206,
+          "depth_nap": -9.937,
+          "fs": 0.028,
+          "inclination": null,
+          "qc": 5.8,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.226,
+          "depth_nap": -9.957,
+          "fs": 0.029,
+          "inclination": null,
+          "qc": 5.946,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.246,
+          "depth_nap": -9.977,
+          "fs": 0.033,
+          "inclination": null,
+          "qc": 5.926,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.266,
+          "depth_nap": -9.997,
+          "fs": 0.033,
+          "inclination": null,
+          "qc": 5.94,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.286,
+          "depth_nap": -10.017,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 5.846,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.306,
+          "depth_nap": -10.036999999999999,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 5.501,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.326,
+          "depth_nap": -10.057,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 5.157,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.346,
+          "depth_nap": -10.077,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 4.904,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.366,
+          "depth_nap": -10.097,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 4.957,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.385,
+          "depth_nap": -10.116,
+          "fs": 0.037,
+          "inclination": null,
+          "qc": 5.05,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 8.405,
+          "depth_nap": -10.136,
+          "fs": 0.036,
+          "inclination": null,
+          "qc": 4.917,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.425,
+          "depth_nap": -10.156,
+          "fs": 0.035,
+          "inclination": null,
+          "qc": 4.746,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.445,
+          "depth_nap": -10.176,
+          "fs": 0.035,
+          "inclination": null,
+          "qc": 5.037,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.465,
+          "depth_nap": -10.196,
+          "fs": 0.037,
+          "inclination": null,
+          "qc": 6.536,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.485,
+          "depth_nap": -10.216,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 7.736,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.505,
+          "depth_nap": -10.236,
+          "fs": 0.041,
+          "inclination": null,
+          "qc": 8.827,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.525,
+          "depth_nap": -10.256,
+          "fs": 0.042,
+          "inclination": null,
+          "qc": 9.603,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.545,
+          "depth_nap": -10.276,
+          "fs": 0.043,
+          "inclination": null,
+          "qc": 9.775,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.565,
+          "depth_nap": -10.296,
+          "fs": 0.051,
+          "inclination": null,
+          "qc": 9.776,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.585,
+          "depth_nap": -10.316,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 9.696,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.605,
+          "depth_nap": -10.336,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 9.655,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.625,
+          "depth_nap": -10.356,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 9.556,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.645,
+          "depth_nap": -10.376,
+          "fs": 0.039,
+          "inclination": null,
+          "qc": 9.244,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.665,
+          "depth_nap": -10.395999999999999,
+          "fs": 0.039,
+          "inclination": null,
+          "qc": 7.925,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.685,
+          "depth_nap": -10.416,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 8.236,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 8.705,
+          "depth_nap": -10.436,
+          "fs": 0.041,
+          "inclination": null,
+          "qc": 7.964,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.725,
+          "depth_nap": -10.456,
+          "fs": 0.041,
+          "inclination": null,
+          "qc": 7.652,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.745,
+          "depth_nap": -10.475999999999999,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 7.419,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.765,
+          "depth_nap": -10.496,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 7.214,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.785,
+          "depth_nap": -10.516,
+          "fs": 0.038,
+          "inclination": null,
+          "qc": 7.001,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.805,
+          "depth_nap": -10.536,
+          "fs": 0.037,
+          "inclination": null,
+          "qc": 6.816,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 8.825,
+          "depth_nap": -10.556,
+          "fs": 0.037,
+          "inclination": null,
+          "qc": 6.424,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.845,
+          "depth_nap": -10.576,
+          "fs": 0.037,
+          "inclination": null,
+          "qc": 5.939,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 8.865,
+          "depth_nap": -10.596,
+          "fs": 0.036,
+          "inclination": null,
+          "qc": 5.402,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 8.885,
+          "depth_nap": -10.616,
+          "fs": 0.038,
+          "inclination": null,
+          "qc": 4.812,
+          "rf": 0.8,
+          "u2": null
+        },
+        {
+          "depth": 8.905,
+          "depth_nap": -10.636,
+          "fs": 0.042,
+          "inclination": null,
+          "qc": 4.254,
+          "rf": 1.0,
+          "u2": null
+        },
+        {
+          "depth": 8.925,
+          "depth_nap": -10.656,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 3.69,
+          "rf": 1.3,
+          "u2": null
+        },
+        {
+          "depth": 8.945,
+          "depth_nap": -10.676,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 3.06,
+          "rf": 1.6,
+          "u2": null
+        },
+        {
+          "depth": 8.965,
+          "depth_nap": -10.696,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 2.396,
+          "rf": 2.0,
+          "u2": null
+        },
+        {
+          "depth": 8.984,
+          "depth_nap": -10.715,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 1.845,
+          "rf": 2.2,
+          "u2": null
+        },
+        {
+          "depth": 9.004,
+          "depth_nap": -10.735,
+          "fs": 0.036,
+          "inclination": null,
+          "qc": 1.526,
+          "rf": 1.8,
+          "u2": null
+        },
+        {
+          "depth": 9.024,
+          "depth_nap": -10.754999999999999,
+          "fs": 0.028,
+          "inclination": null,
+          "qc": 1.307,
+          "rf": 1.1,
+          "u2": null
+        },
+        {
+          "depth": 9.044,
+          "depth_nap": -10.775,
+          "fs": 0.025,
+          "inclination": null,
+          "qc": 1.035,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 9.064,
+          "depth_nap": -10.795,
+          "fs": 0.026,
+          "inclination": null,
+          "qc": 1.029,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 9.084,
+          "depth_nap": -10.815,
+          "fs": 0.03,
+          "inclination": null,
+          "qc": 3.444,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.104,
+          "depth_nap": -10.834999999999999,
+          "fs": 0.034,
+          "inclination": null,
+          "qc": 7.871,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.124,
+          "depth_nap": -10.855,
+          "fs": 0.037,
+          "inclination": null,
+          "qc": 9.384,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.144,
+          "depth_nap": -10.875,
+          "fs": 0.041,
+          "inclination": null,
+          "qc": 9.775,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.164,
+          "depth_nap": -10.895,
+          "fs": 0.043,
+          "inclination": null,
+          "qc": 9.763,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.184,
+          "depth_nap": -10.915,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 9.496,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.204,
+          "depth_nap": -10.935,
+          "fs": 0.043,
+          "inclination": null,
+          "qc": 9.417,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.224,
+          "depth_nap": -10.955,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 9.502,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.244,
+          "depth_nap": -10.975,
+          "fs": 0.045,
+          "inclination": null,
+          "qc": 9.674,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.264,
+          "depth_nap": -10.995,
+          "fs": 0.047,
+          "inclination": null,
+          "qc": 9.934,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.284,
+          "depth_nap": -11.015,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 10.232,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.304,
+          "depth_nap": -11.035,
+          "fs": 0.05,
+          "inclination": null,
+          "qc": 10.558,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.324,
+          "depth_nap": -11.055,
+          "fs": 0.05,
+          "inclination": null,
+          "qc": 10.677,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.344,
+          "depth_nap": -11.075,
+          "fs": 0.05,
+          "inclination": null,
+          "qc": 10.651,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.364,
+          "depth_nap": -11.095,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 10.398,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.384,
+          "depth_nap": -11.115,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 10.114,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.404,
+          "depth_nap": -11.135,
+          "fs": 0.047,
+          "inclination": null,
+          "qc": 9.768,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.424,
+          "depth_nap": -11.155,
+          "fs": 0.045,
+          "inclination": null,
+          "qc": 9.522,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.444,
+          "depth_nap": -11.175,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 9.517,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.464,
+          "depth_nap": -11.195,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 9.728,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.483,
+          "depth_nap": -11.214,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 10.027,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.503,
+          "depth_nap": -11.234,
+          "fs": 0.052,
+          "inclination": null,
+          "qc": 10.314,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.523,
+          "depth_nap": -11.254,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 10.511,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.543,
+          "depth_nap": -11.274,
+          "fs": 0.054,
+          "inclination": null,
+          "qc": 10.453,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.563,
+          "depth_nap": -11.294,
+          "fs": 0.043,
+          "inclination": null,
+          "qc": 10.491,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.583,
+          "depth_nap": -11.314,
+          "fs": 0.045,
+          "inclination": null,
+          "qc": 10.386,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.603,
+          "depth_nap": -11.334,
+          "fs": 0.045,
+          "inclination": null,
+          "qc": 10.172,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.623,
+          "depth_nap": -11.354,
+          "fs": 0.045,
+          "inclination": null,
+          "qc": 10.068,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.643,
+          "depth_nap": -11.374,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 10.02,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 9.663,
+          "depth_nap": -11.394,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 9.523,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.683,
+          "depth_nap": -11.414,
+          "fs": 0.047,
+          "inclination": null,
+          "qc": 9.27,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.703,
+          "depth_nap": -11.434,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 8.966,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.723,
+          "depth_nap": -11.454,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 8.296,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.743,
+          "depth_nap": -11.474,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 7.843,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 9.763,
+          "depth_nap": -11.494,
+          "fs": 0.05,
+          "inclination": null,
+          "qc": 7.32,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 9.783,
+          "depth_nap": -11.514,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 6.657,
+          "rf": 0.8,
+          "u2": null
+        },
+        {
+          "depth": 9.803,
+          "depth_nap": -11.534,
+          "fs": 0.052,
+          "inclination": null,
+          "qc": 5.926,
+          "rf": 0.8,
+          "u2": null
+        },
+        {
+          "depth": 9.823,
+          "depth_nap": -11.554,
+          "fs": 0.051,
+          "inclination": null,
+          "qc": 5.262,
+          "rf": 0.9,
+          "u2": null
+        },
+        {
+          "depth": 9.843,
+          "depth_nap": -11.574,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 4.626,
+          "rf": 0.8,
+          "u2": null
+        },
+        {
+          "depth": 9.863,
+          "depth_nap": -11.594,
+          "fs": 0.037,
+          "inclination": null,
+          "qc": 4.466,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 9.883,
+          "depth_nap": -11.613999999999999,
+          "fs": 0.032,
+          "inclination": null,
+          "qc": 4.924,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 9.902,
+          "depth_nap": -11.633,
+          "fs": 0.028,
+          "inclination": null,
+          "qc": 5.7,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.922,
+          "depth_nap": -11.653,
+          "fs": 0.029,
+          "inclination": null,
+          "qc": 5.966,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.942,
+          "depth_nap": -11.673,
+          "fs": 0.031,
+          "inclination": null,
+          "qc": 5.986,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 9.962,
+          "depth_nap": -11.693,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 5.773,
+          "rf": 0.7,
+          "u2": null
+        },
+        {
+          "depth": 9.982,
+          "depth_nap": -11.713,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 5.555,
+          "rf": 0.9,
+          "u2": null
+        },
+        {
+          "depth": 10.003,
+          "depth_nap": -11.734,
+          "fs": 0.059,
+          "inclination": null,
+          "qc": 5.269,
+          "rf": 1.3,
+          "u2": null
+        },
+        {
+          "depth": 10.023,
+          "depth_nap": -11.754,
+          "fs": 0.065,
+          "inclination": null,
+          "qc": 4.95,
+          "rf": 1.6,
+          "u2": null
+        },
+        {
+          "depth": 10.043,
+          "depth_nap": -11.774,
+          "fs": 0.068,
+          "inclination": null,
+          "qc": 4.022,
+          "rf": 1.9,
+          "u2": null
+        },
+        {
+          "depth": 10.062,
+          "depth_nap": -11.793,
+          "fs": 0.06,
+          "inclination": null,
+          "qc": 2.92,
+          "rf": 1.9,
+          "u2": null
+        },
+        {
+          "depth": 10.082,
+          "depth_nap": -11.813,
+          "fs": 0.051,
+          "inclination": null,
+          "qc": 2.038,
+          "rf": 1.7,
+          "u2": null
+        },
+        {
+          "depth": 10.102,
+          "depth_nap": -11.833,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 1.646,
+          "rf": 1.8,
+          "u2": null
+        },
+        {
+          "depth": 10.122,
+          "depth_nap": -11.853,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 1.646,
+          "rf": 1.6,
+          "u2": null
+        },
+        {
+          "depth": 10.142,
+          "depth_nap": -11.873,
+          "fs": 0.041,
+          "inclination": null,
+          "qc": 2.687,
+          "rf": 1.2,
+          "u2": null
+        },
+        {
+          "depth": 10.162,
+          "depth_nap": -11.893,
+          "fs": 0.038,
+          "inclination": null,
+          "qc": 3.278,
+          "rf": 0.9,
+          "u2": null
+        },
+        {
+          "depth": 10.182,
+          "depth_nap": -11.913,
+          "fs": 0.034,
+          "inclination": null,
+          "qc": 2.793,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 10.202,
+          "depth_nap": -11.933,
+          "fs": 0.037,
+          "inclination": null,
+          "qc": 4.108,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 10.222,
+          "depth_nap": -11.953,
+          "fs": 0.041,
+          "inclination": null,
+          "qc": 7.831,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 10.242,
+          "depth_nap": -11.973,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 9.497,
+          "rf": 0.6,
+          "u2": null
+        },
+        {
+          "depth": 10.262,
+          "depth_nap": -11.993,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 9.476,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.282,
+          "depth_nap": -12.013,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 9.277,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.302,
+          "depth_nap": -12.033,
+          "fs": 0.047,
+          "inclination": null,
+          "qc": 8.886,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.322,
+          "depth_nap": -12.052999999999999,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 8.615,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.342,
+          "depth_nap": -12.073,
+          "fs": 0.043,
+          "inclination": null,
+          "qc": 8.515,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.362,
+          "depth_nap": -12.093,
+          "fs": 0.042,
+          "inclination": null,
+          "qc": 8.474,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.382,
+          "depth_nap": -12.113,
+          "fs": 0.041,
+          "inclination": null,
+          "qc": 8.342,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.402,
+          "depth_nap": -12.133,
+          "fs": 0.042,
+          "inclination": null,
+          "qc": 8.327,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.421,
+          "depth_nap": -12.152,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 8.355,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.441,
+          "depth_nap": -12.172,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 8.416,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.461,
+          "depth_nap": -12.192,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 8.454,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.481,
+          "depth_nap": -12.212,
+          "fs": 0.045,
+          "inclination": null,
+          "qc": 8.448,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.501,
+          "depth_nap": -12.232,
+          "fs": 0.045,
+          "inclination": null,
+          "qc": 8.475,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.521,
+          "depth_nap": -12.252,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 8.508,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.541,
+          "depth_nap": -12.272,
+          "fs": 0.045,
+          "inclination": null,
+          "qc": 8.614,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.561,
+          "depth_nap": -12.292,
+          "fs": 0.036,
+          "inclination": null,
+          "qc": 8.66,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.581,
+          "depth_nap": -12.312,
+          "fs": 0.038,
+          "inclination": null,
+          "qc": 8.734,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.601,
+          "depth_nap": -12.332,
+          "fs": 0.038,
+          "inclination": null,
+          "qc": 8.945,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.621,
+          "depth_nap": -12.352,
+          "fs": 0.039,
+          "inclination": null,
+          "qc": 9.131,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.641,
+          "depth_nap": -12.372,
+          "fs": 0.04,
+          "inclination": null,
+          "qc": 9.376,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.661,
+          "depth_nap": -12.392,
+          "fs": 0.042,
+          "inclination": null,
+          "qc": 9.642,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.681,
+          "depth_nap": -12.411999999999999,
+          "fs": 0.044,
+          "inclination": null,
+          "qc": 10.067,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.701,
+          "depth_nap": -12.432,
+          "fs": 0.046,
+          "inclination": null,
+          "qc": 10.233,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 10.721,
+          "depth_nap": -12.452,
+          "fs": 0.051,
+          "inclination": null,
+          "qc": 10.585,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.74,
+          "depth_nap": -12.471,
+          "fs": 0.054,
+          "inclination": null,
+          "qc": 10.605,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.76,
+          "depth_nap": -12.491,
+          "fs": 0.054,
+          "inclination": null,
+          "qc": 10.479,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.78,
+          "depth_nap": -12.511,
+          "fs": 0.054,
+          "inclination": null,
+          "qc": 10.292,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.8,
+          "depth_nap": -12.531,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 10.194,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.82,
+          "depth_nap": -12.551,
+          "fs": 0.052,
+          "inclination": null,
+          "qc": 10.082,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.84,
+          "depth_nap": -12.571,
+          "fs": 0.052,
+          "inclination": null,
+          "qc": 10.306,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.86,
+          "depth_nap": -12.591,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 10.479,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.88,
+          "depth_nap": -12.611,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 10.48,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.9,
+          "depth_nap": -12.631,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 10.266,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.92,
+          "depth_nap": -12.651,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 10.1,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.94,
+          "depth_nap": -12.671,
+          "fs": 0.054,
+          "inclination": null,
+          "qc": 9.975,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.96,
+          "depth_nap": -12.691,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 9.907,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 10.98,
+          "depth_nap": -12.711,
+          "fs": 0.052,
+          "inclination": null,
+          "qc": 9.986,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.0,
+          "depth_nap": -12.731,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 10.153,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.02,
+          "depth_nap": -12.751,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 10.02,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.039,
+          "depth_nap": -12.77,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 9.974,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.059,
+          "depth_nap": -12.79,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 10.029,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.079,
+          "depth_nap": -12.81,
+          "fs": 0.048,
+          "inclination": null,
+          "qc": 10.181,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.099,
+          "depth_nap": -12.83,
+          "fs": 0.051,
+          "inclination": null,
+          "qc": 10.479,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.119,
+          "depth_nap": -12.85,
+          "fs": 0.055,
+          "inclination": null,
+          "qc": 10.652,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.139,
+          "depth_nap": -12.87,
+          "fs": 0.057,
+          "inclination": null,
+          "qc": 10.903,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.159,
+          "depth_nap": -12.89,
+          "fs": 0.055,
+          "inclination": null,
+          "qc": 11.367,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.179,
+          "depth_nap": -12.91,
+          "fs": 0.055,
+          "inclination": null,
+          "qc": 11.526,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.199,
+          "depth_nap": -12.93,
+          "fs": 0.054,
+          "inclination": null,
+          "qc": 11.639,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.219,
+          "depth_nap": -12.95,
+          "fs": 0.055,
+          "inclination": null,
+          "qc": 11.993,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.239,
+          "depth_nap": -12.97,
+          "fs": 0.057,
+          "inclination": null,
+          "qc": 12.469,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.259,
+          "depth_nap": -12.99,
+          "fs": 0.057,
+          "inclination": null,
+          "qc": 13.048,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.279,
+          "depth_nap": -13.01,
+          "fs": 0.058,
+          "inclination": null,
+          "qc": 13.571,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.299,
+          "depth_nap": -13.03,
+          "fs": 0.06,
+          "inclination": null,
+          "qc": 14.008,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.318,
+          "depth_nap": -13.049,
+          "fs": 0.061,
+          "inclination": null,
+          "qc": 14.26,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.338,
+          "depth_nap": -13.068999999999999,
+          "fs": 0.064,
+          "inclination": null,
+          "qc": 14.538,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.358,
+          "depth_nap": -13.089,
+          "fs": 0.065,
+          "inclination": null,
+          "qc": 14.831,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.378,
+          "depth_nap": -13.109,
+          "fs": 0.068,
+          "inclination": null,
+          "qc": 15.453,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.398,
+          "depth_nap": -13.129,
+          "fs": 0.071,
+          "inclination": null,
+          "qc": 15.833,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.418,
+          "depth_nap": -13.149,
+          "fs": 0.074,
+          "inclination": null,
+          "qc": 16.043,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.438,
+          "depth_nap": -13.169,
+          "fs": 0.075,
+          "inclination": null,
+          "qc": 16.026,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.458,
+          "depth_nap": -13.189,
+          "fs": 0.075,
+          "inclination": null,
+          "qc": 15.787,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.478,
+          "depth_nap": -13.209,
+          "fs": 0.074,
+          "inclination": null,
+          "qc": 15.295,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.498,
+          "depth_nap": -13.229,
+          "fs": 0.072,
+          "inclination": null,
+          "qc": 14.752,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.518,
+          "depth_nap": -13.249,
+          "fs": 0.069,
+          "inclination": null,
+          "qc": 14.506,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.538,
+          "depth_nap": -13.269,
+          "fs": 0.069,
+          "inclination": null,
+          "qc": 14.285,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.558,
+          "depth_nap": -13.289,
+          "fs": 0.065,
+          "inclination": null,
+          "qc": 14.142,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.577,
+          "depth_nap": -13.308,
+          "fs": 0.065,
+          "inclination": null,
+          "qc": 13.755,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.597,
+          "depth_nap": -13.328,
+          "fs": 0.064,
+          "inclination": null,
+          "qc": 13.12,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.617,
+          "depth_nap": -13.348,
+          "fs": 0.062,
+          "inclination": null,
+          "qc": 12.39,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.637,
+          "depth_nap": -13.368,
+          "fs": 0.06,
+          "inclination": null,
+          "qc": 11.659,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.657,
+          "depth_nap": -13.388,
+          "fs": 0.058,
+          "inclination": null,
+          "qc": 11.001,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.677,
+          "depth_nap": -13.408,
+          "fs": 0.057,
+          "inclination": null,
+          "qc": 10.717,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.697,
+          "depth_nap": -13.427999999999999,
+          "fs": 0.055,
+          "inclination": null,
+          "qc": 10.546,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.717,
+          "depth_nap": -13.448,
+          "fs": 0.055,
+          "inclination": null,
+          "qc": 10.325,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.737,
+          "depth_nap": -13.468,
+          "fs": 0.054,
+          "inclination": null,
+          "qc": 10.033,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.757,
+          "depth_nap": -13.488,
+          "fs": 0.054,
+          "inclination": null,
+          "qc": 9.94,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.777,
+          "depth_nap": -13.508,
+          "fs": 0.051,
+          "inclination": null,
+          "qc": 9.88,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.797,
+          "depth_nap": -13.528,
+          "fs": 0.05,
+          "inclination": null,
+          "qc": 9.854,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.816,
+          "depth_nap": -13.547,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 10.027,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.836,
+          "depth_nap": -13.567,
+          "fs": 0.049,
+          "inclination": null,
+          "qc": 10.145,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.856,
+          "depth_nap": -13.587,
+          "fs": 0.05,
+          "inclination": null,
+          "qc": 10.319,
+          "rf": 0.4,
+          "u2": null
+        },
+        {
+          "depth": 11.876,
+          "depth_nap": -13.607,
+          "fs": 0.052,
+          "inclination": null,
+          "qc": 10.565,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.896,
+          "depth_nap": -13.627,
+          "fs": 0.053,
+          "inclination": null,
+          "qc": 10.824,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.916,
+          "depth_nap": -13.647,
+          "fs": 0.055,
+          "inclination": null,
+          "qc": 10.93,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.936,
+          "depth_nap": -13.667,
+          "fs": 0.056,
+          "inclination": null,
+          "qc": 10.65,
+          "rf": 0.5,
+          "u2": null
+        },
+        {
+          "depth": 11.956,
+          "depth_nap": -13.687,
+          "fs": null,
+          "inclination": null,
+          "qc": 10.173,
+          "rf": null,
+          "u2": null
+        },
+        {
+          "depth": 11.976,
+          "depth_nap": -13.707,
+          "fs": null,
+          "inclination": null,
+          "qc": 9.576,
+          "rf": null,
+          "u2": null
+        },
+        {
+          "depth": 11.996,
+          "depth_nap": -13.727,
+          "fs": null,
+          "inclination": null,
+          "qc": 9.118,
+          "rf": null,
+          "u2": null
+        },
+        {
+          "depth": 12.016,
+          "depth_nap": -13.747,
+          "fs": null,
+          "inclination": null,
+          "qc": 8.818,
+          "rf": null,
+          "u2": null
+        },
+        {
+          "depth": 12.035,
+          "depth_nap": -13.766,
+          "fs": null,
+          "inclination": null,
+          "qc": 8.626,
+          "rf": null,
+          "u2": null
+        }
+      ],
+      "position": {
+        "x_rd": 108159.7,
+        "y_rd": 445889.3,
+        "z_nap": -1.731
+      },
+      "project_name": null,
+      "project_number": "BRO",
+      "source_file": "example.gef",
+      "type": "OpenGeoCpt"
+    }
+  ]
+}

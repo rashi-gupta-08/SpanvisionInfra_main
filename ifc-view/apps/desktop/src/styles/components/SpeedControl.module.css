@@ -1,0 +1,46 @@
+.speedControl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--command-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.speedControl label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.speedSlider {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.speedSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.speedSlider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.speedValue {
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 45px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+}

@@ -1,0 +1,28 @@
+Spanvision infra
+geptechniek workspace · Geotechniek
+GW
+OPEN SOURCE ENGINEERING
+Spanvision QA ground investigation
+Sonderingsrapport · Rotterdam
+Opdrachtgever  QA customer
+Projectnr  SV-QA-01
+Datum  02-10-2026
+geptechniek workspace · Geotechniek Sonderingsrapport · pagina 1
+Coordinatentabel
+Sondering X-RD [m] Y-RD [m] Z-NAP [m] Diepte tot [m] Datum
+CPT000000036564 108159.70 445889.30 -1.73 12.04 16-08-2002
+
+Robertson SBT — grondsoort-legenda
+
+Metadata-overzicht
+Veld Waarde
+Sondering CPT000000036564
+Project 
+Apparatuur uitvoerder onderzoek
+Maaiveld [m NAP] -1.73
+Datum 16-08-2002
+Eindiepte [m] 12.04
+geptechniek workspace · Geotechniek
+0.4.1
+geptechniek workspace · Geotechniek
+Spanvision infra

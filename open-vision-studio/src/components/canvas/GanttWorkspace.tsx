@@ -1,0 +1,132 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useAppStore } from '@/state/appStore';
+import {
+  inlineDirectionOf,
+  panelWidthAtPointer,
+  panelWidthStepForArrow,
+  useSplitter,
+} from '@/hooks/useSplitter';
+import {
+  saveLeftPanelWidth,
+  TASK_TABLE_MAX_WIDTH,
+  TASK_TABLE_MIN_WIDTH,
+} from '@/utils/settingsStore';
+import type { Task } from '@/types/task';
+import { GanttTaskGrid } from '@/components/task-grid/GanttTaskGrid';
+import { GanttCanvas, type GanttGridRevealRequest } from './GanttCanvas';
+import { clampTaskGridWidth, effectiveTaskGridMax } from './ganttSplitter';
+import { GanttRowDragBridgeContext, type GanttRowDragBridge, type GanttRowDragStarter } from './ganttRowDragBridge';
+import { applySetting } from '@/components/settings/applySetting';
+import { localeDirection } from '@/i18n/config';
+import type { HistogramPickerSide } from '@/engine/renderer/HistogramRenderer';
+
+export function GanttWorkspace() {
+  const { t, i18n } = useTranslation('task');
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const leftPanelWidth = useAppStore(state => state.ui.leftPanelWidth);
+  const setUI = useAppStore(state => state.setUI);
+  const [revealRequest, setRevealRequest] = useState<GanttGridRevealRequest | null>(null);
+  const [histogramHost, setHistogramHost] = useState<HTMLDivElement | null>(null);
+  const [miniMapHost, setMiniMapHost] = useState<HTMLDivElement | null>(null);
+  const [workspaceWidth, setWorkspaceWidth] = useState(TASK_TABLE_MAX_WIDTH + 180);
+  const taskGridMax = effectiveTaskGridMax(workspaceWidth);
+  const renderedLeftPanelWidth = clampTaskGridWidth(leftPanelWidth, workspaceWidth);
+  // Eén brug per werkruimte: de grid registreert zijn rijsleep, het canvas draagt eraan over.
+  const rowDragStartRef = useRef<GanttRowDragStarter | null>(null);
+  const rowDragBridge = useMemo<GanttRowDragBridge>(() => ({ startRef: rowDragStartRef }), []);
+
+  useEffect(() => {
+    const node = workspaceRef.current;
+    if (!node) return;
+    const update = () => setWorkspaceWidth(node.getBoundingClientRect().width);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // De takenlijst staat aan de BEGINkant van de werkruimte: links in ltr, rechts in ar/fa (het
+  // CSS-grid volgt de gespiegelde shell). Muis en pijltoetsen rekenen daarom via dezelfde gedeelde
+  // regel in `useSplitter`: de grens gaat de kant op van de muis of de pijl.
+  // Het histogram eronder is één canvas over de volle breedte; zijn resourcekiezer staat onder de
+  // takenlijst, dus aan dezelfde kant. De tijdlijn zelf blijft ltr.
+  const histogramPickerSide: HistogramPickerSide = localeDirection(i18n.language) === 'rtl' ? 'right' : 'left';
+  const splitter = useSplitter({
+    min: TASK_TABLE_MIN_WIDTH,
+    max: () => {
+      const width = workspaceRef.current?.getBoundingClientRect().width ?? workspaceWidth;
+      return effectiveTaskGridMax(width);
+    },
+    computeSize: event => {
+      const workspace = workspaceRef.current;
+      if (!workspace) return Number.NaN;
+      return Math.round(panelWidthAtPointer(
+        event.clientX,
+        workspace.getBoundingClientRect(),
+        'inline-start',
+        inlineDirectionOf(workspace),
+      ));
+    },
+    onResize: width => {
+      if (!Number.isNaN(width)) setUI({ leftPanelWidth: width });
+    },
+    onCommit: () => { void saveLeftPanelWidth(useAppStore.getState().ui.leftPanelWidth); },
+  });
+
+  const revealTask = useCallback((task: Task) => {
+    setRevealRequest(current => ({ taskId: task.id, nonce: (current?.nonce ?? 0) + 1 }));
+  }, []);
+
+  return (
+    <GanttRowDragBridgeContext.Provider value={rowDragBridge}>
+    <div ref={workspaceRef} className="gantt-workspace" data-testid="gantt-workspace">
+      <div className="gantt-workspace-grid" style={{ width: renderedLeftPanelWidth }}>
+        <GanttTaskGrid onPlainTaskClick={revealTask} />
+      </div>
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={t('taskGrid.controls.resizeTaskGrid')}
+        aria-valuemin={TASK_TABLE_MIN_WIDTH}
+        aria-valuemax={taskGridMax}
+        aria-valuenow={renderedLeftPanelWidth}
+        tabIndex={0}
+        data-testid="gantt-workspace-splitter"
+        className="gantt-workspace-splitter"
+        data-resizing={splitter.isResizing ? 'true' : undefined}
+        onPointerDown={splitter.startPointer}
+        onKeyDown={event => {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+          event.preventDefault();
+          const step = panelWidthStepForArrow(event.key, 'inline-start', inlineDirectionOf(workspaceRef.current));
+          const next = clampTaskGridWidth(
+            renderedLeftPanelWidth + step * (event.shiftKey ? 40 : 10),
+            workspaceWidth,
+          );
+          applySetting('leftPanelWidth', next, saveLeftPanelWidth);
+        }}
+      />
+      <div className="gantt-workspace-timeline">
+        <GanttCanvas
+          revealRequest={revealRequest}
+          histogramHost={histogramHost}
+          histogramPickerWidth={renderedLeftPanelWidth}
+          histogramPickerSide={histogramPickerSide}
+          miniMapHost={miniMapHost}
+        />
+      </div>
+      <div
+        ref={setHistogramHost}
+        className="gantt-workspace-histogram"
+        data-testid="gantt-histogram-host"
+      />
+      <div
+        ref={setMiniMapHost}
+        className="gantt-workspace-minimap"
+        data-testid="gantt-minimap-host"
+      />
+    </div>
+    </GanttRowDragBridgeContext.Provider>
+  );
+}

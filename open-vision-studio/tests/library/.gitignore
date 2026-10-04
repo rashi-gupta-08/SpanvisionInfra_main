@@ -1,0 +1,5 @@
+.*.mjs
+# Niet uitsluitend voor de (inmiddels geschrapte, F9) ResourceRow-broncontrole: check-library-slice.ts
+# importeert ook PoolImportDialog, dat via Select.css evengoed een CSS-bundel emit — dit is dus een
+# generieke esbuild-bijvangst van elke check die een React-component importeert, niet iets test-specifieks.
+.*.css

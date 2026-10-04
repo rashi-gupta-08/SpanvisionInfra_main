@@ -1,0 +1,126 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Spanvision Infra · PDF",
+  "version": "2026.39.0",
+  "identifier": "com.spanvisioninfra.pdfworkspace",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3041",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Spanvision Infra · PDF — Spanvision Infra",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": false,
+        "visible": true,
+        "backgroundColor": "#000000",
+        "devtools": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https:",
+      "dangerousDisableAssetCspModification": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis",
+      "app",
+      "dmg",
+      "deb",
+      "appimage"
+    ],
+    "createUpdaterArtifacts": false,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "template": "./nsis/installer.nsi",
+        "installerHooks": "./nsis/hooks.nsh",
+        "installMode": "perMachine",
+        "installerIcon": "icons/icon.ico"
+      },
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0",
+          "cups-bsd",
+          "cups-client"
+        ]
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15",
+      "entitlements": "entitlements.plist"
+    },
+    "resources": {
+      "icons/file-icon.ico": "file-icon.ico",
+      "resources/kaders": "kaders",
+      "resources/onderhoeken": "onderhoeken",
+      "resources/tessdata": "tessdata",
+      "resources/fonts": "fonts"
+    },
+    "externalBin": [
+      "binaries/pdfium-worker"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "pdf"
+        ],
+        "mimeType": "application/pdf",
+        "name": "SpanvisionPDFWorkspace.pdf",
+        "description": "Portable Document Format",
+        "role": "Editor"
+      }
+    ],
+    "publisher": "Spanvision Infra",
+    "shortDescription": "geptechniek workspace · PDF by Spanvision infra"
+  },
+  "plugins": {
+    "fs": {
+      "requireLiteralLeadingDot": false
+    },
+    "shell": {
+      "open": true
+    },
+    "deep-link": {
+      "mobile": [
+        {
+          "host": "open",
+          "pathPrefix": [
+            "/"
+          ]
+        }
+      ],
+      "desktop": {
+        "schemes": [
+          "spanvisionpdfworkspace"
+        ]
+      }
+    }
+  },
+  "mainBinaryName": "SpanvisionPDFWorkspace"
+}

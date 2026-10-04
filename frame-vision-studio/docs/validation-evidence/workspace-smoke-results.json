@@ -1,0 +1,522 @@
+[
+  {
+    "children": [
+      {
+        "class": "editor s-DWj8-_C1SH3f",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "2D Editor",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "viewer3d-container s-rUCHE5tBqC62",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "3D Viewer",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "kozijnstaat s-xHG_iU14im-x",
+        "overflow": "auto",
+        "scrollWidth": 920,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Window Schedule",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "production-view s-4Lpfv4iA9Ux6",
+        "overflow": "hidden",
+        "scrollWidth": 689,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Production",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "calc-view s-3Kvh6FxgNFFy",
+        "overflow": "auto",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Calculation",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-9Q_wtlk9Lp6H",
+        "overflow": "auto",
+        "scrollWidth": 382,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Analytics",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-u_246rTLBFfS",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Layout (proto)",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "profile-editor-view s-Pkjn8x-ZeDu7",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Profile editor",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-Hm5QJxC3ukEY",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Production plan",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-vSpo2Z0tmh-L",
+        "overflow": "hidden",
+        "scrollWidth": 507,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Energy",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-C6vN_zPyFZdr",
+        "overflow": "hidden",
+        "scrollWidth": 471,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Circularity",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-D16lik4ehHyB",
+        "overflow": "auto",
+        "scrollWidth": 382,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Plausibility",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-VMEkzWxh3pFT",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Quotations",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-ov_PpDsXUQoz",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "BCF",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-d3jlGorqOI9k",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Cutting plan",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-xU_IbFcSZlHK",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "CNC",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-JaRjR2alf_pu",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Procurement",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-pk-eimC6Xmab",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Combinations",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-xlPTLzurywAf",
+        "overflow": "hidden",
+        "scrollWidth": 390,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "IDS validation",
+    "width": 390
+  },
+  {
+    "children": [
+      {
+        "class": "view s-6XLkjzBvejvo",
+        "overflow": "auto",
+        "scrollWidth": 382,
+        "width": 390
+      }
+    ],
+    "documentWidth": 390,
+    "oldBrand": false,
+    "view": "Certification",
+    "width": 390
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "2D Editor",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "3D Viewer",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Window Schedule",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Production",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Calculation",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Analytics",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Layout (proto)",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Profile editor",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Production plan",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Energy",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Circularity",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Plausibility",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Quotations",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "BCF",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Cutting plan",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "CNC",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Procurement",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Combinations",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "IDS validation",
+    "width": 768
+  },
+  {
+    "documentWidth": 768,
+    "oldBrand": false,
+    "view": "Certification",
+    "width": 768
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "2D Editor",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "3D Viewer",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Window Schedule",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Production",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Calculation",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Analytics",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Layout (proto)",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Profile editor",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Production plan",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Energy",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Circularity",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Plausibility",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Quotations",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "BCF",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Cutting plan",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "CNC",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Procurement",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Combinations",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "IDS validation",
+    "width": 1440
+  },
+  {
+    "documentWidth": 1440,
+    "oldBrand": false,
+    "view": "Certification",
+    "width": 1440
+  }
+]

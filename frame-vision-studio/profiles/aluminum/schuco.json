@@ -1,0 +1,426 @@
+[
+  {
+    "id": "schuco-aws70hi",
+    "name": "Schuco AWS 70.HI",
+    "manufacturer": "Schuco",
+    "series": "AWS 70.HI",
+    "material": "aluminum",
+    "materialSubtype": "thermisch_onderbroken",
+    "width": 51,
+    "depth": 70,
+    "ventDepth": 80,
+    "sightline": 51,
+    "glazingRebate": 25,
+    "minGlassThickness": 11,
+    "maxGlassThickness": 62,
+    "minGlassThicknessFixed": 11,
+    "maxGlassThicknessFixed": 52,
+    "minGlassThicknessVent": 21,
+    "maxGlassThicknessVent": 62,
+    "sealingLevels": 3,
+    "crossSection": [
+      [0, 0],
+      [51, 0],
+      [51, 25],
+      [32, 25],
+      [32, 21],
+      [29, 21],
+      [29, 25],
+      [26, 25],
+      [26, 62],
+      [23, 62],
+      [23, 67],
+      [26, 67],
+      [26, 70],
+      [0, 70]
+    ],
+    "ufValue": 1.5,
+    "uwTripleGlass": 0.93,
+    "uwDoubleGlass": 1.3,
+    "soundInsulation": 47,
+    "airTightness": "Klasse 4",
+    "windLoad": "C5/B5",
+    "waterTightness": "9A",
+    "securityClass": "RC3",
+    "applicableAs": [
+      "frame",
+      "sash"
+    ],
+    "finishes": [
+      "gepoedercoat",
+      "geanodiseerd"
+    ],
+    "colors": [
+      "RAL9010",
+      "RAL9001",
+      "RAL9016",
+      "RAL7016",
+      "RAL7021",
+      "RAL9005",
+      "DB703"
+    ],
+    "sponning": {
+      "width": 15,
+      "depth": 25,
+      "type": "binnensponning"
+    },
+    "sources": [
+      "Schüco Systemeigenschaften AWS (lbprofile.de p.67-71): glas vast 11-52 / vleugel 21-62; Uf 1,5; kozijnprofielen vanaf 51 mm aanzicht; vleugeldiepte = kozijn + 10 (70/80)",
+      "schueco.com AWS 70.HI: '3 sealing levels (MD)'"
+    ],
+    "unverifiedFields": [
+      "width",
+      "sightline",
+      "glazingRebate",
+      "sponning.depth"
+    ],
+    "dataNotes": [
+      "sealingLevels: BRONCONFLICT — fensternorm.com zegt 2, schueco.com zegt 3 (MD); fabrikantsopgave 3 aangehouden (waarschijnlijk telverschil glasdichtingen)",
+      "width/sightline 51 = 'vanaf'-waarde kleinste kozijnprofiel (platform); exacte 70.HI-aanzichten niet gepubliceerd gevonden",
+      "de eerdere sightline 79 / sightlineBottom 104 / sightlineMullion 94 / sightlineVent 41 waren onbebrond en zijn verwijderd",
+      "AWS-sponninghoogte niet publiek gevonden — 25 aangehouden met vlag"
+    ],
+    "innerWalls": [
+      [
+        [2, 2],
+        [24, 2],
+        [24, 23],
+        [2, 23]
+      ],
+      [
+        [28, 2],
+        [49, 2],
+        [49, 19],
+        [28, 19]
+      ],
+      [
+        [1.2, 25],
+        [3.2, 25],
+        [3.2, 49],
+        [1.2, 49]
+      ],
+      [
+        [22.8, 25],
+        [24.8, 25],
+        [24.8, 49],
+        [22.8, 49]
+      ],
+      [
+        [5.2, 26],
+        [20.8, 26],
+        [20.8, 48],
+        [5.2, 48]
+      ],
+      [
+        [2, 51],
+        [21, 51],
+        [21, 68],
+        [2, 68]
+      ]
+    ]
+  },
+  {
+    "id": "schuco-aws75si-plus",
+    "name": "Schuco AWS 75.SI+",
+    "manufacturer": "Schuco",
+    "series": "AWS 75.SI+",
+    "material": "aluminum",
+    "materialSubtype": "super_insulated",
+    "width": 41,
+    "depth": 75,
+    "ventDepth": 85,
+    "sightline": 41,
+    "sightlineVent": 59,
+    "sightlineCombination": 107,
+    "glazingRebate": 25,
+    "minGlassThickness": 19,
+    "maxGlassThickness": 65,
+    "minGlassThicknessFixed": 19,
+    "maxGlassThicknessFixed": 55,
+    "minGlassThicknessVent": 19,
+    "maxGlassThicknessVent": 65,
+    "crossSection": [
+      [0, 0],
+      [41, 0],
+      [41, 25],
+      [22, 25],
+      [22, 21],
+      [19, 21],
+      [19, 25],
+      [16, 25],
+      [16, 67],
+      [13, 67],
+      [13, 72],
+      [16, 72],
+      [16, 75],
+      [0, 75]
+    ],
+    "ufValue": 1.2,
+    "uwTripleGlass": 0.83,
+    "uwDoubleGlass": 1.3,
+    "soundInsulation": 48,
+    "airTightness": "Klasse 4",
+    "windLoad": "C5/B5",
+    "waterTightness": "9A",
+    "securityClass": "RC3",
+    "applicableAs": [
+      "frame",
+      "sash"
+    ],
+    "finishes": [
+      "gepoedercoat",
+      "geanodiseerd"
+    ],
+    "colors": [
+      "RAL9010",
+      "RAL9001",
+      "RAL9016",
+      "RAL7016",
+      "RAL7021",
+      "RAL9005",
+      "DB703"
+    ],
+    "sponning": {
+      "width": 15,
+      "depth": 25,
+      "type": "binnensponning"
+    },
+    "sources": [
+      "Schüco Systemeigenschaften 75.SI (lbprofile.de p.71, 84-89): maatketen kozijn 41 + voeg 7 + vleugel 59 = 107 (min. combinatie 91); glas 19-55 vast / 19-65 vleugel; vleugeldiepte 75/85",
+      "Schüco-tabel p.71 + brochure P3933: Uf 1,2 bij 117 mm declaratie-aanzicht met PA-stegen (tot 0,92 met PT)"
+    ],
+    "unverifiedFields": [
+      "glazingRebate",
+      "sponning.depth"
+    ],
+    "dataNotes": [
+      "AWS-sponninghoogte niet publiek gevonden — 25 aangehouden met vlag"
+    ],
+    "innerWalls": [
+      [
+        [2, 2],
+        [14, 2],
+        [14, 23],
+        [2, 23]
+      ],
+      [
+        [18, 2],
+        [39, 2],
+        [39, 19],
+        [18, 19]
+      ],
+      [
+        [1.2, 25],
+        [3.2, 25],
+        [3.2, 63],
+        [1.2, 63]
+      ],
+      [
+        [12.8, 25],
+        [14.8, 25],
+        [14.8, 63],
+        [12.8, 63]
+      ],
+      [
+        [5.2, 26],
+        [10.8, 26],
+        [10.8, 62],
+        [5.2, 62]
+      ],
+      [
+        [2, 65],
+        [11, 65],
+        [11, 73],
+        [2, 73]
+      ]
+    ]
+  },
+  {
+    "id": "schuco-aws90si-plus",
+    "name": "Schuco AWS 90.SI+",
+    "manufacturer": "Schuco",
+    "series": "AWS 90.SI+",
+    "material": "aluminum",
+    "materialSubtype": "passivhaus",
+    "width": 51,
+    "depth": 90,
+    "ventDepth": 100,
+    "sightline": 51,
+    "glazingRebate": 30,
+    "minGlassThickness": 28,
+    "maxGlassThickness": 68,
+    "minGlassThicknessFixed": 28,
+    "maxGlassThicknessFixed": 63,
+    "minGlassThicknessVent": 28,
+    "maxGlassThicknessVent": 68,
+    "crossSection": [
+      [0, 0],
+      [51, 0],
+      [51, 25],
+      [27, 25],
+      [27, 21],
+      [24, 21],
+      [24, 25],
+      [21, 25],
+      [21, 82],
+      [18, 82],
+      [18, 87],
+      [21, 87],
+      [21, 90],
+      [0, 90]
+    ],
+    "ufValue": 0.71,
+    "applicableAs": [
+      "frame",
+      "sash"
+    ],
+    "finishes": [
+      "gepoedercoat",
+      "geanodiseerd"
+    ],
+    "colors": [
+      "RAL9010",
+      "RAL9001",
+      "RAL7016",
+      "RAL9005",
+      "DB703"
+    ],
+    "sponning": {
+      "width": 15,
+      "depth": 30,
+      "type": "binnensponning"
+    },
+    "sources": [
+      "Schüco Systemeigenschaften (lbprofile.de p.71): glas 28-63 vast / 28-68 vleugel; vleugeldiepte 90/100; Uf 'tot 0,71'"
+    ],
+    "unverifiedFields": [
+      "width",
+      "sightline",
+      "glazingRebate",
+      "sponning.depth"
+    ],
+    "dataNotes": [
+      "ufValue 0,71 is de 'tot'-waarde (beste uitvoering)",
+      "width/sightline 51 = platform-'vanaf'-waarde (kleinste kozijnprofiel), 90.SI+-specifiek aanzicht niet gepubliceerd gevonden; eerdere sightline 64 was onbebrond"
+    ],
+    "innerWalls": [
+      [
+        [2, 2],
+        [19, 2],
+        [19, 23],
+        [2, 23]
+      ],
+      [
+        [23, 2],
+        [49, 2],
+        [49, 19],
+        [23, 19]
+      ],
+      [
+        [1.2, 25],
+        [3.2, 25],
+        [3.2, 67],
+        [1.2, 67]
+      ],
+      [
+        [17.8, 25],
+        [19.8, 25],
+        [19.8, 67],
+        [17.8, 67]
+      ],
+      [
+        [5.2, 26],
+        [15.8, 26],
+        [15.8, 66],
+        [5.2, 66]
+      ],
+      [
+        [2, 69],
+        [16, 69],
+        [16, 88],
+        [2, 88]
+      ]
+    ]
+  },
+  {
+    "id": "schuco-ass77pd-sliding",
+    "name": "Schuco ASS 77 PD Schuifpui",
+    "manufacturer": "Schuco",
+    "series": "ASS 77 PD",
+    "material": "aluminum",
+    "materialSubtype": "sliding",
+    "width": 77,
+    "depth": 77,
+    "sightline": 55,
+    "glazingRebate": 30,
+    "maxGlassThickness": 50,
+    "maxWeight": 300,
+    "crossSection": [
+      [0, 0],
+      [77, 0],
+      [77, 5],
+      [53.9, 5],
+      [53.9, 35.5],
+      [77, 35.5],
+      [77, 41.5],
+      [53.9, 41.5],
+      [53.9, 72],
+      [77, 72],
+      [77, 77],
+      [0, 77]
+    ],
+    "ufValue": 1.6,
+    "applicableAs": [
+      "frame",
+      "sliding_sash"
+    ],
+    "finishes": [
+      "gepoedercoat",
+      "geanodiseerd"
+    ],
+    "colors": [
+      "RAL9010",
+      "RAL7016",
+      "RAL9005",
+      "DB703"
+    ],
+    "sponning": {
+      "width": 15,
+      "depth": 30,
+      "type": "binnensponning"
+    },
+    "unverifiedFields": [
+      "width",
+      "depth",
+      "sightline",
+      "glazingRebate",
+      "sponning.depth",
+      "ufValue",
+      "maxGlassThickness",
+      "maxWeight"
+    ],
+    "dataNotes": [
+      "ASS 77 PD deze onderzoeksronde niet geverifieerd"
+    ],
+    "innerWalls": [
+      [
+        [2, 2],
+        [51.9, 2],
+        [51.9, 25],
+        [2, 25]
+      ],
+      [
+        [2, 27],
+        [51.9, 27],
+        [51.9, 50],
+        [2, 50]
+      ],
+      [
+        [2, 52],
+        [51.9, 52],
+        [51.9, 75],
+        [2, 75]
+      ]
+    ]
+  }
+]

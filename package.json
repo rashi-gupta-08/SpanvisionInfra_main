@@ -1,0 +1,40 @@
+{
+  "name": "@spanvision-infra/geptechniek-suite",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup:suite": "node branding/setup.mjs",
+    "brand:sync": "node branding/sync.mjs",
+    "brand:icons": "node branding/icons.mjs",
+    "brand:appearance": "node branding/appearance.mjs",
+    "verify:appearance": "node qa/modes/verify.mjs",
+    "brand:check": "node branding/sync.mjs --check",
+    "build:suite": "node branding/build.mjs",
+    "preview:suite": "node branding/preview.mjs",
+    "preview:bim": "node branding/preview-bim.mjs",
+    "verify:bim": "node qa/bim/verify.mjs",
+    "verify:studios": "node qa/studios/verify.mjs",
+    "preview:speech": "node branding/preview-speech.mjs",
+    "verify:suite": "node branding/verify.mjs",
+    "verify:speech": "node qa/speech/verify.mjs",
+    "verify:geo": "node branding/verify-geotechniek.mjs",
+    "build:geo:windows": "node branding/native-geotechniek.mjs",
+    "verify:geo:backend": "node branding/verify-geotechniek-backend.mjs",
+    "preview:stl": "node branding/preview-stl.mjs",
+    "verify:stl": "node qa/stl/verify.mjs",
+    "build:stl:windows": "node branding/native-stl.mjs",
+    "preview:field": "node branding/preview-field.mjs",
+    "verify:field": "node qa/field/verify.mjs",
+    "build:field:windows": "node branding/native-field.mjs",
+    "preview:pointcloud": "node branding/preview-pointcloud.mjs",
+    "verify:pointcloud": "node qa/pointcloud/verify.mjs",
+    "preview:pile": "node branding/preview-pile.mjs",
+    "verify:pile": "node qa/pile/verify.mjs",
+    "build:pile:windows": "node branding/native-pile.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.35.5"
+  }
+}

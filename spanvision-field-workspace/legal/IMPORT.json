@@ -1,0 +1,20 @@
+{
+  "archive": "Open-Field-Studio.zip",
+  "sha256": "a612c978b38475f08deef6679a153bdaa5b657831c50429b9c7426b87cf6207b",
+  "version": "0.3.6",
+  "upstream": "https://github.com/OpenAEC-Foundation/Open-Field-Studio",
+  "license": "CC-BY-SA-4.0",
+  "modifiedBy": "Spanvision infra",
+  "changes": [
+    "Branding",
+    "Monochrome presentation",
+    "Responsive layout fixes",
+    "Windows packaging",
+    "Non-destructive native profile migration"
+  ],
+  "excluded": [
+    ".git",
+    ".github",
+    "upstream screenshots"
+  ]
+}

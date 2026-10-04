@@ -1,0 +1,78 @@
+import type { Baseline } from '@/types/baseline';
+import { generateId } from '@/utils/id';
+import type { AppSliceFactory } from './types';
+import { isLeafTask } from '@/utils/taskHierarchy';
+
+export interface BaselineSlice {
+  baselines: Baseline[];
+  activeBaselineId: string | null;
+  /** Snapshot huidige plan → nieuwe Baseline; retourneert het nieuwe id; zet direct als actief.
+   *  Pure metadata: pusht ÉÉN undo-snapshot, roept NOOIT runCPM aan, zet NOOIT scheduleStale. */
+  saveBaseline: (name: string) => string;
+  /** Verwijder een baseline; was het de actieve, dan valt activeBaselineId op de nieuwste (of null). */
+  deleteBaseline: (id: string) => void;
+  renameBaseline: (id: string, name: string) => void;
+  /** Actieve baseline voor overlay/variance; leest alleen, geen runCPM. */
+  setActiveBaseline: (id: string | null) => void;
+}
+
+export const createBaselineSlice: AppSliceFactory<BaselineSlice> = (runtime) => (set) => ({
+  baselines: [],
+  activeBaselineId: null,
+
+  saveBaseline: (name) => {
+    const id = generateId('baseline');
+    set((s) => {
+      runtime.beginUndoable(s);
+      // Snapshot de CPM-early-datums (= de balk zoals getekend) per leaf-taak; fallback op
+      // de schedule-datums voor het geval er nog nooit een runCPM is geweest.
+      const leaves = s.tasks.filter(isLeafTask);
+      s.baselines.push({
+        id,
+        name,
+        createdAt: new Date().toISOString(),
+        tasks: leaves.map((t) => ({
+          taskId: t.id,
+          start: t.time.earlyStart || t.time.scheduleStart,
+          finish: t.time.earlyFinish || t.time.scheduleFinish,
+          duration: t.time.scheduleDuration,
+          isMilestone: t.isMilestone,
+          ...(t.milestoneKind ? { milestoneKind: t.milestoneKind } : {}),
+        })),
+        projectEnd: s.cpmResult?.projectEnd ?? '',
+        projectDuration: s.cpmResult?.projectDuration ?? 0,
+      });
+      s.activeBaselineId = id;
+      runtime.finishMutation(s);
+    });
+    return id;
+  },
+
+  deleteBaseline: (id) =>
+    set((s) => {
+      if (!s.baselines.some((b) => b.id === id)) return; // onbekend id: geen snapshot, geen loze undo-stap.
+      runtime.beginUndoable(s);
+      s.baselines = s.baselines.filter((b) => b.id !== id);
+      if (s.activeBaselineId === id) {
+        s.activeBaselineId = s.baselines.length ? s.baselines[s.baselines.length - 1].id : null;
+      }
+      runtime.finishMutation(s);
+    }),
+
+  renameBaseline: (id, name) =>
+    set((s) => {
+      const b = s.baselines.find((x) => x.id === id);
+      if (!b) return;
+      runtime.beginUndoable(s);
+      b.name = name;
+      runtime.finishMutation(s);
+    }),
+
+  setActiveBaseline: (id) =>
+    set((s) => {
+      if (s.activeBaselineId === id) return;
+      runtime.beginUndoable(s);
+      s.activeBaselineId = id;
+      runtime.finishMutation(s);
+    }),
+});

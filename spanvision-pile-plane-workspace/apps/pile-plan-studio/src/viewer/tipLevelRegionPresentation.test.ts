@@ -1,0 +1,71 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+
+import type { LegendItems } from "../core/projectTypes.ts";
+import type { TipLevelRegionGeometryLayer } from "./tipLevelRegionGeometry.ts";
+import { presentTipLevelRegionGeometry } from "./tipLevelRegionPresentation.ts";
+
+const legend: LegendItems = {
+  encodingMode: "size-symbol",
+  pileSizeColorScheme: "tableau-extended",
+  pileTipLevelColorScheme: "tableau-extended",
+  pileSizes: [],
+  pileTipLevels: [
+    { value: -20_000, symbol: { baseShape: "circle", fillPattern: "full" }, color: "#202020", symbolAutomatic: true, colorAutomatic: true },
+    { value: -10_000, symbol: { baseShape: "circle", fillPattern: "full" }, color: "#101010", symbolAutomatic: true, colorAutomatic: true },
+    { value: -15_000, symbol: { baseShape: "circle", fillPattern: "full" }, color: "#151515", symbolAutomatic: true, colorAutomatic: true },
+  ],
+};
+
+function layer(legendValueM: number): TipLevelRegionGeometryLayer {
+  return {
+    pileTipLevelMKey: legendValueM * 1000,
+    legendValueM,
+    diameterPx: 18.5,
+    faces: [],
+    circles: [],
+    segments: [],
+  };
+}
+
+describe("tip-level region presentation", () => {
+  it("maps exact legend colors and orders shallow PPN layers before deep layers", () => {
+    const presented = presentTipLevelRegionGeometry([
+      layer(-20),
+      layer(-10),
+      layer(-15),
+    ], legend);
+
+    assert.deepEqual(presented.map(({ legendValueM, color, opacity }) => ({
+      legendValueM,
+      color,
+      opacity,
+    })), [
+      { legendValueM: -10, color: "#101010", opacity: 0.25 },
+      { legendValueM: -15, color: "#151515", opacity: 0.25 },
+      { legendValueM: -20, color: "#202020", opacity: 0.25 },
+    ]);
+  });
+
+  it("omits geometry without an exact PPN legend entry", () => {
+    const presented = presentTipLevelRegionGeometry([
+      layer(-15),
+      layer(-15.0004),
+    ], legend);
+
+    assert.deepEqual(presented.map(({ legendValueM }) => legendValueM), [-15]);
+  });
+
+  it("greys inactive tip-level regions only in dual-color mode", () => {
+    const presented = presentTipLevelRegionGeometry(
+      [layer(-10), layer(-15)],
+      { ...legend, encodingMode: "size-color-tip-region" },
+      [-10_000],
+    );
+
+    assert.deepEqual(presented.map(({ legendValueM, color }) => ({ legendValueM, color })), [
+      { legendValueM: -10, color: "#101010" },
+      { legendValueM: -15, color: "#8C989F" },
+    ]);
+  });
+});

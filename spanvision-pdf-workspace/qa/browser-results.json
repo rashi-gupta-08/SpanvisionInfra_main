@@ -1,0 +1,145 @@
+{
+  "results": [
+    {
+      "screen": "landing",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "screen": "login",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "screen": "signup",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "screen": "account",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "screen": "suggestions",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "screen": "scan-and-account-interactions",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "screen": "landing",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "screen": "login",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "screen": "signup",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "screen": "account",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "screen": "suggestions",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "screen": "scan-and-account-interactions",
+      "width": 768,
+      "passed": true
+    },
+    {
+      "screen": "landing",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "screen": "login",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "screen": "signup",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "screen": "account",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "screen": "suggestions",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "screen": "scan-and-account-interactions",
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "screen": "workspace-with-pdf",
+      "width": 1440,
+      "canvasPreserved": true
+    },
+    {
+      "screen": "workspace-with-pdf",
+      "width": 768,
+      "canvasPreserved": true
+    },
+    {
+      "screen": "workspace-with-pdf",
+      "width": 390,
+      "canvasPreserved": true
+    },
+    {
+      "screen": "workspace-with-pdf",
+      "width": 1440,
+      "canvasPreserved": true
+    },
+    {
+      "screen": "annotation-measurement-undo-redo-save-reopen",
+      "passed": true,
+      "annotations": 2
+    },
+    {
+      "screen": "live-assistant",
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "screen": "live-assistant",
+      "width": 768,
+      "passed": true
+    },
+    {
+      "screen": "live-assistant",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "screen": "legacy-preferences-and-canvas-restoration",
+      "passed": true
+    },
+    {
+      "screen": "touch-panels-overflow-controls-and-scan-cancellation",
+      "width": 390,
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "requests": []
+}

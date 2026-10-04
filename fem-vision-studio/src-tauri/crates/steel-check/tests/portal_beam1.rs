@@ -1,0 +1,287 @@
+//! Portal Frame Beam 1 acceptance test — UNP350 S235.
+//!
+//! Reference: verificatie calculations/original/portal-frame.pdf §2.6.1 (page 51-54)
+//! Profile: UNP350 (channel section). Beam length: 5000 mm (horizontal girder).
+//! Governing combination: 2.1 (the reference combination, mapped to u32 21).
+//! Governing check: 6.3.3 interaction with UC = 0.98.
+//!
+//! WAAROM DE SNAPSHOT IN SEPTEMBER 2026 IS VERSCHOVEN
+//! Alleen de regel `deflection_w_add` verandert, en daarbinnen alleen de
+//! GRENSWAARDE, het artikel en de toelichting — niet een unity check. De
+//! w_add-noemer stond vast op 150 ("conform de referentie-uitwerking"), maar
+//! NEN-EN 1990:2002/NB:2019 A1.4.3(3) geeft ℓ_rep/150 uitsluitend voor
+//! vloerafscheidingen ter plaatse van een hoogteverschil. Voor deze staaf geldt
+//! het tweede gedachtestreepje — "overige vloeren en daken die intensief door
+//! personen worden gebruikt" — dus 3/1 000 deel van ℓ_rep: 15.0 mm in plaats
+//! van de oude 33.33 mm bij L = 5000 mm.
+//! De unity check blijft 0,00 omdat `deflection_actual_max_mm` in deze test 0 is;
+//! de referentie-uitwerking rekent de doorbuiging niet mee in deze staaf.
+//!
+//! WAAROM DE SNAPSHOT OP 15 SEPTEMBER 2026 IS VERSCHOVEN (knik om de zwakke as)
+//! Alleen de toets `6.3.1_buckling` verandert, en daarin geen enkel getal dat
+//! al bestond. De titel noemt beide assen met hun vlak; `variables` krijgt
+//! L_cr,y en L_cr,z, `intermediate_values` N_b,Rd per as; de afleiding
+//! (`deelstappen`) schrijft per as een volledige tak uit; en de Engelse notitie
+//! "Governing axis" is vervangen door Nederlandse kanttekeningen met de
+//! herkomst van de kniklengte. Waarde, unity check, status en alle bestaande
+//! variabelen en tussenwaarden zijn gelijk gebleven — bij het bijwerken per veld
+//! nagelopen.
+
+use steel_check::*;
+use mechanics::{InternalForces, ForcePoint};
+use nen_en_1993_1_1_ltb::LateralBracing;
+use nen_en_1990::ConsequenceClass;
+use approx::assert_relative_eq;
+use std::sync::OnceLock;
+
+fn run() -> &'static BeamCheckResult {
+    static RESULT: OnceLock<BeamCheckResult> = OnceLock::new();
+    RESULT.get_or_init(|| {
+        let input = BeamCheckInput {
+            bijlage: Default::default(),
+            beam_id: 1,
+            profile_name: "UNP350".to_string(),
+            steel_grade: "S235".to_string(),
+            length_m: 5.0,
+            forces_envelope: vec![
+                // Combination 2.1 (id=21), x=0: compression + shear + moment
+                ForcePoint {
+                    combination_id: 21,
+                    position_mm: 0.0,
+                    forces: InternalForces { n_ed: -18.479, vy_ed: 0.0, vz_ed: -232.736, mt_ed: 0.0, my_ed: 66.036, mz_ed: 0.0 },
+                },
+                // Combination 2.1 (id=21), x=3900 mm: decisive for bending + shear + 6.3.3
+                ForcePoint {
+                    combination_id: 21,
+                    position_mm: 3900.0,
+                    forces: InternalForces { n_ed: -18.479, vy_ed: 0.0, vz_ed: 235.084, mt_ed: 0.0, my_ed: -194.796, mz_ed: 0.0 },
+                },
+            ],
+            lateral_bracing: LateralBracing { top_flange_positions: vec![], bottom_flange_positions: vec![] },
+            // the reference: Lcr,y=5000 mm, Lcr,z=5000 mm
+            buckling_length_y_m: 5.0,
+            buckling_length_z_m: 5.0,
+            deflection_limit_class: DeflectionClass::Floor,
+            deflection_limit_numerator: 333,
+            deflection_actual_max_mm: 0.0,
+            is_cantilever: false,
+            consequence_class: ConsequenceClass::CC1,
+            pre_camber_mm: 0.0,
+            deflection_permanent_mm: 0.0,
+            deflection_add_limit_numerator: 0.0,
+            deflection_notes: vec![],
+            q_equiv_n_per_mm: 0.0,
+            z_a_mm: 0.0,
+            custom_section: None,
+            staafstand: None,
+            staafstand_notities: None,
+            staafeinden: None,
+            staaf_notities: None,
+            profile_end: None,
+            custom_section_end: None,
+        };
+        check_beam(input)
+    })
+}
+
+fn find_check<'a>(result: &'a BeamCheckResult, id: &str) -> &'a NamedCheck {
+    result.checks.iter().find(|c| c.id == id)
+        .unwrap_or_else(|| panic!("check '{}' not found; available: {:?}", id,
+            result.checks.iter().map(|c| c.id.as_str()).collect::<Vec<_>>()))
+}
+
+fn resistance_value(result: &BeamCheckResult, id: &str) -> f64 {
+    match &find_check(result, id).kind {
+        CheckKind::Resistance(r) => r.value,
+        CheckKind::Stability(s) => s.value,
+    }
+}
+
+fn uc_value(result: &BeamCheckResult, id: &str) -> f64 {
+    match &find_check(result, id).kind {
+        CheckKind::Resistance(r) => r.uc.as_ref().expect("expected UC").uc,
+        CheckKind::Stability(s) => s.uc.as_ref().expect("expected UC").uc,
+    }
+}
+
+#[test]
+fn portal_beam1_compression() {
+    let r = run();
+    // Phase 13-G: UNP350 area aligned with the reference (A=7665.7 mm²)
+    // N_c,Rd = 7665.7 × 235 / 1.0 / 1000 = 1801.44 kN — matches the reference exactly
+    assert_relative_eq!(resistance_value(r, "6.2.4_compression"), 1801.44, max_relative = 1e-3);
+    assert_relative_eq!(uc_value(r, "6.2.4_compression"), 0.01, max_relative = 0.15); // very small UC, wider tolerance
+}
+
+#[test]
+fn portal_beam1_bending() {
+    let r = run();
+    // Phase 13-F: UNP350 Wpl,y corrected to 889763 mm³ (the reference catalog value)
+    // M_y,c,Rd = 889763 × 235 / 1.0 / 1e6 = 209.094 kNm — now matches the reference exactly
+    assert_relative_eq!(resistance_value(r, "6.2.5_bending_y"), 209.094, max_relative = 1e-3);
+    // UC = 194.796 / 209.094 = 0.932 (reference: 0.93 — now aligned)
+    assert_relative_eq!(uc_value(r, "6.2.5_bending_y"), 0.932, max_relative = 0.025);
+}
+
+#[test]
+fn portal_beam1_shear() {
+    let r = run();
+    // Phase 13-G: UNP350 Av_z aligned with the reference (Av=4946 mm²)
+    // V_c,z,Rd = 4946 × (235/√3) / 1.0 / 1000 = 671.06 kN — matches the reference 671.1 kN
+    assert_relative_eq!(resistance_value(r, "6.2.6_shear_z"), 671.06, max_relative = 1e-3);
+    // UC = 235.084 / 671.06 = 0.350 (reference: 0.35)
+    assert_relative_eq!(uc_value(r, "6.2.6_shear_z"), 0.350, max_relative = 0.025);
+}
+
+#[test]
+fn portal_beam1_channel_ltb() {
+    let r = run();
+    // Phase 13-E: UNP350 LTB is now computed (no longer NotApplicable).
+    // Uses conservative monosym Mcr (× 0.7) with buckling curve c (alpha_LT=0.49).
+    let ltb_uc = uc_value(r, "6.3.2_ltb_channel");
+    assert!(ltb_uc > 0.0 && ltb_uc < 5.0, "LTB UC should be a finite positive value, got {}", ltb_uc);
+    eprintln!("portal_beam1 channel LTB UC (Phase 13-E) = {}", ltb_uc);
+}
+
+#[test]
+fn portal_beam1_governing_ok() {
+    let r = run();
+    // the reference governing: 6.3.3 UC=0.98, beam is OK.
+    // Phase 13-F: Wpl corrected to 889763 mm³, bending and interaction UCs now aligned with the reference.
+    assert!(r.uc_max > 0.0, "uc_max should be positive");
+    // Document UC for comparison with the reference reference:
+    eprintln!("portal_beam1 uc_max (Phase 13-F) = {}", r.uc_max);
+}
+
+/// Regressiesnapshot van het volledige resultaat.
+///
+/// Sept 2026 (e) bijgewerkt na de nabeschouwing op de kipreparatie. **Geen
+/// enkele unity check en geen enkele bestaande tussenwaarde verandert**; wat
+/// erbij komt is uitsluitend verantwoording:
+///  * α_LT = 0,49 staat nu in de tussenwaardenlijst. Dat was de enige grootheid
+///    die het I-pad wel toonde en dit kanaalpad niet, en juist hier is het de
+///    bewuste keuze buiten tabel 6.5 om — dus de waarde die het rapport hoort te
+///    laten zien.
+///  * Twee notities zijn van het Engels naar het Nederlands gebracht, in lijn
+///    met de rest van de kipuitvoer.
+///  * Er komt één notitie bij: de omhullende van combinatie 21 is bemonsterd
+///    tot x = 3900 mm op een staaf van 5000 mm, dus het eindmoment waaruit β en
+///    B* volgen is door `interpolate_my_at` vastgehouden en niet gemeten. Dat
+///    is precies de invoer waar de β van 1,4898 → 1,3373 hieronder op rust; het
+///    rapport zegt dat nu zelf in plaats van alleen deze docstring.
+///
+/// Sept 2026 (d) bijgewerkt na de kipreparatie. Van de drie defecten raakt er
+/// één dit kanaalpad: β kwam uit het VELDmoment (M op L_st/4 gedeeld door het
+/// grootste moment over de staaf) in plaats van uit de EINDMOMENTEN van het
+/// kipveld (NB.NB.4.3). De andere twee raakten dit pad niet — `m_b_rd_channel`
+/// zette L_kip al gelijk aan L_st, wat voor deze ongesteunde ligger het juiste
+/// gaffelgeval is, en α_LT stond hier al op 0,49.
+///
+/// De ligger is 5000 mm, ongesteund, met M(0) = +66,036 kNm en
+/// M(3900) = −194,796 kNm. De momentenlijn wisselt dus van teken: dubbele
+/// kromming, het gunstigste geval van tabel NB.NB.1. β wordt daarmee
+/// −194,796 in de noemer en +66,036 in de teller, dus β = −0,339 in plaats van
+/// de +0,090 die de kwartpuntbenadering gaf. C₁ gaat mee van 1,669 naar 2,123.
+///
+/// Waar die 2,123 precies vandaan komt — de eerdere formulering "dat is precies
+/// wat de formule van geval 1 geeft" was op twee punten mis en is hierbij
+/// rechtgezet. `nb_annex::c1_c2_factors` gebruikt die formule niet; hij
+/// interpoleert bilineair in de gedigitaliseerde figuur NB.NB.5, op een β-raster
+/// van vijf punten. Hier is B* = −1 (q_equiv = 0, dus uitsluitend
+/// eindmomenten), dus de laatste kolom telt, en daarin staat de rij β = −0,5 op
+/// 2,300 en de rij β = 0 op 1,750. Lineair op β = −0,339:
+/// 1,750 + (0,339/0,5)·(2,300 − 1,750) = 2,1229 — de snapshotwaarde. De formule
+/// van geval 1 uit tabel NB.NB.1 zelf geeft 1,75 + 1,05·0,339 + 0,3·0,339² =
+/// 2,140, oftewel 0,8 % hóger; zij is kwadratisch waar de interpolatie tussen
+/// twee rijen lineair is, en de rij β = −0,5 staat bovendien al op de
+/// afkapwaarde 2,30. De formule is hier dus een plausibiliteitscontrole die op
+/// 0,8 % uitkomt, niet het mechanisme waarlangs de waarde ontstaat.
+///
+/// Gevolg: M_cr 199,86 → 254,24 kNm, λ_LT 1,0228 → 0,9069, χ_LT 0,6253 →
+/// 0,6966, M_b,Rd 130,75 → 145,66 kNm, UC kip 1,4898 → 1,3373, uc_max
+/// idem. De ligger blijft ruim NotOk op kip. De UC daalt hier dus; dat is geen
+/// versoepeling maar het wegvallen van een te ongunstige β — de oude waarde
+/// las de momentenlijn op de verkeerde plek af.
+///
+/// De tussenwaardenlijst van dit kanaalpad is bovendien gelijkgetrokken met
+/// die van het I-profielpad: L_g, L_kip, B*, C₂ en k_red stonden er niet in en
+/// staan er nu wel. B* = −1 (q_equiv = 0, dus uitsluitend eindmomenten) en
+/// C₂ = 0 (z_a = 0); rekenkundig identiek aan de vaste 1,0 en 0 die er stonden.
+///
+/// **De op het referentie-rapport geijkte waarden veranderen NIET**:
+/// N_c,Rd = 1801,44 kN, M_y,c,Rd = 209,094 kNm en V_c,z,Rd = 671,06 kN staan
+/// hierboven onveranderd en worden onverminderd afgedwongen.
+///
+/// Sept 2026 (c) bijgewerkt nadat de exacte doorsnedemotor de It-waarden van
+/// de hele U-reeks heeft gecorrigeerd. De motor sluit It numeriek in tussen
+/// een bewezen onder- en bovengrens; voor alle 27 U-profielen lag de
+/// opgeslagen waarde BOVEN die bovengrens, dus aantoonbaar te hoog — bij
+/// UNP350 met +4,6%. Een te hoge torsieconstante geeft een te hoge M_cr en
+/// daarmee een te hoge kipcapaciteit: onveilig.
+///
+/// UNP350 gaat van It = 632 878 naar 603 930 mm⁴. Gevolg hier: M_cr 203,54 ->
+/// 199,86 kNm, chi_LT 0,6309 -> 0,6253, M_b,Rd 131,92 -> 130,75 kNm, uc_max
+/// 1,4766 -> 1,4898. De ligger blijft ruim NotOk op kip.
+///
+/// Waarom deze snapshot wél mee mag bewegen terwijl de rest van dit bestand
+/// vastligt: de nieuwe 1,4898 valt binnen 0,03% samen met de 1,4893 die hier
+/// stond vóór stap (b) hieronder, toen It nog rechtstreeks uit een externe
+/// referentieberekening kwam (605 000 mm⁴; de motor geeft daar 603 930, dus
+/// −0,18%). Stap (b) was de afwijking, en die wordt hiermee teruggedraaid.
+/// De op het referentie-rapport geijkte asserties hierboven (N_c,Rd,
+/// M_y,c,Rd, V_c,z,Rd) veranderen niet en worden onverminderd afgedwongen.
+/// Zie de insluitingstest in steel-profiles/tests/torsie_u_insluiting.rs.
+///
+/// Sept 2026 (b) bijgewerkt na het herstel van de torsiegrootheden van UNP350.
+/// It is met de El Darwish & Johnston-formule herberekend die nu op de hele
+/// U-reeks wordt toegepast (605 000 -> 632 878 mm⁴, +4,6%) en Iw met de
+/// sectoriale-oppervlakmethode over de 8% schuine flensmiddellijn
+/// (1,106·10¹¹ -> 1,0572·10¹¹ mm⁶, −4,4%). Zie
+/// ../source-provenance/fem-vision-studio/docs/superpowers/specs/2026-09-02-profieldata-generatie.md §10.
+/// Gevolg in deze snapshot: M_cr 200,00 -> 203,54 kNm, chi_LT 0,6255 -> 0,6309,
+/// M_b,Rd 130,80 -> 131,92 kNm en daarmee uc_max 1,4893 -> 1,4766. De ligger
+/// blijft ruim NotOk op kip.
+/// **De op het referentie-rapport geijkte waarden veranderen NIET**:
+/// A, Wpl;y en Av;z van UNP350 zijn bewust ongemoeid gelaten, dus
+/// N_c,Rd = 1801,44 kN, M_y,c,Rd = 209,094 kNm en V_c,z,Rd = 671,06 kN staan
+/// hierboven onveranderd en worden nog steeds afgedwongen.
+///
+/// Sept 2026 (a) bijgewerkt na de correctie van de UNP-knikkromme om de y-as:
+/// EN 1993-1-1 tabel 6.2 schrijft voor U-doorsneden kromme **c** voor om
+/// beide assen; de database stond op kromme b. Daardoor verandert in deze
+/// snapshot uitsluitend chi_y (0,9206 -> 0,8901) en, via de 6.3.3-interactie,
+/// de UC van vgl. 6.61 (0,9069 -> 0,9073) en 6.62 (0,58846 -> 0,58851).
+/// Alle op het referentie-rapport geijkte waarden in dit bestand
+/// (N_c,Rd = 1801,44 kN, M_y,c,Rd = 209,094 kNm, V_c,z,Rd = 671,06 kN en de
+/// bijbehorende UC's) zijn ONgewijzigd en worden hierboven nog steeds
+/// afgedwongen. N_b,Rd verandert niet, omdat voor deze ligger de z-as
+/// maatgevend is en die al op kromme c stond.
+/// September 2026 (f) — bijlage B en tabel 3.1 (basisaudit nr 7, 17, 36).
+/// Drie wijzigingen, alle drie per veld nagelopen en met de hand nagerekend
+/// (formules van tabel B.1/B.2/B.3, invoer uit deze snapshot zelf):
+///  * 6.3.3 rekent niet meer met een vaste C_m = 0,6 en tabel B.1, maar met
+///    C_my, C_mz en C_mLT uit tabel B.3 (uit het momentenverloop van
+///    respectievelijk de staaf, de staaf om z en het maatgevende kipveld) en,
+///    voor een open doorsnede met χ_LT < 1, k_zy uit tabel B.2. De variabelen
+///    C_my, C_mz en C_mLT komen erbij en de notities beschrijven de rij van
+///    tabel B.3 en de gebruikte tabel voor k_zy.
+///  * Elke gerekende toets met f_y in haar formule krijgt de notitie van
+///    tabel 3.1 (dikteklasse t ≤ 40 mm; f_y en f_u ongewijzigd voor deze
+///    doorsnede).
+///  * Geen enkele weerstand, χ, λ̄, M_cr of doorbuiging verandert.
+/// Getallen (UNP 350, klasse 1, λ̄_y = 0,4137, λ̄_z = 1,9719, n_y = 0,0115,
+/// n_z = 0,0510, χ_LT = 0,6966 → tabel B.2, M_b,Rd = 145,660 kNm):
+///   C_my  = 0,4644 — rij 1: M(0) = 66,04, M(3900) = −194,80, ψ = −0,339.
+///   C_mLT = 0,5822 — kipveld 0–5000 met M(5000) vastgehouden op −194,80:
+///                    monotoon met bolling, gemiddelde −93,07, α_s = 0,478 →
+///                    0,2 + 0,382 = 0,582 > rij 1.
+///   k_yy = 0,4644·(1 + 0,2137·0,0115) = 0,4655 (was 0,6015)
+///   k_zy = max(1 − 0,1·1,9719·0,0510/0,3322; 1 − 0,1·0,0510/0,3322) = 0,9846 (was 0,3609)
+///   k_zz = 1 + (2·1,9719 − 0,6)·0,0510 = 1,0714, k_yz = 0,6429
+///   6.61 = 0,0115 + 0,4655·194,80/145,66 = 0,6341 (was 0,8159)
+///   6.62 = 0,0510 + 0,9846·194,80/145,66 = 1,3678 (was 0,5337) → maatgevend
+///   boven de kip (1,3373); de ligger bleef al NotOk.
+#[test]
+fn portal_beam1_snapshot() {
+    insta::assert_json_snapshot!("portal_beam1", run());
+}

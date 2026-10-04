@@ -1,0 +1,19 @@
+{
+  "cad2d": "passed",
+  "pdf": "passed",
+  "ifc": "passed",
+  "calc": "passed",
+  "hub": "passed",
+  "cad": "passed",
+  "geo": "passed",
+  "speech": "passed",
+  "stl": "passed",
+  "field": "passed",
+  "pointcloud": "passed",
+  "pile": "passed",
+  "bim": "passed",
+  "planner": "passed",
+  "fem": "passed",
+  "frame": "passed",
+  "calculation": "passed"
+}

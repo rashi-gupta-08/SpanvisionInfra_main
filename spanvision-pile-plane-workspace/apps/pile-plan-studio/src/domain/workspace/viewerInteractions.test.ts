@@ -1,0 +1,299 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import {
+  addReactViewerLoadPoints,
+  clearReactViewerSelection,
+  expandInitialReactViewerLoadPointGroup,
+  getReactViewerContextCptIds,
+  getReactViewerSelectedCptIds,
+  isReactViewerCptSelectionEditing,
+  isViewerSelectionActionAllowed,
+  openReactViewerCpt,
+  selectReactViewerLoadPoint,
+  selectSingleLoadPointForInspection,
+  setReactViewerLoadPoints,
+  shouldClearLegendSelectionFromPointerTarget,
+  shouldRaiseCptMarker,
+  toggleReactViewerLoadPoint,
+} from "./viewerInteractions.ts";
+
+describe("React viewer interactions", () => {
+  it("locks load-point selection while manually editing CPTs", () => {
+    assert.equal(isViewerSelectionActionAllowed(false, "load-point"), true);
+    assert.equal(isViewerSelectionActionAllowed(false, "background"), true);
+    assert.equal(isViewerSelectionActionAllowed(false, "lasso"), true);
+    assert.equal(isViewerSelectionActionAllowed(true, "cpt"), true);
+    assert.equal(isViewerSelectionActionAllowed(true, "load-point"), false);
+    assert.equal(isViewerSelectionActionAllowed(true, "background"), false);
+    assert.equal(isViewerSelectionActionAllowed(true, "lasso"), false);
+  });
+
+  it("defaults selected scope when creating a selection from empty", () => {
+    const state = {
+      selectedLoadPointId: null,
+      selectedLoadPointIds: [],
+      selectedCptId: null,
+      rightPanelMode: "load-point" as const,
+      cptSettingsScope: "all" as const,
+      legendSelectionFilter: { pileSizes: [], pileTipLevels: [] },
+    };
+
+    assert.equal(selectReactViewerLoadPoint(state, 2).cptSettingsScope, "selected");
+    assert.equal(addReactViewerLoadPoints(state, [2, 3]).cptSettingsScope, "selected");
+  });
+
+  it("forces all scope when a selection becomes empty", () => {
+    const state = {
+      selectedLoadPointId: 1,
+      selectedLoadPointIds: [1],
+      selectedCptId: null,
+      rightPanelMode: "load-point" as const,
+      cptSettingsScope: "selected" as const,
+      legendSelectionFilter: { pileSizes: [], pileTipLevels: [] },
+    };
+
+    assert.equal(toggleReactViewerLoadPoint(state, 1).cptSettingsScope, "all");
+    assert.equal(clearReactViewerSelection(state).cptSettingsScope, "all");
+  });
+
+  it("preserves explicit scope when changing between non-empty selections", () => {
+    const state = {
+      selectedLoadPointId: 1,
+      selectedLoadPointIds: [1, 2],
+      selectedCptId: null,
+      rightPanelMode: "load-point" as const,
+      cptSettingsScope: "all" as const,
+      legendSelectionFilter: { pileSizes: [], pileTipLevels: [] },
+    };
+
+    assert.equal(selectReactViewerLoadPoint(state, 3).cptSettingsScope, "all");
+    assert.equal(toggleReactViewerLoadPoint(state, 2).cptSettingsScope, "all");
+    assert.equal(addReactViewerLoadPoints(state, [3]).cptSettingsScope, "all");
+  });
+
+  it("replaces the viewer selection and clears its previous CPT and legend context", () => {
+    const state = {
+      selectedLoadPointId: 1,
+      selectedLoadPointIds: [1, 2],
+      selectedCptId: 64,
+      rightPanelMode: "cpts" as const,
+      cptSettingsScope: "all" as const,
+      legendSelectionFilter: { pileSizes: [290], pileTipLevels: [-17.5] },
+    };
+
+    const next = setReactViewerLoadPoints(state, [3, 4]);
+
+    assert.deepEqual(next.selectedLoadPointIds, [3, 4]);
+    assert.equal(next.selectedLoadPointId, 3);
+    assert.equal(next.selectedCptId, null);
+    assert.equal(next.cptSettingsScope, "all");
+    assert.deepEqual(next.legendSelectionFilter, { pileSizes: [], pileTipLevels: [] });
+  });
+
+  it("selects one load point and clears the selected CPT", () => {
+    const next = selectReactViewerLoadPoint(
+      {
+        selectedLoadPointId: 1,
+        selectedLoadPointIds: [1, 3],
+        selectedCptId: 64,
+        rightPanelMode: "cpts",
+        cptSettingsScope: "all",
+        legendSelectionFilter: { pileSizes: [290], pileTipLevels: [-17.5] },
+      },
+      2,
+    );
+
+    assert.deepEqual(next.selectedLoadPointIds, [2]);
+    assert.equal(next.selectedLoadPointId, 2);
+    assert.equal(next.selectedCptId, null);
+    assert.equal(next.rightPanelMode, "cpts");
+    assert.deepEqual(next.legendSelectionFilter, { pileSizes: [], pileTipLevels: [] });
+  });
+
+  it("expands clicks, additive clicks, and lasso selections to complete groups", () => {
+    const state = {
+      selectedLoadPointId: null,
+      selectedLoadPointIds: [],
+      selectedCptId: null,
+      rightPanelMode: "load-point" as const,
+      cptSettingsScope: "all" as const,
+      legendSelectionFilter: { pileSizes: [], pileTipLevels: [] },
+    };
+    const groups = [{ load_point_ids: [1, 2, 3] }, { load_point_ids: [4, 5] }];
+
+    const clicked = selectReactViewerLoadPoint(state, 2, groups);
+    assert.deepEqual(clicked.selectedLoadPointIds, [1, 2, 3]);
+    const additive = addReactViewerLoadPoints(clicked, [5], groups);
+    assert.deepEqual(additive.selectedLoadPointIds, [1, 2, 3, 4, 5]);
+    const lasso = setReactViewerLoadPoints(state, [2, 4], groups);
+    assert.deepEqual(lasso.selectedLoadPointIds, [1, 2, 3, 4, 5]);
+  });
+
+  it("expands only the untouched initial project selection when groups arrive", () => {
+    const initial = {
+      selectedLoadPointId: 2,
+      selectedLoadPointIds: [2],
+      selectedCptId: null,
+      rightPanelMode: "load-point" as const,
+      cptSettingsScope: "selected" as const,
+      legendSelectionFilter: { pileSizes: [], pileTipLevels: [] },
+    };
+    const groups = [{ load_point_ids: [1, 2, 3] }, { load_point_ids: [4] }];
+
+    assert.deepEqual(
+      expandInitialReactViewerLoadPointGroup(initial, 2, groups).selectedLoadPointIds,
+      [1, 2, 3],
+    );
+    const userSelection = { ...initial, selectedLoadPointId: 4, selectedLoadPointIds: [4] };
+    assert.strictEqual(
+      expandInitialReactViewerLoadPointGroup(userSelection, 2, groups),
+      userSelection,
+    );
+  });
+
+  it("selects exactly one member for disclosure-list inspection", () => {
+    const state = {
+      selectedLoadPointId: 1,
+      selectedLoadPointIds: [1, 2, 3],
+      selectedCptId: 64,
+      rightPanelMode: "load-point" as const,
+      cptSettingsScope: "selected" as const,
+      legendSelectionFilter: { pileSizes: [], pileTipLevels: [] },
+    };
+
+    const next = selectSingleLoadPointForInspection(state, 2);
+    assert.deepEqual(next.selectedLoadPointIds, [2]);
+    assert.equal(next.selectedLoadPointId, 2);
+    assert.equal(next.selectedCptId, null);
+  });
+
+  it("toggles a load point for additive modifier-click selection", () => {
+    const next = toggleReactViewerLoadPoint(
+      {
+        selectedLoadPointId: 1,
+        selectedLoadPointIds: [1, 2],
+        selectedCptId: null,
+        rightPanelMode: "load-point",
+        cptSettingsScope: "selected",
+        legendSelectionFilter: { pileSizes: [320], pileTipLevels: [] },
+      },
+      2,
+    );
+
+    assert.deepEqual(next.selectedLoadPointIds, [1]);
+    assert.equal(next.selectedLoadPointId, 1);
+    assert.deepEqual(next.legendSelectionFilter, { pileSizes: [], pileTipLevels: [] });
+  });
+
+  it("clears load point and CPT selection without changing the active panel", () => {
+    const next = clearReactViewerSelection({
+      selectedLoadPointId: 1,
+      selectedLoadPointIds: [1],
+      selectedCptId: 64,
+      rightPanelMode: "cpts",
+      cptSettingsScope: "selected",
+      legendSelectionFilter: { pileSizes: [290], pileTipLevels: [-17.5] },
+    });
+
+    assert.deepEqual(next.selectedLoadPointIds, []);
+    assert.equal(next.selectedLoadPointId, null);
+    assert.equal(next.selectedCptId, null);
+    assert.equal(next.rightPanelMode, "cpts");
+    assert.deepEqual(next.legendSelectionFilter, { pileSizes: [], pileTipLevels: [] });
+  });
+
+  it("opens a CPT and clears legend selection", () => {
+    const next = openReactViewerCpt(
+      {
+        selectedLoadPointId: 1,
+        selectedLoadPointIds: [1],
+        selectedCptId: null,
+        rightPanelMode: "load-point",
+        cptSettingsScope: "all",
+        legendSelectionFilter: { pileSizes: [290], pileTipLevels: [-17.5] },
+      },
+      64,
+    );
+
+    assert.equal(next.selectedCptId, 64);
+    assert.equal(next.rightPanelMode, "cpts");
+    assert.deepEqual(next.legendSelectionFilter, { pileSizes: [], pileTipLevels: [] });
+  });
+
+  it("clears legend selection when clicking beside legend items", () => {
+    const legendItemTarget = {
+      closest: (selector: string) => selector === ".legend-item" ? {} : null,
+    } as Element;
+    const legendBackgroundTarget = {
+      closest: () => null,
+    } as unknown as Element;
+
+    assert.equal(shouldClearLegendSelectionFromPointerTarget(legendItemTarget), false);
+    assert.equal(shouldClearLegendSelectionFromPointerTarget(legendBackgroundTarget), true);
+  });
+
+  it("keeps legend selection while using the legend editor", () => {
+    const legendEditorTarget = {
+      closest: (selector: string) => selector === ".legend-editor-dialog" ? {} : null,
+    } as unknown as Element;
+
+    assert.equal(shouldClearLegendSelectionFromPointerTarget(legendEditorTarget), false);
+  });
+
+  it("shows the union of CPTs for selected load points plus the open CPT", () => {
+    const selectedIds = getReactViewerSelectedCptIds({
+      selectedCptId: 63,
+      selectedLoadPointIds: [1, 2],
+      selectedCptsByLoadPointId: new Map([
+        [1, [{ cpt: { id: 61, name: "CPT 61", x_mm: 0, y_mm: 0 }, distance_mm: 1, label: "upper left" }]],
+        [2, [
+          { cpt: { id: 61, name: "CPT 61", x_mm: 0, y_mm: 0 }, distance_mm: 2, label: "lower left" },
+          { cpt: { id: 62, name: "CPT 62", x_mm: 0, y_mm: 0 }, distance_mm: 3, label: "upper right" },
+        ]],
+      ]),
+    });
+
+    assert.deepEqual(selectedIds, [61, 62, 63]);
+  });
+
+  it("keeps load-point CPT context separate from the inspected CPT", () => {
+    const contextIds = getReactViewerContextCptIds({
+      selectedLoadPointIds: [1],
+      selectedCptsByLoadPointId: new Map([[
+        1,
+        [{ cpt: { id: 61, name: "CPT 61", x_mm: 0, y_mm: 0 }, distance_mm: 1, label: "upper left" }],
+      ]]),
+    });
+
+    assert.deepEqual(contextIds, [61]);
+  });
+
+  it("shows the union of manual CPT draft sets while editing", () => {
+    const selectedIds = getReactViewerSelectedCptIds({
+      cptSelectionEditDraft: {
+        loadPointIds: [1, 2],
+        cptIdsByLoadPoint: new Map([[1, new Set([62, 64])], [2, new Set([61, 64])]]),
+      },
+      selectedCptId: null,
+      selectedLoadPointIds: [1],
+      selectedCptsByLoadPointId: new Map([
+        [1, [{ cpt: { id: 61, name: "CPT 61", x_mm: 0, y_mm: 0 }, distance_mm: 1, label: "upper left" }]],
+      ]),
+    });
+
+    assert.deepEqual(selectedIds, [61, 62, 64]);
+  });
+
+  it("treats any active manual CPT draft as editing", () => {
+    assert.equal(isReactViewerCptSelectionEditing({ cptSelectionEditDraft: null }), false);
+    assert.equal(isReactViewerCptSelectionEditing({
+      cptSelectionEditDraft: { loadPointIds: [1, 2], cptIdsByLoadPoint: new Map() },
+    }), true);
+  });
+
+  it("raises every CPT above ordinary load points while manual selection is active", () => {
+    assert.equal(shouldRaiseCptMarker(false, false), false);
+    assert.equal(shouldRaiseCptMarker(true, false), true);
+    assert.equal(shouldRaiseCptMarker(false, true), true);
+  });
+});

@@ -1,0 +1,269 @@
+// Selectie + klembord.
+//
+// Deze twee horen bij elkaar en niet bij `taskSlice`: het klembord werkt op de selectie, en beide
+// zijn iets anders dan de taken zelf. Het onderscheid dat ze deelt is de UNDO-regel — selectie is
+// GEEN documentdata en pusht dus nooit een undo-snapshot, terwijl plakken dat juist wél doet omdat
+// het taken aanmaakt. Die regel stond eerder verspreid in commentaar tussen 1100 regels
+// taakmutaties; hier is hij de reden dat het bestand bestaat.
+//
+// Documentcontract: `selectedTaskIds` en `activeTaskId` zijn PER DOCUMENT (ze reizen mee bij een documentwissel,
+// `snapshot: 'none'` — je selectie hoort niet in een undo-stap), `taskClipboard` is APP-GLOBAAL,
+// zodat kopiëren en plakken tussen documenten werkt. Beide velden blijven op het top-level van
+// `AppState` staan, dus `documentContract.ts` verandert niet mee: die leest `s.selectedTaskIds`,
+// niet `s.selection.selectedTaskIds`.
+import type { AppSliceFactory } from './types';
+import type { Task } from '@/types/task';
+import type { Sequence } from '@/types/sequence';
+import type { ResourceAssignment } from '@/types/resource';
+import { subtreeCollector } from '@/state/taskTree';
+import { generateId } from '@/utils/id';
+import {
+  assignInsertedWbsCodes, insertRemappedRelations, normalizeInsertedBranch, notifyReferencesCleared,
+  notifyRelationsSkipped,
+} from '@/state/insertedBranch';
+import {
+  normalizeTaskRowCursor,
+  uniqueTaskIds,
+  type TaskRowCursor,
+  type ViewRow,
+} from '@/engine/view/visibleRows';
+
+/**
+ * Productiegrens tussen een occurrence-cursor en de domeinselectie. Alleen wanneer reconciliatie
+ * werkelijk op een andere taak uitkomt, wordt de enkelvoudige taakselectie meegeschoven. Een
+ * identieke occurrence met alleen een nieuwe absolute rijindex laat de selectie ongemoeid.
+ */
+export function reconcileTaskCursorSelection(
+  rows: readonly ViewRow[],
+  cursor: TaskRowCursor | null,
+  selectTask: (taskId: string) => void,
+): TaskRowCursor | null {
+  const next = normalizeTaskRowCursor(rows, cursor);
+  if (cursor !== null && next !== null && next.taskId !== cursor.taskId) selectTask(next.taskId);
+  return next;
+}
+
+export interface TaskClipboard {
+  tasks: Task[];
+  sequences: Sequence[];
+  assignments: ResourceAssignment[];
+}
+
+export interface SelectionSlice {
+  selectedTaskIds: string[];
+  /** Taak van de actieve cel/klik. Kan bewust buiten de meervoudige selectie vallen wanneer de
+   * gebruiker die taak met Ctrl/Cmd uit de set togglet; het eigenschappenpaneel blijft hem volgen. */
+  activeTaskId: string | null;
+  taskClipboard: TaskClipboard | null;
+
+  /** Selecteer één taak. `multi` (Ctrl/Cmd) togglet, `range` (Shift) breidt uit vanaf de laatst
+   *  geselecteerde. Geen undo: selectie is geen documentdata. */
+  selectTask: (id: string, multi?: boolean, range?: boolean) => void;
+  selectTaskRange: (fromId: string, toId: string) => void;
+  deselectAll: () => void;
+  /** Ctrl/Cmd+A: selecteer alle ZICHTBARE taken — leest `viewRows` (dezelfde
+   *  zichtbaarheids-afleiding als de tabel/Gantt, respecteert dus ingeklapte groepen/summaries).
+   *  Geen undo: selectie is geen documentdata. */
+  selectAllTasks: () => void;
+  /** Box-selectie: zet de selectie op precies `ids` (vervangen), of voeg ze
+   *  toe aan de bestaande selectie (`additive`, Ctrl/Cmd tijdens het slepen). Geen undo. */
+  selectTasks: (ids: string[], additive: boolean, activeTaskId?: string | null) => void;
+
+  /** Kopieer de opgegeven takken (default: de huidige selectie) incl. subtaken naar het klembord. */
+  copyTasks: (ids?: string[]) => void;
+  /** Plak het klembord als nieuwe takken; geeft de nieuwe root-ids terug (leeg als er niets te
+   *  plakken viel). Dit pusht WEL een undo-snapshot — er ontstaan taken. */
+  pasteTasks: () => string[];
+}
+
+export const createSelectionSlice: AppSliceFactory<SelectionSlice> = (runtime) => (set, get) => ({
+  selectedTaskIds: [],
+  activeTaskId: null,
+  taskClipboard: null,
+
+  selectTask: (id, multi = false, range = false) =>
+    set((s) => {
+      s.activeTaskId = id;
+      if (range && s.selectedTaskIds.length > 0) {
+        // Shift+click: select range from last selected to clicked task
+        const lastSelected = s.selectedTaskIds[s.selectedTaskIds.length - 1];
+        const flatIds = s.tasks.map(t => t.id);
+        const fromIdx = flatIds.indexOf(lastSelected);
+        const toIdx = flatIds.indexOf(id);
+        if (fromIdx >= 0 && toIdx >= 0) {
+          const start = Math.min(fromIdx, toIdx);
+          const end = Math.max(fromIdx, toIdx);
+          const rangeIds = flatIds.slice(start, end + 1);
+          // Merge with existing selection (union)
+          const merged = new Set([...s.selectedTaskIds, ...rangeIds]);
+          s.selectedTaskIds = Array.from(merged);
+        } else {
+          s.selectedTaskIds = [id];
+        }
+      } else if (multi) {
+        const idx = s.selectedTaskIds.indexOf(id);
+        if (idx >= 0) {
+          s.selectedTaskIds.splice(idx, 1);
+        } else {
+          s.selectedTaskIds.push(id);
+        }
+      } else {
+        s.selectedTaskIds = [id];
+      }
+    }),
+
+  selectTaskRange: (fromId, toId) =>
+    set((s) => {
+      const flatIds = s.tasks.map(t => t.id);
+      const fromIdx = flatIds.indexOf(fromId);
+      const toIdx = flatIds.indexOf(toId);
+      if (fromIdx >= 0 && toIdx >= 0) {
+        const start = Math.min(fromIdx, toIdx);
+        const end = Math.max(fromIdx, toIdx);
+        s.selectedTaskIds = flatIds.slice(start, end + 1);
+        s.activeTaskId = toId;
+      }
+    }),
+
+  deselectAll: () =>
+    set((s) => {
+      s.selectedTaskIds = [];
+      s.activeTaskId = null;
+    }),
+
+  selectAllTasks: () =>
+    set((s) => {
+      s.selectedTaskIds = uniqueTaskIds(s.viewRows);
+      if (!s.activeTaskId || !s.selectedTaskIds.includes(s.activeTaskId)) {
+        s.activeTaskId = s.selectedTaskIds[0] ?? null;
+      }
+    }),
+
+  selectTasks: (ids, additive, activeTaskId) =>
+    set((s) => {
+      const uniqueIds = [...new Set(ids)];
+      if (!additive) {
+        const nextActiveTaskId = activeTaskId === undefined ? (uniqueIds[0] ?? null) : activeTaskId;
+        const unchanged = s.activeTaskId === nextActiveTaskId
+          && s.selectedTaskIds.length === uniqueIds.length
+          && s.selectedTaskIds.every((id, index) => id === uniqueIds[index]);
+        if (unchanged) return;
+        s.selectedTaskIds = uniqueIds;
+        s.activeTaskId = nextActiveTaskId;
+        return;
+      }
+      const merged = new Set([...s.selectedTaskIds, ...uniqueIds]);
+      const nextSelectedTaskIds = Array.from(merged);
+      const nextActiveTaskId = activeTaskId !== undefined
+        ? activeTaskId
+        : uniqueIds.length > 0 ? uniqueIds[uniqueIds.length - 1] : s.activeTaskId;
+      const unchanged = s.activeTaskId === nextActiveTaskId
+        && s.selectedTaskIds.length === nextSelectedTaskIds.length
+        && s.selectedTaskIds.every((id, index) => id === nextSelectedTaskIds[index]);
+      if (unchanged) return;
+      s.selectedTaskIds = nextSelectedTaskIds;
+      s.activeTaskId = nextActiveTaskId;
+    }),
+
+  copyTasks: (ids) =>
+    set((s) => {
+      const sourceIds = ids ?? s.selectedTaskIds;
+      if (sourceIds.length === 0) return;
+
+      // Selectie uitbreiden met alle (klein)kinderen, net als bij verwijderen.
+      const collect = subtreeCollector(s.tasks); // één index voor alle bronnen
+      const idSet = new Set<string>(sourceIds.flatMap(sid => collect(sid)));
+
+      const tasks = s.tasks.filter(t => idSet.has(t.id));
+      if (tasks.length === 0) return;
+
+      // Alleen relaties waarvan beide uiteinden mee gekopieerd worden.
+      const sequences = s.sequences.filter(
+        seq => idSet.has(seq.predecessorId) && idSet.has(seq.successorId),
+      );
+      const assignments = s.assignments.filter(a => idSet.has(a.taskId));
+
+      // Deep-clone: het klembord blijft geldig na latere edits/undo van de bron.
+      s.taskClipboard = JSON.parse(JSON.stringify({ tasks, sequences, assignments }));
+    }),
+
+  pasteTasks: () => {
+    const newRootIds: string[] = [];
+    let skippedRelations = 0;
+    let clearedReferences = 0;
+    set((s) => {
+      const clip = s.taskClipboard;
+      if (!clip || clip.tasks.length === 0) return;
+
+      runtime.beginUndoable(s);
+
+      const copiedIds = new Set(clip.tasks.map(t => t.id));
+      const resourceExists = new Set(s.resources.map(r => r.id));
+
+      // Geplakte roots komen als sibling van de (eerst) geselecteerde taak;
+      // zonder selectie op rootniveau.
+      const anchor = s.selectedTaskIds.length > 0
+        ? s.tasks.find(t => t.id === s.selectedTaskIds[0])
+        : undefined;
+      const targetParentId = anchor ? anchor.parentId : null;
+
+      // Verse id voor elke gekopieerde taak.
+      const idMap = new Map<string, string>();
+      for (const t of clip.tasks) idMap.set(t.id, generateId('task'));
+
+      for (const src of clip.tasks) {
+        const newId = idMap.get(src.id)!;
+        const parentInClip = !!src.parentId && copiedIds.has(src.parentId);
+        if (!parentInClip) newRootIds.push(newId);
+
+        const task: Task = {
+          ...JSON.parse(JSON.stringify(src)),
+          id: newId,
+          parentId: parentInClip ? idMap.get(src.parentId!)! : targetParentId,
+          childIds: src.childIds.filter(c => copiedIds.has(c)).map(c => idMap.get(c)!),
+          // Verweesde resourceverwijzingen overslaan.
+          resourceIds: src.resourceIds.filter(r => resourceExists.has(r)),
+        };
+        s.tasks.push(task);
+      }
+
+      // Nieuwe roots aan de doelouder hangen.
+      if (targetParentId) {
+        const parent = s.tasks.find(t => t.id === targetParentId);
+        if (parent) parent.childIds.push(...newRootIds);
+      }
+
+      // Interne relaties opnieuw aanmaken met de nieuwe ids, getoetst aan de relatieregels —
+      // zonder die toets zou plakken een spookrelatie (bv. uit een IFC-import) eeuwig laten
+      // voortleven. Zie `insertRemappedRelations`.
+      skippedRelations = insertRemappedRelations(s, clip.sequences, idMap);
+
+      // Resource-toewijzingen opnieuw aanmaken (resources die niet meer bestaan overslaan).
+      // Spread behoudt óók het optionele curve-veld — net als bij sequences hierboven.
+      for (const a of clip.assignments) {
+        if (!resourceExists.has(a.resourceId)) continue;
+        s.assignments.push({
+          ...a,
+          id: generateId('asgn'),
+          taskId: idMap.get(a.taskId)!,
+        });
+      }
+
+      // Het klembord is app-globaal: kalenders, eigen taaktypes, activiteitscodes en eigen velden
+      // uit een ander document bestaan hier misschien niet — die verwijzingen leegmaken en melden.
+      clearedReferences = normalizeInsertedBranch(s, idMap.values());
+
+      // WBS: geplakte takken zouden anders de codes van hun bron letterlijk dupliceren.
+      assignInsertedWbsCodes(s, idMap.values());
+
+      s.selectedTaskIds = newRootIds;
+      s.activeTaskId = newRootIds[0] ?? null;
+      runtime.finishMutation(s, { stale: true }); // geplakte taken: planning verouderd tot F5.
+    });
+    get().recomputeViewRows();
+    // Ná `set()`: `get().notify(...)` binnen een actieve producer aanroepen kan niet.
+    notifyRelationsSkipped(get().notify, skippedRelations, 'relations-skipped-on-paste');
+    notifyReferencesCleared(get().notify, clearedReferences);
+    return newRootIds;
+  },
+});

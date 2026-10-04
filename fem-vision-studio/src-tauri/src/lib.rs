@@ -1,0 +1,410 @@
+use concrete_check::{
+    ConcreteBeamCheckInput, ConcreteBeamCheckResult, DekkingslijnAntwoord, DekkingslijnVerzoek,
+    MnKappaRequest, MnKappaResponse, SegmentStiffnessRequest, SegmentStiffnessResponse,
+};
+use nen_en_1992_1_1::{
+    ConcreteClass, ConcreteCoverRequest, ConcreteCoverResponse, EffectiveFlangeWidthRequest,
+    EffectiveFlangeWidthResponse, ExposureClassInfo, ReinforcementGrade,
+};
+// §5.8 — de kolomtoets. Apart van de `use` hierboven omdat die regel al door
+// meer dan één spoor tegelijk wordt bewerkt; twee `use`-regels naar dezelfde
+// crate is toegestaan en houdt de wijzigingen uit elkaars vaarwater.
+use concrete_check::{ConcreteColumnCheckRequest, ConcreteColumnCheckResponse};
+// Bijlage B — de kruipcoëfficiënt. Eigen `use`-regel om dezelfde reden.
+use nen_en_1992_1_1::{CreepCoefficientRequest, CreepCoefficientResponse};
+use nen_en_1993_1_1_section::{S235, S275, S355, S420, S460, SteelGrade};
+use nen_en_1993_1_8_las::{LasInput, LasResultaat};
+use nen_en_1995_1_1::clt::CltPreset;
+use plaat_check::{PlateCheckInput, PlateCheckResult};
+use report::{ReportInput, generate_report_pdf};
+use section_properties::opdracht::{Invoer as DoorsnedeInvoer, Uitvoer as DoorsnedeUitvoer};
+use spanning_check::{SpanningBeamCheckInput, SpanningBeamCheckResult};
+use steel_check::{BeamCheckInput, BeamCheckResult};
+use steel_profiles::SteelProfile;
+use timber_check::clt::{CltBeamCheckInput, CltBeamCheckResult};
+use timber_check::{TimberBeamCheckInput, TimberBeamCheckResult};
+
+/// Het bedieningskanaal van de app — alleen actief met `OPENAEC_GUI_CONTROL=1`.
+/// Geen rekenkern en dus geen drie-wegen-regel; zie de moduletekst.
+///
+/// `pub` omdat de unit-tests van `gui_control::rapport` in tests/ staan: de
+/// unit-testharnas van deze lib laadt op Windows niet (zie build.rs).
+pub mod gui_control;
+use gui_control::GuiControl;
+use std::sync::Arc;
+use tauri::Manager;
+
+// De commands hieronder zijn één-op-één gespiegeld in `crates/toetsbrug`
+// (dezelfde functies als JSON-in/JSON-uit voor de browser) en in de MCP-server
+// `crates/openaec-mcp-server`. Wie hier een command toevoegt, voegt hem daar
+// ook toe — anders werkt hij alleen in de desktop-app.
+//
+// Die drie lijsten worden tegen elkaar gehouden door
+// `crates/openaec-mcp-server/tests/drie_wegen_kruistabel.rs`. Die test valt in
+// beide richtingen om, dus een command dat maar twee wegen krijgt komt niet
+// ongemerkt langs; wat bewust geen derde weg heeft, staat daar met reden in de
+// uitzonderingslijst.
+
+#[tauri::command]
+fn list_steel_profiles() -> Vec<SteelProfile> {
+    steel_profiles::db().all().to_vec()
+}
+
+#[tauri::command]
+fn list_steel_grades() -> Vec<SteelGrade> {
+    vec![S235, S275, S355, S420, S460]
+}
+
+#[tauri::command]
+async fn check_steel_beams(inputs: Vec<BeamCheckInput>) -> Result<Vec<BeamCheckResult>, String> {
+    Ok(steel_check::check_all_beams(inputs))
+}
+
+/// Sterkteklassen die de EN 1995-kern ondersteunt (EN 338 naaldhout +
+/// EN 14080 gelamineerd hout). De frontend gebruikt deze lijst om te bepalen
+/// welke houtmaterialen toetsbaar zijn.
+#[tauri::command]
+fn list_timber_grades() -> Vec<String> {
+    nen_en_1995_1_1::strength_class_names()
+}
+
+#[tauri::command]
+async fn check_timber_beams(
+    inputs: Vec<TimberBeamCheckInput>,
+) -> Result<Vec<TimberBeamCheckResult>, String> {
+    Ok(timber_check::check_all_timber_beams(inputs))
+}
+
+/// Kruislaaghout: standaardopbouwen voor de profielkiezer.
+#[tauri::command]
+fn list_clt_presets() -> Vec<CltPreset> {
+    nen_en_1995_1_1::clt::clt_presets()
+}
+
+/// Kruislaaghout: toetsing per lamel (samengestelde doorsnede, bijlage B
+/// met starre verbinding).
+#[tauri::command]
+async fn check_clt_beams(
+    inputs: Vec<CltBeamCheckInput>,
+) -> Result<Vec<CltBeamCheckResult>, String> {
+    Ok(timber_check::clt::check_all_clt_beams(inputs))
+}
+
+/// Beton (NEN-EN 1992-1-1): sterkteklassen met alle waarden uit tabel 3.1.
+#[tauri::command]
+fn list_concrete_classes() -> Vec<ConcreteClass> {
+    nen_en_1992_1_1::CONCRETE_CLASSES.to_vec()
+}
+
+/// Wapeningsstaal: B500A/B/C (bijlage C).
+#[tauri::command]
+fn list_reinforcement_grades() -> Vec<ReinforcementGrade> {
+    nen_en_1992_1_1::REINFORCEMENT_GRADES.to_vec()
+}
+
+#[tauri::command]
+async fn check_concrete_beams(
+    inputs: Vec<ConcreteBeamCheckInput>,
+) -> Result<Vec<ConcreteBeamCheckResult>, String> {
+    Ok(concrete_check::check_all_concrete_beams(inputs))
+}
+
+/// Het losse M-N-κ-diagram voor de korfeditor in de staafeigenschappen —
+/// zonder dat er een hele toetsrun voor nodig is.
+#[tauri::command]
+async fn concrete_mn_kappa(inputs: MnKappaRequest) -> Result<MnKappaResponse, String> {
+    concrete_check::mn_kappa(inputs)
+}
+
+/// De stateloze stijfheidsdienst voor de fysisch niet-lineaire tweede orde
+/// (5.8.6): één betonstaaf, in segmenten, elk met zijn eigen secante
+/// buigstijfheid.
+///
+/// Eén verzoek is één ronde. Zonder `segment_forces` komt alleen de
+/// segmentindeling terug — die is de bron van de elementgrenzen voor de mesh en
+/// hoort daarom uit de kern te komen en niet uit de frontend. Mét krachten komt
+/// per segment de EI terug waarmee de volgende ronde gerekend wordt, plus het
+/// convergentie-oordeel. Er blijft niets achter tussen twee aanroepen.
+#[tauri::command]
+async fn concrete_segment_stiffness(
+    inputs: SegmentStiffnessRequest,
+) -> Result<SegmentStiffnessResponse, String> {
+    concrete_check::segment_stiffness(inputs)
+}
+
+/// De KOLOMTOETS van §5.8 los van een volledige staaftoetsing: de kniklengte
+/// l₀, de slankheid λ = l₀/i (5.14) en de slankheidsgrens λ_lim = 20·A·B·C/√n
+/// waaronder de tweede-orde-effecten mogen worden verwaarloosd — door de
+/// nationale bijlage bij 5.8.3.1(1) als EIS gesteld in plaats van als
+/// aanbeveling. Daarbij de effectieve kruipcoëfficiënt φ_ef (5.19) met de drie
+/// voorwaarden van 5.8.4(4), en de detailleringseisen van §9.5.
+///
+/// **Geschoord of ongeschoord is invoer en geen afleiding.** §5.8.1 noemt het
+/// uitdrukkelijk een aanname in de berekening: een raamwerk mét windverband
+/// ziet er in een 2D-model niet anders uit dan hetzelfde raamwerk zonder. Het
+/// verschil is groot — een factor twee in l₀ tussen (5.15) en (5.16), en
+/// C = 0,7 dat voor een ongeschoord element is voorgeschreven — dus er wordt
+/// niets aangenomen; zonder dat gegeven is er geen toets.
+///
+/// Dit command draait exact dezelfde rekengang als `check_concrete_beams`
+/// (`concrete_check::kolomtoetsen`) en bestaat naast dat command om dezelfde
+/// reden als `concrete_cover_check` naast de dekkingstoets in de staaftoetsing:
+/// het invoerscherm moet λ en λ_lim kunnen tonen terwijl de gebruiker typt,
+/// zonder er een hele toetsronde voor te draaien.
+///
+/// **De tweede as zit erin.** Naast de poort om y komen drie toetsen om de
+/// z-as terug (§5.8.3.1 om z, het moment om z met de imperfectie van §5.2 en
+/// de tweede orde van §5.8.6, en §5.8.9). Dat de raamwerkoplosser M_z = 0
+/// levert, maakt M_Edz niet nul: de imperfectie en de tweede orde om z hangen
+/// niet van het model af.
+#[tauri::command]
+async fn concrete_column_check(
+    inputs: ConcreteColumnCheckRequest,
+) -> Result<ConcreteColumnCheckResponse, String> {
+    concrete_check::column_check(inputs)
+}
+
+/// De dekkingslijn van één betonstaaf: §9.2.1.3 met figuur 9.2 voor de
+/// momenten, en §6.2 voor de dwarskracht — als GEGEVENS, niet als plaatje.
+///
+/// Per plaats langs de staaf komen de benodigde en de aanwezige waarde terug,
+/// met per punt het bewijs dat daar gold: welke staafbundels er liggen, of zij
+/// binnen hun verankeringslengte vallen (het lineaire krachtverloop van
+/// 9.2.1.3(3)), en welke bewijsvoering van §6.2 de dwarskrachtweerstand
+/// leverde. Op een zonegrens staan twee punten met dezelfde x — links en
+/// rechts van de sprong — want interpoleren over een sprong heeft geen
+/// betekenis.
+///
+/// Stateloos, net als `concrete_segment_stiffness`: één verzoek, één antwoord,
+/// niets blijft achter. Het verzoek draagt de betonstaaf in HETZELFDE type dat
+/// `check_concrete_beams` krijgt, zodat er geen tweede invoertype en geen
+/// tweede frontendbouwer ontstaat; zie de moduletekst van
+/// `concrete_check::dekkingslijn`.
+///
+/// Voor een lijn met punten op de plaatsen waar de weerstand SPRINGT moeten de
+/// zonegrenzen rekenknopen zijn. Dat gebeurt aan de solverkant, via
+/// `SolverBeamInput.extraSneden` (zie `lib/betonZoneSneden.ts`); zonder die
+/// knopen mist de omhullende de sprong en meldt de lijn dat hij een grens niet
+/// kon bereiken.
+#[tauri::command]
+async fn concrete_dekkingslijn(
+    inputs: DekkingslijnVerzoek,
+) -> Result<DekkingslijnAntwoord, String> {
+    concrete_check::dekkingslijn(inputs)
+}
+
+/// De meewerkende flensbreedte b_eff van een T- of L-ligger (5.3.2.1), per
+/// gebied uit figuur 5.2 (eindveld, tussensteunpunt, binnenveld, uitkraging).
+///
+/// De rekengang staat in `nen_en_1992_1_1::beff` en kent geen knopen, staven
+/// of opleggingen: de invoer is de liggerlijn (overspanningen + de twee
+/// uiteinden) plus de flensmaten. Het omzetten van de modeltopologie naar zo'n
+/// liggerlijn gebeurt in de frontend (`lib/beffLiggerlijn.ts`); de crate zou
+/// die topologie niet kennen.
+///
+/// Een geval dat buiten figuur 5.2 valt — een losstaande uitkraging, een
+/// uitkraging langer dan de halve aangrenzende overspanning, een
+/// overspanningsverhouding buiten 2/3 … 1,5 — levert een FOUT met de reden en
+/// geen getal. Een verkeerde b_eff is onzichtbaar en stuurt naast de sterkte
+/// ook I_c, M_cr en de tweede orde.
+#[tauri::command]
+async fn concrete_effective_flange_width(
+    inputs: EffectiveFlangeWidthRequest,
+) -> Result<EffectiveFlangeWidthResponse, String> {
+    nen_en_1992_1_1::beff::effective_flange_width_request(inputs)
+}
+
+/// De milieuklassen van tabel 4.1, met hun omschrijving en de voorbeelden uit
+/// de tabel. Bedoeld voor de keuzelijst in de invoer: die hoort de tekst van
+/// de norm te tonen en niet een eigen samenvatting.
+#[tauri::command]
+fn list_exposure_classes() -> Vec<ExposureClassInfo> {
+    nen_en_1992_1_1::EXPOSURE_CLASSES.to_vec()
+}
+
+/// De betondekking toetsen aan de milieuklasse (4.4.1).
+///
+/// Uit de milieuklasse en de constructieklasse volgt c_min,dur (tabel 4.4N in
+/// de versie van de nationale bijlage), uit de staafdiameters c_min,b (tabel
+/// 4.2); samen met de ondergrens van 10 mm geeft (4.2) de minimumdekking en
+/// (4.1) de vereiste nominale dekking. Het antwoord draagt de hele keten, zodat
+/// de invoer kan laten zien wáárom een dekking te klein is.
+///
+/// **Dit is een toets van ÉÉN betonoppervlak.** 4.4.1.1(1)P meet de dekking tot
+/// "het dichtstbijzijnde betonoppervlak", en een element heeft er meer dan één:
+/// een vloer met de bovenzijde binnen (XC1) en de onderzijde buiten (XC4) heeft
+/// twee verschillende c_min,dur en dus twee verschillende nuttige hoogtes. De
+/// invoer roept dit command daarom één keer per zijde aan en zet in
+/// `ConcreteCoverRequest::side` welke; dat veld verandert geen getal, het
+/// benoemt het antwoord. Waar de zijden in het model wonen — bij de korf, in
+/// `cover_top`, `cover_bottom` en `cover_sides` — staat bij
+/// [`nen_en_1992_1_1::CoverSide`].
+#[tauri::command]
+async fn concrete_cover_check(
+    inputs: ConcreteCoverRequest,
+) -> Result<ConcreteCoverResponse, String> {
+    nen_en_1992_1_1::dekking::concrete_cover_request(inputs)
+}
+
+/// De kruipcoëfficiënt φ(∞,t₀) (en desgewenst φ(t,t₀)) volgens bijlage B van
+/// NEN-EN 1992-1-1, uit de betonklasse, de relatieve vochtigheid, de fictieve
+/// dikte h₀ en de ouderdom t₀ bij belasten met de cementklasse (B.1–B.9).
+///
+/// h₀ komt uit de doorsnede (B.6, hele omtrek) of wordt opgegeven. Het
+/// antwoord draagt alle tussenwaarden en de afleiding als deelstappen, zodat de
+/// app de waarde in de BGT-stijfheidslus en de kolomtoets kan gebruiken en het
+/// rapport kan laten zien waar hij vandaan komt. De rekengang staat in
+/// `nen_en_1992_1_1::kruip` en nergens anders.
+#[tauri::command]
+async fn concrete_creep_coefficient(
+    inputs: CreepCoefficientRequest,
+) -> Result<CreepCoefficientResponse, String> {
+    nen_en_1992_1_1::kruip::creep_coefficient_request(inputs)
+}
+
+/// Vrije spanningstoets (geen norm): een doorsnede plus een toelaatbare
+/// spanning, getoetst op de vergelijkspanning van von Mises. Bedoeld voor
+/// materialen die buiten EN 1992/1993/1995 vallen — natuursteen, een
+/// gietstuk, een kunststof — en voor een snelle spanningscontrole op een
+/// bestaand profiel.
+#[tauri::command]
+async fn check_stress_beams(
+    inputs: Vec<SpanningBeamCheckInput>,
+) -> Result<Vec<SpanningBeamCheckResult>, String> {
+    Ok(spanning_check::check_all_spanning_beams(inputs))
+}
+
+/// Platen (wandschijven, belast in het vlak): de elementspanningen per
+/// UGT-combinatie getoetst aan de norm van het plaatmateriaal — staal volgens
+/// NEN-EN 1993-1-1 6.2.1(5). Zelfde functie als de toetsbrug-opdracht en het
+/// MCP-gereedschap `check_plates` en als de plaattoets in `check_fem_model`.
+#[tauri::command]
+async fn check_plates(inputs: Vec<PlateCheckInput>) -> Result<Vec<PlateCheckResult>, String> {
+    Ok(plaat_check::check_all_plates(inputs))
+}
+
+/// Doorlopende langslassen in een samengestelde doorsnede, getoetst volgens
+/// NEN-EN 1993-1-8 4.5.3.3 (vereenvoudigde methode).
+///
+/// De schuifstroom per naad (`F_w,Ed` in N/mm) komt van de aanroeper: die kent
+/// de meetkunde van de doorsnede en dus welk deel er aan welke naad hangt.
+/// Deze kern doet uitsluitend de normkant — correlatiefactor uit tabel 4.1,
+/// `f_vw,d` uit (4.4), weerstand uit (4.3) en de unity check.
+#[tauri::command]
+async fn check_fillet_welds(inputs: Vec<LasInput>) -> Result<Vec<LasResultaat>, String> {
+    Ok(nen_en_1993_1_8_las::toets_lassen(&inputs))
+}
+
+/// Doorsnede-eigenschappen van een of meer geometrieën — de motor achter de
+/// profieleditor.
+///
+/// Dezelfde rekengang als de binary `doorsnedemotor` en als het eindpunt
+/// `/api/doorsnede` van de dev-server: alle drie roepen ze
+/// `section_properties::opdracht::reken` aan. Zonder dit command werkte de
+/// profieleditor alleen op de dev-server en bleef hij in de geïnstalleerde app
+/// wachten op een motor die er niet was.
+///
+/// Eén geometrie die niet door de motor komt laat de hele aanroep falen, met
+/// de naam erbij: een halve lijst met stilzwijgend ontbrekende doorsneden is
+/// erger dan een duidelijke fout.
+#[tauri::command]
+async fn bereken_doorsneden(
+    invoer: Vec<DoorsnedeInvoer>,
+) -> Result<Vec<DoorsnedeUitvoer>, String> {
+    let mut uit = Vec::with_capacity(invoer.len());
+    for i in &invoer {
+        match section_properties::opdracht::reken(i) {
+            Ok(u) => uit.push(u),
+            Err(e) => {
+                let naam = i.naam();
+                return Err(if naam.is_empty() {
+                    e
+                } else {
+                    format!("{naam}: {e}")
+                });
+            }
+        }
+    }
+    Ok(uit)
+}
+
+#[tauri::command]
+async fn generate_steel_report_pdf(input: ReportInput) -> Result<Vec<u8>, String> {
+    Ok(generate_report_pdf(input))
+}
+
+// ── Het bedieningskanaal ────────────────────────────────────────────────────
+// Twee commands, dun: de logica staat in `gui_control`. Ze staan hier als
+// functie omdat elke naam in `generate_handler!` een functie in dít bestand
+// hoort te zijn — dat bewaakt `tests/drie_wegen_kruistabel.rs`, en die regel
+// geldt voor deze twee net zo goed als voor de rekenkern-commands.
+
+/// Staat het kanaal aan? De pagina vraagt dit bij het laden en luistert
+/// alleen dan — in een gewone sessie kost `bediening.ts` niets.
+#[tauri::command]
+fn gui_control_actief(control: tauri::State<'_, Arc<GuiControl>>) -> bool {
+    control.is_actief()
+}
+
+/// Het antwoord van de pagina op een opdracht met dit id.
+#[tauri::command]
+fn gui_control_antwoord(
+    control: tauri::State<'_, Arc<GuiControl>>,
+    id: u64,
+    uitkomst: serde_json::Value,
+) -> Result<(), String> {
+    control.antwoord(id, uitkomst)
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .invoke_handler(tauri::generate_handler![
+            list_steel_profiles,
+            list_steel_grades,
+            check_steel_beams,
+            list_timber_grades,
+            check_timber_beams,
+            list_clt_presets,
+            check_clt_beams,
+            list_concrete_classes,
+            list_reinforcement_grades,
+            check_concrete_beams,
+            concrete_mn_kappa,
+            concrete_segment_stiffness,
+            concrete_column_check,
+            concrete_dekkingslijn,
+            concrete_effective_flange_width,
+            list_exposure_classes,
+            concrete_cover_check,
+            concrete_creep_coefficient,
+            check_stress_beams,
+            check_plates,
+            check_fillet_welds,
+            bereken_doorsneden,
+            generate_steel_report_pdf,
+            gui_control_actief,
+            gui_control_antwoord,
+        ])
+        .setup(|app| {
+            // Zet het bedieningskanaal op, of niet — `start` kijkt zelf naar de
+            // omgevingsvariabele en levert anders een kanaal dat "uit" zegt.
+            let control = gui_control::start(app.handle());
+            app.manage(control);
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            // Bij afsluiten het vindbestand weghalen: een achtergebleven
+            // gui-control.json zou een client naar een dode poort sturen.
+            if let tauri::RunEvent::Exit = event {
+                if let Some(control) = app.try_state::<Arc<GuiControl>>() {
+                    control.opruimen();
+                }
+            }
+        });
+}

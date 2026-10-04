@@ -1,0 +1,50 @@
+# Auto Claude data directory
+.auto-claude/
+
+# Auto Claude worktrees
+.worktrees/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+test/venv/
+.venv/
+
+# Coverage
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+
+# Python artifacts
+src/ifc_validator.egg-info/
+quick_test.py
+test_output.json
+
+# Session notes (local only)
+SESSION_STATUS.md
+viewer/SESSION_STATUS.md
+viewer/BCF_IMPLEMENTATION_PROMPT.md
+
+# TypeScript incremental build artifacts
+*.tsbuildinfo
+
+# Runtime databases
+*.db
+*.db-shm
+*.db-wal

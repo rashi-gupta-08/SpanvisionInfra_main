@@ -1,0 +1,306 @@
+//! Acceptatietest: beide liggers uit de referentie-uitwerking 2867 (galerij).
+//!
+//! Twee liggers van 8000 mm, S 235, CC2, elk met 2 zijdelingse steunen op de
+//! derdepunten (L_st = 2667 mm), belasting aangrijpend op de bovenflens.
+//!
+//! Eén punt waarop deze toetsing sinds september 2026 BEWUST van de referentie
+//! afwijkt: de grenswaarde voor de bijkomende doorbuiging w_add. Zie
+//! `doorbuiging_beide_liggers` hieronder.
+
+use approx::assert_relative_eq;
+use mechanics::{ForcePoint, InternalForces};
+use nen_en_1990::ConsequenceClass;
+use nen_en_1993_1_1_ltb::LateralBracing;
+use steel_check::*;
+
+fn uc_van(r: &BeamCheckResult, id: &str) -> f64 {
+    let check = r
+        .checks
+        .iter()
+        .find(|c| c.id == id)
+        .unwrap_or_else(|| {
+            panic!(
+                "toets '{id}' ontbreekt; aanwezig: {:?}",
+                r.checks.iter().map(|c| c.id.as_str()).collect::<Vec<_>>()
+            )
+        });
+    match &check.kind {
+        CheckKind::Resistance(x) => x.uc.as_ref().expect("UC aanwezig").uc,
+        CheckKind::Stability(x) => x.uc.as_ref().expect("UC aanwezig").uc,
+    }
+}
+
+/// Bouwt de invoer voor één ligger uit de referentie.
+///
+/// `m_max_knm` het maatgevende veldmoment, `v_max_kn` de maatgevende
+/// dwarskracht bij de oplegging, `q_n_per_mm` de equivalente veldbelasting in
+/// het kipveld, `w_z_mm` de doorbuiging (negatief = zakking).
+fn ligger(
+    profiel: &str,
+    m_max_knm: f64,
+    v_max_kn: f64,
+    q_n_per_mm: f64,
+    w_z_mm: f64,
+) -> BeamCheckResult {
+    check_beam(invoer(profiel, m_max_knm, v_max_kn, q_n_per_mm, w_z_mm))
+}
+
+/// De invoer van ligger 1, om er in één test een veld van te variëren.
+fn basisinvoer() -> BeamCheckInput {
+    invoer("HEA 320", 111.84, 55.92, 8.115, -11.0)
+}
+
+fn invoer(
+    profiel: &str,
+    m_max_knm: f64,
+    v_max_kn: f64,
+    q_n_per_mm: f64,
+    w_z_mm: f64,
+) -> BeamCheckInput {
+    BeamCheckInput {
+        bijlage: Default::default(),
+        beam_id: 1,
+        profile_name: profiel.to_string(),
+        steel_grade: "S235".to_string(),
+        length_m: 8.0,
+        forces_envelope: vec![
+            // x = 0: maatgevende dwarskracht bij de oplegging
+            ForcePoint {
+                combination_id: 21,
+                position_mm: 0.0,
+                forces: InternalForces {
+                    vz_ed: v_max_kn,
+                    ..Default::default()
+                },
+            },
+            // x = 4000: maatgevend veldmoment
+            ForcePoint {
+                combination_id: 21,
+                position_mm: 4000.0,
+                forces: InternalForces {
+                    my_ed: m_max_knm,
+                    ..Default::default()
+                },
+            },
+        ],
+        // 2 zijdelingse steunen op de derdepunten → L_st = 2667 mm
+        lateral_bracing: LateralBracing {
+            top_flange_positions: vec![1.0 / 3.0, 2.0 / 3.0],
+            bottom_flange_positions: vec![],
+        },
+        buckling_length_y_m: 8.0,
+        buckling_length_z_m: 8.0,
+        deflection_limit_class: DeflectionClass::Floor,
+        deflection_limit_numerator: 333,
+        deflection_actual_max_mm: w_z_mm,
+        is_cantilever: false,
+        consequence_class: ConsequenceClass::CC2,
+        pre_camber_mm: 0.0,
+        deflection_permanent_mm: -3.2,
+        deflection_add_limit_numerator: 0.0,
+        deflection_notes: vec![],
+        q_equiv_n_per_mm: q_n_per_mm,
+        z_a_mm: 155.0,
+        custom_section: None,
+        staafstand: None,
+        staafstand_notities: None,
+        staafeinden: None,
+        staaf_notities: None,
+        profile_end: None,
+        custom_section_end: None,
+    }
+}
+
+fn ligger1() -> BeamCheckResult {
+    ligger("HEA 320", 111.84, 55.92, 8.115, -11.0)
+}
+fn ligger2() -> BeamCheckResult {
+    ligger("HEA 400", 227.04, 113.52, 15.615, -11.2)
+}
+
+#[test]
+fn ligger1_hea320_buiging_en_dwarskracht() {
+    let r = ligger1();
+    // 6.2.5 (6.13): M_y,c,Rd = 382,666 kNm → UC = 111,84/382,666 = 0,29
+    assert_relative_eq!(uc_van(&r, "6.2.5_bending_y"), 0.29, max_relative = 3e-2);
+    // 6.2.6 (6.18): V_c,z,Rd = 558,4 kN → UC = 55,92/558,4 = 0,10
+    assert_relative_eq!(uc_van(&r, "6.2.6_shear_z"), 0.10, max_relative = 5e-2);
+}
+
+#[test]
+fn ligger2_hea400_buiging_en_dwarskracht() {
+    let r = ligger2();
+    // M_y,c,Rd = 602,106 kNm → UC = 227,04/602,106 = 0,38
+    assert_relative_eq!(uc_van(&r, "6.2.5_bending_y"), 0.38, max_relative = 3e-2);
+    // V_c,z,Rd = 778,1 kN → UC = 113,52/778,1 = 0,15
+    assert_relative_eq!(uc_van(&r, "6.2.6_shear_z"), 0.15, max_relative = 3e-2);
+}
+
+#[test]
+fn doorbuiging_beide_liggers() {
+    // w_fin = -11 mm, grens L/333 = 24,0 → UC = 0,46. Ongewijzigd.
+    //
+    // w_add = -11 - (-3,2) = -7,8 mm. Hier WIJKT de toetsing bewust van de
+    // referentie-uitwerking af. Die rekent met een vaste L/150 = 53,3 mm en
+    // komt op UC 0,15. NEN-EN 1990:2002/NB:2019 A1.4.3(3) geeft ℓ_rep/150
+    // uitsluitend voor vloerafscheidingen ter plaatse van een hoogteverschil;
+    // deze galerijligger valt onder het tweede gedachtestreepje — "overige
+    // vloeren en daken die intensief door personen worden gebruikt" — en dus
+    // onder 3/1 000 deel van ℓ_rep = 24,0 mm. UC = 7,8/24,0 = 0,325.
+    // De referentiewaarde is niet weg: zet `deflection_add_limit_numerator` op
+    // 150 en de toetsing levert weer 0,15, mét een notitie dat de noemer is
+    // opgegeven (zie doorbuiging_2867.rs).
+    let r1 = ligger1();
+    assert_relative_eq!(uc_van(&r1, "deflection_w_fin"), 0.46, max_relative = 3e-2);
+    assert_relative_eq!(uc_van(&r1, "deflection_w_add"), 0.325, max_relative = 2e-2);
+
+    // w_fin = -11,2 mm → UC = 0,47
+    let r2 = ligger2();
+    assert_relative_eq!(uc_van(&r2, "deflection_w_fin"), 0.47, max_relative = 3e-2);
+}
+
+#[test]
+fn kip_levert_geen_reductie_in_deze_casus() {
+    // In de referentie is λ_LT = 0,378 respectievelijk 0,385, beide onder de
+    // drempel λ_LT,0 = 0,4, dus χ_LT = 1,00. De kiptoets mag de buigtoets dan
+    // niet verzwaren.
+    for (naam, r) in [("HEA 320", ligger1()), ("HEA 400", ligger2())] {
+        let uc_buiging = uc_van(&r, "6.2.5_bending_y");
+        let uc_kip = uc_van(&r, "6.3.2_ltb");
+        assert!(
+            uc_kip <= uc_buiging * 1.05,
+            "{naam}: kip-UC {uc_kip} mag niet boven buiging-UC {uc_buiging} liggen (χ_LT = 1,00)"
+        );
+    }
+}
+
+/// De toelichtingen die de aanroeper meestuurt komen in het rapport terecht —
+/// bij w_fin, want daar zit `deflection_actual_max_mm` in.
+///
+/// Zonder deze test kwamen ze alleen in de klasse-4-tak van de orchestrator
+/// terecht en op het normale pad niet: dezelfde regel stond er twee keer, en
+/// er was er maar één aangepast. Een toelichting die stilzwijgend wegvalt is
+/// precies het probleem dat dit kanaal moest oplossen.
+#[test]
+fn toelichtingen_van_de_aanroeper_komen_bij_w_fin_terecht() {
+    let mut input = BeamCheckInput {
+        bijlage: Default::default(),
+        deflection_notes: vec!["w is gemeten vanaf de koorde.".to_string()],
+        ..basisinvoer()
+    };
+    input.deflection_notes.push("Staaf loopt door in staaf 2.".to_string());
+    let r = check_beam(input);
+    let fin = r
+        .checks
+        .iter()
+        .find(|c| c.id == "deflection_w_fin")
+        .expect("w_fin aanwezig");
+    let CheckKind::Resistance(x) = &fin.kind else {
+        panic!("w_fin hoort een ResistanceCalc te zijn");
+    };
+    assert!(
+        x.notes.iter().any(|n| n.contains("vanaf de koorde")),
+        "toelichting ontbreekt in het rapport: {:?}",
+        x.notes
+    );
+    assert!(
+        x.notes.iter().any(|n| n.contains("loopt door in staaf 2")),
+        "tweede toelichting ontbreekt: {:?}",
+        x.notes
+    );
+}
+
+#[test]
+fn beide_liggers_voldoen() {
+    for (naam, r) in [("HEA 320", ligger1()), ("HEA 400", ligger2())] {
+        assert!(
+            r.uc_max < 1.0,
+            "{naam} moet voldoen, uc_max = {} (maatgevend: {})",
+            r.uc_max,
+            r.governing_check_id
+        );
+    }
+}
+
+#[test]
+fn de_nb_tussenwaarden_staan_in_het_resultaat() {
+    // Het rapport moet de NB-tussenwaarden kunnen tonen; controleer dat ze
+    // aanwezig zijn en plausibel, zodat een lege kolom in het rapport opvalt.
+    let r = ligger1();
+    let ltb = r
+        .checks
+        .iter()
+        .find(|c| c.id == "6.3.2_ltb")
+        .expect("kiptoets aanwezig");
+    let CheckKind::Stability(s) = &ltb.kind else {
+        panic!("kiptoets hoort een StabilityCalc te zijn");
+    };
+    let waarde = |sym: &str| {
+        s.intermediate_values
+            .iter()
+            .find(|v| v.symbol == sym)
+            .unwrap_or_else(|| panic!("tussenwaarde '{sym}' ontbreekt"))
+            .value
+    };
+    // L_g = volledige overspanning, L_st = afstand tussen de steunen.
+    // Vroeger waren deze twee aan elkaar gelijkgesteld; dat is de kern van de
+    // reparatie, dus deze twee moeten echt verschillen.
+    assert_relative_eq!(waarde("L_g"), 8000.0, max_relative = 1e-9);
+    assert_relative_eq!(waarde("L_{st}"), 2666.67, max_relative = 1e-3);
+    assert!(
+        waarde("L_g") > waarde("L_{st}"),
+        "L_g en L_st horen niet gelijk te zijn"
+    );
+    assert_relative_eq!(waarde("k_{red}"), 1.0, max_relative = 1e-9);
+    // S volgens NB.NB.13, referentie 2006 mm
+    assert_relative_eq!(waarde("S"), 2006.0, max_relative = 5e-3);
+
+    // L_kip moet binnen de normbegrenzing 1,0 ≤ L_kip/L_st ≤ 1,4 liggen.
+    let verhouding = waarde("L_{kip}") / waarde("L_{st}");
+    assert!(
+        (1.0..=1.4).contains(&verhouding),
+        "L_kip/L_st = {verhouding} valt buiten de normbegrenzing [1,0 ; 1,4]"
+    );
+}
+
+/// Sept 2026 — vervangt `bekend_gat_beta_wordt_benaderd_niet_volgens_de_norm`.
+///
+/// Die test dwong af dat β NIET nul was en documenteerde daarmee een bekend
+/// gat: de orchestrator leidde β af uit het moment op L_st/4 gedeeld door het
+/// grootste moment over de hele staaf, wat hier β ≈ 0,167 en L_kip ≈ 3378 mm
+/// gaf. Zijn eigen docstring schreef de vervanging voor: *"als dit 0 is
+/// geworden, is het gat gedicht — vervang deze test door een controle op
+/// L_kip = 3733 mm"*. Dat is precies wat hieronder staat.
+///
+/// De rekengang, met de vindplaatsen erbij:
+///  * De ligger heeft twee kipsteunen op de derdepunten, dus drie kipvelden
+///    van 2666,67 mm: [0 ; 2667], [2667 ; 5333] en [5333 ; 8000].
+///  * NB.NB.4.3 — β van het eerste veld: eindmomenten M(0) = 0 en M(2667),
+///    dus β = 0. Van het middenveld en het eindveld is β groter (0,67 resp.
+///    1,0), en die krijgen daarmee L_kip = 1,0·L_st.
+///  * NB.NB.4.3 — dat eerste veld ligt tussen een gaffel en een kipsteun, dus
+///    L_kip = (1,4 − 0,8·0)·2666,67 = 3733,33 mm. De bovengrens 1,4 wordt hier
+///    exact geraakt.
+///  * Het is ook het veld met de LAAGSTE M_cr en dus het maatgevende — precies
+///    het veld dat de referentie-uitwerking kiest. Het langste veld zou hier
+///    niets onderscheiden (alle drie zijn even lang); de kiplengte wél.
+#[test]
+fn het_eindveld_is_maatgevend_met_beta_nul_en_l_kip_3733() {
+    let r = ligger1();
+    let ltb = r.checks.iter().find(|c| c.id == "6.3.2_ltb").unwrap();
+    let CheckKind::Stability(s) = &ltb.kind else { unreachable!() };
+    let waarde = |sym: &str| {
+        s.intermediate_values
+            .iter()
+            .find(|v| v.symbol == sym)
+            .unwrap_or_else(|| panic!("tussenwaarde '{sym}' ontbreekt"))
+            .value
+    };
+    assert_relative_eq!(waarde(r"\beta"), 0.0, epsilon = 1e-12);
+    assert_relative_eq!(waarde("L_{kip}"), 3733.33, max_relative = 1e-4);
+    // De referentie-uitwerking geeft λ_LT = 0,378; met de gedigitaliseerde
+    // NB-figuren komen we op 0,370 (2 % lager). Beide blijven onder de drempel
+    // λ_LT,0 = 0,4, dus χ_LT = 1,00 — zoals in de referentie.
+    assert_relative_eq!(waarde(r"\bar{\lambda}_{LT}"), 0.378, max_relative = 3e-2);
+    assert_relative_eq!(waarde(r"\chi_{LT}"), 1.0, max_relative = 1e-12);
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "id": "fem",
+    "passed": true,
+    "records": [
+      {
+        "mode": "light",
+        "colorPixels": 15149,
+        "inkPixels": 58464
+      },
+      {
+        "mode": "dark",
+        "colorPixels": 16929,
+        "inkPixels": 26698
+      },
+      {
+        "mode": "light",
+        "colorPixels": 15149,
+        "inkPixels": 58464
+      }
+    ]
+  },
+  {
+    "id": "bim",
+    "passed": true,
+    "records": [
+      {
+        "mode": "light",
+        "colorPixels": 0,
+        "inkPixels": 61860
+      },
+      {
+        "mode": "dark",
+        "colorPixels": 0,
+        "inkPixels": 78507
+      },
+      {
+        "mode": "light",
+        "colorPixels": 0,
+        "inkPixels": 61860
+      }
+    ]
+  },
+  {
+    "id": "ifc",
+    "passed": true,
+    "records": [
+      {
+        "mode": "light",
+        "colorPixels": 0,
+        "inkPixels": 69158
+      },
+      {
+        "mode": "dark",
+        "colorPixels": 0,
+        "inkPixels": 80755
+      },
+      {
+        "mode": "light",
+        "colorPixels": 0,
+        "inkPixels": 69158
+      }
+    ]
+  }
+]

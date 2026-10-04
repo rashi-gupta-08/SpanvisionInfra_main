@@ -1,0 +1,823 @@
+/**
+ * Grensvertaling tussen het interne domeinmodel (`src/types/`) en het publieke extensie-contract
+ * (`extTypes.ts`). ALLE conversie tussen die twee werelden loopt hierdoorheen — nergens anders in de
+ * extensie-laag mag een interne `Task`/`Project`/… rechtstreeks naar buiten of naar binnen.
+ *
+ * Twee richtingen:
+ *   • `toExt*`   — interne (Immer-BEVROREN) store-objecten → VERSE, MUTEERBARE `Ext*`-kopieën.
+ *                  Diep gekopieerd, zodat een extensie z'n kopie mag muteren zónder de store te raken.
+ *   • `fromExt*` — `Ext*`-invoer van een extensie → interne vorm voor de store-acties / `loadState`.
+ *
+ * Elke mapper bouwt zijn resultaat VELD-VOOR-VELD met een expliciet return-type. Zo geldt:
+ *   (a) voeg je een VERPLICHT `Ext*`-veld toe zonder het hier te mappen → compileerfout; voor
+ *       OPTIONELE velden vangt de compiler dat niet (weglaten uit een object-literal is legaal) —
+ *       die moet je bij een DTO-uitbreiding zelf in álle betrokken mappers nalopen (incl. de
+ *       `fromExt*Input`/`fromExt*Updates`-paden, die per veld `if (x !== undefined)` doorgeven);
+ *   (b) hernoem je een INTERN veld → dat duikt alléén hier op, nooit in extensie-code.
+ */
+import { localTodayIso } from '@/utils/dateUtils';
+import type { Project } from '@/types/project';
+import { resolveConventions } from '@/engine/scheduler/conventions/registry';
+import type { WorkCalendar, Holiday, WorkTimeBands, WorkingException } from '@/types/calendar';
+import type { Task, TaskTime, TaskConstraint, ExternalLink } from '@/types/task';
+import { hourInputFinishFollowsEdits } from '@/utils/taskDefaults';
+import type { Sequence } from '@/types/sequence';
+import type { Resource, ResourceAssignment, AvailabilityStep } from '@/types/resource';
+import type { ImportResult } from '@/services/importTypes';
+import type { RibbonTab } from '@/state/slices/types';
+import type { CjkFontProvider } from '@/services/pdf/fontRegistry';
+import type {
+  ExtProject,
+  ExtSchedulingOptions,
+  ExtCalendar,
+  ExtHoliday,
+  ExtWorkingException,
+  ExtWorkTimeBands,
+  ExtTask,
+  ExtTaskTime,
+  ExtTaskConstraint,
+  ExtExternalLink,
+  ExtTaskNote,
+  ExtSequence,
+  ExtResource,
+  ExtAvailabilityStep,
+  ExtAssignment,
+  ExtImportResult,
+  ExtRibbonTab,
+  ExtFontProvider,
+} from './extTypes';
+
+// ── Kleine helpers (diepe kopie van geneste, mogelijk bevroren, waarden) ──
+
+/** Publieke scheduling-options worden veld-voor-veld gereconstrueerd. Dit is tegelijk een
+ *  mutabiliteitsgrens en een beveiligingsgrens: runtime-objecten van JS-extensies kunnen extra
+ *  interne `p6*`-sleutels dragen die niet in `ExtSchedulingOptions` staan. Een spread zou die
+ *  ongemerkt als solverinvoer activeren. De native XER-lezer zet zulke bronopties rechtstreeks op
+ *  het interne model en loopt dus niet door deze generieke extensie-invoer. */
+function publicSchedulingOptions(o: ExtSchedulingOptions): ExtSchedulingOptions {
+  return {
+    lagCalendar: o.lagCalendar,
+    criticalDefinition: o.criticalDefinition ? { ...o.criticalDefinition } : undefined,
+    totalFloatMode: o.totalFloatMode,
+    makeOpenEndedCritical: o.makeOpenEndedCritical,
+    nearCriticalThreshold: o.nearCriticalThreshold,
+    floatPaths: o.floatPaths ? { ...o.floatPaths } : undefined,
+  };
+}
+
+function copyConstraint(c: TaskConstraint): ExtTaskConstraint {
+  return { type: c.type, date: c.date, hard: c.hard };
+}
+function toIntConstraint(c: ExtTaskConstraint): TaskConstraint {
+  return { type: c.type, date: c.date, hard: c.hard };
+}
+
+function copyExternalLink(l: ExternalLink): ExtExternalLink {
+  return {
+    id: l.id,
+    direction: l.direction,
+    relType: l.relType,
+    lagDays: l.lagDays,
+    lagMinutes: l.lagMinutes,
+    anchorDate: l.anchorDate,
+    sourceRef: { ...l.sourceRef },
+    sourceMissing: l.sourceMissing,
+  };
+}
+function toIntExternalLink(l: ExtExternalLink): ExternalLink {
+  return {
+    id: l.id,
+    direction: l.direction,
+    relType: l.relType,
+    lagDays: l.lagDays,
+    lagMinutes: l.lagMinutes,
+    anchorDate: l.anchorDate,
+    sourceRef: { ...l.sourceRef },
+    sourceMissing: l.sourceMissing,
+  };
+}
+
+function copyNote(n: { id: string; text: string; done: boolean }): ExtTaskNote {
+  return { id: n.id, text: n.text, done: n.done };
+}
+
+function copyWorkTime(w: WorkTimeBands): ExtWorkTimeBands {
+  const src = w.byWeekday;
+  return {
+    byWeekday: {
+      1: src[1].map((b) => ({ start: b.start, end: b.end })),
+      2: src[2].map((b) => ({ start: b.start, end: b.end })),
+      3: src[3].map((b) => ({ start: b.start, end: b.end })),
+      4: src[4].map((b) => ({ start: b.start, end: b.end })),
+      5: src[5].map((b) => ({ start: b.start, end: b.end })),
+      6: src[6].map((b) => ({ start: b.start, end: b.end })),
+      7: src[7].map((b) => ({ start: b.start, end: b.end })),
+    },
+  };
+}
+function toIntWorkTime(w: ExtWorkTimeBands): WorkTimeBands {
+  const src = w.byWeekday;
+  return {
+    byWeekday: {
+      1: src[1].map((b) => ({ start: b.start, end: b.end })),
+      2: src[2].map((b) => ({ start: b.start, end: b.end })),
+      3: src[3].map((b) => ({ start: b.start, end: b.end })),
+      4: src[4].map((b) => ({ start: b.start, end: b.end })),
+      5: src[5].map((b) => ({ start: b.start, end: b.end })),
+      6: src[6].map((b) => ({ start: b.start, end: b.end })),
+      7: src[7].map((b) => ({ start: b.start, end: b.end })),
+    },
+  };
+}
+
+function copyHoliday(h: Holiday): ExtHoliday {
+  return { name: h.name, startDate: h.startDate, endDate: h.endDate };
+}
+function toIntHoliday(h: ExtHoliday): Holiday {
+  return { name: h.name, startDate: h.startDate, endDate: h.endDate };
+}
+
+/** `bands` mee-kopiëren (niet spreaden) — een kale spread zou anders het bevroren store-array-object
+ *  doorgeven. */
+function copyWorkingException(w: WorkingException): ExtWorkingException {
+  return { name: w.name, startDate: w.startDate, endDate: w.endDate, ...(w.bands ? { bands: w.bands.map((b) => ({ start: b.start, end: b.end })) } : {}) };
+}
+function toIntWorkingException(w: ExtWorkingException): WorkingException {
+  return { name: w.name, startDate: w.startDate, endDate: w.endDate, ...(w.bands ? { bands: w.bands.map((b) => ({ start: b.start, end: b.end })) } : {}) };
+}
+
+function copyAvailStep(s: AvailabilityStep): ExtAvailabilityStep {
+  return { from: s.from, maxUnits: s.maxUnits };
+}
+function toIntAvailStep(s: ExtAvailabilityStep): AvailabilityStep {
+  return { from: s.from, maxUnits: s.maxUnits };
+}
+
+// ── Project ──
+
+export function toExtProject(p: Project): ExtProject {
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    startDate: p.startDate,
+    endDate: p.endDate,
+    calendarId: p.calendarId,
+    createdAt: p.createdAt,
+    modifiedAt: p.modifiedAt,
+    author: p.author,
+    company: p.company,
+    wbsAutoNumber: p.wbsAutoNumber,
+    statusDate: p.statusDate,
+    progressMode: p.progressMode,
+    defaultTaskDurationUnit: p.defaultTaskDurationUnit,
+    defaultWorkRule: p.defaultWorkRule,
+    schedulingOptions: p.schedulingOptions ? publicSchedulingOptions(p.schedulingOptions) : undefined,
+    // Contract 1.2.0: het opgeloste profiel, alleen-lezen.
+    schedulingProfile: {
+      id: p.schedulingProfile?.id ?? 'ops',
+      baseId: p.schedulingProfile?.baseId ?? 'ops',
+      name: p.schedulingProfile?.name ?? '',
+      conventions: { ...resolveConventions(p.schedulingProfile) },
+    },
+  };
+}
+
+export function fromExtProject(p: ExtProject): Project {
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    startDate: p.startDate,
+    endDate: p.endDate,
+    calendarId: p.calendarId,
+    createdAt: p.createdAt,
+    modifiedAt: p.modifiedAt,
+    author: p.author,
+    company: p.company,
+    wbsAutoNumber: p.wbsAutoNumber,
+    statusDate: p.statusDate,
+    progressMode: p.progressMode,
+    defaultTaskDurationUnit: p.defaultTaskDurationUnit,
+    defaultWorkRule: p.defaultWorkRule,
+    schedulingOptions: p.schedulingOptions ? publicSchedulingOptions(p.schedulingOptions) : undefined,
+    // Bewust géén `schedulingProfile`: een extensie-import rekent als OPS.
+  };
+}
+
+// ── Kalender ──
+
+export function toExtCalendar(c: WorkCalendar): ExtCalendar {
+  return {
+    id: c.id,
+    name: c.name,
+    description: c.description,
+    workDays: [...c.workDays],
+    workStartHour: c.workStartHour,
+    workEndHour: c.workEndHour,
+    hoursPerDay: c.hoursPerDay,
+    simpleBreakStartMinute: c.simpleBreakStartMinute,
+    simpleBreakDurationMinutes: c.simpleBreakDurationMinutes,
+    holidays: c.holidays.map(copyHoliday),
+    workTime: c.workTime ? copyWorkTime(c.workTime) : undefined,
+    shift: c.shift,
+    workingExceptions: c.workingExceptions ? c.workingExceptions.map(copyWorkingException) : undefined,
+    p6Source: c.p6Source,
+    p6NonWorkPenaltyDates: c.p6NonWorkPenaltyDates ? [...c.p6NonWorkPenaltyDates] : undefined,
+  };
+}
+
+export function fromExtCalendar(c: ExtCalendar): WorkCalendar {
+  return {
+    id: c.id,
+    name: c.name,
+    description: c.description,
+    workDays: [...c.workDays],
+    workStartHour: c.workStartHour,
+    workEndHour: c.workEndHour,
+    hoursPerDay: c.hoursPerDay,
+    simpleBreakStartMinute: c.simpleBreakStartMinute,
+    simpleBreakDurationMinutes: c.simpleBreakDurationMinutes,
+    holidays: c.holidays.map(toIntHoliday),
+    workTime: c.workTime ? toIntWorkTime(c.workTime) : undefined,
+    shift: c.shift,
+    workingExceptions: c.workingExceptions ? c.workingExceptions.map(toIntWorkingException) : undefined,
+  };
+}
+
+// ── Taaktijd ──
+
+export function toExtTaskTime(tt: TaskTime): ExtTaskTime {
+  return {
+    durationType: tt.durationType,
+    durationUnit: tt.durationUnit,
+    scheduleDuration: tt.scheduleDuration,
+    durationMinutes: tt.durationMinutes,
+    scheduleStart: tt.scheduleStart,
+    scheduleFinish: tt.scheduleFinish,
+    earlyStart: tt.earlyStart,
+    earlyFinish: tt.earlyFinish,
+    lateStart: tt.lateStart,
+    lateFinish: tt.lateFinish,
+    freeFloat: tt.freeFloat,
+    totalFloat: tt.totalFloat,
+    isCritical: tt.isCritical,
+    interferingFloat: tt.interferingFloat,
+    isNearCritical: tt.isNearCritical,
+    floatPath: tt.floatPath,
+    actualStart: tt.actualStart,
+    actualFinish: tt.actualFinish,
+    actualDuration: tt.actualDuration,
+    remainingTime: tt.remainingTime,
+    remainingMinutes: tt.remainingMinutes,
+    completion: tt.completion,
+    // resume/stop: zelfde onvoorwaardelijke doorgifte als de andere optionele
+    // tracking-velden hierboven (`undefined` blijft `undefined`).
+    resume: tt.resume,
+    stop: tt.stop,
+  };
+}
+
+/**
+ * Grensverdediging bij `addTask`: `ExtTaskTime` declareert `durationType`/
+ * `scheduleDuration`/`scheduleStart`/`scheduleFinish`/`earlyStart`/`earlyFinish`/`lateStart`/
+ * `lateFinish`/`freeFloat`/`totalFloat`/`isCritical`/`completion` als VERPLICHT — maar dat is alleen
+ * een TS-compileertijd-garantie. Een extensie draait ONGETYPEERD (`new Function`-sandbox, CommonJS);
+ * niets valideert op runtime dat een binnenkomend object die velden ook echt draagt. Een ontbrekend
+ * `completion` zou tot in `Task.time` doorlopen en `writeIFC` laten crashen op
+ * `time.completion.toFixed(1)` (`ifcTaskSlots.ts`). Elk verplicht veld krijgt daarom een expliciete,
+ * niet-crashende terugval (`??`, dus `false`/`0` blijven staan): datumvelden vallen terug op `scheduleStart`/
+ * `-Finish` (zelf terugvallend op vandaag), getallen op 0, `isCritical` op `false`, `completion` op 0
+ * — dezelfde geest als `createDefaultTaskTime`. De bron-laag (`taskSlice`/`mcpTransaction`, zie hun
+ * `mergeTaskTime`) herstelt daarna evt. datum-samenhang tegen het echte projectanker; dit is de
+ * grensverdediging die voorkomt dat een onvolledig extensie-object hier al een writer-crash veroorzaakt.
+ */
+export function fromExtTaskTime(tt: ExtTaskTime): TaskTime {
+  const start = tt.scheduleStart ?? localTodayIso();
+  const finish = tt.scheduleFinish ?? start;
+  return {
+    durationType: tt.durationType ?? 'WORKTIME',
+    durationUnit: tt.durationUnit ?? (tt.durationMinutes != null ? 'hours' : 'days'),
+    scheduleDuration: tt.scheduleDuration ?? 0,
+    durationMinutes: tt.durationMinutes,
+    scheduleStart: start,
+    scheduleFinish: finish,
+    earlyStart: tt.earlyStart ?? start,
+    earlyFinish: tt.earlyFinish ?? finish,
+    lateStart: tt.lateStart ?? start,
+    lateFinish: tt.lateFinish ?? finish,
+    freeFloat: tt.freeFloat ?? 0,
+    totalFloat: tt.totalFloat ?? 0,
+    isCritical: tt.isCritical ?? false,
+    interferingFloat: tt.interferingFloat,
+    isNearCritical: tt.isNearCritical,
+    floatPath: tt.floatPath,
+    actualStart: tt.actualStart,
+    actualFinish: tt.actualFinish,
+    actualDuration: tt.actualDuration,
+    remainingTime: tt.remainingTime,
+    remainingMinutes: tt.remainingMinutes,
+    completion: tt.completion ?? 0,
+    // resume/stop hebben geen zinvolle generieke fallback (net als
+    // actualStart/actualFinish hierboven) — afwezig blijft afwezig.
+    resume: tt.resume,
+    stop: tt.stop,
+  };
+}
+
+// ── Taak ──
+
+export function toExtTask(t: Task, customTaskType?: { id: string; name: string }): ExtTask {
+  return {
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    wbsCode: t.wbsCode,
+    taskType: t.taskType,
+    ...(t.customTaskTypeId ? { customTaskType: customTaskType ?? { id: t.customTaskTypeId } } : {}),
+    status: t.status,
+    isMilestone: t.isMilestone,
+    milestoneKind: t.milestoneKind,
+    mandatory: t.mandatory,
+    priority: t.priority,
+    levelingDelay: t.levelingDelay,
+    // levelingDelayMinutes/-Elapsed, splitGaps, manuallyScheduled: zelfde onvoorwaardelijke
+    // doorgifte als levelingDelay hierboven.
+    levelingDelayMinutes: t.levelingDelayMinutes,
+    levelingDelayElapsed: t.levelingDelayElapsed,
+    splitGaps: t.splitGaps ? t.splitGaps.map(g => ({ ...g })) : undefined,
+    manuallyScheduled: t.manuallyScheduled,
+    // Deze velden reizen WEL mee door de VOLLEDIGE vertaling (`fromExtTask` — het invoerpad van een
+    // extensie-importer mag geen velden laten vallen, contract-poort `check-ext-contract.ts`), maar
+    // blijven buiten de create-/update-paden (`fromExtTaskInput`). `mspTaskType`/`effortDriven` zijn
+    // ook via MCP niet zetbaar (`taskFields.ts` REJECT_HINTS); `workRule` wel.
+    mspTaskType: t.mspTaskType,
+    effortDriven: t.effortDriven,
+    workRule: t.workRule,
+    // P6/XER-herkomst is READ-ONLY voor extensies. `toExtTask` toont de bronvelden voor
+    // analyse; `fromExtTask` hieronder accepteert ze bewust niet als generieke invoer.
+    p6DurationType: t.p6DurationType,
+    p6ActivityType: t.p6ActivityType,
+    p6ProjectId: t.p6ProjectId,
+    p6TaskId: t.p6TaskId,
+    p6ExplicitTargetWindow: t.p6ExplicitTargetWindow,
+    p6CompletePctType: t.p6CompletePctType,
+    p6ExpectedFinish: t.p6ExpectedFinish,
+    p6SuspendResume: t.p6SuspendResume,
+    timephasedContours: t.timephasedContours ? t.timephasedContours.map(c => ({ resourceUid: c.resourceUid, ...(c.resourceId !== undefined ? { resourceId: c.resourceId } : {}), periods: c.periods.map(p => ({ ...p })) })) : undefined,
+    timephasedFinishFloor: t.timephasedFinishFloor,
+    timephasedStartAnchor: t.timephasedStartAnchor,
+    timephasedDurationWalks: t.timephasedDurationWalks ? t.timephasedDurationWalks.map(w => ({ ...w })) : undefined,
+    parentId: t.parentId,
+    childIds: [...t.childIds],
+    isSummary: t.isSummary,
+    time: toExtTaskTime(t.time),
+    resourceIds: [...t.resourceIds],
+    color: t.color,
+    activityCodes: t.activityCodes ? { ...t.activityCodes } : undefined,
+    customFields: t.customFields ? { ...t.customFields } : undefined,
+    constraint: t.constraint ? copyConstraint(t.constraint) : undefined,
+    constraint2: t.constraint2 ? copyConstraint(t.constraint2) : undefined,
+    isHammock: t.isHammock,
+    externalLinks: t.externalLinks ? t.externalLinks.map(copyExternalLink) : undefined,
+    deadline: t.deadline,
+    calendarId: t.calendarId,
+    notes: t.notes ? t.notes.map(copyNote) : undefined,
+  };
+}
+
+/** Volledige Ext→intern taakvertaling (bv. binnen een geladen project). */
+export function fromExtTask(t: ExtTask): Task {
+  return {
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    wbsCode: t.wbsCode,
+    taskType: t.taskType,
+    ...(t.customTaskType?.id.trim() ? { customTaskTypeId: t.customTaskType.id.trim(), taskType: 'USERDEFINED' } : {}),
+    status: t.status,
+    isMilestone: t.isMilestone,
+    milestoneKind: t.milestoneKind,
+    mandatory: t.mandatory,
+    priority: t.priority,
+    levelingDelay: t.levelingDelay,
+    // levelingDelayMinutes/-Elapsed, splitGaps, manuallyScheduled: zelfde onvoorwaardelijke
+    // doorgifte als levelingDelay hierboven.
+    levelingDelayMinutes: t.levelingDelayMinutes,
+    levelingDelayElapsed: t.levelingDelayElapsed,
+    splitGaps: t.splitGaps ? t.splitGaps.map(g => ({ ...g })) : undefined,
+    manuallyScheduled: t.manuallyScheduled,
+    // De VOLLEDIGE vertaling vernietigt geen data (contract-poort `check-ext-contract.ts`) — ook de
+    // .mpp-leeskant-velden reizen mee terug. De create-/update-paden (`fromExtTaskInput`,
+    // extensie-API) blijven hier bewust buiten.
+    mspTaskType: t.mspTaskType,
+    effortDriven: t.effortDriven,
+    workRule: t.workRule,
+    // De P6/XER-velden zijn bronprovenance, geen publieke generieke invoer.
+    // De native XER-reader en het IFC-round-trippad materialiseren ze rechtstreeks op `Task`;
+    // een ongetypeerde extensiepayload mag via deze mapper geen P6-solverroute activeren.
+    timephasedContours: t.timephasedContours ? t.timephasedContours.map(c => ({ resourceUid: c.resourceUid, ...(c.resourceId !== undefined ? { resourceId: c.resourceId } : {}), periods: c.periods.map(p => ({ ...p })) })) : undefined,
+    timephasedFinishFloor: t.timephasedFinishFloor,
+    timephasedStartAnchor: t.timephasedStartAnchor,
+    timephasedDurationWalks: t.timephasedDurationWalks ? t.timephasedDurationWalks.map(w => ({ ...w })) : undefined,
+    parentId: t.parentId,
+    childIds: [...t.childIds],
+    isSummary: t.isSummary,
+    time: fromExtTaskTime(t.time),
+    resourceIds: [...t.resourceIds],
+    color: t.color,
+    activityCodes: t.activityCodes ? { ...t.activityCodes } : undefined,
+    customFields: t.customFields ? { ...t.customFields } : undefined,
+    constraint: t.constraint ? toIntConstraint(t.constraint) : undefined,
+    constraint2: t.constraint2 ? toIntConstraint(t.constraint2) : undefined,
+    isHammock: t.isHammock,
+    externalLinks: t.externalLinks ? t.externalLinks.map(toIntExternalLink) : undefined,
+    deadline: t.deadline,
+    calendarId: t.calendarId,
+    notes: t.notes ? t.notes.map(copyNote) : undefined,
+  };
+}
+
+/**
+ * Ext-taakINVOER voor `api.data.addTask` → interne invoer voor de store-actie. Alleen de door de
+ * extensie gezette velden worden doorgegeven; de store-actie vult zelf de defaults aan. `name` is
+ * verplicht (zoals de store-actie eist); `time` wordt naar interne vorm gemapt indien meegegeven.
+ */
+export function fromExtTaskInput(
+  input: Partial<ExtTask> & { name: string },
+): Partial<Task> & { name: string } {
+  const out: Partial<Task> & { name: string } = { name: input.name };
+  if (input.id !== undefined) out.id = input.id;
+  if (input.description !== undefined) out.description = input.description;
+  if (input.wbsCode !== undefined) out.wbsCode = input.wbsCode;
+  if (input.taskType !== undefined) {
+    out.taskType = input.taskType;
+    if (input.taskType !== 'USERDEFINED') out.customTaskTypeId = undefined;
+  }
+  if (input.customTaskType?.id) {
+    out.taskType = 'USERDEFINED';
+    out.customTaskTypeId = input.customTaskType.id.trim();
+  }
+  if (input.status !== undefined) out.status = input.status;
+  if (input.isMilestone !== undefined) out.isMilestone = input.isMilestone;
+  if (input.milestoneKind !== undefined) out.milestoneKind = input.milestoneKind;
+  if (input.mandatory !== undefined) out.mandatory = input.mandatory;
+  if (input.priority !== undefined) out.priority = input.priority;
+  if (input.levelingDelay !== undefined) out.levelingDelay = input.levelingDelay;
+  // levelingDelayMinutes/-Elapsed, splitGaps, manuallyScheduled: zelfde "alleen-als-gezet"-vorm als
+  // levelingDelay hierboven.
+  if (input.levelingDelayMinutes !== undefined) out.levelingDelayMinutes = input.levelingDelayMinutes;
+  if (input.levelingDelayElapsed !== undefined) out.levelingDelayElapsed = input.levelingDelayElapsed;
+  if (input.splitGaps !== undefined) out.splitGaps = input.splitGaps.map(g => ({ ...g }));
+  if (input.manuallyScheduled !== undefined) out.manuallyScheduled = input.manuallyScheduled;
+  if (input.parentId !== undefined) out.parentId = input.parentId;
+  if (input.childIds !== undefined) out.childIds = [...input.childIds];
+  if (input.isSummary !== undefined) out.isSummary = input.isSummary;
+  if (input.time !== undefined) out.time = fromExtTaskTime(input.time);
+  if (input.resourceIds !== undefined) out.resourceIds = [...input.resourceIds];
+  if (input.color !== undefined) out.color = input.color;
+  if (input.activityCodes !== undefined) out.activityCodes = { ...input.activityCodes };
+  if (input.customFields !== undefined) out.customFields = { ...input.customFields };
+  if (input.constraint !== undefined) out.constraint = toIntConstraint(input.constraint);
+  if (input.constraint2 !== undefined) out.constraint2 = toIntConstraint(input.constraint2);
+  if (input.isHammock !== undefined) out.isHammock = input.isHammock;
+  if (input.externalLinks !== undefined) out.externalLinks = input.externalLinks.map(toIntExternalLink);
+  if (input.deadline !== undefined) out.deadline = input.deadline;
+  if (input.calendarId !== undefined) out.calendarId = input.calendarId;
+  if (input.notes !== undefined) out.notes = input.notes.map(copyNote);
+  return out;
+}
+
+/**
+ * `api.data.addTask`-invoer: als `fromExtTaskInput`, maar een
+ * URENtaak waarvoor de extensie GEEN `scheduleFinish` meegaf krijgt ook geen einde uit de grensterugval
+ * (`fromExtTaskTime` vult `scheduleFinish`/`earlyFinish`/`lateFinish` anders met de start). Zo ziet de
+ * store-`addTask` geen "meegegeven einde" en leidt `seedNewHourTaskFinish` het einde af uit start + duur
+ * op de taakkalender — dezelfde regel als elke andere nieuwe urentaak. Een meegegeven einde wint; een
+ * dagtaak blijft ongewijzigd. Niet voor `sdk.factory.createTask`: die bouwt een volledig DTO zonder
+ * document of kalender en kan dus niets afleiden.
+ *
+ * Alleen voor een taak die meebeweegt (`hourInputFinishFollowsEdits`: niet gestart, niet handmatig,
+ * geen samenvatting/hammock/P6-targetvenster) — anders zou de store het einde niet afleiden en viel het
+ * op de verse default terug. Ook een meegegeven `earlyFinish`/`lateFinish` zonder `scheduleFinish` wordt
+ * genegeerd: dat is rekenuitvoer die de eerstvolgende berekening toch overschrijft,
+ * en zo zijn gepland en vroegst einde vóór die berekening coherent.
+ */
+export function fromExtTaskAddInput(
+  input: Partial<ExtTask> & { name: string },
+): Partial<Task> & { name: string } {
+  const out = fromExtTaskInput(input);
+  if (!input.time || !out.time || input.time.scheduleFinish !== undefined || out.time.durationUnit !== 'hours') return out;
+  const probe = { childIds: [], status: 'NOT_STARTED', ...out, time: out.time } as Task;
+  if (!hourInputFinishFollowsEdits(probe)) return out;
+  const time: Partial<TaskTime> = { ...out.time };
+  delete time.scheduleFinish;
+  delete time.earlyFinish;
+  delete time.lateFinish;
+  // Runtime-partieel: `taskSlice.addTask` merget `partial.time` veld-voor-veld met de verse default.
+  out.time = time as TaskTime;
+  return out;
+}
+
+/**
+ * Extensie-rand, UPDATE-pad. `fromExtTaskTime` (hierboven) vult ontbrekende verplichte velden met
+ * GENERIEKE defaults — goed voor `addTask`, fout voor `api.data.updateTask`: `mergeTaskTime` zou
+ * dan een reeds-compleet object zien en de ECHTE bestaande completion/floats/etc. overschrijven.
+ * Deze functie kopieert daarom VELD-VOOR-VELD zonder fallback (ontbrekend blijft ontbrekend);
+ * `taskSlice.updateTask`'s `mergeTaskTime` vult het ontbrekende aan uit de bestaande taaktijd.
+ *
+ * Een object-LITERAL met elke sleutel expliciet genoemd (`{ durationMinutes: tt.durationMinutes, ... }`)
+ * zet die sleutel ALTIJD als eigen property, ook als hij op `tt` nooit voorkwam — en `mergeTaskTime`
+ * leest sleutel-aanwezigheid als "expliciet gewist". Een partiële `api.data.updateTask({time:
+ * {scheduleStart:...}})` zou zo `durationMinutes`/`actualStart`/… wissen (gepind in blok (10b) van
+ * check-ifc-roundtrip.ts). Elk optioneel veld wordt daarom pas op `out` gezet als de sleutel ook ECHT
+ * op `tt` aanwezig is (`'veld' in tt`, NIET `tt.veld !== undefined` — dat laatste zou een BEWUSTE
+ * clear via een expliciete `undefined`-waarde weer verkeerd als "niet genoemd" lezen).
+ *
+ * Bewust open: `remainingTime`/`remainingMinutes` gaan hier ONGEVALIDEERD door naar `TaskTime`, zonder
+ * consistentiecheck tegen `completion`. De MCP-tools weigeren die velden (`taskFields.ts`'s
+ * `PROGRESS_REJECT_HINTS`); een extensie kan met een inconsistente `remainingTime` dus een niet-ronde
+ * klokstand zetten. Directe veldtoegang is precies het contract dat de extensie-API voor `TaskTime`
+ * biedt — een check hier zou legitiem gebruik (een extensie die zelf een precieze restduur bijhoudt)
+ * net zo goed blokkeren.
+ */
+function fromExtTaskTimePatch(tt: Partial<ExtTaskTime>): Partial<TaskTime> {
+  const out: Partial<TaskTime> = {};
+  if ('durationType' in tt) out.durationType = tt.durationType;
+  if ('scheduleDuration' in tt) out.scheduleDuration = tt.scheduleDuration;
+  if ('durationMinutes' in tt) out.durationMinutes = tt.durationMinutes;
+  if ('scheduleStart' in tt) out.scheduleStart = tt.scheduleStart;
+  if ('scheduleFinish' in tt) out.scheduleFinish = tt.scheduleFinish;
+  if ('earlyStart' in tt) out.earlyStart = tt.earlyStart;
+  if ('earlyFinish' in tt) out.earlyFinish = tt.earlyFinish;
+  if ('lateStart' in tt) out.lateStart = tt.lateStart;
+  if ('lateFinish' in tt) out.lateFinish = tt.lateFinish;
+  if ('freeFloat' in tt) out.freeFloat = tt.freeFloat;
+  if ('totalFloat' in tt) out.totalFloat = tt.totalFloat;
+  if ('isCritical' in tt) out.isCritical = tt.isCritical;
+  if ('interferingFloat' in tt) out.interferingFloat = tt.interferingFloat;
+  if ('isNearCritical' in tt) out.isNearCritical = tt.isNearCritical;
+  if ('floatPath' in tt) out.floatPath = tt.floatPath;
+  if ('actualStart' in tt) out.actualStart = tt.actualStart;
+  if ('actualFinish' in tt) out.actualFinish = tt.actualFinish;
+  if ('actualDuration' in tt) out.actualDuration = tt.actualDuration;
+  if ('remainingTime' in tt) out.remainingTime = tt.remainingTime;
+  if ('remainingMinutes' in tt) out.remainingMinutes = tt.remainingMinutes;
+  if ('completion' in tt) out.completion = tt.completion;
+  // resume/stop volgen dezelfde sleutel-aanwezigheid-conventie als de andere
+  // optionele velden hierboven — cruciaal voor dezelfde reden (zie de docstring boven deze functie):
+  // `mergeTaskTime` (taskDefaults.ts) onderscheidt "niet genoemd" van "bewust gewist" via `in`.
+  if ('resume' in tt) out.resume = tt.resume;
+  if ('stop' in tt) out.stop = tt.stop;
+  return out;
+}
+
+/** Ext-taakWIJZIGINGEN voor `api.data.updateTask` → interne `Partial<Task>`. */
+export function fromExtTaskUpdates(updates: Partial<ExtTask>): Partial<Task> {
+  const out: Partial<Task> = {};
+  if (updates.name !== undefined) out.name = updates.name;
+  if (updates.description !== undefined) out.description = updates.description;
+  if (updates.wbsCode !== undefined) out.wbsCode = updates.wbsCode;
+  if (updates.taskType !== undefined) {
+    out.taskType = updates.taskType;
+    if (updates.taskType !== 'USERDEFINED') out.customTaskTypeId = undefined;
+  }
+  if (updates.customTaskType?.id) {
+    out.taskType = 'USERDEFINED';
+    out.customTaskTypeId = updates.customTaskType.id.trim();
+  }
+  if (updates.status !== undefined) out.status = updates.status;
+  if (updates.isMilestone !== undefined) out.isMilestone = updates.isMilestone;
+  if (updates.milestoneKind !== undefined) out.milestoneKind = updates.milestoneKind;
+  if (updates.mandatory !== undefined) out.mandatory = updates.mandatory;
+  if (updates.priority !== undefined) out.priority = updates.priority;
+  if (updates.levelingDelay !== undefined) out.levelingDelay = updates.levelingDelay;
+  // levelingDelayMinutes/-Elapsed, splitGaps, manuallyScheduled: zelfde "alleen-als-gezet"-vorm als
+  // levelingDelay hierboven.
+  if (updates.levelingDelayMinutes !== undefined) out.levelingDelayMinutes = updates.levelingDelayMinutes;
+  if (updates.levelingDelayElapsed !== undefined) out.levelingDelayElapsed = updates.levelingDelayElapsed;
+  if (updates.splitGaps !== undefined) out.splitGaps = updates.splitGaps.map(g => ({ ...g }));
+  if (updates.manuallyScheduled !== undefined) out.manuallyScheduled = updates.manuallyScheduled;
+  if (updates.parentId !== undefined) out.parentId = updates.parentId;
+  if (updates.childIds !== undefined) out.childIds = [...updates.childIds];
+  if (updates.isSummary !== undefined) out.isSummary = updates.isSummary;
+  // `fromExtTaskTimePatch`, NIET `fromExtTaskTime` — zie de docstring daarboven. `out.time`
+  // is hier op TS-niveau een volledige `TaskTime`, maar dat is dezelfde bewuste afwijking als
+  // `addTask`'s `partial.time`: de echte volledigheid wordt pas door `taskSlice.updateTask`'s
+  // `mergeTaskTime` (tegen de bestaande taaktijd) gegarandeerd, niet hier.
+  if (updates.time !== undefined) out.time = fromExtTaskTimePatch(updates.time) as TaskTime;
+  if (updates.resourceIds !== undefined) out.resourceIds = [...updates.resourceIds];
+  if (updates.color !== undefined) out.color = updates.color;
+  if (updates.activityCodes !== undefined) out.activityCodes = { ...updates.activityCodes };
+  if (updates.customFields !== undefined) out.customFields = { ...updates.customFields };
+  if (updates.constraint !== undefined) out.constraint = toIntConstraint(updates.constraint);
+  if (updates.constraint2 !== undefined) out.constraint2 = toIntConstraint(updates.constraint2);
+  if (updates.isHammock !== undefined) out.isHammock = updates.isHammock;
+  if (updates.externalLinks !== undefined) out.externalLinks = updates.externalLinks.map(toIntExternalLink);
+  if (updates.deadline !== undefined) out.deadline = updates.deadline;
+  if (updates.calendarId !== undefined) out.calendarId = updates.calendarId;
+  if (updates.notes !== undefined) out.notes = updates.notes.map(copyNote);
+  return out;
+}
+
+// ── Relatie ──
+
+export function toExtSequence(s: Sequence): ExtSequence {
+  return {
+    id: s.id,
+    predecessorId: s.predecessorId,
+    successorId: s.successorId,
+    type: s.type,
+    lagDays: s.lagDays,
+    lagMinutes: s.lagMinutes,
+    lagUnit: s.lagUnit,
+    lagPercent: s.lagPercent,
+    p6StartAtPredecessorFinishBoundary: s.p6StartAtPredecessorFinishBoundary,
+  };
+}
+
+export function fromExtSequence(s: ExtSequence): Sequence {
+  return {
+    id: s.id,
+    predecessorId: s.predecessorId,
+    successorId: s.successorId,
+    type: s.type,
+    lagDays: s.lagDays,
+    lagMinutes: s.lagMinutes,
+    lagUnit: s.lagUnit,
+    lagPercent: s.lagPercent,
+  };
+}
+
+/** Ext-relatieINVOER voor `api.data.addSequence` (zonder id) → interne invoer. */
+export function fromExtSequenceInput(seq: Omit<ExtSequence, 'id'>): Omit<Sequence, 'id'> {
+  return {
+    predecessorId: seq.predecessorId,
+    successorId: seq.successorId,
+    type: seq.type,
+    lagDays: seq.lagDays,
+    lagMinutes: seq.lagMinutes,
+    lagUnit: seq.lagUnit,
+    lagPercent: seq.lagPercent,
+  };
+}
+
+// ── Resource + toewijzing ──
+
+export function toExtResource(r: Resource): ExtResource {
+  return {
+    id: r.id,
+    name: r.name,
+    type: r.type,
+    description: r.description,
+    color: r.color,
+    costPerHour: r.costPerHour,
+    maxUnits: r.maxUnits,
+    calendarId: r.calendarId,
+    availabilitySteps: r.availabilitySteps ? r.availabilitySteps.map(copyAvailStep) : undefined,
+    unitOfMeasure: r.unitOfMeasure,
+    parentId: r.parentId,
+  };
+}
+
+export function fromExtResource(r: ExtResource): Resource {
+  return {
+    id: r.id,
+    name: r.name,
+    type: r.type,
+    description: r.description,
+    color: r.color,
+    costPerHour: r.costPerHour,
+    maxUnits: r.maxUnits,
+    calendarId: r.calendarId,
+    availabilitySteps: r.availabilitySteps ? r.availabilitySteps.map(toIntAvailStep) : undefined,
+    unitOfMeasure: r.unitOfMeasure,
+    parentId: r.parentId,
+  };
+}
+
+export function toExtAssignment(a: ResourceAssignment): ExtAssignment {
+  return {
+    id: a.id,
+    taskId: a.taskId,
+    resourceId: a.resourceId,
+    unitsPerDay: a.unitsPerDay,
+    curve: a.curve,
+    workWindowStart: a.workWindowStart,
+    workWindowFinish: a.workWindowFinish,
+    curveValues: a.curveValues ? [...a.curveValues] : undefined,
+    plannedWorkMinutes: a.plannedWorkMinutes,
+    actualWorkMinutes: a.actualWorkMinutes,
+    remainingWorkMinutes: a.remainingWorkMinutes,
+  };
+}
+
+export function fromExtAssignment(a: ExtAssignment): ResourceAssignment {
+  return {
+    id: a.id,
+    taskId: a.taskId,
+    resourceId: a.resourceId,
+    unitsPerDay: a.unitsPerDay,
+    curve: a.curve,
+    workWindowStart: a.workWindowStart,
+    workWindowFinish: a.workWindowFinish,
+    curveValues: a.curveValues ? [...a.curveValues] : undefined,
+    plannedWorkMinutes: a.plannedWorkMinutes,
+    actualWorkMinutes: a.actualWorkMinutes,
+    remainingWorkMinutes: a.remainingWorkMinutes,
+  };
+}
+
+// ── Importresultaat ──
+
+/**
+ * Ext-importresultaat → interne `ImportResult` (de vorm die `loadState`/de open-paden verwachten).
+ * De rijkere optionele velden (resourceCalendars, activityCodeTypes, …) zet een extensie niet; die
+ * blijven `undefined` en de store valt terug op zijn defaults.
+ */
+export function fromExtImportResult(r: ExtImportResult): ImportResult {
+  const catalog = new Map<string, { id: string; name: string }>();
+  const names = new Map<string, string>();
+  const addType = (raw: { id: string; name: string }, source: string) => {
+    const type = { id: raw.id.trim(), name: raw.name.trim() };
+    if (!type.id || !type.name) throw new Error(`${source}: customTaskType vereist een niet-lege id en naam`);
+    const byId = catalog.get(type.id);
+    if (byId && byId.name !== type.name) throw new Error(`${source}: customTaskType-id '${type.id}' heeft conflicterende namen`);
+    const nameKey = type.name.toLocaleLowerCase();
+    const byName = names.get(nameKey);
+    if (byName && byName !== type.id) throw new Error(`${source}: customTaskType-naam '${type.name}' heeft conflicterende ids`);
+    catalog.set(type.id, type);
+    names.set(nameKey, type.id);
+  };
+  for (const type of r.customTaskTypes ?? []) addType(type, 'ExtImportResult.customTaskTypes');
+  for (const task of r.tasks) {
+    if (task.customTaskType?.name) addType(
+      { id: task.customTaskType.id, name: task.customTaskType.name },
+      `ExtImportResult.tasks['${task.id}']`,
+    );
+  }
+  return {
+    project: fromExtProject(r.project),
+    calendar: fromExtCalendar(r.calendar),
+    tasks: r.tasks.map(fromExtTask),
+    sequences: r.sequences.map(fromExtSequence),
+    resources: r.resources.map(fromExtResource),
+    assignments: r.assignments.map(fromExtAssignment),
+    customTaskTypes: [...catalog.values()],
+  };
+}
+
+// ── UI-grens: ribbontabblad ──
+
+/**
+ * Ext-facing tabblad-id → intern tabblad-id.
+ *
+ * De publieke waarde `relations` blijft voor bestaande extensies geldig, maar landt op `table`: er is
+ * geen zelfstandig relatiepaneel; de volledige taakgrid bevat alle relatiefunctionaliteit. De
+ * `Record` over de volledige `ExtRibbonTab`-unie dwingt af dat een nieuw ext-tabblad ook echt ergens
+ * op uitkomt.
+ */
+const RIBBON_TAB_MAP: Record<ExtRibbonTab, RibbonTab> = {
+  file: 'file',
+  start: 'start',
+  planning: 'planning',
+  resources: 'resources',
+  relations: 'table',
+  beeld: 'beeld',
+  instellingen: 'instellingen',
+  table: 'table',
+  ifc: 'ifc',
+  report: 'report',
+  ai: 'ai',
+};
+
+export function fromExtRibbonTab(tab: ExtRibbonTab): RibbonTab {
+  return RIBBON_TAB_MAP[tab];
+}
+
+// ── PDF-fontprovider ──
+
+/**
+ * Ext-facing font-provider → interne `CjkFontProvider`.
+ *
+ * Bewust een NIEUW object en geen doorgeef-referentie: de registry bewaart wat hij krijgt, en een
+ * extensie die z'n eigen provider-object naderhand muteert (of er velden aan toevoegt die de
+ * pagineerder ooit gaat lezen) zou anders rechtstreeks in de host-registry zitten. De methodes
+ * worden gebonden aan het originele object, zodat een provider met interne state (bv. een
+ * bytes-cache) gewoon blijft werken.
+ *
+ * `getBoldBytes` wordt alleen doorgegeven als hij er is — een sleutel met `undefined` erin zou de
+ * `getBoldBytes?` -check in de pagineerder laten slagen op een niet-functie.
+ */
+export function fromExtFontProvider(p: ExtFontProvider): CjkFontProvider {
+  const out: CjkFontProvider = {
+    id: p.id,
+    covers: (codepoint: number) => p.covers(codepoint),
+    getRegularBytes: () => p.getRegularBytes(),
+  };
+  if (p.getBoldBytes) {
+    const bold = p.getBoldBytes.bind(p);
+    out.getBoldBytes = () => bold();
+  }
+  return out;
+}

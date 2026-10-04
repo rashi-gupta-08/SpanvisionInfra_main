@@ -1,0 +1,303 @@
+import { useCallback, useMemo } from 'react';
+import { useAppStore } from '../../state/appStore';
+import type { DrawingType, PlanSubtype } from '../../types/geometry';
+import { PLAN_SUBTYPE_CONFIG } from '../../types/geometry';
+
+// Drawing type display configuration
+const DRAWING_TYPE_CONFIG: Record<DrawingType, { label: string; color: string }> = {
+  standalone: { label: 'Stand Alone', color: 'bg-gray-500/30 text-gray-300' },
+  plan: { label: 'Plan', color: 'bg-blue-500/30 text-blue-300' },
+  section: { label: 'Section', color: 'bg-amber-500/30 text-amber-300' },
+};
+
+export function DrawingPropertiesPanel({ showHeader = true }: { showHeader?: boolean }) {
+  const {
+    drawings,
+    activeDrawingId,
+    updateDrawingBoundary,
+    renameDrawing,
+    updateDrawingType,
+    updateDrawingStorey,
+    updateDrawingPlanSubtype,
+    projectStructure,
+    boundaryEditState,
+    selectBoundary,
+    deselectBoundary,
+    fitBoundaryToContent,
+    boundaryVisible,
+    toggleBoundaryVisible,
+    axesVisible,
+    toggleAxesVisible,
+    openDrawingStandardsDialog,
+  } = useAppStore();
+
+  const activeDrawing = drawings.find(d => d.id === activeDrawingId);
+
+  // Collect all storeys from project structure for storey assignment dropdown
+  // Sort by elevation (descending) so highest storey appears first
+  const allStoreys = useMemo(() => {
+    const storeys = projectStructure?.buildings?.flatMap(b =>
+      b.storeys.map(s => ({ ...s, buildingName: b.name }))
+    ) ?? [];
+    storeys.sort((a, b) => b.elevation - a.elevation);
+    return storeys;
+  }, [projectStructure]);
+
+  const handleTypeChange = useCallback((newType: DrawingType) => {
+    if (!activeDrawingId) return;
+    updateDrawingType(activeDrawingId, newType);
+    // Auto-set structural plan as default subtype when switching to plan
+    if (newType === 'plan' && !activeDrawing?.planSubtype) {
+      updateDrawingPlanSubtype(activeDrawingId, 'structural-plan');
+    }
+  }, [activeDrawingId, activeDrawing, updateDrawingType]);
+
+  const handleStoreyChange = useCallback((storeyId: string) => {
+    if (!activeDrawingId) return;
+    updateDrawingStorey(activeDrawingId, storeyId || undefined);
+  }, [activeDrawingId, updateDrawingStorey]);
+
+  const handlePlanSubtypeChange = useCallback((subtype: string) => {
+    if (!activeDrawingId) return;
+    updateDrawingPlanSubtype(activeDrawingId, (subtype || undefined) as PlanSubtype | undefined);
+  }, [activeDrawingId, updateDrawingPlanSubtype]);
+
+  const handleBoundaryChange = useCallback((
+    field: 'x' | 'y' | 'width' | 'height',
+    value: string
+  ) => {
+    if (!activeDrawingId) return;
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+
+    // Ensure width and height are positive
+    if ((field === 'width' || field === 'height') && numValue <= 0) return;
+
+    updateDrawingBoundary(activeDrawingId, { [field]: numValue });
+  }, [activeDrawingId, updateDrawingBoundary]);
+
+  const handleNameChange = useCallback((value: string) => {
+    if (!activeDrawingId || !value.trim()) return;
+    renameDrawing(activeDrawingId, value.trim());
+  }, [activeDrawingId, renameDrawing]);
+
+  if (!activeDrawing) {
+    return (
+      <div className="p-3 text-cad-text-dim text-sm">
+        No drawing selected
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col text-sm">
+      {showHeader && (
+        <div className="p-3 border-b border-cad-border">
+          <h3 className="font-medium text-cad-text">Drawing Properties</h3>
+        </div>
+      )}
+
+      {/* Drawing Info */}
+      <div className="p-3 border-b border-cad-border">
+        <div className="space-y-2">
+          <div>
+            <label className="block text-xs text-cad-text-dim mb-1">Name:</label>
+            <input
+              type="text"
+              value={activeDrawing.name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+            />
+          </div>
+
+          {/* Drawing Type */}
+          <div>
+            <label className="block text-xs text-cad-text-dim mb-1">Type:</label>
+            <select
+              value={activeDrawing.drawingType || 'standalone'}
+              onChange={(e) => handleTypeChange(e.target.value as DrawingType)}
+              className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+            >
+              {(['standalone', 'plan', 'section'] as DrawingType[]).map((type) => (
+                <option key={type} value={type}>{DRAWING_TYPE_CONFIG[type].label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Plan subtype and storey assignment (for plan drawings) */}
+          {(activeDrawing.drawingType || 'standalone') === 'plan' && (
+            <>
+              <div>
+                <label className="block text-xs text-cad-text-dim mb-1">Plan Type:</label>
+                <select
+                  value={activeDrawing.planSubtype || ''}
+                  onChange={(e) => handlePlanSubtypeChange(e.target.value)}
+                  className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+                  title="Plan subtype"
+                >
+                  <option value="">General</option>
+                  {(Object.entries(PLAN_SUBTYPE_CONFIG) as [PlanSubtype, typeof PLAN_SUBTYPE_CONFIG[PlanSubtype]][]).map(([key, cfg]) => (
+                    <option key={key} value={key}>{cfg.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-cad-text-dim mb-1">Storey:</label>
+                {allStoreys.length > 0 ? (
+                  <select
+                    value={activeDrawing.storeyId || ''}
+                    onChange={(e) => handleStoreyChange(e.target.value)}
+                    className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+                    title="Linked building storey"
+                  >
+                    <option value="">-- None --</option>
+                    {allStoreys.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.buildingName} - {s.name} ({s.elevation}mm)
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-xs text-cad-text-dim italic">
+                    No storeys defined. Add storeys in Project Structure.
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Display Section */}
+      <div className="p-3 border-b border-cad-border">
+        <h4 className="font-medium text-cad-text mb-2">Display</h4>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={axesVisible}
+            onChange={toggleAxesVisible}
+            className="accent-cad-accent"
+            title="Show/Hide Axes"
+          />
+          <span className="text-xs text-cad-text">Show Axes</span>
+        </label>
+      </div>
+
+      {/* Boundary Section */}
+      <div className="p-3 border-b border-cad-border">
+        <div className="flex items-center justify-between mb-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={boundaryVisible}
+              onChange={toggleBoundaryVisible}
+              className="accent-cad-accent"
+              title="Show/Hide Boundary"
+            />
+            <h4 className="font-medium text-cad-text">Boundary (Region)</h4>
+          </label>
+          {boundaryEditState.isSelected && (
+            <span className="text-xs px-1.5 py-0.5 bg-orange-500/20 text-orange-400 border border-orange-500/30">
+              Selected
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-cad-text-dim mb-3">
+          Defines the visible area when placed on sheets. Click on the boundary edge to select it.
+        </p>
+
+        {/* Boundary Action Buttons */}
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => boundaryEditState.isSelected ? deselectBoundary() : selectBoundary()}
+            className={`flex-1 px-2 py-1.5 text-xs border ${
+              boundaryEditState.isSelected
+                ? 'bg-orange-500/20 border-orange-500/50 text-orange-400 hover:bg-orange-500/30'
+                : 'bg-cad-input border-cad-border text-cad-text hover:bg-cad-hover'
+            }`}
+          >
+            {boundaryEditState.isSelected ? 'Deselect' : 'Select Boundary'}
+          </button>
+          <button
+            onClick={() => activeDrawingId && fitBoundaryToContent(activeDrawingId)}
+            className="flex-1 px-2 py-1.5 text-xs bg-cad-input border border-cad-border text-cad-text hover:bg-cad-hover"
+            title="Adjust boundary to fit all shapes with padding"
+          >
+            Fit to Content
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs text-cad-text-dim mb-1">X:</label>
+            <input
+              type="number"
+              value={activeDrawing.boundary.x}
+              onChange={(e) => handleBoundaryChange('x', e.target.value)}
+              className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-cad-text-dim mb-1">Y:</label>
+            <input
+              type="number"
+              value={activeDrawing.boundary.y}
+              onChange={(e) => handleBoundaryChange('y', e.target.value)}
+              className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-cad-text-dim mb-1">Width:</label>
+            <input
+              type="number"
+              min="1"
+              value={activeDrawing.boundary.width}
+              onChange={(e) => handleBoundaryChange('width', e.target.value)}
+              className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-cad-text-dim mb-1">Height:</label>
+            <input
+              type="number"
+              min="1"
+              value={activeDrawing.boundary.height}
+              onChange={(e) => handleBoundaryChange('height', e.target.value)}
+              className="w-full px-2 py-1 text-xs bg-cad-input border border-cad-border text-cad-text"
+            />
+          </div>
+        </div>
+
+        {/* Selection Tip */}
+        {boundaryEditState.isSelected && (
+          <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400">
+            <strong>Tip:</strong> Drag the corner or edge handles to resize. Drag the center handle to move the boundary.
+          </div>
+        )}
+      </div>
+
+      {/* Drawing Standards */}
+      <div className="p-3 border-b border-cad-border">
+        <h4 className="font-medium text-cad-text mb-2">Standards</h4>
+        <button
+          onClick={openDrawingStandardsDialog}
+          className="w-full px-2 py-1.5 text-xs bg-cad-input border border-cad-border text-cad-text hover:bg-cad-hover"
+        >
+          Drawing Standards...
+        </button>
+      </div>
+
+      {/* Info Section */}
+      <div className="p-3">
+        <h4 className="font-medium text-cad-text mb-2">Information</h4>
+        <div className="space-y-1 text-xs text-cad-text-dim">
+          <div>Created: {new Date(activeDrawing.createdAt).toLocaleDateString('en-GB')}</div>
+          <div>Modified: {new Date(activeDrawing.modifiedAt).toLocaleDateString('en-GB')}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Legacy alias
+export { DrawingPropertiesPanel as DraftPropertiesPanel };

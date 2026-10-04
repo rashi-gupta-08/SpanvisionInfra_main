@@ -1,0 +1,14 @@
+[
+  {
+    "file": "src/services/calculation/calculator.ts",
+    "unchanged": true
+  },
+  {
+    "file": "src/services/calculation/staartDefaults.ts",
+    "unchanged": true
+  },
+  {
+    "file": "src/services/calculation/urenProrate.ts",
+    "unchanged": true
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "geo-mini",
+    "scenario": "allowed",
+    "passed": true
+  },
+  {
+    "id": "geo-mini",
+    "scenario": "denied",
+    "passed": true
+  },
+  {
+    "id": "geo-map",
+    "scenario": "allowed",
+    "passed": true
+  },
+  {
+    "id": "geo-map",
+    "scenario": "denied",
+    "passed": true
+  },
+  {
+    "id": "geo-drawing",
+    "scenario": "allowed",
+    "passed": true
+  },
+  {
+    "id": "geo-drawing",
+    "scenario": "denied",
+    "passed": true
+  },
+  {
+    "id": "fem",
+    "scenario": "allowed",
+    "passed": true
+  },
+  {
+    "id": "fem",
+    "scenario": "denied",
+    "passed": true
+  },
+  {
+    "id": "calculation",
+    "scenario": "allowed",
+    "passed": true
+  },
+  {
+    "id": "calculation",
+    "scenario": "denied",
+    "passed": true
+  },
+  {
+    "id": "pointcloud",
+    "scenario": "allowed",
+    "passed": true
+  },
+  {
+    "id": "pointcloud",
+    "scenario": "denied",
+    "passed": true
+  },
+  {
+    "id": "stl",
+    "scenario": "allowed",
+    "passed": true
+  },
+  {
+    "id": "stl",
+    "scenario": "denied",
+    "passed": true
+  }
+]

@@ -1,0 +1,621 @@
+//! WebAssembly bindings for ofs-core.
+//!
+//! Exposes the same domain logic as the Tauri backend, but callable
+//! from JavaScript in a browser. All data passes as JSON strings.
+
+use wasm_bindgen::prelude::*;
+use std::sync::Mutex;
+
+use ofs_core::kozijn::{Kozijn, Project};
+use ofs_core::production::compute_production_data;
+
+// ── State ──────────────────────────────────────────────────────
+
+static PROJECT: Mutex<Option<Project>> = Mutex::new(None);
+
+fn with_project<F, R>(f: F) -> Result<R, String>
+where
+    F: FnOnce(&mut Project) -> R,
+{
+    let mut guard = PROJECT.lock().map_err(|e| e.to_string())?;
+    let project = guard.get_or_insert_with(|| Project::new("New project", ""));
+    Ok(f(project))
+}
+
+fn find_kozijn(project: &Project, id: &str) -> Result<usize, String> {
+    let uuid: uuid::Uuid = id.parse().map_err(|e: uuid::Error| e.to_string())?;
+    project
+        .kozijnen
+        .iter()
+        .position(|k| k.id == uuid)
+        .ok_or_else(|| "Kozijn niet gevonden".into())
+}
+
+// ── Project commands ───────────────────────────────────────────
+
+#[wasm_bindgen]
+pub fn get_project() -> Result<String, String> {
+    with_project(|p| serde_json::to_string(p).unwrap())
+}
+
+#[wasm_bindgen]
+pub fn new_project(name: &str, number: &str) -> Result<String, String> {
+    let mut guard = PROJECT.lock().map_err(|e| e.to_string())?;
+    let project = Project::new(name, number);
+    let json = serde_json::to_string(&project).map_err(|e| e.to_string())?;
+    *guard = Some(project);
+    Ok(json)
+}
+
+#[wasm_bindgen]
+pub fn open_project_json(json: &str) -> Result<String, String> {
+    let project: Project = serde_json::from_str(json).map_err(|e| e.to_string())?;
+    let result = serde_json::to_string(&project).map_err(|e| e.to_string())?;
+    let mut guard = PROJECT.lock().map_err(|e| e.to_string())?;
+    *guard = Some(project);
+    Ok(result)
+}
+
+#[wasm_bindgen]
+pub fn save_project_json() -> Result<String, String> {
+    with_project(|p| serde_json::to_string(p).unwrap())
+}
+
+// ── Kozijn CRUD ────────────────────────────────────────────────
+
+#[wasm_bindgen]
+pub fn create_kozijn(name: &str, mark: &str, width: f64, height: f64) -> Result<String, String> {
+    with_project(|p| {
+        let k = Kozijn::new(name, mark, width, height);
+        let json = serde_json::to_string(&k).unwrap();
+        p.kozijnen.push(k);
+        json
+    })
+}
+
+#[wasm_bindgen]
+pub fn create_kozijn_from_template(
+    template: &str,
+    width: f64,
+    height: f64,
+    sjabloon_id: Option<String>,
+) -> Result<String, String> {
+    let sj = match sjabloon_id {
+        Some(id) => ofs_core::template::get_sjabloon(&id),
+        None => ofs_core::template::default_sjabloon(),
+    };
+    with_project(|p| {
+        let k = match template {
+            "single_turn_tilt" => ofs_core::grid::template_single_turn_tilt_sj(width, height, &sj),
+            "double_turn_tilt" => ofs_core::grid::template_double_turn_tilt_sj(width, height, &sj),
+            "sliding_door" => ofs_core::grid::template_sliding_door_sj(width, height, &sj),
+            "front_door" => ofs_core::grid::template_front_door_sj(width, height, &sj),
+            "klapraam" => ofs_core::grid::template_top_hung_sj(width, height, &sj),
+            "hefschuif" => ofs_core::grid::template_lift_slide_sj(width, height, &sj),
+            "pivot" => ofs_core::grid::template_pivot_sj(width, height, &sj),
+            "stolp" => ofs_core::grid::template_stolp_sj(width, height, &sj),
+            _ => Kozijn::new_with_sjabloon("Kozijn", "K01", width, height, &sj),
+        };
+        let json = serde_json::to_string(&k).unwrap();
+        p.kozijnen.push(k);
+        json
+    })
+}
+
+#[wasm_bindgen]
+pub fn get_kozijn(id: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn get_all_kozijnen() -> Result<String, String> {
+    with_project(|p| serde_json::to_string(&p.kozijnen).unwrap())
+}
+
+#[wasm_bindgen]
+pub fn remove_kozijn(id: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        p.kozijnen.remove(idx);
+        Ok("ok".into())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn duplicate_kozijn(id: &str, new_mark: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let mut dup = p.kozijnen[idx].clone();
+        dup.id = uuid::Uuid::new_v4();
+        dup.mark = new_mark.to_string();
+        let json = serde_json::to_string(&dup).unwrap();
+        p.kozijnen.push(dup);
+        Ok(json)
+    })?
+}
+
+// ── Kozijn mutations ───────────────────────────────────────────
+
+#[wasm_bindgen]
+pub fn update_kozijn_dimensions(id: &str, width: f64, height: f64) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &mut p.kozijnen[idx];
+        k.frame.outer_width = width;
+        k.frame.outer_height = height;
+        // Recalculate grid
+        let fw = k.frame.frame_width;
+        if k.grid.columns.len() == 1 {
+            k.grid.columns[0].size = width - 2.0 * fw;
+        }
+        if k.grid.rows.len() == 1 {
+            k.grid.rows[0].size = height - 2.0 * fw;
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_cell_type(
+    id: &str,
+    cell_index: usize,
+    panel_type: &str,
+    opening_direction: Option<String>,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &mut p.kozijnen[idx];
+        if cell_index < k.cells.len() {
+            if let Ok(pt) = serde_json::from_str::<ofs_core::kozijn::PanelType>(&format!("\"{}\"", panel_type)) {
+                k.cells[cell_index].panel_type = pt;
+            }
+            k.cells[cell_index].opening_direction = opening_direction
+                .as_deref()
+                .and_then(|d| serde_json::from_str(&format!("\"{}\"", d)).ok());
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_cell_panel_filling(
+    id: &str,
+    cell_index: usize,
+    panel_filling_json: &str,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &mut p.kozijnen[idx];
+        if cell_index < k.cells.len() {
+            if let Ok(filling) = serde_json::from_str::<ofs_core::panel_filling::PanelFilling>(panel_filling_json) {
+                k.cells[cell_index].panel_filling = Some(filling);
+            }
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_cell_glaslat(
+    id: &str,
+    cell_index: usize,
+    glaslat_json: &str,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &mut p.kozijnen[idx];
+        if cell_index < k.cells.len() {
+            if let Ok(glaslat) = serde_json::from_str::<ofs_core::glaslat::Glaslat>(glaslat_json) {
+                k.cells[cell_index].glaslat = Some(glaslat);
+            }
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_kozijn_layout(
+    id: &str,
+    layout_json: &str,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let trimmed = layout_json.trim();
+        p.kozijnen[idx].layout = if trimmed.is_empty() || trimmed == "null" {
+            None
+        } else {
+            Some(serde_json::from_str::<ofs_core::layout::VakNode>(trimmed).map_err(|e| e.to_string())?)
+        };
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_cell_escape(
+    id: &str,
+    cell_index: usize,
+    is_escape: bool,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &mut p.kozijnen[idx];
+        if cell_index < k.cells.len() {
+            k.cells[cell_index].is_escape = is_escape;
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_cell_sash_profile(
+    id: &str,
+    cell_index: usize,
+    profile_id: &str,
+    profile_name: &str,
+    sash_width: f64,
+    sash_depth: f64,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &mut p.kozijnen[idx];
+        let cell = k.cells.get_mut(cell_index).ok_or("Cel niet gevonden")?;
+        cell.sash_profile = Some(ofs_core::profile::ProfileRef {
+            id: profile_id.to_string(),
+            name: profile_name.to_string(),
+        });
+        cell.sash_width = Some(sash_width);
+        cell.sash_depth = Some(sash_depth);
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_edge_config(
+    id: &str,
+    edge_index: usize,
+    edge_json: &str,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let edge: ofs_core::edge::EdgeConfig = serde_json::from_str(edge_json)
+            .map_err(|e| format!("Ongeldig edge JSON: {}", e))?;
+        let k = &mut p.kozijnen[idx];
+        // Ensure edges vector has 4 entries (left, right, top, bottom)
+        while k.frame.edges.len() < 4 {
+            k.frame.edges.push(ofs_core::edge::EdgeConfig::default());
+        }
+        if edge_index < 4 {
+            k.frame.edges[edge_index] = edge;
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_corner_joints(id: &str, joints_json: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let joints: Vec<ofs_core::joint::Joint> = serde_json::from_str(joints_json)
+            .map_err(|e| format!("Ongeldige joints JSON: {}", e))?;
+        p.kozijnen[idx].frame.corner_joints = joints;
+        // Explicitly saved joints always win from now on, even when they
+        // equal the auto-populated default set (see Frame::joints_configured).
+        p.kozijnen[idx].frame.joints_configured = true;
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_frame_shape(
+    id: &str,
+    shape_type: &str,
+    arch_height: Option<f64>,
+    top_width: Option<f64>,
+    left_angle: Option<f64>,
+    right_angle: Option<f64>,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let st: ofs_core::kozijn::ShapeType =
+            serde_json::from_str(&format!("\"{}\"", shape_type))
+                .map_err(|e| format!("Ongeldig shape type: {}", e))?;
+        let k = &mut p.kozijnen[idx];
+        // Merge with the existing shape: None arguments keep the stored value
+        // (same semantics as the Tauri command).
+        let prev = k.frame.shape.clone();
+        k.frame.shape = ofs_core::kozijn::FrameShape {
+            shape_type: st,
+            arch_radius: prev.arch_radius,
+            arch_height: arch_height.or(prev.arch_height),
+            top_width: top_width.or(prev.top_width),
+            left_angle: left_angle.or(prev.left_angle),
+            right_angle: right_angle.or(prev.right_angle),
+            ellipse_rx: prev.ellipse_rx,
+            ellipse_ry: prev.ellipse_ry,
+            polygon_points: prev.polygon_points,
+            apex_offset: prev.apex_offset,
+        };
+        // Round frames have no grid dividers: normalize to a single 1×1 cell
+        if st == ofs_core::kozijn::ShapeType::Round {
+            ofs_core::geometry::normalize_grid_single_cell(k);
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_frame_profile(
+    id: &str,
+    profile_id: &str,
+    profile_name: &str,
+    profile_width: Option<f64>,
+    profile_depth: Option<f64>,
+    profile_snapshot_json: Option<String>,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &mut p.kozijnen[idx];
+        k.frame.profile = ofs_core::profile::ProfileRef {
+            id: profile_id.to_string(),
+            name: profile_name.to_string(),
+        };
+        if let Some(w) = profile_width {
+            let old_fw = k.frame.frame_width;
+            k.frame.frame_width = w;
+            // Rescale the grid to the new frame width (same semantics as the
+            // Tauri command).
+            let old_inner = k.frame.outer_width - 2.0 * old_fw;
+            let new_inner = k.frame.outer_width - 2.0 * w;
+            if old_inner > 0.0 && new_inner > 0.0 {
+                let scale = new_inner / old_inner;
+                for col in &mut k.grid.columns {
+                    col.size *= scale;
+                }
+            }
+            let old_inner_h = k.frame.outer_height - 2.0 * old_fw;
+            let new_inner_h = k.frame.outer_height - 2.0 * w;
+            if old_inner_h > 0.0 && new_inner_h > 0.0 {
+                let scale_h = new_inner_h / old_inner_h;
+                for row in &mut k.grid.rows {
+                    row.size *= scale_h;
+                }
+            }
+        }
+        if let Some(d) = profile_depth {
+            k.frame.frame_depth = d;
+        }
+        // Resolved snapshot: explicit "null"/empty clears it, an omitted
+        // argument leaves the stored snapshot untouched.
+        if let Some(json) = profile_snapshot_json {
+            let trimmed = json.trim();
+            k.frame.profile_snapshot = if trimmed.is_empty() || trimmed == "null" {
+                None
+            } else {
+                Some(
+                    serde_json::from_str::<ofs_core::profile::ProfileSnapshot>(trimmed)
+                        .map_err(|e| format!("Ongeldig profielsnapshot JSON: {}", e))?,
+                )
+            };
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_sill_profile(
+    id: &str,
+    profile_id: &str,
+    profile_name: &str,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        p.kozijnen[idx].frame.sill_profile = Some(ofs_core::profile::ProfileRef {
+            id: profile_id.to_string(),
+            name: profile_name.to_string(),
+        });
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn update_member_profile(
+    id: &str,
+    member_type: &str,
+    member_index: Option<u32>,
+    profile_id: &str,
+    profile_name: &str,
+    _profile_width: Option<f64>,
+    _profile_depth: Option<f64>,
+) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &mut p.kozijnen[idx];
+        let profile = ofs_core::profile::ProfileRef {
+            id: profile_id.to_string(),
+            name: profile_name.to_string(),
+        };
+        // Same member mapping as the Tauri command: per-member frame
+        // overrides, dividers by index (+1: the first column/row carries no
+        // divider). Width/depth are accepted but not applied per-member (the
+        // Tauri command ignores them too — per-member widths need geometry
+        // support first).
+        match member_type {
+            "frame_top" => k.frame.top_profile = Some(profile),
+            "frame_bottom" => k.frame.bottom_profile = Some(profile),
+            "frame_left" => k.frame.left_profile = Some(profile),
+            "frame_right" => k.frame.right_profile = Some(profile),
+            "divider_v" => {
+                if let Some(i) = member_index {
+                    if let Some(col) = k.grid.columns.get_mut(i as usize + 1) {
+                        col.divider_profile = Some(profile);
+                    }
+                }
+            }
+            "divider_h" => {
+                if let Some(i) = member_index {
+                    if let Some(row) = k.grid.rows.get_mut(i as usize + 1) {
+                        row.divider_profile = Some(profile);
+                    }
+                }
+            }
+            _ => return Err(format!("Onbekend member type: {}", member_type)),
+        }
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn add_column(id: &str, position: f64) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        p.kozijnen[idx].add_column(position);
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn add_row(id: &str, position: f64) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        p.kozijnen[idx].add_row(position);
+        Ok(serde_json::to_string(&p.kozijnen[idx]).unwrap())
+    })?
+}
+
+// ── Custom profiles ────────────────────────────────────────────
+
+#[wasm_bindgen]
+pub fn get_custom_profiles() -> Result<String, String> {
+    with_project(|p| serde_json::to_string(&p.custom_profiles).unwrap())
+}
+
+// ── Geometry ───────────────────────────────────────────────────
+
+#[wasm_bindgen]
+pub fn get_kozijn_geometry(id: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let geom = ofs_core::geometry::compute_2d_geometry(&p.kozijnen[idx]);
+        Ok(serde_json::to_string(&geom).unwrap())
+    })?
+}
+
+// ── Production ─────────────────────────────────────────────────
+
+#[wasm_bindgen]
+pub fn get_production_data_project() -> Result<String, String> {
+    with_project(|p| {
+        let data: Vec<_> = p.kozijnen.iter().map(|k| compute_production_data(k)).collect();
+        serde_json::to_string(&data).unwrap()
+    })
+}
+
+// ── Energy (BENG / Bouwbesluit) ─────────────────────────────────
+
+#[wasm_bindgen]
+pub fn get_project_energy(max_uw: f64) -> Result<String, String> {
+    with_project(|p| {
+        let profiles = p.custom_profiles.clone();
+        let result = ofs_core::energy::calculate_project_energy(p, &profiles, max_uw);
+        serde_json::to_string(&result).unwrap()
+    })
+}
+
+// ── Certification (CE / SKH / KOMO) ─────────────────────────────
+
+#[wasm_bindgen]
+pub fn check_certification(id: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &p.kozijnen[idx];
+        let profiles = &p.custom_profiles;
+        let result = serde_json::json!({
+            "ceMarking": ofs_core::certification::check_ce_marking(k, profiles),
+            "skhKomo": ofs_core::certification::check_skh_komo(k),
+            "performanceClass": ofs_core::performance_class::classify_performance(k, profiles),
+        });
+        Ok(serde_json::to_string(&result).unwrap())
+    })?
+}
+
+// ── Circularity / material passport ─────────────────────────────
+
+#[wasm_bindgen]
+pub fn get_project_circularity() -> Result<String, String> {
+    with_project(|p| {
+        let result = ofs_core::circularity::calculate_project_circularity(p);
+        serde_json::to_string(&result).unwrap()
+    })
+}
+
+// ── Purchase orders (per-supplier) ──────────────────────────────
+
+#[wasm_bindgen]
+pub fn generate_purchase_orders() -> Result<String, String> {
+    with_project(|p| {
+        let orders = ofs_core::purchase_order::generate_purchase_orders(p);
+        serde_json::to_string(&orders).unwrap()
+    })
+}
+
+// ── Plausibility (indicative static wind-load) ──────────────────
+
+#[wasm_bindgen]
+pub fn get_project_plausibility(wind_pressure_pa: f64) -> Result<String, String> {
+    with_project(|p| {
+        let result = ofs_core::plausibility::calculate_project_plausibility(p, wind_pressure_pa);
+        serde_json::to_string(&result).unwrap()
+    })
+}
+
+// ── Declaration of Performance (DoP) ────────────────────────────
+
+#[wasm_bindgen]
+pub fn generate_dop_for_kozijn(id: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let dop = ofs_core::dop::generate_dop(&p.kozijnen[idx], &p.custom_profiles);
+        Ok(serde_json::to_string(&dop).unwrap())
+    })?
+}
+
+// ── Thermal ────────────────────────────────────────────────────
+
+#[wasm_bindgen]
+pub fn calculate_thermal(id: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let result = ofs_core::thermal::calculate_uw(&p.kozijnen[idx], &[]);
+        Ok(serde_json::to_string(&result).unwrap())
+    })?
+}
+
+// ── Export data (returns JSON for JS-side file generation) ──────
+
+#[wasm_bindgen]
+pub fn get_export_data(id: &str) -> Result<String, String> {
+    with_project(|p| {
+        let idx = find_kozijn(p, id)?;
+        let k = &p.kozijnen[idx];
+        let prod = compute_production_data(k);
+        let result = serde_json::json!({
+            "kozijn": k,
+            "production": prod,
+        });
+        Ok(serde_json::to_string(&result).unwrap())
+    })?
+}
+
+#[wasm_bindgen]
+pub fn get_project_export_data() -> Result<String, String> {
+    with_project(|p| {
+        let data: Vec<_> = p.kozijnen.iter().map(|k| {
+            let prod = compute_production_data(k);
+            serde_json::json!({ "kozijn": k, "production": prod })
+        }).collect();
+        serde_json::to_string(&data).unwrap()
+    })
+}

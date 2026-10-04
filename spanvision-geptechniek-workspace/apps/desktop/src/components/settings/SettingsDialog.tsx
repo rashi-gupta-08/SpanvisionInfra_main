@@ -1,0 +1,373 @@
+import { BRAND, BrandMark } from "../../branding";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
+import { LANGUAGES, changeLanguage } from "../../i18n/config";
+import { getSetting, setSetting } from "../../store";
+import { useAllExtensions, setExtension, type ExtensionId } from "../../hooks/useExtensions";
+import { CALC_REGISTRY } from "../../calc/framework/registry";
+import Modal from "../Modal";
+import ThemedSelect from "../ThemedSelect";
+import "../ThemedSelect.css";
+import "./SettingsDialog.css";
+
+const THEME_OPTIONS = [
+  { value: BRAND.theme, labelKey: "appearance.mono", swatches: ["#000000", "#121212", "#1B1B1B", "#EEEEEE"] },
+  { value: "light",     labelKey: "appearance.light",     swatches: ["#FAFAF9", "#FFFFFF", "#D97706", "#36363E"] },
+  { value: "forge",     labelKey: "appearance.forge",     swatches: ["#36363E", "#44444C", "#D97706", "#FAFAF9"] },
+  { value: "openaec",   labelKey: "appearance.dark",      swatches: ["#27272A", "#1C1917", "#D97706", "#FAFAF9"] },
+  { value: "blueprint", labelKey: "appearance.blueprint", swatches: ["#0F1B2D", "#1A2C45", "#60A5FA", "#E0E7FF"] },
+  { value: "contrast",  labelKey: "appearance.contrast",  swatches: ["#000000", "#0A0A0A", "#FFD700", "#FFFFFF"] },
+];
+
+/* ─── Tab configuratie ──────────────────────────────────────
+   Pas deze array aan voor jouw project.
+   Voeg domein-specifieke tabs toe, verwijder wat je niet nodig hebt.
+
+   Voorbeeld met domein-tab:
+     const TAB_IDS = ["general", "appearance", "calculation", "about"] as const;
+   ─────────────────────────────────────────────────────────── */
+const TAB_IDS = ["general", "appearance", "extensions", "about"] as const;
+
+export function applyTheme(theme?: string) {
+  document.documentElement.setAttribute("data-theme", theme || BRAND.theme);
+}
+
+interface SettingsDialogProps {
+  open: boolean;
+  onClose: () => void;
+  theme: string;
+  onThemeChange: (theme: string) => void;
+}
+
+export default function SettingsDialog({
+  open,
+  onClose,
+  theme,
+  onThemeChange,
+}: SettingsDialogProps) {
+  const { t } = useTranslation("settings");
+  const { t: tCommon } = useTranslation("common");
+  const [activeTab, setActiveTab] = useState("general");
+
+  // Draft state — only committed on Save
+  const [draftTheme, setDraftTheme] = useState(theme);
+  const [draftLang, setDraftLang] = useState("en");
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+
+  // Snapshot of original values when dialog opens, for reverting on Cancel
+  const originalTheme = useRef(theme);
+  const originalLang = useRef("");
+
+  // Reset draft to current values when dialog opens
+  useEffect(() => {
+    if (open) {
+      originalTheme.current = theme;
+      setDraftTheme(theme);
+      getSetting("language", "auto").then((lang) => {
+        originalLang.current = lang;
+        setDraftLang(lang);
+      });
+    }
+  }, [open, theme]);
+
+  // Live theme preview — apply immediately when the user picks one in the dropdown.
+  // Saved only on Save; reverted on Cancel.
+  const handleThemePreview = (value: string) => {
+    setDraftTheme(value);
+    applyTheme(value);
+  };
+
+  // Live language preview — switch i18n immediately on selection.
+  const handleLangPreview = (value: string) => {
+    setDraftLang(value);
+    changeLanguage(value);
+  };
+
+  // Cancel — discard all draft changes, revert live preview
+  const handleCancel = () => {
+    setDraftTheme(originalTheme.current);
+    applyTheme(originalTheme.current);
+    setDraftLang(originalLang.current);
+    changeLanguage(originalLang.current);
+    onClose();
+  };
+
+  // Save — commit all draft changes
+  const handleSave = () => {
+    onThemeChange(draftTheme);
+    applyTheme(draftTheme);
+    setSetting("theme", draftTheme);
+
+    setSetting("language", draftLang);
+    changeLanguage(draftLang);
+
+    onClose();
+  };
+
+  // Reset to defaults — resets draft values (still requires Save to apply)
+  const handleReset = () => {
+    setConfirmResetOpen(true);
+  };
+
+  const handleConfirmReset = () => {
+    setDraftTheme(BRAND.theme);
+    applyTheme(BRAND.theme);
+    setDraftLang("en");
+    changeLanguage("en");
+    setConfirmResetOpen(false);
+  };
+
+  const footer = (
+    <>
+      <button className="settings-btn settings-btn-secondary" onClick={handleReset}>
+        {t("resetToDefaults")}
+      </button>
+      <div className="settings-footer-right">
+        <button className="settings-btn settings-btn-secondary" onClick={handleCancel}>
+          {tCommon("cancel")}
+        </button>
+        <button className="settings-btn settings-btn-primary" onClick={handleSave}>
+          {tCommon("save")}
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <>
+    <Modal open={open} onClose={handleCancel} title={t("title")} width={560} height={500} className="settings-dialog" footer={footer}>
+      <div className="settings-body">
+        <div className="settings-sidebar">
+          {TAB_IDS.map((id) => (
+            <button
+              key={id}
+              className={`settings-tab${activeTab === id ? " active" : ""}`}
+              onClick={() => setActiveTab(id)}
+            >
+              {t(`tabs.${id}`)}
+            </button>
+          ))}
+        </div>
+
+        <div className="settings-content">
+          {activeTab === "general" && (
+            <GeneralTabContent lang={draftLang} onLangChange={handleLangPreview} />
+          )}
+          {activeTab === "appearance" && (
+            <AppearanceTabContent theme={draftTheme} onThemeSelect={handleThemePreview} />
+          )}
+          {activeTab === "extensions" && <ExtensionsTabContent />}
+          {activeTab === "about" && <AboutTabContent />}
+        </div>
+      </div>
+    </Modal>
+
+    <Modal
+      open={confirmResetOpen}
+      onClose={() => setConfirmResetOpen(false)}
+      title={t("resetToDefaults")}
+      width={340}
+      footer={
+        <>
+          <button className="settings-btn settings-btn-secondary" onClick={() => setConfirmResetOpen(false)}>
+            {tCommon("cancel")}
+          </button>
+          <button className="settings-btn settings-btn-primary" onClick={handleConfirmReset}>
+            {t("resetToDefaults")}
+          </button>
+        </>
+      }
+    >
+      <div style={{ padding: 12, fontSize: 12 }}>{t("resetConfirm")}</div>
+    </Modal>
+    </>
+  );
+}
+
+/* ─── General Tab ───────────────────────────────────────────
+   Taalselectie werkt out-of-the-box.
+   Pas de overige secties aan of verwijder ze naar behoefte.
+   ─────────────────────────────────────────────────────────── */
+function GeneralTabContent({
+  lang,
+  onLangChange,
+}: {
+  lang: string;
+  onLangChange: (value: string) => void;
+}) {
+  const { t } = useTranslation("settings");
+
+  return (
+    <div className="settings-section">
+      <h3>{t("general.application")}</h3>
+      <div className="settings-row">
+        <span className="settings-label">{t("general.language")}</span>
+        <ThemedSelect
+          value={lang}
+          options={LANGUAGES.map((l) => ({ value: l.code, label: l.name }))}
+          onChange={onLangChange}
+          style={{ width: 180 }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Appearance Tab ────────────────────────────────────────
+   Themaselectie werkt out-of-the-box.
+   ─────────────────────────────────────────────────────────── */
+function AppearanceTabContent({
+  theme,
+  onThemeSelect,
+}: {
+  theme: string;
+  onThemeSelect: (value: string) => void;
+}) {
+  const { t } = useTranslation("settings");
+  return (
+    <div className="settings-section">
+      <h3>{t("appearance.theme")}</h3>
+      <ThemeDropdown theme={theme} onThemeSelect={onThemeSelect} />
+    </div>
+  );
+}
+
+function ThemeDropdown({
+  theme,
+  onThemeSelect,
+}: {
+  theme: string;
+  onThemeSelect: (value: string) => void;
+}) {
+  const { t } = useTranslation("settings");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const selected = THEME_OPTIONS.find((o) => o.value === theme) || THEME_OPTIONS[0];
+
+  const swatchRow = (swatches: string[]) => (
+    <div className="theme-dropdown-swatches">
+      {swatches.map((color, i) => (
+        <span key={i} className="theme-dropdown-swatch" style={{ backgroundColor: color } as CSSProperties} />
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="theme-dropdown" ref={ref}>
+      <button className="theme-dropdown-trigger" onClick={() => setOpen(!open)}>
+        {swatchRow(selected.swatches)}
+        <span className="theme-dropdown-label">{t(selected.labelKey)}</span>
+        <svg className="theme-dropdown-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div className="theme-dropdown-menu">
+          {THEME_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              className={`theme-dropdown-item${theme === opt.value ? " active" : ""}`}
+              onClick={() => { onThemeSelect(opt.value); setOpen(false); }}
+            >
+              {swatchRow(opt.swatches)}
+              <span className="theme-dropdown-label">{t(opt.labelKey)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Extensies Tab ────────────────────────────────────────
+   Optionele app-modules die de gebruiker handmatig aanzet.
+   Default UIT zodat een verse installatie alleen het kern-
+   werkflow toont; de gebruiker kiest welke extra tabs/knoppen
+   ze willen. State zit in `preferences.json` via `useExtensions`.
+   ─────────────────────────────────────────────────────────── */
+function ExtensionsTabContent() {
+  const exts = useAllExtensions();
+
+  const items: Array<{
+    id: ExtensionId;
+    title: string;
+    description: string;
+  }> = [
+    {
+      id: "tekening",
+      title: "Site plan",
+      description:
+        "Add a Site drawing tab with CAD sheets (A2/A3), mapped CPTs, borders, scale bar, snapping, overlays and PDF export.",
+    },
+    {
+      id: "offertes",
+      title: "Request quotations",
+      description:
+        "Add a Request quotations button to the site drawing ribbon. Choose nearby CPT companies and prepare a quotation request by email.",
+    },
+    ...CALC_REGISTRY.map((m) => ({
+      id: `calc.${m.id}` as ExtensionId,
+      title: m.name,
+      description: `${m.subtitle} (${m.norm})${m.status === "coming-soon" ? "— coming soon" : ""}`,
+    })),
+  ];
+
+  return (
+    <div className="settings-section">
+      <h3>Extensions</h3>
+      <p style={{ fontSize: 11, lineHeight: 1.5, color: "var(--theme-dialog-content-secondary)", marginBottom: 12 }}>
+        Optional modules — enable what you use. Changes apply immediately.
+      </p>
+      {items.map((item) => (
+        <div
+          key={item.id}
+          style={{
+            display: "flex",
+            gap: 12,
+            padding: "10px 0",
+            borderBottom: "1px solid var(--theme-border-subtle)",
+            alignItems: "flex-start",
+          }}
+        >
+          <label style={{ display: "flex", gap: 10, alignItems: "flex-start", flex: 1, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={exts[item.id]}
+              onChange={(e) => { void setExtension(item.id, e.target.checked); }}
+              style={{ marginTop: 2 }}
+            />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--theme-text)" }}>{item.title}</div>
+              <div style={{ fontSize: 11, color: "var(--theme-dialog-content-secondary)", marginTop: 2, lineHeight: 1.4 }}>
+                {item.description}
+              </div>
+            </div>
+          </label>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── About Tab ───────────────────────────────────────────────
+// Open GEO Studio — naam, versie en links staan in i18n keys
+// in locales/{lang}/settings.json, sectie "about".
+// ─────────────────────────────────────────────────────────────
+function AboutTabContent() {
+  const { t } = useTranslation("settings");
+  return <div className="settings-section">
+    <BrandMark size={48}/><h3>{BRAND.product}</h3>
+    <p>{BRAND.organization} · v{BRAND.version}</p><p>{t("about.description")}</p>
+    <details className="geo-about-notices"><summary>Open-source notices</summary><p>This workspace edition is based on Open Geotechniek Studio and shared OpenAEC libraries. Original copyright and licensing records are preserved in the bundled notices.</p><a href="/notices.md" target="_blank" rel="noopener noreferrer">Read notices</a></details>
+  </div>;
+}

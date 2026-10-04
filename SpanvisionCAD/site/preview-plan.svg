@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 940" role="img" aria-label="Monochrome technical plan illustration">
+  <rect width="1920" height="940" fill="#121212"/>
+  <defs><pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity=".045"/></pattern></defs>
+  <rect width="1920" height="940" fill="url(#grid)"/>
+  <g fill="none" stroke="#eeeeee" stroke-opacity=".7" stroke-width="3">
+    <path d="M-80 500H200L400 300H780L975 500H1350L1560 290H2000"/>
+    <path d="M-80 580H230L430 380H745L945 580H1380L1590 370H2000"/>
+    <path d="M940-80V210L1140 410V740L940 940"/>
+    <path d="M1020-80V180L1220 380V765L1020 1010"/>
+  </g>
+  <g fill="none" stroke="#999999" stroke-width="2" stroke-opacity=".7">
+    <path d="M45 68H390V280H45zM80 100H355V245H80zM460 68H710V250H460zM1470 60H1840V250H1470z"/>
+    <path d="M70 675H400V865H70zM460 690H770V885H460zM1450 640H1820V880H1450z"/>
+    <path d="M500 430V650M700 430V650M1250 30V320M1400 60V320M1270 660V900"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-width="2"><circle cx="1080" cy="520" r="175"/><circle cx="1080" cy="520" r="115"/><path d="M1080 300v440M860 520h440"/></g>
+  <g fill="#eeeeee" font-family="Arial,sans-serif" font-size="24" letter-spacing="3"><text x="75" y="155">SITE PLAN / 01</text><text x="1485" y="150">DWG  •  2D</text><text x="85" y="800">SECTION A—A</text><text x="1480" y="770">SPANVISION INFRA</text></g>
+</svg>

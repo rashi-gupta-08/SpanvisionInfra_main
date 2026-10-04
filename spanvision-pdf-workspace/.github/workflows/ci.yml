@@ -1,0 +1,193 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags-ignore:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'ubuntu-22.04'
+          - platform: 'windows-latest'
+          - platform: 'macos-26'
+
+    runs-on: ${{ matrix.platform }}
+    env:
+      # Do not bundle the display stack into the AppImage. Bundled Ubuntu-era
+      # libwayland/xkbcommon/xcb shadow the host copies and abort WebKit with
+      # "Could not create default EGL display: EGL_BAD_PARAMETER" on newer Mesa
+      # (Fedora 44, issue #362). linuxdeploy reads this list; the host provides
+      # these libraries. Keep in sync with scripts/linux-appimage-smoke.sh.
+      LINUXDEPLOY_EXCLUDED_LIBRARIES: 'libwayland-client.so*;libwayland-cursor.so*;libwayland-egl.so*;libwayland-server.so*;libxkbcommon.so*;libxcb-randr.so*;libxcb-render.so*;libxcb-shm.so*;libXau.so*;libXdmcp.so*'
+    defaults:
+      run:
+        working-directory: open-pdf-studio
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Rust targets (macOS universal)
+        if: matrix.platform == 'macos-26'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Install dependencies (Ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libtesseract-dev libleptonica-dev pkg-config
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run quality regression tests
+        run: npm run test:quality
+
+      - name: Prepare native runtime
+        run: npm run prepare:native-runtime
+
+      # The OCR save tests run the real fontkit path with the bundled font, which
+      # is not in git. The build step fetches it later anyway.
+      - name: Prepare OCR runtime
+        run: npm run prepare:ocr-runtime
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run Linux release regression tests
+        run: node --test scripts/linux-release-config.test.mjs
+
+      - name: Test AppImage smoke checks
+        if: matrix.platform == 'ubuntu-22.04'
+        run: bash scripts/linux-appimage-smoke.test.sh
+
+      # The PDFium worker pool runs as a Tauri sidecar (bundle.externalBin).
+      # Tauri requires binaries/pdfium-worker-<target-triple> to exist at
+      # build time on EVERY desktop platform, so build the workspace crate
+      # first and drop it in with the right triple suffix (same steps as
+      # release.yml — without this every CI build fails on a missing
+      # resource path).
+      - name: Build pdfium-worker sidecar (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        working-directory: .
+        run: |
+          cargo build --release -p pdfium-worker
+          New-Item -ItemType Directory -Force open-pdf-studio/src-tauri/binaries | Out-Null
+          Copy-Item target/release/pdfium-worker.exe open-pdf-studio/src-tauri/binaries/pdfium-worker-x86_64-pc-windows-msvc.exe -Force
+
+      - name: Build pdfium-worker sidecar (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        working-directory: .
+        run: |
+          cargo build --release -p pdfium-worker
+          mkdir -p open-pdf-studio/src-tauri/binaries
+          cp target/release/pdfium-worker open-pdf-studio/src-tauri/binaries/pdfium-worker-x86_64-unknown-linux-gnu
+
+      - name: Build pdfium-worker sidecar (macOS universal)
+        if: matrix.platform == 'macos-26'
+        working-directory: .
+        run: |
+          cargo build --release -p pdfium-worker --target aarch64-apple-darwin
+          cargo build --release -p pdfium-worker --target x86_64-apple-darwin
+          mkdir -p open-pdf-studio/src-tauri/binaries
+          # tauri-build validates the sidecar PER ARCH during the per-target
+          # cargo builds of a universal bundle, so all three names must exist.
+          cp target/aarch64-apple-darwin/release/pdfium-worker open-pdf-studio/src-tauri/binaries/pdfium-worker-aarch64-apple-darwin
+          cp target/x86_64-apple-darwin/release/pdfium-worker open-pdf-studio/src-tauri/binaries/pdfium-worker-x86_64-apple-darwin
+          lipo -create -output open-pdf-studio/src-tauri/binaries/pdfium-worker-universal-apple-darwin \
+            target/aarch64-apple-darwin/release/pdfium-worker \
+            target/x86_64-apple-darwin/release/pdfium-worker
+
+      - name: Fetch libpdfium.so (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          mkdir -p src-tauri/binaries/linux-x64
+          curl -L "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7834/pdfium-linux-x64.tgz" -o /tmp/pdfium-linux.tgz
+          tar xzf /tmp/pdfium-linux.tgz -C /tmp lib/libpdfium.so
+          cp /tmp/lib/libpdfium.so src-tauri/binaries/linux-x64/libpdfium.so
+
+      - name: Build Tauri app
+        if: matrix.platform == 'windows-latest'
+        run: npm run tauri build -- --no-bundle
+
+      # Tauri 2.10 downloads its own, older linuxdeploy build, which ignores
+      # LINUXDEPLOY_EXCLUDED_LIBRARIES, so the display stack ended up in the
+      # AppImage anyway (issue #362). Tauri only downloads when the file is not
+      # already in its tool cache (~/.cache/tauri), so place a pinned,
+      # checksum-verified linuxdeploy release there first.
+      - name: Provide pinned linuxdeploy (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="${XDG_CACHE_HOME:-$HOME/.cache}/tauri"
+          mkdir -p "$tools"
+          curl -fsSL --retry 3 -o "$tools/linuxdeploy-x86_64.AppImage" \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+          echo "c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d  $tools/linuxdeploy-x86_64.AppImage" | sha256sum -c -
+          chmod +x "$tools/linuxdeploy-x86_64.AppImage"
+
+      - name: Build Tauri AppImage
+        if: matrix.platform == 'ubuntu-22.04'
+        run: npm run tauri build -- --bundles appimage --config '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      - name: Verify AppImage on Debian 13
+        if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          appimage=$(find ../target/release/bundle/appimage -maxdepth 1 -type f -name '*.AppImage' -print -quit)
+          test -n "$appimage"
+          appimage=$(realpath "$appimage")
+          docker run --rm \
+            -v "$appimage:/input/open-pdf-studio.AppImage:ro" \
+            -v "$PWD/scripts/linux-appimage-smoke.sh:/input/linux-appimage-smoke.sh:ro" \
+            debian:13-slim \
+            bash -lc 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends dbus-x11 gvfs libegl1 libgles2 libgtk-3-0t64 xauth xvfb && cp /input/open-pdf-studio.AppImage /tmp/open-pdf-studio.AppImage && bash /input/linux-appimage-smoke.sh /tmp/open-pdf-studio.AppImage 10'
+
+      # Fedora 44 ships Mesa 26, where an AppImage that bundles its own display
+      # stack aborts before a window appears (issue #362). Start the same
+      # AppImage against Fedora's own libraries. The container installs every
+      # display-stack library the AppImage no longer bundles; a desktop Fedora
+      # has them through Mesa and GTK.
+      - name: Verify AppImage on Fedora 44
+        if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
+        run: |
+          appimage=$(find ../target/release/bundle/appimage -maxdepth 1 -type f -name '*.AppImage' -print -quit)
+          test -n "$appimage"
+          appimage=$(realpath "$appimage")
+          docker run --rm \
+            -v "$appimage:/input/open-pdf-studio.AppImage:ro" \
+            -v "$PWD/scripts/linux-appimage-smoke.sh:/input/linux-appimage-smoke.sh:ro" \
+            fedora:44 \
+            bash -lc 'dnf install -y --setopt=install_weak_deps=False dbus-daemon dbus-tools findutils gtk3 gvfs libwayland-client libwayland-cursor libwayland-egl libwayland-server libxcb libXau libXdmcp libxkbcommon mesa-libEGL libglvnd-gles xorg-x11-server-Xvfb xorg-x11-xauth && cp /input/open-pdf-studio.AppImage /tmp/open-pdf-studio.AppImage && bash /input/linux-appimage-smoke.sh /tmp/open-pdf-studio.AppImage 10'
+
+      - name: Build ad-hoc signed macOS app
+        if: matrix.platform == 'macos-26'
+        env:
+          APPLE_SIGNING_IDENTITY: '-'
+        run: npm run tauri build -- --target universal-apple-darwin --bundles app --config '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      - name: Verify and launch macOS app
+        if: matrix.platform == 'macos-26'
+        run: |
+          APP_PATH="../target/universal-apple-darwin/release/bundle/macos/pdf workspace.app"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          bash scripts/macos-startup-smoke.sh "$APP_PATH"

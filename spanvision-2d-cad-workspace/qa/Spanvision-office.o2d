@@ -1,0 +1,935 @@
+{
+  "version": 3,
+  "name": "Spanvision office",
+  "createdAt": "2026-10-03T16:03:51.168Z",
+  "modifiedAt": "2026-10-03T16:03:51.168Z",
+  "shapes": [
+    {
+      "id": "8a9770a8-9869-4cd8-91d8-2bdca0675595",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 0,
+        "y": 0
+      },
+      "width": 12000,
+      "height": 7600,
+      "rotation": 0
+    },
+    {
+      "id": "559a1083-024d-4148-b82e-8b5a170c0df6",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 160,
+        "y": 160
+      },
+      "width": 11680,
+      "height": 7280,
+      "rotation": 0
+    },
+    {
+      "id": "a2ad58b9-bb0f-4f56-bc0e-e2ca4b7adbc8",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 4200,
+        "y": 160
+      },
+      "end": {
+        "x": 4200,
+        "y": 2800
+      }
+    },
+    {
+      "id": "2072d2a3-547e-4209-97ff-5b7f79a0bf64",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 4360,
+        "y": 160
+      },
+      "end": {
+        "x": 4360,
+        "y": 2800
+      }
+    },
+    {
+      "id": "5249ba0e-2381-4a86-9f6e-1963f6ec120a",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 4200,
+        "y": 3700
+      },
+      "end": {
+        "x": 4200,
+        "y": 7440
+      }
+    },
+    {
+      "id": "550e270d-30b4-4033-a757-927c8cc03299",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 4360,
+        "y": 3700
+      },
+      "end": {
+        "x": 4360,
+        "y": 7440
+      }
+    },
+    {
+      "id": "26253bb9-8ddc-4752-877e-387ea8cb9005",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 160,
+        "y": 4700
+      },
+      "end": {
+        "x": 4200,
+        "y": 4700
+      }
+    },
+    {
+      "id": "8b5b6204-a85f-45ee-ba0a-6aeb1ec25683",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 160,
+        "y": 4860
+      },
+      "end": {
+        "x": 4200,
+        "y": 4860
+      }
+    },
+    {
+      "id": "3184ea0e-c8b6-4240-9e42-61a610ff73d5",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 4360,
+        "y": 4700
+      },
+      "end": {
+        "x": 9600,
+        "y": 4700
+      }
+    },
+    {
+      "id": "b6cec954-e964-4c4c-8869-0fd9eb16c88d",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 4360,
+        "y": 4860
+      },
+      "end": {
+        "x": 9600,
+        "y": 4860
+      }
+    },
+    {
+      "id": "4813ab4f-6bd6-4852-b9f0-5e6de514daae",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 10600,
+        "y": 4700
+      },
+      "end": {
+        "x": 11840,
+        "y": 4700
+      }
+    },
+    {
+      "id": "7ed4d80f-d82d-452b-8390-50d053090c6e",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 8400,
+        "y": 160
+      },
+      "end": {
+        "x": 8400,
+        "y": 2300
+      }
+    },
+    {
+      "id": "bd5fae17-e625-428d-bfd7-df58daa58b1f",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 8560,
+        "y": 160
+      },
+      "end": {
+        "x": 8560,
+        "y": 2300
+      }
+    },
+    {
+      "id": "920c6b3f-fad3-455f-b217-6f0a00ad9caf",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 8400,
+        "y": 3200
+      },
+      "end": {
+        "x": 8400,
+        "y": 4700
+      }
+    },
+    {
+      "id": "67245532-c0ea-4267-82e9-7a9934599da8",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#eeeeee",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 8560,
+        "y": 3200
+      },
+      "end": {
+        "x": 8560,
+        "y": 4700
+      }
+    },
+    {
+      "id": "77dc02c5-c6d0-4661-872e-17b85d8c4bb1",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 900,
+        "y": 1400
+      },
+      "width": 2400,
+      "height": 1100,
+      "rotation": 0
+    },
+    {
+      "id": "eb58ec1c-977a-4d89-80fa-e92162b7538e",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 1300,
+        "y": 1080
+      },
+      "width": 420,
+      "height": 250,
+      "rotation": 0
+    },
+    {
+      "id": "0cbb4b9c-72dd-4d98-b80d-bc5fe590fcd9",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 2480,
+        "y": 1080
+      },
+      "width": 420,
+      "height": 250,
+      "rotation": 0
+    },
+    {
+      "id": "71c18aad-c5f1-4668-a7ee-52081968c9c3",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 1300,
+        "y": 2560
+      },
+      "width": 420,
+      "height": 250,
+      "rotation": 0
+    },
+    {
+      "id": "f606a690-60ad-4632-8610-a1e49194fe0e",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 2480,
+        "y": 2560
+      },
+      "width": 420,
+      "height": 250,
+      "rotation": 0
+    },
+    {
+      "id": "aa309229-db3a-4718-9b9a-432eedd224a7",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#78bbb3",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 5100,
+        "y": 1300
+      },
+      "width": 1300,
+      "height": 600,
+      "rotation": 0
+    },
+    {
+      "id": "6908bf10-8e3b-47e4-bf2a-46a073eb9c1e",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#78bbb3",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 6800,
+        "y": 1300
+      },
+      "width": 1300,
+      "height": 600,
+      "rotation": 0
+    },
+    {
+      "id": "99ee117e-e5c6-47f2-9da9-377c87517815",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#78bbb3",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 5100,
+        "y": 2300
+      },
+      "width": 1300,
+      "height": 600,
+      "rotation": 0
+    },
+    {
+      "id": "5aa95aa2-50fe-437a-9c96-48cb0cc19b8c",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#78bbb3",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 6800,
+        "y": 2300
+      },
+      "width": 1300,
+      "height": 600,
+      "rotation": 0
+    },
+    {
+      "id": "32898024-8e57-42fe-ac92-0f6cd74d059d",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 9300,
+        "y": 1200
+      },
+      "width": 1750,
+      "height": 700,
+      "rotation": 0
+    },
+    {
+      "id": "01734795-2fbf-494f-be80-30036c3aa9ee",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 9500,
+        "y": 2200
+      },
+      "width": 650,
+      "height": 400,
+      "rotation": 0
+    },
+    {
+      "id": "926936b0-fc68-4826-9dd3-b0692da2adfa",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 9450,
+        "y": 3350
+      },
+      "width": 1800,
+      "height": 350,
+      "rotation": 0
+    },
+    {
+      "id": "b74cdd35-a9f2-4d96-9992-6e76307ef342",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 850,
+        "y": 5700
+      },
+      "width": 2050,
+      "height": 450,
+      "rotation": 0
+    },
+    {
+      "id": "ee1b94b5-fca4-4cc8-a7dd-eb51fdb2bf8e",
+      "type": "rectangle",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "topLeft": {
+        "x": 1500,
+        "y": 6400
+      },
+      "width": 600,
+      "height": 300,
+      "rotation": 0
+    },
+    {
+      "id": "602e328b-1571-4741-958b-a9dd6a0bd0f1",
+      "type": "text",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#bbbbbb",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "position": {
+        "x": 1000,
+        "y": 3300
+      },
+      "text": "MEETING ROOM",
+      "fontSize": 3.5,
+      "fontFamily": "Osifont",
+      "rotation": 0,
+      "alignment": "left",
+      "verticalAlignment": "top",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "color": "#bbbbbb",
+      "lineHeight": 1.4,
+      "isModelText": false
+    },
+    {
+      "id": "d09c73f1-e1f5-4a7b-b25f-66e84b6bfb55",
+      "type": "text",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#bbbbbb",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "position": {
+        "x": 5400,
+        "y": 3500
+      },
+      "text": "DESIGN STUDIO",
+      "fontSize": 3.5,
+      "fontFamily": "Osifont",
+      "rotation": 0,
+      "alignment": "left",
+      "verticalAlignment": "top",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "color": "#bbbbbb",
+      "lineHeight": 1.4,
+      "isModelText": false
+    },
+    {
+      "id": "b4b0efcb-194c-4ae5-8af3-14097818f70c",
+      "type": "text",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#bbbbbb",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "position": {
+        "x": 9000,
+        "y": 4050
+      },
+      "text": "DIRECTOR",
+      "fontSize": 3,
+      "fontFamily": "Osifont",
+      "rotation": 0,
+      "alignment": "left",
+      "verticalAlignment": "top",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "color": "#bbbbbb",
+      "lineHeight": 1.4,
+      "isModelText": false
+    },
+    {
+      "id": "21637200-31c3-4446-a92e-05c2fb929dcd",
+      "type": "text",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#bbbbbb",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "position": {
+        "x": 900,
+        "y": 6800
+      },
+      "text": "RECEPTION",
+      "fontSize": 3,
+      "fontFamily": "Osifont",
+      "rotation": 0,
+      "alignment": "left",
+      "verticalAlignment": "top",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "color": "#bbbbbb",
+      "lineHeight": 1.4,
+      "isModelText": false
+    },
+    {
+      "id": "9edb987e-2c7e-4f80-bf31-4aaebe9a469b",
+      "type": "text",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#bbbbbb",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "position": {
+        "x": 6000,
+        "y": 6300
+      },
+      "text": "COLLABORATION SPACE",
+      "fontSize": 3.5,
+      "fontFamily": "Osifont",
+      "rotation": 0,
+      "alignment": "left",
+      "verticalAlignment": "top",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "color": "#bbbbbb",
+      "lineHeight": 1.4,
+      "isModelText": false
+    },
+    {
+      "id": "ed1869c1-1976-4141-a091-e6a1f3e7b9e1",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#777777",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 0,
+        "y": -600
+      },
+      "end": {
+        "x": 12000,
+        "y": -600
+      }
+    },
+    {
+      "id": "34f0767b-91b0-45bc-9484-ea71a9febd8e",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#777777",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 0,
+        "y": -850
+      },
+      "end": {
+        "x": 0,
+        "y": -350
+      }
+    },
+    {
+      "id": "d46b84d1-ab06-45dc-9544-606fb410ddf8",
+      "type": "line",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#777777",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "start": {
+        "x": 12000,
+        "y": -850
+      },
+      "end": {
+        "x": 12000,
+        "y": -350
+      }
+    },
+    {
+      "id": "8b473069-b2e5-4190-8785-06efd0298577",
+      "type": "text",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#bbbbbb",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "position": {
+        "x": 5400,
+        "y": -1050
+      },
+      "text": "12 000",
+      "fontSize": 3,
+      "fontFamily": "Osifont",
+      "rotation": 0,
+      "alignment": "left",
+      "verticalAlignment": "top",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "color": "#bbbbbb",
+      "lineHeight": 1.4,
+      "isModelText": false
+    },
+    {
+      "id": "8982cc30-70e1-41f5-b89d-ba0554dc0bff",
+      "type": "text",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#bbbbbb",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "position": {
+        "x": 0,
+        "y": 8200
+      },
+      "text": "SPANVISION INFRA / OFFICE WORKSPACE",
+      "fontSize": 4,
+      "fontFamily": "Osifont",
+      "rotation": 0,
+      "alignment": "left",
+      "verticalAlignment": "top",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "color": "#bbbbbb",
+      "lineHeight": 1.4,
+      "isModelText": false
+    },
+    {
+      "id": "e090fe59-8fc1-473f-8ef1-4c5a71a59b30",
+      "type": "text",
+      "layerId": "architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "style": {
+        "strokeColor": "#999999",
+        "strokeWidth": 1,
+        "lineStyle": "solid"
+      },
+      "position": {
+        "x": 0,
+        "y": 8750
+      },
+      "text": "GROUND FLOOR     ·     CONCEPT PLAN     ·     1:100",
+      "fontSize": 2.5,
+      "fontFamily": "Osifont",
+      "rotation": 0,
+      "alignment": "left",
+      "verticalAlignment": "top",
+      "bold": false,
+      "italic": false,
+      "underline": false,
+      "color": "#999999",
+      "lineHeight": 1.4,
+      "isModelText": false
+    }
+  ],
+  "layers": [
+    {
+      "id": "architecture",
+      "name": "Architecture",
+      "drawingId": "spanvision-office-plan",
+      "visible": true,
+      "locked": false,
+      "color": "#eeeeee",
+      "lineStyle": "solid",
+      "lineWidth": 1
+    }
+  ],
+  "drawings": [
+    {
+      "id": "spanvision-office-plan",
+      "name": "Office · Ground floor",
+      "drawingType": "standalone",
+      "boundary": {
+        "x": -1200,
+        "y": -1800,
+        "width": 14500,
+        "height": 11800
+      },
+      "scale": 0.01,
+      "createdAt": "2026-10-03T16:03:51.168Z",
+      "modifiedAt": "2026-10-03T16:03:51.168Z"
+    }
+  ],
+  "sheets": [],
+  "activeDrawingId": "spanvision-office-plan",
+  "activeSheetId": null,
+  "activeLayerId": "architecture",
+  "drawingViewports": {},
+  "sheetViewports": {},
+  "settings": {
+    "gridSize": 100,
+    "gridVisible": false,
+    "snapEnabled": true
+  }
+}

@@ -1,0 +1,224 @@
+// Gedeelde veld-catalogus voor de Beeld-UI: filter-editor,
+// groepeer-/sorteer-popovers. DRY over de drie UI-stukken die allemaal een lijst van
+// beschikbare FieldRefs + labels + (voor filter) waarde-editor-soort nodig hebben.
+// De kolommen-dialoog gebruikt deze builtinlijst alleen voor zijn tijdelijke legacyveldcatalogus.
+//
+// Geen store-/React-afhankelijkheid buiten types; ontvangt i18n-labels en context als argument
+// zodat dit bestand testbaar en herbruikbaar blijft.
+
+import type { ActivityCodeType, CustomFieldDef } from '@/types/structure';
+import type { Resource } from '@/types/resource';
+import type { BuiltinFieldKey, FieldRef, FilterOperator } from '@/state/slices/types';
+
+export interface FieldCatalogCtx {
+  activityCodeTypes: ActivityCodeType[];
+  customFieldDefs: CustomFieldDef[];
+  resources: Resource[];
+  /** Vertaalde builtin-veldlabels, keyed op BuiltinFieldKey (uit task:table.*). */
+  builtinLabels: Record<BuiltinFieldKey, string>;
+  /** Vertaalde taskType-labels (uit task:taskType.*), voor het taskType-select-veld. */
+  taskTypeLabels: Record<string, string>;
+  resourceLabel: string; // t('column.resource')
+  /** Label van het groepeer-/sorteerveld Resourcetype (t('column.resourceType')). */
+  resourceTypeLabel?: string;
+  /** Suffix voor disambiguatie bij botsende labels uit gebruikersdata, bv. "activiteitcode". */
+  activityCodeSuffix: string; // t('column.activityCodeSuffix')
+  /** Suffix voor disambiguatie bij botsende labels uit gebruikersdata, bv. "eigen veld". */
+  customFieldSuffix: string; // t('column.customFieldSuffix')
+}
+
+/** Alle builtin-velden die in filter/sort zinvol zijn. */
+export const FILTER_SORT_BUILTIN_KEYS: BuiltinFieldKey[] = [
+  'wbsCode', 'name', 'duration', 'start', 'finish',
+  'taskType', 'isCritical', 'totalFloat', 'completion', 'isMilestone',
+  // Analysevelden.
+  'freeFloat', 'interferingFloat', 'isNearCritical', 'floatPath',
+];
+
+/** Groepeerbare builtin-velden: alleen discrete velden, geen continue getallen/datums. */
+export const GROUP_BUILTIN_KEYS: BuiltinFieldKey[] = ['wbsCode', 'taskType'];
+
+/**
+ * Filter-only builtin-velden: synthetische velden die alleen als
+ * filterregel zin hebben, niet als sorteer- of groepeersleutel — vandaar apart van
+ * `FILTER_SORT_BUILTIN_KEYS`, dat `fullFieldList` ook aan de sorteer-popover levert
+ * (`ribbonWidgets.tsx`). Gebruik `filterFieldList`, niet `fullFieldList`, in de filter-editor.
+ */
+export const FILTER_ONLY_BUILTIN_KEYS: BuiltinFieldKey[] = ['activeDuring'];
+
+function fieldKey(field: FieldRef): string {
+  switch (field.src) {
+    case 'builtin': return `builtin:${field.key}`;
+    case 'activityCode': return `activityCode:${field.typeId}`;
+    case 'customField': return `customField:${field.defId}`;
+    case 'resource': return 'resource';
+    case 'resourceType': return 'resourceType';
+  }
+}
+
+export function fieldsEqual(a: FieldRef, b: FieldRef): boolean {
+  return fieldKey(a) === fieldKey(b);
+}
+
+/** Volledige veldenlijst voor filter/sort: alle builtins + elke activity-code-type + elk custom field + resource. */
+export function fullFieldList(ctx: FieldCatalogCtx): FieldRef[] {
+  return [
+    ...FILTER_SORT_BUILTIN_KEYS.map((key): FieldRef => ({ src: 'builtin', key })),
+    ...ctx.activityCodeTypes.map((t): FieldRef => ({ src: 'activityCode', typeId: t.id })),
+    ...ctx.customFieldDefs.map((d): FieldRef => ({ src: 'customField', defId: d.id })),
+    { src: 'resource' },
+  ];
+}
+
+/**
+ * Sorteer-veldenlijst: `fullFieldList` plus Resourcetype. Resourcetype staat bewust niet
+ * in de filterlijst: het is een afgeleide indeling voor groeperen en sorteren, geen filterwaarde.
+ */
+export function sortFieldList(ctx: FieldCatalogCtx): FieldRef[] {
+  return [...fullFieldList(ctx), { src: 'resourceType' }];
+}
+
+/**
+ * Filter-veldenlijst: `fullFieldList` plus de filter-only synthetische velden. Gebruikt door
+ * `FilterDialog` i.p.v. `fullFieldList` zelf, precies om `activeDuring` weg te houden bij de
+ * sorteer-popover (die `fullFieldList` rechtstreeks gebruikt).
+ */
+export function filterFieldList(ctx: FieldCatalogCtx): FieldRef[] {
+  return [
+    ...fullFieldList(ctx),
+    ...FILTER_ONLY_BUILTIN_KEYS.map((key): FieldRef => ({ src: 'builtin', key })),
+  ];
+}
+
+/** Groepeerbare veldenlijst: WBS, taskType, activity codes, custom fields, resource en
+ *  resourcetype. Twee niveaus Resourcetype → Resource geven de indeling van het rapport
+ *  Resourcediagram. */
+export function groupFieldList(
+  ctx: {
+    activityCodeTypes: ReadonlyArray<ActivityCodeType>;
+    customFieldDefs: ReadonlyArray<CustomFieldDef>;
+  },
+): FieldRef[] {
+  return [
+    ...GROUP_BUILTIN_KEYS.map((key): FieldRef => ({ src: 'builtin', key })),
+    ...ctx.activityCodeTypes.map((t): FieldRef => ({ src: 'activityCode', typeId: t.id })),
+    ...ctx.customFieldDefs.map((d): FieldRef => ({ src: 'customField', defId: d.id })),
+    { src: 'resource' },
+    { src: 'resourceType' },
+  ];
+}
+
+export function fieldLabel(field: FieldRef, ctx: FieldCatalogCtx): string {
+  switch (field.src) {
+    case 'builtin': return ctx.builtinLabels[field.key] ?? field.key;
+    case 'activityCode': return ctx.activityCodeTypes.find(t => t.id === field.typeId)?.name ?? field.typeId;
+    case 'customField': return ctx.customFieldDefs.find(d => d.id === field.defId)?.name ?? field.defId;
+    case 'resource': return ctx.resourceLabel;
+    case 'resourceType': return ctx.resourceTypeLabel ?? 'resourceType';
+  }
+}
+
+/**
+ * Labelt een veldenlijst voor gebruik in een dropdown en disambigueert botsende labels:
+ * builtin-velden hebben altijd al unieke label-keys, maar een activity-code-type
+ * of custom field kan door de gebruiker een naam krijgen die toevallig samenvalt met een ander
+ * veld (builtin of user-defined). Alleen bij een daadwerkelijke botsing krijgt zo'n
+ * gebruikersgedefinieerd veld een bron-suffix, bv. "Type (activiteitcode)".
+ */
+export function fieldOptions(
+  fields: FieldRef[], ctx: FieldCatalogCtx,
+): { field: FieldRef; label: string }[] {
+  const rawLabels = fields.map(f => fieldLabel(f, ctx));
+  const counts = new Map<string, number>();
+  for (const label of rawLabels) counts.set(label, (counts.get(label) ?? 0) + 1);
+
+  return fields.map((field, i) => {
+    const label = rawLabels[i];
+    if ((counts.get(label) ?? 0) <= 1) return { field, label };
+    const suffix = field.src === 'activityCode' ? ctx.activityCodeSuffix
+      : field.src === 'customField' ? ctx.customFieldSuffix
+      : undefined;
+    return { field, label: suffix ? `${label} (${suffix})` : label };
+  });
+}
+
+export type FieldKind = 'text' | 'number' | 'date' | 'boolean' | 'select' | 'multiselect' | 'activePeriod';
+
+/** Bepaalt welke waarde-editor + operatorenset een veld krijgt in de filter-editor. */
+export function fieldKind(field: FieldRef, ctx: FieldCatalogCtx): FieldKind {
+  if (field.src === 'builtin') {
+    switch (field.key) {
+      case 'name':
+      case 'wbsCode':
+        return 'text';
+      case 'duration':
+      case 'totalFloat':
+      case 'completion':
+      case 'freeFloat':
+      case 'interferingFloat':
+      case 'floatPath':
+        return 'number';
+      case 'start':
+      case 'finish':
+        return 'date';
+      case 'isCritical':
+      case 'isMilestone':
+      case 'isNearCritical':
+        return 'boolean';
+      case 'taskType':
+        return 'select';
+      case 'activeDuring':
+        return 'activePeriod';
+    }
+  }
+  if (field.src === 'activityCode') return 'select';
+  if (field.src === 'customField') {
+    const def = ctx.customFieldDefs.find(d => d.id === field.defId);
+    switch (def?.type) {
+      case 'text': return 'text';
+      case 'number':
+      case 'integer':
+      case 'cost':
+        return 'number';
+      case 'date': return 'date';
+      case 'boolean': return 'boolean';
+      default: return 'text';
+    }
+  }
+  // resource
+  return 'multiselect';
+}
+
+/** Toegestane operatoren per veldsoort. */
+export function operatorsForKind(kind: FieldKind): FilterOperator[] {
+  switch (kind) {
+    case 'text': return ['eq', 'neq', 'contains', 'startsWith', 'isEmpty'];
+    case 'number':
+    case 'date':
+      return ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'between', 'isEmpty'];
+    case 'boolean': return ['eq', 'neq'];
+    case 'select': return ['eq', 'neq', 'in', 'isEmpty'];
+    case 'multiselect': return ['in', 'isEmpty'];
+    // Interval-overlap heeft altijd beide grenzen nodig (`evaluateActiveDuring`) — geen
+    // zinnige eq/lt/gt-variant zonder een tweede datum, dus maar één operator.
+    case 'activePeriod': return ['between'];
+  }
+}
+
+/** Selecteerbare opties voor select/multiselect-velden (codes, taskType, resources). */
+export function selectOptions(
+  field: FieldRef, ctx: FieldCatalogCtx,
+): { value: string; label: string }[] {
+  if (field.src === 'activityCode') {
+    const type = ctx.activityCodeTypes.find(t => t.id === field.typeId);
+    if (!type) return [];
+    return type.values.map(v => ({ value: v.id, label: v.description ? `${v.code} — ${v.description}` : v.code }));
+  }
+  if (field.src === 'builtin' && field.key === 'taskType') {
+    return Object.entries(ctx.taskTypeLabels).map(([value, label]) => ({ value, label }));
+  }
+  if (field.src === 'resource') {
+    return ctx.resources.map(r => ({ value: r.name, label: r.name }));
+  }
+  return [];
+}

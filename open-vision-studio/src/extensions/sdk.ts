@@ -1,0 +1,149 @@
+/**
+ * Host-SDK die een extensie binnenkrijgt via `require('open-planner-studio')`.
+ *
+ * In tegenstelling tot de per-extensie `ExtensionApi` (die `onLoad(api)` ontvangt en
+ * permissie-checks + opruimen per extensie regelt) is de SDK GLOBAAL en STATELOOS:
+ * alleen constanten, versie-info en pure helpers om geldige domeinobjecten te bouwen.
+ * Niets hier muteert de store of omzeilt permissies — mutaties lopen via `api.data.*`, dat door de
+ * host aan één expliciete documentcontext wordt gebonden. Deze SDK, de eventbus en registries
+ * blijven appglobaal.
+ */
+import type { ExtensionCategory, ExtensionPermission } from './types';
+import type {
+  ExtProject,
+  ExtCalendar,
+  ExtTask,
+  ExtTaskTime,
+  ExtImportResult,
+} from './extTypes';
+import { HOST_EVENTS } from '@/services/extensionEvents';
+import { KNOWN_PERMISSIONS } from './permissions';
+import { createDefaultCalendar } from '@/engine/calendar/defaultCalendar';
+import type { Task } from '@/types/task';
+import { createDefaultTaskTime } from '@/utils/taskDefaults';
+import { createDefaultProject } from '@/state/slices/projectSlice';
+import { generateId } from '@/utils/id';
+import { formatDate, parseDate, addBusinessDays, localTodayIso } from '@/utils/dateUtils';
+import { toExtProject, toExtCalendar, toExtTask, toExtTaskTime, fromExtTaskInput } from './extMappers';
+import { EXTENSION_API_VERSION } from './apiVersion';
+
+const CATEGORIES: readonly ExtensionCategory[] = [
+  'Import/Export',
+  'Planning',
+  'Reporting',
+  'Utility',
+  'Fonts',
+  'Other',
+];
+
+const PERMISSIONS: readonly ExtensionPermission[] = KNOWN_PERMISSIONS;
+
+export interface PlannerStudioSdk {
+  /** App-versie (calendar-versioning, bv. '2026.4.0'). Vergelijk met manifest.minAppVersion. */
+  readonly version: string;
+  /** Semver van het EXTENSIE-CONTRACT dat deze host biedt (bv. '1.0.0'). Vergelijk met
+   *  manifest.apiVersion — zie extensions/apiVersion.ts voor het verschil met `version`. */
+  readonly apiVersion: string;
+  /** Geldige manifest-categorieën. */
+  readonly categories: readonly ExtensionCategory[];
+  /** Geldige manifest-permissies. */
+  readonly permissions: readonly ExtensionPermission[];
+  /** Namen van host-lifecycle-events; abonneer via `api.events.on(naam, cb)`. */
+  readonly hostEvents: typeof HOST_EVENTS;
+
+  /** Stateloze helpers die de conventies van de app volgen. */
+  readonly utils: {
+    generateId(prefix?: string): string;
+    formatDate(date: Date): string;
+    parseDate(iso: string): Date;
+    addBusinessDays(date: Date, days: number): Date;
+  };
+
+  /** Fabrieksfuncties die volledige, geldige EXT-facing objecten opleveren (Ext*-DTO's). */
+  readonly factory: {
+    createProject(overrides?: Partial<ExtProject>): ExtProject;
+    createCalendar(): ExtCalendar;
+    createTask(partial: Partial<ExtTask> & { name: string }): ExtTask;
+    /** Bouw een TaskTime met een gegeven startdatum (ISO) en duur in werkdagen. */
+    createTaskTime(start: string, durationDays: number): ExtTaskTime;
+    /** Lege ExtImportResult als startpunt voor een importer-handler. */
+    emptyImportResult(overrides?: Partial<ExtImportResult>): ExtImportResult;
+  };
+}
+
+/** Bouw een volledige (interne) Task met dezelfde defaults als de store-actie addTask. Bewust ZONDER
+ *  `seedNewHourTaskFinish`: dit is een DTO-bouwer zonder
+ *  document of kalender, dus er is niets om het einde van een urentaak op af te leiden. Een extensie
+ *  die een urentaak aan het document toevoegt gebruikt `api.data.addTask` zonder `scheduleFinish` —
+ *  daar leidt de store het einde af (`fromExtTaskAddInput`); in een importresultaat is het einde
+ *  bronwaarde, net als bij een lezer. */
+function buildInternalTask(partial: Partial<Task> & { name: string }): Task {
+  const start = partial.time?.scheduleStart ?? localTodayIso();
+  return {
+    id: partial.id ?? generateId('task'),
+    name: partial.name,
+    description: partial.description ?? '',
+    wbsCode: partial.wbsCode ?? '',
+    taskType: partial.taskType ?? 'CONSTRUCTION',
+    customTaskTypeId: partial.customTaskTypeId,
+    status: partial.status ?? 'NOT_STARTED',
+    isMilestone: partial.isMilestone ?? false,
+    priority: partial.priority ?? 0,
+    parentId: partial.parentId ?? null,
+    childIds: partial.childIds ?? [],
+    isSummary: partial.isSummary,
+    time: partial.time ?? createDefaultTaskTime(start, partial.isMilestone ? 0 : 5),
+    resourceIds: partial.resourceIds ?? [],
+    color: partial.color,
+  };
+}
+
+/** Ext-facing createTask: bouw intern (defaults) en map naar het publieke contract. */
+function createExtTask(partial: Partial<ExtTask> & { name: string }): ExtTask {
+  const custom = partial.customTaskType;
+  const definition = custom?.id.trim() && custom.name?.trim()
+    ? { id: custom.id.trim(), name: custom.name.trim() }
+    : undefined;
+  return toExtTask(buildInternalTask(fromExtTaskInput(partial)), definition);
+}
+
+function emptyImportResult(overrides?: Partial<ExtImportResult>): ExtImportResult {
+  return {
+    project: toExtProject(createDefaultProject()),
+    calendar: toExtCalendar(createDefaultCalendar()),
+    tasks: [],
+    sequences: [],
+    resources: [],
+    assignments: [],
+    ...overrides,
+  };
+}
+
+let sdk: PlannerStudioSdk | null = null;
+
+/** Bouw (eenmalig) de SDK-singleton. */
+export function getExtensionSdk(): PlannerStudioSdk {
+  if (sdk) return sdk;
+  sdk = {
+    version: typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0.0',
+    apiVersion: EXTENSION_API_VERSION,
+    categories: CATEGORIES,
+    permissions: PERMISSIONS,
+    hostEvents: HOST_EVENTS,
+    utils: { generateId, formatDate, parseDate, addBusinessDays },
+    factory: {
+      createProject: (overrides) => ({ ...toExtProject(createDefaultProject()), ...overrides }),
+      createCalendar: () => toExtCalendar(createDefaultCalendar()),
+      createTask: createExtTask,
+      createTaskTime: (start, durationDays) => toExtTaskTime(createDefaultTaskTime(start, durationDays)),
+      emptyImportResult,
+    },
+  };
+  return sdk;
+}
+
+/** Hang de SDK op window zodat `require('open-planner-studio')` en devtools 'm vinden. */
+export function installExtensionSdk(): void {
+  if (typeof window === 'undefined') return;
+  (window as unknown as Record<string, unknown>).__openPlannerStudioSdk = getExtensionSdk();
+}

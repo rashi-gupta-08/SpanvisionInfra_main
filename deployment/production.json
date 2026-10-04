@@ -1,0 +1,117 @@
+{
+  "organization": "Spanvision Infra",
+  "modules": [
+    {
+      "id": "cad",
+      "label": "CAD",
+      "url": "https://spanvision-cad.vercel.app/app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "cad2d",
+      "label": "2D CAD",
+      "url": "https://spanvision-cad2d.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "bim",
+      "label": "Vision BIM Validator",
+      "url": "https://spanvision-bim.onrender.com/home",
+      "available": true,
+      "platform": "render"
+    },
+    {
+      "id": "pdf",
+      "label": "PDF",
+      "url": "https://spanvision-pdf.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "ifc",
+      "label": "IFC",
+      "url": "https://spanvision-ifc.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "calc",
+      "label": "Calc",
+      "url": "https://spanvision-calc.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "planner",
+      "label": "Open Vision Studio",
+      "url": "https://spanvision-planner.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "fem",
+      "label": "FEM Vision Studio",
+      "url": "https://spanvision-fem.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "frame",
+      "label": "Frame Vision Studio",
+      "url": "https://spanvision-frame.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "calculation",
+      "label": "Vision Calculation Studio",
+      "url": "https://spanvision-calculation.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "geo",
+      "label": "Geotechnical",
+      "url": "https://spanvision-geo.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "speech",
+      "label": "Speech",
+      "url": "https://spanvision-speech.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "stl",
+      "label": "STL-3D Map",
+      "url": "https://spanvision-stl.onrender.com/",
+      "available": true,
+      "platform": "render"
+    },
+    {
+      "id": "field",
+      "label": "Field Workspace",
+      "url": "https://spanvision-field.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "pointcloud",
+      "label": "Pointcloud Workspace",
+      "url": "https://spanvision-pointcloud.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    },
+    {
+      "id": "pile",
+      "label": "Pile Plane Workspace",
+      "url": "https://spanvision-pile.vercel.app/",
+      "available": true,
+      "platform": "vercel"
+    }
+  ]
+}

@@ -619,7 +619,7 @@ function updateSlotWarning() {
 async function refreshExportDir() {
   try {
     const { path } = await api('/api/export-dir');
-    $('export-dir').value = path;
+    $('export-dir').value = appInfo?.cloud ? 'Browser download' : path;
   } catch { /* server not ready yet */ }
 }
 
@@ -646,7 +646,7 @@ async function build(chooseDir) {
   try {
     const res = await post('/api/build', { project, choose_dir: chooseDir });
     renderBuild(res);
-    $('export-dir').value = res.output_dir.replace(/[\\/][^\\/]+$/, '');
+    $('export-dir').value = appInfo?.cloud ? 'Browser download' : res.output_dir.replace(/[\\/][^\\/]+$/, '');
     if (!appInfo?.cloud) $('btn-reveal').classList.remove('hidden');
     status(appInfo?.cloud ? 'Ready. Download your model from the results below.' : 'Ready. Saved in ' + res.output_dir, 'ok');
   } catch (err) {
@@ -704,6 +704,7 @@ async function loadAppInfo() {
       $('export-dir').value = 'Browser download';
       const label = document.querySelector('label[for="export-dir"]');
       if (label) label.textContent = 'Download location';
+      document.querySelector('#about-dialog .hint').textContent = 'Browser downloads · STL / 3MF export';
     }
     $('app-version').textContent = 'v' + appInfo.version;
     if(appInfo.services.feedbackEnabled&&appInfo.feedback_url){$('btn-feedback').classList.remove('hidden');$('btn-feedback').onclick=()=>window.open(appInfo.feedback_url,'_blank','noopener,noreferrer');}

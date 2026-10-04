@@ -12,6 +12,7 @@ Run as module for testing: python -m server.ifc_processor
 """
 
 import json
+import math
 import os
 import tempfile
 import time
@@ -268,12 +269,16 @@ class IFCProcessor:
                                     color = [0.8, 0.8, 0.8]  # Default gray
 
                                 if color:
+                                    color = [float(channel) if math.isfinite(float(channel)) else 0.8 for channel in color[:3]]
                                     if hasattr(mat, "transparency"):
                                         try:
                                             transp = mat.transparency
                                             if callable(transp):
                                                 transp = transp()
-                                            color.append(1.0 - transp)
+                                            # IfcOpenShell uses NaN when transparency is
+                                            # unspecified. Unstyled materials are opaque.
+                                            alpha = 1.0 - max(0.0, min(1.0, float(transp))) if math.isfinite(float(transp)) else 1.0
+                                            color.append(alpha)
                                         except (TypeError, AttributeError):
                                             color.append(1.0)
                                     else:
@@ -330,7 +335,7 @@ class IFCProcessor:
             }
 
             # Calculate approximate size
-            data_size = len(json.dumps(output_data))
+            data_size = len(json.dumps(output_data, allow_nan=False))
 
             return ProcessingResult(
                 success=True,

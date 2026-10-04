@@ -8,6 +8,11 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
+    buildFilter:
+      paths:
+        - Dockerfile
+        - deployment/*.py
+        - vision-bim-validator/**
     envVars:
       - key: SPANVISION_SERVICE
         value: bim
@@ -20,6 +25,11 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/ping
+    buildFilter:
+      paths:
+        - Dockerfile
+        - deployment/*.py
+        - spanvision-stl-3d-map-workspace/**
     envVars:
       - key: SPANVISION_SERVICE
         value: stl

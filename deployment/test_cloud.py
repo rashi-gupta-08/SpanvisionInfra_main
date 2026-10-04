@@ -29,14 +29,16 @@ class CloudIsolationTests(unittest.TestCase):
                 forged = {'X-Authentik-Username': 'visitor', 'X-Authentik-Meta-Tenant': first.cookies.get('spanvision-workspace-test')}
                 self.assertEqual(second.get('/api/v2/projects/' + project_id, headers=forged).status_code, 404)
                 import ifcopenshell
-                model = ifcopenshell.file(schema='IFC4')
-                model.create_entity('IfcProject', GlobalId=ifcopenshell.guid.new(), Name='Cloud test')
+                model = ifcopenshell.open(str(Path(__file__).resolve().parents[1] / 'ifc-view/demo/Spanvision-IFC-View-Demo.ifc'))
                 upload = first.post('/api/upload', files={'ifc_file': ('test.ifc', model.to_string(), 'application/octet-stream')})
                 self.assertEqual(upload.status_code, 200, upload.text)
                 file_id = upload.json()['file_id']
                 self.assertEqual(first.get('/api/files').json()['count'], 1)
                 self.assertEqual(second.get('/api/files').json()['count'], 0)
                 self.assertEqual(second.get('/api/status/' + file_id).status_code, 404)
+                geometry = first.post('/api/process/' + file_id, params={'output_format': 'json-mesh'})
+                self.assertEqual(geometry.status_code, 200, geometry.text)
+                self.assertGreater(geometry.json()['stats']['elements'], 0)
                 validation = first.post('/api/v1/validate', files={'ifc_file': ('test.ifc', model.to_string(), 'application/octet-stream')}, data={'ids_standard': 'rvb'})
                 self.assertEqual(validation.status_code, 202, validation.text)
                 job_id = validation.json()['job_id']

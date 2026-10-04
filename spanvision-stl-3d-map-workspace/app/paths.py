@@ -43,6 +43,11 @@ def migrate_profile(target: Path, legacy: Path) -> None:
 
 def data_dir() -> Path:
     override = os.environ.get('SPANVISION_STL_DATA_DIR')
+    if os.environ.get('SPANVISION_CLOUD') == '1':
+        from deployment.cloud_sessions import session_id
+        target = Path(override or '/tmp/spanvision-stl') / session_id.get()
+        target.mkdir(parents=True, exist_ok=True)
+        return target
     base = Path(os.environ.get('LOCALAPPDATA') or Path.home())
     target = Path(override) if override else base / ORGANIZATION / APP_NAME
     target.mkdir(parents=True, exist_ok=True)
@@ -77,6 +82,8 @@ def write_settings(values: dict[str, Any]) -> None:
     temporary.replace(path)
 
 def export_dir() -> Path:
+    if os.environ.get('SPANVISION_CLOUD') == '1':
+        return data_dir() / 'exports'
     stored = read_settings().get('export_dir')
     if isinstance(stored, str) and stored:
         return Path(stored)

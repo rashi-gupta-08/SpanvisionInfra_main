@@ -73,6 +73,20 @@ _design_cache: dict[str, LoadedDesign] = {}
 # Where the last build wrote to; the download endpoint only serves from there.
 _last_output_dir: Path | None = None
 
+CLOUD = os.environ.get('SPANVISION_CLOUD') == '1'
+
+
+def _upload_dir() -> Path:
+    directory = data_dir() / 'uploads' if CLOUD else UPLOAD_DIR
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+def _project_dir() -> Path:
+    directory = data_dir() / 'projects' if CLOUD else PROJECT_DIR
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
 
 def _safe_id(value: str) -> str:
     slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", (value or "kaart")).strip("-").lower()
@@ -102,7 +116,7 @@ def _load_project(payload: dict[str, Any]) -> Project:
 def _design_for(project: Project) -> LoadedDesign | None:
     if not project.design.filename or not project.design.enabled:
         return None
-    path = UPLOAD_DIR / project.id / Path(project.design.filename).name
+    path = _upload_dir() / project.id / Path(project.design.filename).name
     if not path.exists():
         return None
 
@@ -147,6 +161,7 @@ def api_appinfo() -> dict:
         "releases_url": appinfo.RELEASES_URL,
         "feedback_url": feedback_url,
         "organization": appinfo.ORGANIZATION,
+        "cloud": CLOUD,
         "mark": appinfo.BRAND['mark'],
         "theme": appinfo.BRAND['theme'],
         "services": {"feedbackEnabled": bool(feedback_url), "updaterEnabled": bool(appinfo.SERVICES.get('updaterEnabled') and appinfo.LATEST_RELEASE_API)},
@@ -193,7 +208,7 @@ def api_build(req: ProjectRequest) -> dict:
     project = _load_project(req.project)
 
     target_root = export_dir()
-    if req.choose_dir:
+    if req.choose_dir and not CLOUD:
         chosen = pick_folder(str(target_root), f"{APP_NAME} - save as")
         if not chosen:
             raise HTTPException(409, "Cancelled.")
@@ -244,6 +259,8 @@ def api_export_dir_get() -> dict:
 
 @app.post("/api/export-dir/pick")
 def api_export_dir_pick() -> dict:
+    if CLOUD:
+        raise HTTPException(400, "Download generated files from the results below.")
     chosen = pick_folder(str(export_dir()), f"{APP_NAME} - choose export folder")
     if not chosen:
         return {"path": str(export_dir()), "changed": False}
@@ -253,6 +270,8 @@ def api_export_dir_pick() -> dict:
 
 @app.post("/api/export-dir")
 def api_export_dir_set(req: ExportDirRequest) -> dict:
+    if CLOUD:
+        raise HTTPException(400, "Cloud exports use browser downloads.")
     path = Path(req.path).expanduser()
     set_export_dir(path)
     return {"path": str(path)}
@@ -260,6 +279,8 @@ def api_export_dir_set(req: ExportDirRequest) -> dict:
 
 @app.post("/api/reveal")
 def api_reveal() -> dict:
+    if CLOUD:
+        raise HTTPException(400, "Download generated files from the results below.")
     target = _last_output_dir if _last_output_dir and _last_output_dir.is_dir() else export_dir()
     target.mkdir(parents=True, exist_ok=True)
     return {"ok": open_in_explorer(target), "path": str(target)}
@@ -271,13 +292,22 @@ async def api_design_upload(
     file: UploadFile = File(...),
 ) -> dict:
     pid = _safe_id(project_id)
-    target_dir = UPLOAD_DIR / pid
+    target_dir = _upload_dir() / pid
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    name = Path(file.filename or "ontwerp.ifc").name
+    name = Path((file.filename or "design.ifc").replace('\\', '/')).name
+    if name in ('', '.', '..'):
+        raise HTTPException(400, "Choose a supported design file.")
     target = target_dir / name
     with target.open("wb") as fh:
-        shutil.copyfileobj(file.file, fh)
+        size = 0
+        while chunk := await file.read(1024 * 1024):
+            size += len(chunk)
+            if CLOUD and size > 50 * 1024 * 1024:
+                fh.close()
+                target.unlink(missing_ok=True)
+                raise HTTPException(413, "Choose a file smaller than 50 MB for the cloud preview.")
+            fh.write(chunk)
 
     try:
         design = load_design(target)
@@ -291,7 +321,7 @@ async def api_design_upload(
 
 @app.delete("/api/design")
 def api_design_delete(project_id: str, filename: str) -> dict:
-    path = UPLOAD_DIR / _safe_id(project_id) / Path(filename).name
+    path = _upload_dir() / _safe_id(project_id) / Path(filename.replace('\\', '/')).name
     path.unlink(missing_ok=True)
     _design_cache.clear()
     return {"ok": True}
@@ -299,9 +329,10 @@ def api_design_delete(project_id: str, filename: str) -> dict:
 
 @app.get("/api/download/{project_id}/{filename}")
 def api_download(project_id: str, filename: str) -> FileResponse:
-    if _last_output_dir is None:
+    output = export_dir() / _safe_id(project_id) if CLOUD else _last_output_dir
+    if output is None:
         raise HTTPException(404, "Nothing generated yet")
-    directory = _last_output_dir.resolve()
+    directory = output.resolve()
     path = (directory / Path(filename).name).resolve()
     if not path.is_file() or directory not in path.parents:
         raise HTTPException(404, "File not found")
@@ -311,7 +342,7 @@ def api_download(project_id: str, filename: str) -> FileResponse:
 @app.get("/api/projects")
 def api_projects() -> dict:
     items = []
-    for path in sorted(PROJECT_DIR.glob("*.json")):
+    for path in sorted(_project_dir().glob("*.json")):
         items.append({"id": path.stem, "modified": path.stat().st_mtime})
     return {"projects": items}
 
@@ -321,7 +352,7 @@ def api_project_save(req: ProjectRequest) -> dict:
     import json
 
     project = _load_project(req.project)
-    path = PROJECT_DIR / f"{project.id}.json"
+    path = _project_dir() / f"{project.id}.json"
     path.write_text(json.dumps(project.to_dict(), indent=2), encoding="utf-8")
     return {"ok": True, "id": project.id}
 
@@ -330,7 +361,7 @@ def api_project_save(req: ProjectRequest) -> dict:
 def api_project_load(project_id: str) -> dict:
     import json
 
-    path = PROJECT_DIR / f"{_safe_id(project_id)}.json"
+    path = _project_dir() / f"{_safe_id(project_id)}.json"
     if not path.exists():
         raise HTTPException(404, "Project not found")
     return json.loads(path.read_text(encoding="utf-8"))

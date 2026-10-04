@@ -647,8 +647,8 @@ async function build(chooseDir) {
     const res = await post('/api/build', { project, choose_dir: chooseDir });
     renderBuild(res);
     $('export-dir').value = res.output_dir.replace(/[\\/][^\\/]+$/, '');
-    $('btn-reveal').classList.remove('hidden');
-    status('Ready. Saved in ' + res.output_dir, 'ok');
+    if (!appInfo?.cloud) $('btn-reveal').classList.remove('hidden');
+    status(appInfo?.cloud ? 'Ready. Download your model from the results below.' : 'Ready. Saved in ' + res.output_dir, 'ok');
   } catch (err) {
     // 409 is the user cancelling the folder dialog, which is not an error.
     if (err.message === 'Cancelled.') status('Save cancelled.');
@@ -697,6 +697,14 @@ let appInfo = null;
 async function loadAppInfo() {
   try {
     appInfo = await api('/api/appinfo');
+    if (appInfo.cloud) {
+      $('btn-pick-dir').classList.add('hidden');
+      $('btn-build-as').classList.add('hidden');
+      $('btn-reveal').classList.add('hidden');
+      $('export-dir').value = 'Browser download';
+      const label = document.querySelector('label[for="export-dir"]');
+      if (label) label.textContent = 'Download location';
+    }
     $('app-version').textContent = 'v' + appInfo.version;
     if(appInfo.services.feedbackEnabled&&appInfo.feedback_url){$('btn-feedback').classList.remove('hidden');$('btn-feedback').onclick=()=>window.open(appInfo.feedback_url,'_blank','noopener,noreferrer');}
     if(appInfo.services.updaterEnabled)checkUpdate();

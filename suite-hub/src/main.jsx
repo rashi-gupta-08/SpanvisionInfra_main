@@ -3,6 +3,7 @@ import { render } from 'solid-js/web';
 import brand from './brand.json';
 import Floorplan from './Floorplan';
 import Globe from './Globe';
+import { isLocalPreview, moduleUrl } from './module-url';
 import './preview.css';
 import './palette.css';
 import './hub.css';
@@ -35,7 +36,8 @@ function App() {
   const [filename,setFilename]=createSignal('Ground floor scan.pdf');
   let modal, upload, scanTimer, previousFocus, requestController;
   const validScreens=['landing','modules','login','signup','account'];
-  const openUrl=module=>`http://127.0.0.1:${module.port}${module.path}?appearance=${mode()}`;
+  const localPreview=isLocalPreview(location.hostname);
+  const openUrl=module=>moduleUrl(module,status()[module.id],mode(),location.hostname);
   function exploreTools() { document.getElementById('tools-title')?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}); }
   function clearScan() { clearInterval(scanTimer); scanTimer=undefined; }
   function closeScan() { clearScan(); modal.close(); previousFocus?.focus(); }
@@ -63,6 +65,12 @@ function App() {
       const result=await response.json();
       if(!Array.isArray(result.modules))throw new Error('Invalid preview status');
       const modules=Object.fromEntries(result.modules.map(module=>[module.id,module]));
+      if(!localPreview){
+        for(const module of brand.modules){
+          if(!moduleUrl(module,modules[module.id],mode(),location.hostname))modules[module.id]={available:false,message:'This tool has not been deployed yet.'};
+        }
+        setStatus(modules);return;
+      }
       const bim=brand.modules.find(module=>module.id==='bim');
       if(bim&&!modules.bim?.available){
         try {const response=await fetch(`http://127.0.0.1:${bim.port}/__bim/status`,{signal:AbortSignal.timeout(1500)});const health=await response.json();if(response.ok&&health.id==='bim')modules.bim=health;}catch{modules.bim={...bim,available:false,message:'Start the Vision BIM Validator preview to open this tool.'};}
@@ -88,7 +96,7 @@ function App() {
       setStatus(modules);
     } catch(e) {
       if(e.name==='AbortError')return;
-      setStatus(Object.fromEntries(brand.modules.map(module=>[module.id,{available:false,message:'Start the suite preview to open this module.'}])));
+      setStatus(Object.fromEntries(brand.modules.map(module=>[module.id,{available:false,message:localPreview?'Start the suite preview to open this module.':'Tool availability could not be loaded. Try checking again.'}])));
     }
   }
   function changeScreen() {
@@ -145,7 +153,7 @@ function App() {
           <section class="company-catalog" aria-labelledby="tools-title">
             <div class="catalog-heading" data-sv-reveal><div><h2 id="tools-title">All tools <span>{brand.modules.length}</span></h2><p>Choose a tool to open its workspace in a new tab.</p></div><button class="button button-outline" onClick={refreshStatus}>Check availability<Arrow/></button></div>
             <Modules/>
-            <p class="catalog-note">Files and saved preferences stay with each workspace.</p>
+            <p class="catalog-note">{localPreview?'Files and saved preferences stay with each workspace.':'Browser drafts stay with each workspace. BIM and map processing uses temporary cloud storage; download your results to keep them.'}</p>
           </section>
         </section>
       </Show>

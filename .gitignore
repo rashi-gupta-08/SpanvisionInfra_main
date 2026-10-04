@@ -107,3 +107,11 @@ Thumbs.db
 
 # Local-only implementation plans.
 /spanvision-pile-plane-workspace/docs/plans/
+
+# Cloud CLI state and generated deployment packages.
+.vercel/
+/qa/deployment/tools/
+/qa/deployment/output/
+/qa/deployment/*.json
+/qa/deployment/*.yaml
+/qa/deployment/*.go

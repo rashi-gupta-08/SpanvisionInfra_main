@@ -206,7 +206,7 @@ async def get_current_user(request: Request):
     X-authentik-* headers on every forwarded request.  This endpoint
     exposes that information to the frontend.
     """
-    username = request.headers.get("X-authentik-username")
+    username = None if os.environ.get('SPANVISION_CLOUD') == '1' else request.headers.get("X-authentik-username")
     if not username:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
@@ -268,7 +268,8 @@ async def upload_ifc(
         raise HTTPException(status_code=400, detail="Empty file uploaded")
 
     # Save file to temp directory
-    safe_filename = f"{file_id}_{ifc_file.filename.replace(' ', '_')}"
+    basename = Path(ifc_file.filename.replace('\\', '/')).name
+    safe_filename = f"{file_id}_{basename.replace(' ', '_')}"
     file_path = UPLOAD_DIR / safe_filename
 
     try:
@@ -762,7 +763,7 @@ async def validate_ifc_ids(
         if len(ifc_content) > MAX_FILE_SIZE:
             raise HTTPException(status_code=413, detail="IFC file too large")
 
-        ifc_path = job_dir / ifc_file.filename
+        ifc_path = job_dir / Path(ifc_file.filename.replace('\\', '/')).name
         with open(ifc_path, "wb") as f:
             f.write(ifc_content)
 
@@ -784,7 +785,7 @@ async def validate_ifc_ids(
             if len(ids_content) > MAX_IDS_FILE_SIZE:
                 raise HTTPException(status_code=413, detail="IDS file too large")
 
-            ids_filename = ids_file.filename
+            ids_filename = Path(ids_file.filename.replace('\\', '/')).name
             ids_path = job_dir / ids_filename
             with open(ids_path, "wb") as f:
                 f.write(ids_content)
@@ -951,7 +952,8 @@ async def upload_model(
     # Save to disk
     model_dir = UPLOAD_DIR / "projects" / project_id
     model_dir.mkdir(parents=True, exist_ok=True)
-    safe_name = f"{uuid.uuid4().hex[:8]}_{ifc_file.filename.replace(' ', '_')}"
+    basename = Path(ifc_file.filename.replace('\\', '/')).name
+    safe_name = f"{uuid.uuid4().hex[:8]}_{basename.replace(' ', '_')}"
     file_path = model_dir / safe_name
 
     with open(file_path, "wb") as f:
@@ -1055,7 +1057,9 @@ if _frontend_dist.is_dir():
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         """Serve the React SPA. API routes are matched first by FastAPI."""
-        file_path = _frontend_dist / full_path
+        file_path = (_frontend_dist / full_path).resolve()
+        if _frontend_dist.resolve() not in file_path.parents:
+            raise HTTPException(status_code=404, detail="File not found")
         if full_path and file_path.is_file():
             # Hashed assets (JS/CSS) get long cache; everything else no-cache
             if "/assets/" in full_path:

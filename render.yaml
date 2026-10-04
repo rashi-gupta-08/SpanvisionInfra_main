@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: spanvision-bim
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: SPANVISION_SERVICE
+        value: bim
+  - type: web
+    name: spanvision-stl
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/ping
+    envVars:
+      - key: SPANVISION_SERVICE
+        value: stl

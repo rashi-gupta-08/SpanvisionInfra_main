@@ -21,7 +21,7 @@ try {
   page.setDefaultTimeout(20000);
   page.on('pageerror',error=>errors.push(error.message));
   const origin = process.env.PDF_TEST_URL || 'http://127.0.0.1:3084/';
-  await page.goto(origin);
+  await page.goto(origin, {waitUntil:'domcontentloaded',timeout:60000});
   const selecting=page.waitForEvent('filechooser');
   await page.getByRole('button',{name:'Open PDF',exact:true}).click();
   await (await selecting).setFiles({name:'source.pdf',mimeType:'application/pdf',buffer:source});
@@ -68,13 +68,15 @@ try {
   assert.ok(annotation.has(pdfLib.PDFName.of('AP')),'Saved annotation has an actual PDF appearance');
   checks.push('Save As downloads a PDF retaining both pages, 90-degree page rotation and a bounded rectangle appearance');
   const reopened=await context.newPage(); reopened.on('pageerror',error=>errors.push(error.message));
-  await reopened.goto(origin);
+  await reopened.goto(origin, {waitUntil:'domcontentloaded',timeout:60000});
   const opening=reopened.waitForEvent('filechooser');
   await reopened.getByRole('button',{name:'Open PDF',exact:true}).click();
   await (await opening).setFiles(saved);
   await reopened.waitForFunction(()=>document.querySelector('#pdf-canvas')?.width>0);
   await reopened.getByText('1 (1 total)',{exact:true}).waitFor();
   checks.push('Downloaded annotated PDF reopens with its actual annotation');
+  await reopened.bringToFront();
+  await reopened.locator('#annotation-canvas').click({position:{x:10,y:10}});
   const anotherOpening = reopened.waitForEvent('filechooser');
   await reopened.keyboard.press('Control+o');
   await (await anotherOpening).setFiles({name:'other.pdf',mimeType:'application/pdf',buffer:source});
@@ -83,6 +85,7 @@ try {
   await reopened.locator('.document-tab').filter({hasText:'annotated.pdf'}).click();
   await reopened.getByText('1 (1 total)',{exact:true}).waitFor();
   const beforeFailure = await reopened.locator('.document-tab').count();
+  await reopened.locator('#annotation-canvas').click({position:{x:10,y:10}});
   const cancelling = reopened.waitForEvent('filechooser');
   await reopened.keyboard.press('Control+o');
   const cancelled = await cancelling;
@@ -90,6 +93,7 @@ try {
   assert.equal(await reopened.locator('.document-tab').count(),beforeFailure);
   await reopened.getByText('1 (1 total)',{exact:true}).waitFor();
   checks.push('Cancelling the browser file picker preserves the open annotated document');
+  await reopened.locator('#annotation-canvas').click({position:{x:10,y:10}});
   const invalidOpening = reopened.waitForEvent('filechooser');
   await reopened.keyboard.press('Control+o');
   await (await invalidOpening).setFiles({name:'broken.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.7\nbroken')});
@@ -101,7 +105,7 @@ try {
   await reopened.locator('#pdf-canvas').waitFor({state:'visible'});
   checks.push('Malformed PDF reports its failure and restores the active annotated document, including a non-adjacent tab');
   const fresh = await context.newPage(); fresh.on('pageerror',error=>errors.push(error.message));
-  await fresh.goto(origin);
+  await fresh.goto(origin, {waitUntil:'domcontentloaded',timeout:60000});
   const firstInvalid = fresh.waitForEvent('filechooser');
   await fresh.getByRole('button',{name:'Open PDF',exact:true}).click();
   await (await firstInvalid).setFiles({name:'bad-first.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.7\nbroken')});

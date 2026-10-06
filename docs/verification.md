@@ -73,7 +73,7 @@ Serve the built Speech app on port 4298 and run `node deployment/verify-speech.m
 - Regression assertions and reference cases establish the specific behaviors and numeric cases tested. They do not certify every engineering scenario.
 - Skipped tests remain unverified. Read their reasons in the source/logs before claiming coverage.
 - Existing baseline/oracle pins are not regenerated to hide failures. Windows line-ending and deterministic gzip-header repairs preserve the original reference content and numeric results.
-- FEM v2 source and bundle checks cover the canonical calculation implementation. The website currently deployed from v1 needs separate release integration and verification.
+- FEM v2 source and bundle checks cover the canonical calculation implementation. The canonical frontend and Rust bridge were deployed on 6 October 2026; live section/API recovery and browser theme checks passed. These checks do not establish every engineering case or Windows acceptance.
 - Windows Rust tests establish native library behavior. Windows installer and GUI acceptance is a separate outstanding gate.
 - Source test results precede deployment. Retest the actual deployed build and record its source commit before publishing a release status.
 

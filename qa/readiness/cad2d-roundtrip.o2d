@@ -1,8 +1,8 @@
 {
   "version": 3,
   "name": "Untitled",
-  "createdAt": "2026-10-06T04:31:59.034Z",
-  "modifiedAt": "2026-10-06T04:31:59.034Z",
+  "createdAt": "2026-10-06T06:52:22.514Z",
+  "modifiedAt": "2026-10-06T06:52:22.515Z",
   "drawings": [
     {
       "id": "drawing-1",
@@ -15,8 +15,8 @@
       },
       "scale": 0.01,
       "drawingType": "standalone",
-      "createdAt": "2026-10-06T04:31:55.850Z",
-      "modifiedAt": "2026-10-06T04:31:55.850Z"
+      "createdAt": "2026-10-06T06:52:19.612Z",
+      "modifiedAt": "2026-10-06T06:52:19.612Z"
     }
   ],
   "sheets": [
@@ -181,8 +181,8 @@
         ]
       },
       "annotations": [],
-      "createdAt": "2026-10-06T04:31:55.850Z",
-      "modifiedAt": "2026-10-06T04:31:55.850Z"
+      "createdAt": "2026-10-06T06:52:19.613Z",
+      "modifiedAt": "2026-10-06T06:52:19.613Z"
     },
     {
       "id": "sheet-2",
@@ -345,8 +345,8 @@
         ]
       },
       "annotations": [],
-      "createdAt": "2026-10-06T04:31:55.850Z",
-      "modifiedAt": "2026-10-06T04:31:55.850Z"
+      "createdAt": "2026-10-06T06:52:19.613Z",
+      "modifiedAt": "2026-10-06T06:52:19.613Z"
     }
   ],
   "activeDrawingId": "drawing-1",
@@ -372,7 +372,7 @@
   },
   "shapes": [
     {
-      "id": "1791261117289-4",
+      "id": "1791269540895-4",
       "type": "rectangle",
       "layerId": "layer-0",
       "drawingId": "drawing-1",
@@ -1573,9 +1573,9 @@
       "name": "Query 1",
       "sql": "SELECT COUNT(*) AS [total] FROM shapes",
       "category": "analysis",
-      "id": "260821ba-30cd-4b8c-a1cb-d87b58977f24",
-      "createdAt": "2026-10-06T04:31:58.507Z",
-      "modifiedAt": "2026-10-06T04:31:58.738Z"
+      "id": "58630a32-7977-4e89-be82-d705c896edf3",
+      "createdAt": "2026-10-06T06:52:22.042Z",
+      "modifiedAt": "2026-10-06T06:52:22.277Z"
     }
   ]
 }

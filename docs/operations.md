@@ -2,9 +2,9 @@
 
 ## Current topology and state
 
-`branding/brand.json` lists the tools and local preview ports. `deployment/production.json` records the deployed URLs. Vercel hosts the hub and static browser applications. Render hosts the Python BIM and STL APIs with their frontends. The FEM v2 Rust calculation bridge is not yet integrated into the production browser deployment.
+`branding/brand.json` lists the tools and local preview ports. `deployment/production.json` records the deployed URLs. Vercel hosts the hub and static browser applications. Render hosts the Python BIM and STL APIs with their frontends and the FEM Rust API. On 6 October 2026, the hub and 15 tools were updated from commit `36aa5c04`; Planner remains on its previous deployment pending its full verification gate. See [deployment record](deployment-2026-10-06.md).
 
-The FEM release configuration now targets `design-mockup`, the canonical frontend. `deployment/Dockerfile.fem` and the Render blueprint define a bounded API using the actual Rust `toetsbrug` and `doorsnedemotor` executables. Vercel packaging forwards the two FEM API endpoints to that service. This configuration remains undeployed and needs Linux container and live-service verification before release. Local acceptance uses port 10000 for the API and the frontend preview proxy; `deployment/verify-fem-browser.mjs` checks the real browser-to-Rust path.
+The FEM release configuration targets `design-mockup`, the canonical frontend. `deployment/Dockerfile.fem` builds the actual Rust `toetsbrug` and `doorsnedemotor` executables on Linux. The service is deployed at `https://spanvision-fem-engine.onrender.com`; Vercel forwards both FEM API endpoints to it. Live checks passed for rectangle area and inertia, invalid sections and commands, input limits and recovery, including through the Vercel frontend. Local acceptance uses port 10000 for the API and the frontend preview proxy; `deployment/verify-fem-browser.mjs` also passed against the deployed canonical frontend.
 
 The deployment uses anonymous workspaces. The cloud middleware issues private HttpOnly cookies, strips visitor identity headers, and supplies an internal tenant identity. BIM project/model/job state and STL designs must not be shared across workspace cookies. Browser profiles store a display name locally and do not authenticate a person.
 
@@ -34,7 +34,7 @@ wasm-pack build ofs-wasm --target web --release -- --locked
 
 Run this from `frame-vision-studio`, copy the generated JavaScript/WASM pair into `ui/public/wasm`, run the browser integration tests, then rebuild the frontend. Do not deploy a new JavaScript bridge with an older incompatible WASM binary.
 
-FEM canonical v2 source is `fem-vision-studio/design-mockup`. Its solver sidecar is built by `npm run build:sidecar`. Native prerequisites include `cargo build --locked --release -p toetsbrug` and `-p openaec-mcp-server` from `src-tauri`. A green v2 test suite does not certify the currently deployed v1 frontend.
+FEM canonical v2 source is `fem-vision-studio/design-mockup`. Its solver sidecar is built by `npm run build:sidecar`. Native prerequisites include `cargo build --locked --release -p toetsbrug` and `-p openaec-mcp-server` from `src-tauri`. The deployed v2 browser frontend has separate live API and theme checks; Windows package acceptance remains outstanding.
 
 ## Cloud controls
 

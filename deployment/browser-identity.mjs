@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { installWorkspaceUi } from './browser-ui.mjs';
 
 const icons = fileURLToPath(new URL('./browser-icons/',import.meta.url));
 export function brandBrowserHtml(html, prefix = '/__spanvision-brand/') {
@@ -27,6 +28,7 @@ export async function installBrowserIdentity(directory, {entries=['index.html'],
     const html = await fs.readFile(file,'utf8');
     await fs.writeFile(file,brandBrowserHtml(html,prefix));
   }
+  await installWorkspaceUi(directory,{entries,prefix:prefix.replace('__spanvision-brand','__spanvision-ui')});
 }
 if(process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if(!process.argv[2])throw new Error('Provide the browser output directory.');

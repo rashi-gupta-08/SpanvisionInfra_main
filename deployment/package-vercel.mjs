@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { installBrowserIdentity } from './browser-identity.mjs';
+import { installWorkspaceUi } from './browser-ui.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const brand = JSON.parse(await fs.readFile(path.join(root, 'branding/brand.json'), 'utf8'));
@@ -16,6 +17,7 @@ const source = path.join(root, module.directory, module.dist);
 await fs.access(path.join(source, module.path === '/app/' ? 'app/index.html' : 'index.html'));
 await fs.cp(source, staticDir, { recursive: true, filter: sourcePath => !sourcePath.endsWith('.map') && path.basename(sourcePath) !== 'suite-build.json' });
 if(id !== 'hub') await installBrowserIdentity(staticDir,{entries:[id === 'cad' ? 'app/index.html' : 'index.html']});
+else await installWorkspaceUi(staticDir,{optionalEntries:['launch.html']});
 const routes = [
   { src: '/.*', headers: { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin' }, continue: true },
   { handle: 'filesystem' },

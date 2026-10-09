@@ -3,6 +3,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { root,brand,write,fingerprint,digest,appDirectory } from './common.mjs';
 import { stlInputs, pythonPath } from './stl.mjs';
+import { installBrowserIdentity } from '../deployment/browser-identity.mjs';
 const requested=process.argv.slice(2);
 const modules=brand.modules.filter(m=>!requested.length||requested.includes(m.id));
 const out=path.join(root,'qa/suite');fs.mkdirSync(out,{recursive:true});
@@ -58,6 +59,8 @@ async function build(module) {
    // Build the browser entry directly, bypassing only native runtime preparation.
    await run(process.execPath,[path.join(app,'node_modules/vite/bin/vite.js'),'build'],app,module.id+'-build');
  }
+ await installBrowserIdentity(dist,{entries:module.id==='cad'?['app/index.html']:module.id==='stl'?['index.html','web/index.html']:['index.html'],prefix:module.id==='stl'?'/static/__spanvision-brand/':'/__spanvision-brand/'});
+ if(module.id==='stl')fs.cpSync(path.join(dist,'__spanvision-brand'),path.join(dist,'web/__spanvision-brand'),{recursive:true});
  if(fingerprint(module)!==source)throw new Error(`${module.label} source changed during its build; rebuild before previewing.`);
  write(path.relative(root,path.join(dist,'suite-build.json')),JSON.stringify({id:module.id,brandDigest:digest(module),sourceFingerprint:source,builtAt:new Date().toISOString(),...(module.id==='stl'?{inputs:stlInputs(module)}:{})},null,2)+'\n');
  console.log(`${module.label} built and stamped.`);

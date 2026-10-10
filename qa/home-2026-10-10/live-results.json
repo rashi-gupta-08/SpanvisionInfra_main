@@ -1,6 +1,6 @@
 {
-  "verifiedAt": "2026-10-10T13:00:58.960Z",
-  "origin": "https://spanvision-infra.vercel.app",
+  "verifiedAt": "2026-10-10T16:03:18.649Z",
+  "origin": "http://127.0.0.1:4231",
   "checks": [
     {
       "name": "Real preview: themes, pricing regions, annual totals, plan dialog and anonymous tools",

@@ -1,6 +1,6 @@
 {
   "origin": "https://spanvision-infra.vercel.app",
-  "verifiedAt": "2026-10-10T15:44:33.328Z",
+  "verifiedAt": "2026-10-10T16:11:21.464Z",
   "checks": [
     {
       "name": "Real unconfigured website: admin is hidden and anonymous API access is rejected",

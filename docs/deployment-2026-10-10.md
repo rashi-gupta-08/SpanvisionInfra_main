@@ -14,7 +14,36 @@ Release branch: **`version/V.1.0`**. Source repository: [SpanvisionInfra_main](h
 
 ## Deployment plan and status
 
-The source commit and cloud refresh are being recorded with this release. Final deployment IDs, commit hashes, timestamps and live-check results will be added after completion.
+Completed on **10 October 2026**. Application commit: `a54f958b`; deployment-script fixes: `30442a33`. Both commits are pushed to `version/V.1.0` in the canonical and rashi-gupta-08 repositories.
+
+The existing main site and all 14 static tool projects were refreshed on Vercel. All three Render services are **live** from `30442a334e79a00f0740e28821f1b00a26b5a2f1`, using the existing free Singapore services. BIM/STL live build filters now match the blueprint. The final documentation commit does not change deployed application behavior.
+
+Live verification completed at **21:42 IST**: Home/account/admin checks passed, all 17 website/tool pages passed font/CSS and both-theme checks, Render health/readiness endpoints passed, and the FEM rectangle area/inertia reference passed directly and through Vercel. Anonymous admin APIs returned 401 without private data. No sample admin session was published.
+
+| Project | Deployment ID |
+| --- | --- |
+| Main Spanvision Infra website | `dpl_2racRDPb2ABvrhy3ahe27L8qtXKv` |
+| Vision CAD Studio | `dpl_8NYiGz89D3zcYGfMCGjZhfK5NwP7` |
+| 2D Vision Studio | `dpl_FQp6AwtnUm4Wxq6JUjKGNHLtDF6s` |
+| Vision Portable Document Studio | `dpl_7sKUQqgKc2yhh4Rj1R6BBEBnFmxz` |
+| Vision IFC Studio | `dpl_AnnF2YLdPkWozdTt6aiGLevJ6xgb` |
+| Calc Vision Studio | `dpl_FK2epiu9adB323iC8FEbxDzKiLif` |
+| Open Vision Studio | `dpl_7uGN1jXZTRpuYxBGbmCzh8H18r7G` |
+| FEM Vision Studio | `dpl_32D75qUjBebxtR7DFwzBwrevyk6U` |
+| Frame Vision Studio | `dpl_FkBGUkS2SGN5fAZwSCoTXY1a9ibE` |
+| Vision Calculation Studio | `dpl_9HTXuwqPkYRcn2ZamCY6WZ4kNnW9` |
+| Vision Geotech Studio | `dpl_9eSG5zXhHY9nNY5ikMwWmk1m9TPW` |
+| Speech Vision Studio | `dpl_F6hfPFJtaPFCxPUuYDt7EwPhbcNn` |
+| Vision Field Studio | `dpl_DVc9HoQxkcemvcJP6uCNQZBdbqtb` |
+| Vision Pointcloud Studio | `dpl_GKtEcjTDwM4xzbsqESb5Gj8EVvNY` |
+| Vision Pile Studio | `dpl_9dL54cnHWnZ1f3aWZWQpyLDcF9wS` |
+| bim | `dep-db566249v7es738q2r1g` |
+| fem-engine | `dep-db566bad0e5s73ebg8b0` |
+| stl | `dep-db566249v7es738q2r40` |
+
+Exact URLs, commit hashes and timestamps are in [deployment-record.json](../qa/deployment/release-2026-10-10/deployment-record.json). Live API results are in [api-checks.json](../qa/deployment/release-2026-10-10/api-checks.json); page/theme results are in [workspace-checks.json](../qa/deployment/release-2026-10-10/workspace-checks.json).
+
+The machine ran out of C: space during a deployment-record write. Generated browser builds were preserved on D: behind junctions, the record was recovered from successful Vercel CLI logs, and the publisher now writes its report atomically and resolves build junctions before packaging. No source or user files were deleted.
 
 | Application | Hosting |
 | --- | --- |

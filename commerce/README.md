@@ -4,6 +4,10 @@ Updated: **10 October 2026**.
 
 These additions use the existing live site at `https://spanvision-infra.vercel.app/`. Home opens first and keeps the Spanvision Infra company heading, supplied logo and architecture animation. Pricing, FAQ, sign-in and create-account links sit in the main navigation; Tools opens the existing catalogue of all 16 workspaces. No separate site or replacement brand has been created. Dark remains the default; light mode and reduced motion are supported.
 
+## Sign-up availability fix — 10 October 2026
+
+When the authentication provider is unconfigured, account forms now disable submission and direct visitors to a local profile or anonymous tools. The submit handler also rejects programmatic submission in that state, preventing unnecessary credential requests and 503 console errors. Server-side setup checks remain in place. This does not activate real sign-up; complete the Supabase setup below.
+
 ## Current state
 
 - Published to the existing `https://spanvision-infra.vercel.app/` production website on **10 October 2026**. Only the hub was deployed; the tool applications and Render services were not changed by this home-page update.

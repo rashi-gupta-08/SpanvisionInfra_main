@@ -58,15 +58,16 @@ try{
     const context=await browser.newContext();const page=await context.newPage();
     try{
       await page.goto(origin+'/#signup',{waitUntil:'networkidle'});
+      let submissions=0;page.on('request',request=>{if(request.method()==='POST'&&request.url().includes('/api/account/'))submissions++;});
+      const submit=page.getByRole('button',{name:/Online accounts unavailable/});
+      await submit.waitFor();assert(await submit.isDisabled());
       await page.getByRole('textbox',{name:'Full name'}).fill('Preview Engineer');
       await page.getByRole('textbox',{name:'Email address'}).fill('preview@example.test');
       await page.locator('input[name="password"]').fill('strong-test-password');
-      await page.locator('input[name="confirm"]').fill('different-test-password');
-      await page.getByRole('button',{name:/Create account/}).click();
-      assert.match(await page.getByRole('alert').innerText(),/do not match/);
       await page.locator('input[name="confirm"]').fill('strong-test-password');
-      await page.getByRole('button',{name:/Create account/}).click();
-      await page.getByRole('alert').filter({hasText:'setup is in progress'}).waitFor();
+      await page.locator('form.identity-form').evaluate(form=>form.requestSubmit());
+      assert.equal(submissions,0,'Unconfigured authentication must not submit credentials');
+      assert(await page.getByRole('link',{name:/Create local profile/}).isVisible());
       await page.getByRole('button',{name:'Show password'}).click();
       assert.equal(await page.locator('input[name="password"]').getAttribute('type'),'text');
       await page.getByRole('button',{name:'Hide password'}).click();

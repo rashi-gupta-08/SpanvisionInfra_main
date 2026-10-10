@@ -8,7 +8,6 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cobe": "2.0.1",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "6.4.299",
     "solid-js": "^1.9.11",

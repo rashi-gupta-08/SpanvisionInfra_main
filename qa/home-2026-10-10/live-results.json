@@ -1,0 +1,23 @@
+{
+  "verifiedAt": "2026-10-10T13:00:58.960Z",
+  "origin": "https://spanvision-infra.vercel.app",
+  "checks": [
+    {
+      "name": "Real preview: themes, pricing regions, annual totals, plan dialog and anonymous tools",
+      "passed": true
+    },
+    {
+      "name": "Real preview: sign-up validation and honest unconfigured-account response",
+      "passed": true
+    },
+    {
+      "name": "Mobile widths: home, pricing, sign-in and sign-up in both themes",
+      "passed": true
+    },
+    {
+      "name": "UI contract with mocked provider: sign-up verification, sign-in, recovery and sign-out",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

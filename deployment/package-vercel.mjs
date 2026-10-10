@@ -14,7 +14,8 @@ const output = path.join(root, 'qa/deployment/output', id);
 await fs.mkdir(output, { recursive: true });
 const staticDir = path.join(output, '.vercel/output/static');
 await fs.mkdir(staticDir, { recursive: true });
-const source = path.join(root, module.directory, module.dist);
+// Windows builds may live on another drive behind a directory junction.
+const source = await fs.realpath(path.join(root, module.directory, module.dist));
 await fs.access(path.join(source, module.path === '/app/' ? 'app/index.html' : 'index.html'));
 await fs.cp(source, staticDir, { recursive: true, filter: sourcePath => !sourcePath.endsWith('.map') && path.basename(sourcePath) !== 'suite-build.json' });
 if(id !== 'hub') await installBrowserIdentity(staticDir,{entries:[id === 'cad' ? 'app/index.html' : 'index.html']});

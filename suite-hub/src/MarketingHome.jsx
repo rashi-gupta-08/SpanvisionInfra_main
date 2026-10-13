@@ -1,5 +1,4 @@
 import {For,Show,createSignal} from 'solid-js';
-import ArchitectureDrawing from './ArchitectureDrawing';
 import {plans,regions,selection,formatPrice} from '../../commerce/catalog.mjs';
 import {accountRequest} from './account-client';
 
@@ -42,12 +41,11 @@ export default function MarketingHome(props){
   return <div class="marketing-home">
     <section class="company-home-page" aria-labelledby="home-heading"><div class="company-intro">
       <div class="company-intro-copy">
-        <span class="eyebrow" data-sv-reveal><i class="intro-line"/>ENGINEERING & INFRASTRUCTURE</span>
         <h1 id="home-heading" data-sv-reveal>{props.organization}</h1>
         <div class="company-intro-bottom"><p data-sv-reveal>From first sketch to final calculation.<br/>Draw, validate, plan and build in one connected workspace.</p><div class="intro-actions" data-sv-reveal><a class="button button-light" href="#modules">Explore all tools<Arrow/></a><button class="button button-outline" onClick={props.openScan}>Explore scan & OCR</button></div></div>
         <div class="intro-summary" data-sv-reveal><span><b>{props.toolCount}</b> engineering tools</span><i/><span>One workspace. Your workflow.</span></div>
       </div>
-      <ArchitectureDrawing mode={props.mode}/>
+      <picture class="landing-cover" aria-hidden="true"><source media="(max-width: 767px)" srcset="/bridge-steel-cover.png" width="941" height="1672"/><img class="landing-cover-image" src="/bridge-steel-cover-wide.png" width="1916" height="821" alt="" loading="eager" fetchpriority="high" decoding="async" draggable="false" onError={event=>{event.currentTarget.style.visibility='hidden';}}/></picture>
     </div>
     <section class="home-account-access" aria-labelledby="account-access-heading"><div><span class="eyebrow">YOUR WORKSPACE</span><h2 id="account-access-heading">{props.account.user()?'Welcome back.':'Explore freely. Sign in when you need to.'}</h2><p>Your tools are available without an account. Account access and subscriptions live here, alongside your toolkit.</p></div><div class="home-account-actions"><Show when={props.account.user()} fallback={<><a href="#login" class="button button-outline">Sign in</a><a href="#signup" class="button button-light">Create account<Arrow/></a></>}><a href="#account" class="button button-light">My account<Arrow/></a></Show></div></section>
     </section>

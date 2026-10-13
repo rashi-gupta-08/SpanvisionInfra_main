@@ -40,3 +40,33 @@
 @media(max-width:850px){.marketing-header{padding:20px;gap:16px;flex-wrap:wrap}.marketing-header .brand-lockup{flex:1;font-size:14px}.marketing-header nav{order:4;width:100%;margin:0;justify-content:space-between;gap:18px}.marketing-header .header-sign-in{font-size:11px}.marketing-header .header-action{display:none}.marketing-header .sv-appearance-control{margin-left:0}}
 @media(max-width:767px){.marketing-section{padding:54px 20px}.company-home-page{padding:30px 20px 0}.home-account-access{flex-direction:column;align-items:flex-start;gap:24px;padding:28px 0}.home-account-access h2{font-size:23px}.home-account-actions{width:100%;flex-direction:row}.home-account-actions .button{flex:1;padding:12px;font-size:11px;white-space:normal;gap:10px}.marketing-section-heading{flex-direction:column;align-items:flex-start;gap:22px;margin-bottom:28px}.marketing-section-heading>p{font-size:12px}.pricing-grid,.faq-section,.online-account-grid{grid-template-columns:1fr}.faq-section{gap:32px}.pricing-controls{align-items:flex-start;flex-direction:column;gap:18px}.billing-toggle{width:100%}.billing-toggle button{flex:1;padding:9px 12px}.billing-toggle button span{display:block;margin:2px 0 0}.region-selector{width:100%;justify-content:space-between}.region-selector select{flex:1;max-width:230px}.pricing-draft{align-items:flex-start;flex-direction:column;gap:6px;font-size:10px}.price-card{padding:26px}.plan-caption{min-height:0}.plan-price strong{font-size:48px}.payment-strip{gap:14px 20px}.payment-strip>span{width:100%}.payment-strip>span:last-child{margin-left:0}.identity-page{margin:24px 20px 50px;grid-template-columns:1fr;min-height:0;border-radius:16px}.identity-story{display:none}.identity-form-panel{padding:28px 24px}.identity-back{margin-bottom:28px}.identity-form-panel h1{font-size:32px}.online-account-heading{align-items:flex-start;flex-direction:column}.online-account h1{font-size:38px}.online-account-grid>article{padding:24px}.signed-out-card{padding:30px 0}.signed-out-card .text-button{display:flex;margin-left:0;margin-top:12px}}
 @media(forced-colors:active){.price-card,.architecture-viewport,.identity-story{background:Canvas!important;border-color:CanvasText}.plan-price strong,.marketing-section h2{color:CanvasText}}
+
+/* The landscape artwork spans the hero; the original portrait serves phones. */
+.company-home-page{max-width:none;padding:0}
+.company-home-page .company-intro{display:flex;align-items:flex-start;min-height:540px;height:calc(100vw * 821 / 1916 + 1px);padding:0;margin:0;border-bottom:1px solid var(--sv-border);overflow:hidden;isolation:isolate}
+.company-home-page .company-intro::before{inset:0;z-index:1;opacity:1;background:linear-gradient(90deg,var(--sv-page) 0%,color-mix(in srgb,var(--sv-page) 85%,transparent) 27%,color-mix(in srgb,var(--sv-page) 42%,transparent) 48%,transparent 73%),linear-gradient(180deg,color-mix(in srgb,var(--sv-page) 55%,transparent),transparent 24%,transparent 82%,var(--sv-page));mask-image:none;pointer-events:none}
+.company-home-page .company-intro-copy{position:relative;z-index:2;width:100%;max-width:1240px;margin:0 auto;padding:40px 36px 64px;pointer-events:none}
+.company-home-page .company-intro-copy a,.company-home-page .company-intro-copy button{pointer-events:auto}
+.company-home-page .company-intro h1{font-size:clamp(52px,5.6vw,84px);max-width:690px;line-height:1.04;letter-spacing:-.055em;margin:0 0 30px}
+.company-home-page .company-intro-bottom{max-width:570px}
+.company-home-page .company-intro-bottom p{color:var(--sv-text-soft);font-size:16px;line-height:1.85;max-width:530px}
+.company-home-page .intro-summary{color:var(--sv-text-soft);margin-top:30px}
+.company-home-page .intro-actions .button-outline{background:color-mix(in srgb,var(--sv-page) 78%,transparent);backdrop-filter:blur(6px)}
+.landing-cover{position:absolute;z-index:0;inset:0;display:block;background:var(--sv-page);pointer-events:none}
+.landing-cover-image{display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;mix-blend-mode:screen;user-select:none}
+:root[data-sv-mode="light"] .landing-cover-image{filter:invert(1) grayscale(1);mix-blend-mode:multiply}
+.company-home-page .home-account-access{max-width:1168px;margin:0 auto;padding:24px 0}
+@media(max-width:1240px){.company-home-page .home-account-access{margin:0 36px}}
+@media(max-width:1023px){.company-home-page .company-intro-copy{padding-bottom:80px}.company-home-page .company-intro h1{max-width:570px}.company-home-page .company-intro-bottom p{max-width:470px;font-size:14px}}
+@media(max-width:767px){
+  .company-home-page .company-intro{height:auto;min-height:640px;align-items:flex-start}
+  .company-home-page .company-intro-copy{padding:24px 20px 220px}
+  .company-home-page .company-intro h1{font-size:clamp(43px,10.8vw,66px);max-width:520px;margin:0 0 24px}
+  .company-home-page .company-intro-bottom p{font-size:13px;max-width:430px}
+  .company-home-page .company-intro::before{background:linear-gradient(180deg,var(--sv-page) 0%,color-mix(in srgb,var(--sv-page) 88%,transparent) 29%,color-mix(in srgb,var(--sv-page) 45%,transparent) 47%,transparent 67%,color-mix(in srgb,var(--sv-page) 25%,transparent) 85%,var(--sv-page))}
+  .landing-cover{padding:0}
+  .landing-cover-image{width:100%;height:100%;max-width:none;object-position:center bottom}
+  .company-home-page .home-account-access{margin:0 20px;padding:24px 0}
+  .company-home-page .intro-summary{font-size:10px;gap:12px;margin-top:23px}
+}
+@media(forced-colors:active){.landing-cover{display:none}.company-home-page .company-intro::before{display:none}.company-home-page .company-intro{min-height:0;height:auto}.company-home-page .company-intro-copy{padding:48px 20px}.company-home-page .intro-actions .button-outline{background:Canvas}}

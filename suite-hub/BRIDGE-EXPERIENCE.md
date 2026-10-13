@@ -62,6 +62,8 @@ Publication uses the existing `version/V.1.0` release branch and the existing Ve
 
 Rechecked on 13 October 2026 before publication: the production build, all seven browser check groups and byte identity of both packaged image assets passed. The deployment package retained all seven routes, including account APIs and suite status. The checks cover homepage presentation and navigation; they do not certify every feature of the independent tools.
 
+Published on 13 October 2026 from application commit `d8f10de4c9a43518b1c7b03a391f5b170c8c07ad`, pushed to both release repositories. Vercel deployment `dpl_2hGgvFcCBPBktyXnwP7Co3rxhExd` is ready at [spanvision-infra.vercel.app](https://spanvision-infra.vercel.app/). All seven check groups also passed against production, including ten theme/viewport combinations and both asset byte identities. See [the deployment record](../docs/deployment-2026-10-13.md).
+
 ## Artwork generation
 
 Created with the built-in imagegen tool in edit mode, using the original uploaded portrait as the edit target. The output was copied into the project's public assets; the original file was preserved. Final generation prompt:

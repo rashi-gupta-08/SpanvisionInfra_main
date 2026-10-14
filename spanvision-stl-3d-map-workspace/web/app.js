@@ -1,5 +1,6 @@
 /* STL-3D map workspace - browser side.
  * The browser owns the project object; the server is stateless. */
+import { api } from './api.mjs';
 
 // Printable bodies, in print order. Colours mirror config.py DEFAULT_BANDS.
 const BODY_DEFS = [
@@ -87,16 +88,6 @@ function status(text, cls) {
   const el = $('status');
   el.textContent = text;
   el.className = cls || '';
-}
-
-async function api(path, options) {
-  const res = await fetch(path, options);
-  if (!res.ok) {
-    let detail = res.statusText;
-    try { detail = (await res.json()).detail || detail; } catch { /* not json */ }
-    throw new Error(detail);
-  }
-  return res.json();
 }
 
 function post(path, body) {
@@ -244,7 +235,7 @@ $('btn-load').onclick = async () => {
   readSettings();
   busy(true, 'Retrieving buildings (3DBAG) and OSM data…');
   try {
-    const data = await post('/api/area', { project, refresh: false });
+    const data = await post('/api/area', { project, refresh: true });
     renderArea(data);
     if (data.stats.surfaces_error) {
       status('Buildings loaded; water and roads unavailable (OSM offline).', 'err');
@@ -709,7 +700,7 @@ async function loadAppInfo() {
     $('app-version').textContent = 'v' + appInfo.version;
     if(appInfo.services.feedbackEnabled&&appInfo.feedback_url){$('btn-feedback').classList.remove('hidden');$('btn-feedback').onclick=()=>window.open(appInfo.feedback_url,'_blank','noopener,noreferrer');}
     if(appInfo.services.updaterEnabled)checkUpdate();
-  } catch { /* server not ready */ }
+  } catch (error) { status('Unable to connect to the workspace. ' + error.message, 'err'); }
 }
 
 async function checkUpdate() {

@@ -94,7 +94,7 @@ function App() {
   async function refreshStatus() {
     requestController?.abort();requestController=new AbortController();
     try {
-      const response=await fetch('/__suite/status',{signal:requestController.signal});
+      const response=await fetch('/__suite/status',{cache:'no-store',signal:requestController.signal});
       if(!response.ok)throw new Error('Preview status unavailable');
       const result=await response.json();
       if(!Array.isArray(result.modules))throw new Error('Invalid preview status');

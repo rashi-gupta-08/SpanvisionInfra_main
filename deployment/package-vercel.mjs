@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { installBrowserIdentity } from './browser-identity.mjs';
 import { installWorkspaceUi } from './browser-ui.mjs';
 import { packageCommerce } from './package-commerce.mjs';
+import { backendRoutes } from './backend-services.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const brand = JSON.parse(await fs.readFile(path.join(root, 'branding/brand.json'), 'utf8'));
@@ -27,9 +28,7 @@ const routes = [
   { src: '/.*', headers: { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin' }, continue: true },
   { handle: 'filesystem' },
 ];
-if (id === 'fem') {
-  routes.splice(1, 0, { src: '/api/(toetsing|doorsnede)', dest: 'https://spanvision-fem-engine.onrender.com/api/$1' });
-}
+routes.splice(1, 0, ...backendRoutes(id));
 if (id === 'cad') routes.push({ src: '/app(?:/.*)?', dest: '/app/index.html' });
 else routes.push({ src: '/(.*)', dest: '/index.html' });
 if (id === 'hub') {
@@ -43,10 +42,6 @@ if (id === 'hub') {
   await fs.mkdir(path.join(staticDir, '__suite'), { recursive: true });
   await fs.writeFile(path.join(staticDir, '__suite/status.json'), JSON.stringify(manifest));
   routes.splice(1, 0, { src: '/__suite/status', dest: '/__suite/status.json', headers: { 'Cache-Control': 'no-store' } });
-  routes.splice(2, 0,
-    { src: '/__suite/ready/bim', dest: 'https://spanvision-bim.onrender.com/health', headers: { 'Cache-Control': 'no-store' } },
-    { src: '/__suite/ready/stl', dest: 'https://spanvision-stl.onrender.com/__stl/status', headers: { 'Cache-Control': 'no-store' } },
-  );
 }
 await fs.writeFile(path.join(output, '.vercel/output/config.json'), JSON.stringify({ version: 3, routes }, null, 2));
 await fs.writeFile(path.join(output, 'vercel.json'), JSON.stringify({ framework: null }, null, 2));

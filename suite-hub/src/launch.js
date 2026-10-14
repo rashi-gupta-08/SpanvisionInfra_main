@@ -1,5 +1,6 @@
 import brand from './brand.json';
 import { isLocalPreview, moduleUrl } from './module-url';
+import { waitForBackend } from '../../deployment/service-readiness.mjs';
 import './launch.css';
 
 const id = new URL(location.href).searchParams.get('tool');
@@ -20,23 +21,9 @@ function delay(milliseconds, signal) {
 
 async function waitForService(signal) {
   const started = performance.now();
-  while (!signal.aborted) {
-    const attempt = new AbortController();
-    const cancel = () => attempt.abort();
-    signal.addEventListener('abort', cancel, { once: true });
-    const timeout = setTimeout(cancel, 8000);
-    try {
-      const response = await fetch(`/__suite/ready/${id}`, { cache: 'no-store', credentials: 'omit', signal: attempt.signal });
-      if (response.ok) {
-        const data = await response.json();
-        if (id === 'bim' ? data.status === 'healthy' : data.id === 'stl') return;
-      }
-    } catch { /* The service may still be starting; keep the splash visible. */ }
-    finally { clearTimeout(timeout); signal.removeEventListener('abort', cancel); }
+  await waitForBackend(id, `/__suite/ready/${id}`, { signal, onWaiting() {
     status.textContent = performance.now() - started > 45000 ? 'The workspace is still starting. Please wait…' : 'Preparing workspace…';
-    await delay(1500, signal);
-  }
-  throw new DOMException('Cancelled', 'AbortError');
+  } });
 }
 
 function updateAppearance() {
@@ -72,7 +59,7 @@ async function openWorkspace() {
     if (!state?.available) throw new Error('This workspace is currently unavailable. Please try again shortly.');
     const url = moduleUrl(module, state, window.SpanvisionAppearance.getMode(), location.hostname);
     if (!url || (!isLocalPreview(location.hostname) && new URL(url).protocol !== 'https:')) throw new Error('This workspace has no valid deployment address.');
-    if (!isLocalPreview(location.hostname) && state.platform === 'render' && ['bim', 'stl'].includes(id)) {
+    if (!isLocalPreview(location.hostname) && ['bim', 'stl', 'fem'].includes(id)) {
       stage = 'startup';
       clearTimeout(timeout);
       timeout = setTimeout(() => request.abort(), 120000);

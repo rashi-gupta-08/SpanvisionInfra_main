@@ -57,7 +57,7 @@ export default function CalcTab({ onSettingsClick: _onSettingsClick }: CalcTabPr
 
   const handleNew = useCallback(() => {
     if (useProjectStore.getState().dirty) {
-      const ok = confirm("Niet-opgeslagen wijzigingen worden weggegooid. Doorgaan?");
+      const ok = confirm("Unsaved changes will be discarded. Continue?");
       if (!ok) return;
     }
     nieuwProject();
@@ -93,7 +93,7 @@ export default function CalcTab({ onSettingsClick: _onSettingsClick }: CalcTabPr
     <div className="ribbon-content">
       <div className="ribbon-groups">
         <RibbonGroup label={t("calc.file", "Bestand")}>
-          <RibbonButton icon={newDocIcon} label={t("calc.new", "Nieuw")} size="large" onClick={handleNew} />
+          <RibbonButton icon={newDocIcon} label={t("calc.new", "New")} size="large" onClick={handleNew} />
           <RibbonButton icon={openFolderIcon} label={t("calc.browse", "Browse…")} size="large" onClick={handleOpen} />
           <RibbonButton icon={saveDiskIcon} label={t("calc.save", "Save")} size="large" onClick={handleSave} />
         </RibbonGroup>

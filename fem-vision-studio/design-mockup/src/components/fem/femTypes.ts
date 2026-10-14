@@ -376,13 +376,13 @@ export type BeamLoadRole =
 
 /** Volgorde + NL-labels van de staaftypen, voor dropdowns en tabellen. */
 export const BEAM_LOAD_ROLES: { id: BeamLoadRole; label: string; kort: string }[] = [
-  { id: "gevelLinks",  label: "Linkergevel",          kort: "Gevel L" },
-  { id: "gevelRechts", label: "Rechtergevel",         kort: "Gevel R" },
-  { id: "dakPlat",     label: "Plat dak (≤ 5°)",      kort: "Dak plat" },
-  { id: "dakHellend",  label: "Hellend dak (> 5°)",   kort: "Dak hellend" },
-  { id: "overstek",    label: "Overstek / luifel",    kort: "Overstek" },
-  { id: "vloer",       label: "Vloer",                kort: "Vloer" },
-  { id: "binnen",      label: "Binnenstaaf (geen windvlak)", kort: "Binnen" },
+  { id: "gevelLinks",  label: "Left facade",          kort: "Gevel L" },
+  { id: "gevelRechts", label: "Right facade",         kort: "Gevel R" },
+  { id: "dakPlat",     label: "Flat roof (≤ 5°)",      kort: "Dak plat" },
+  { id: "dakHellend",  label: "Pitched roof (> 5°)",   kort: "Dak hellend" },
+  { id: "overstek",    label: "Overhang / canopy",    kort: "Overstek" },
+  { id: "vloer",       label: "Floor",                kort: "Vloer" },
+  { id: "binnen",      label: "Internal member (no wind surface)", kort: "Binnen" },
 ];
 
 /**
@@ -1846,7 +1846,7 @@ export const DEFAULT_STRUCTURAL_GRID: StructuralGrid = {
   enabled: true,
   xAxes: [
     { id: "A", label: "A", position: 0 },
-    { id: "B", label: "B", position: 12000 },
+    { id: "B", label: "V", position: 12000 },
   ],
   zAxes: [
     { id: "1", label: "1", position: 0 },

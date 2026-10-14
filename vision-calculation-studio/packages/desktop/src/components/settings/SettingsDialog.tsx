@@ -359,7 +359,7 @@ function UnitsTabContent({
 
       <h3 style={{ marginTop: 16 }}>{t("units.defaults", "Default display units")}</h3>
       <div className="settings-row">
-        <span className="settings-label">{t("units.length", "Lengte")}</span>
+        <span className="settings-label">{t("units.length", "Length")}</span>
         <ThemedSelect
           value={units.defaultLength}
           options={[

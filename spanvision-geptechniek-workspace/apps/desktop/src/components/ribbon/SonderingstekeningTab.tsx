@@ -265,7 +265,7 @@ export default function SonderingstekeningTab() {
             />
             <RibbonButton
               icon={deleteIcon}
-              label={t("tekening.deleteSelection", "Verwijderen")}
+              label={t("tekening.deleteSelection", "Delete")}
               size="small"
               title={t("tekening.deleteHint", "Delete the selected object (Delete)")}
               onClick={() => dispatch("ogs:tekening-delete")}

@@ -257,7 +257,7 @@ function SymbolContent() {
                     <button
                       id="btn-systeemtypen"
                       class="sp-settings-btn"
-                      title="Systeemtypen beheren"
+                      title={"Manage system types"}
                       onClick={(e) => { e.stopPropagation(); openDialog('systeemtypen'); }}
                       innerHTML={`<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="1" width="10" height="10"/><line x1="4.3" y1="1" x2="4.3" y2="11"/><line x1="7.6" y1="1" x2="7.6" y2="11"/><line x1="1" y1="4.3" x2="11" y2="4.3"/><line x1="1" y1="7.6" x2="11" y2="7.6"/></svg>`}
                     />
@@ -485,7 +485,7 @@ export function SymbolSettingsDialog() {
               </select>
             </label>
             <label class="sp-settings-locale-field">
-              <span>Land</span>
+              <span>Country</span>
               <select value={selectedCountry()} onChange={(e) => setSelectedCountry(e.target.value)}>
                 <For each={libraryCountries()}>
                   {(c) => <option value={c.id} selected={c.id === selectedCountry()}>{c.flag ? c.flag + ' ' : ''}{c.name}</option>}
@@ -494,16 +494,16 @@ export function SymbolSettingsDialog() {
             </label>
           </div>
           <Show when={indexStatus() === 'loading'}>
-            <div class="sp-settings-download sp-settings-download-note">Online bibliotheek laden…</div>
+            <div class="sp-settings-download sp-settings-download-note">Loading online library…</div>
           </Show>
           <Show when={indexStatus() === 'offline'}>
-            <div class="sp-settings-download sp-settings-download-note">Online bibliotheek niet bereikbaar — beperkte landenlijst</div>
+            <div class="sp-settings-download sp-settings-download-note">Online library unavailable — limited country list</div>
           </Show>
           <Show when={dlInfo().toFetch.length > 0 || dlInfo().tagOnly.length > 0 || downloadBusy()}>
             <div class="sp-settings-download">
               <Show when={!downloadBusy()} fallback={
                 <span class="sp-settings-download-label">
-                  Downloaden {Math.min((downloadProgress()?.done ?? 0) + 1, downloadProgress()?.total ?? 1)}/{downloadProgress()?.total ?? 1}: {downloadProgress()?.label || ''}
+                  Download {Math.min((downloadProgress()?.done ?? 0) + 1, downloadProgress()?.total ?? 1)}/{downloadProgress()?.total ?? 1}: {downloadProgress()?.label || ''}
                 </span>
               }>
                 <span class="sp-settings-download-label">
@@ -519,7 +519,7 @@ export function SymbolSettingsDialog() {
             </div>
           </Show>
           <Show when={downloadError()}>
-            <div class="sp-settings-download sp-settings-download-error">Download mislukt: {downloadError()}</div>
+            <div class="sp-settings-download sp-settings-download-error">Download failed: {downloadError()}</div>
           </Show>
           <div class="sp-settings-body">
             <For each={allCategories().filter(c => matchesLocale(c, selectedIndustry(), selectedCountry()))}>

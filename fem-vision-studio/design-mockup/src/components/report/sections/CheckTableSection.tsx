@@ -92,7 +92,7 @@ function MaatgevendeHerkomst({ result, namen }: {
   if (m.positieMm !== null) {
     delen.push(
       t("report.maatgevendPositie", "x = {{x}} mm", {
-        x: m.positieMm.toLocaleString("nl-NL", { maximumFractionDigits: 0 }),
+        x: m.positieMm.toLocaleString("en-GB", { maximumFractionDigits: 0 }),
       }),
     );
   }

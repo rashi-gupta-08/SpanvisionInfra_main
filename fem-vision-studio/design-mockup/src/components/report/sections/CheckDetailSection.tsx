@@ -147,7 +147,7 @@ export function VerloopBlok({ verloop }: { verloop: VerloopRapport }) {
       <p className="rpt-note">
         {t("report.verloopNoot", {
           defaultValue:
-            "De maten verlopen lineair van {{begin}} bij x = 0 naar {{eind}} bij x = L. Elke doorsnedetoets is op alle {{aantal}} rekenpunten met de plaatselijke doorsnede uitgevoerd; hieronder staan er zes, plus — met een * achter de plaats — het maatgevende rekenpunt.",
+            "Dimensions vary linearly from {{begin}} at x = 0 to {{eind}} at x = L. Every cross-section check was carried out at all {{aantal}} evaluation points using the local cross-section; six of them are listed below, plus — marked with * after the position — the governing evaluation point.",
           begin: verloop.begin_naam,
           eind: verloop.eind_naam,
           aantal: verloop.aantal_rekenpunten,
@@ -183,7 +183,7 @@ export function VerloopBlok({ verloop }: { verloop: VerloopRapport }) {
         <p className="rpt-note">
           {t("report.verloopMaatgevend", {
             defaultValue:
-              "Maatgevend punt: x = {{x}} mm (t = {{t}}), toets {{toets}}, UC = {{uc}}.",
+              "Governing point: x = {{x}} mm (t = {{t}}), check {{toets}}, UC = {{uc}}.",
             x: fmtValue(verloop.maatgevend.doorsnede.x_mm, 0),
             t: fmtValue(verloop.maatgevend.doorsnede.t, 3),
             toets: splitsArtikel(verloop.maatgevend.toets_id).artikel,
@@ -485,7 +485,7 @@ export default function CheckDetailSection() {
             {weggelaten > 0 &&
               `${t("report.staafKeuzeNoot", {
                 defaultValue:
-                  "Van {{aantal}} van de {{totaal}} getoetste staven is de uitgebreide uitvoer op verzoek weggelaten; die staven staan wel in het toetsingsoverzicht.",
+                  "For {{aantal}} of the {{totaal}} checked members the detailed output was left out on request; those members do appear in the check overview.",
                 aantal: weggelaten,
                 totaal: results.length,
               })} `}

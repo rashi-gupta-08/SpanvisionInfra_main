@@ -198,7 +198,7 @@ function BetonStaafBlok({
                 />
                 <div className="rpt-figuur-bijschrift">
                   {t("report.betonDoorsnedeBijschrift", {
-                    defaultValue: "Doorsnede {{naam}} mm met wapeningskorf (ware schaal).",
+                    defaultValue: "Cross-section {{naam}} mm with reinforcement cage (true to scale).",
                     naam: r.section_name,
                   })}
                 </div>
@@ -418,7 +418,7 @@ function BetonStaafBlok({
                   <p className="rpt-bet-verwijzing">
                     {t("report.betonKetenVerwijzing", {
                       defaultValue:
-                        "De volledige afleiding van deze toets — {{aantal}} stappen, elk met formule, ingevulde waarden, vindplaats en de aannamen die eronder liggen — staat in het hoofdstuk “Toetsing per staaf”, op het gedetailleerde niveau.",
+                        "The full derivation of this check — {{aantal}} steps, each with formula, substituted values, reference and the underlying assumptions — is given in the chapter “Check per member”, at the detailed level.",
                       aantal: c.deelstappen.length,
                     })}
                   </p>
@@ -444,7 +444,7 @@ function BetonStaafBlok({
                 {diagram
                   ? t("report.betonMKappaBijschrift", {
                       defaultValue:
-                        "M-κ-diagram bij N_Ed = {{n}} kN. M_Rd = {{mrd}} kNm bij κ_u = {{ku}}·10⁻³/m.",
+                        "M-κ diagram at N_Ed = {{n}} kN. M_Rd = {{mrd}} kNm at κ_u = {{ku}}·10⁻³/m.",
                       n: fmtValue(diagram.n_kn, 1),
                       mrd: fmtValue(diagram.m_max_knm, 1),
                       ku: fmtValue(diagram.kappa_u_per_m * 1e3, 2),
@@ -468,7 +468,7 @@ function BetonStaafBlok({
                   <div className="rpt-figuur-bijschrift">
                     {t("report.betonInteractieBijschrift", {
                       defaultValue:
-                        "N-M-interactiediagram (bezwijkomhullende) met het rekenpunt (N_Ed; M_Ed) = ({{n}} kN; {{m}} kNm). De streeplijn is de horizontale snede M_Rd(N_Ed) waarop de unity check rust.",
+                        "N-M interaction diagram (failure envelope) with the design point (N_Ed; M_Ed) = ({{n}} kN; {{m}} kNm). The dashed line is the horizontal cut M_Rd(N_Ed) on which the unity check rests.",
                       n: nEd === undefined ? "—" : fmtValue(nEd, 1),
                       m: mEd === undefined ? "—" : fmtValue(mEd, 1),
                     })}
@@ -790,13 +790,13 @@ export default function BetonSection() {
             {checkedTime && `${t("report.checkedAt", "Toetsing uitgevoerd op")} ${checkedTime}. `}
             {t("report.betonMethodeNoot", {
               defaultValue:
-                "Methode: doorsnedetoetsing op buiging met normaalkracht volgens {{norm}}, in de uiterste grenstoestand. Twee toetsen op hetzelfde punt: de rechthoekige spanningsverdeling van 3.1.7(3) (de klassieke handberekening) en de M-N-κ-berekening met het parabool-rechthoekdiagram van 3.1.7(1), waarbij M_Rd(N_Ed) het grootste moment op het M-κ-diagram bij N_Ed is. Bij druk geldt de minimale excentriciteit van 6.1(4). Tekenconventie: N positief is trek, M positief is trek in de onderste vezel.",
+                "Method: cross-section check for bending with axial force to {{norm}}, in the ultimate limit state. Two checks at the same point: the rectangular stress distribution of 3.1.7(3) (the classic hand calculation) and the M-N-κ calculation with the parabola-rectangle diagram of 3.1.7(1), where M_Rd(N_Ed) is the largest moment on the M-κ diagram at N_Ed. Under compression the minimum eccentricity of 6.1(4) applies. Sign convention: N positive is tension, M positive is tension in the bottom fibre.",
               norm: betonNorm,
             })}{" "}
             {weggelaten > 0 &&
               t("report.betonStaafKeuzeNoot", {
                 defaultValue:
-                  "Van {{aantal}} van de {{totaal}} betonstaven is de uitwerking op verzoek weggelaten; die staven staan wel in het toetsingsoverzicht.",
+                  "For {{aantal}} of the {{totaal}} concrete members the elaboration has been omitted on request; those members do appear in the check summary.",
                 aantal: weggelaten,
                 totaal: beton.length,
               })}

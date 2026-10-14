@@ -89,7 +89,7 @@ function SpanningStaafBlok({ r }: { r: SpanningBeamCheckResult }) {
             <div className="rpt-figuur-bijschrift">
               {t("report.spanningFiguurBijschrift", {
                 defaultValue:
-                  "Doorsnede met het spanningsverloop bij de maatgevende snede (x = {{x}} mm, combinatie {{combo}}): N = {{n}} kN, Vz = {{v}} kN, My = {{m}} kNm. Trek positief; de streeplijn in het rechterpaneel is fd = {{fd}} N/mm².",
+                  "Cross-section with the stress distribution at the governing section (x = {{x}} mm, combination {{combo}}): N = {{n}} kN, Vz = {{v}} kN, My = {{m}} kNm. Tension positive; the dashed line in the right-hand panel is fd = {{fd}} N/mm².",
                 x: fmtValue(v!.position_mm, 0),
                 combo: v!.combination_id,
                 n: fmtValue(v!.n_ed_kn, 2),
@@ -190,7 +190,7 @@ export default function SpanningSection() {
             {weggelaten > 0 &&
               t("report.spanningStaafKeuzeNoot", {
                 defaultValue:
-                  "Van {{aantal}} van de {{totaal}} staven is de uitwerking op verzoek weggelaten; die staven staan wel in het toetsingsoverzicht.",
+                  "For {{aantal}} of the {{totaal}} members the derivation has been omitted on request; those members are still listed in the check overview.",
                 aantal: weggelaten,
                 totaal: spanning.length,
               })}

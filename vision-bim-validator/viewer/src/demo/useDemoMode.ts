@@ -88,7 +88,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
   validation_timestamp: new Date().toISOString(),
   specifications: [
     {
-      specification_name: "Alle elementen moeten een classificatie hebben",
+      specification_name: "All elements must have a classification",
       status: "fail",
       severity: "error",
       total_requirements: 1,
@@ -96,7 +96,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
       requirements: [
         {
           requirement_description:
-            "Elk IfcElement moet een NL/SfB classificatie bevatten",
+            "Each IfcElement must contain an NL/SfB classification",
           status: "fail",
           total_elements: 2847,
           failed_elements: 42,
@@ -113,7 +113,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
               element_type: "IfcSlab",
               element_name: "Floor: Concrete 300 mm",
               status: "fail",
-              messages: ["Classificatie ontbreekt (verwacht: NL/SfB)"],
+              messages: ["Classification is missing (expected: NL/SfB)"],
             },
             {
               global_id: "1FNFp$3YP0$fMaDNLqKrn2",
@@ -127,7 +127,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
       ],
     },
     {
-      specification_name: "Brandwerendheid moet zijn gespecificeerd",
+      specification_name: "Fire resistance must be specified",
       status: "fail",
       severity: "error",
       total_requirements: 2,
@@ -135,7 +135,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
       requirements: [
         {
           requirement_description:
-            "IfcWall en IfcSlab moeten Pset_WallCommon.FireRating bevatten",
+            "IfcWall and IfcSlab must contain Pset_WallCommon.FireRating",
           status: "fail",
           total_elements: 486,
           failed_elements: 18,
@@ -145,13 +145,13 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
               element_type: "IfcWall",
               element_name: "Binnenwand: Gips 100",
               status: "fail",
-              messages: ["FireRating ontbreekt in Pset_WallCommon"],
+              messages: ["FireRating is missing from Pset_WallCommon"],
             },
           ],
         },
         {
           requirement_description:
-            "FireRating waarde moet een geldige notatie zijn (bijv. REI60)",
+            "FireRating must use a valid notation (e.g. REI60)",
           status: "pass",
           total_elements: 468,
           failed_elements: 0,
@@ -194,7 +194,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
       failed_requirements: 0,
       requirements: [
         {
-          requirement_description: "Elementen moeten een Name attribuut hebben",
+          requirement_description: "Elements must have a Name attribute",
           status: "pass",
           total_elements: 2847,
           failed_elements: 0,
@@ -202,7 +202,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
         },
         {
           requirement_description:
-            "Name moet voldoen aan het vastgestelde naamgevingspatroon",
+            "Name must match the specified naming pattern",
           status: "pass",
           total_elements: 2847,
           failed_elements: 0,
@@ -219,7 +219,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
       requirements: [
         {
           requirement_description:
-            "IfcSpace elementen moeten een LongName hebben",
+            "IfcSpace elements must have a LongName",
           status: "pass",
           total_elements: 89,
           failed_elements: 0,
@@ -245,21 +245,21 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
       ],
     },
     {
-      specification_name: "Project informatie volledig",
+      specification_name: "Complete project information",
       status: "pass",
       severity: "info",
       total_requirements: 3,
       failed_requirements: 0,
       requirements: [
         {
-          requirement_description: "IfcProject moet een Name hebben",
+          requirement_description: "IfcProject must have a Name",
           status: "pass",
           total_elements: 1,
           failed_elements: 0,
           elements: [],
         },
         {
-          requirement_description: "IfcSite moet coördinaten bevatten",
+          requirement_description: "IfcSite must contain coordinates",
           status: "pass",
           total_elements: 1,
           failed_elements: 0,
@@ -267,7 +267,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
         },
         {
           requirement_description:
-            "IfcBuilding moet een adres bevatten",
+            "IfcBuilding must contain an address",
           status: "pass",
           total_elements: 1,
           failed_elements: 0,
@@ -284,7 +284,7 @@ const DEMO_VALIDATION_RESULT: ValidationResult = {
       requirements: [
         {
           requirement_description:
-            "Elk element moet aan een IfcBuildingStorey zijn gekoppeld",
+            "Each element must be linked to an IfcBuildingStorey",
           status: "pass",
           total_elements: 2847,
           failed_elements: 0,

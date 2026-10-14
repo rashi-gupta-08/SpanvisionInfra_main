@@ -59,7 +59,7 @@ function anyZero() {
 export function computePile(input: PileInput, cpt: Cpt | null): PileResult {
   if (!cpt) return emptyResult("No active CPT");
   const pileType = getPileType(input.pileTypeId);
-  if (!pileType) return emptyResult(`Onbekend paaltype: ${input.pileTypeId}`);
+  if (!pileType) return emptyResult(`Unknown pile type: ${input.pileTypeId}`);
 
   const groundNap = cpt.metadata.ground_level_nap ?? 0;
   const pileToeDepth = groundNap - input.pileToeNap;

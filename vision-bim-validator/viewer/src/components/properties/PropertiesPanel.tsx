@@ -285,7 +285,7 @@ export function PropertiesPanel() {
       <div className="props-panel__header">
         <span className="props-panel__type">{properties.entityType}</span>
         <h3 className="props-panel__name">
-          {properties.name ?? "Naamloos"}
+          {properties.name ?? "Untitled"}
         </h3>
         <span className="props-panel__id">{properties.globalId}</span>
       </div>

@@ -56,12 +56,12 @@ export function BcfPlatformSection() {
         <h4 className="bcf-panel__heading">Result</h4>
         <div className="bcf-panel__result">
           <div className="bcf-panel__result-stat bcf-panel__result-stat--success">
-            <span>Topics aangemaakt</span>
+            <span>Topics created</span>
             <strong>{bcfPushResult.topicsCreated}</strong>
           </div>
           {bcfPushResult.topicsFailed > 0 && (
             <div className="bcf-panel__result-stat bcf-panel__result-stat--error">
-              <span>Mislukt</span>
+              <span>Failed</span>
               <strong>{bcfPushResult.topicsFailed}</strong>
             </div>
           )}

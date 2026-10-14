@@ -318,12 +318,12 @@ export default function Backstage({ open, onClose, onOpenSettings, onOpenFile }:
         if (!IS_TAURI) {
           const msg = err instanceof Error ? err.message : String(err);
           alert(
-            `Kon ${f.name} niet openen in browser-modus:\n${msg}\n\n` +
+            `Kon ${f.name} cannot open in browser mode:\n${msg}\n\n` +
             "Tip: BHR-GT XML + GMW XML + GEF + BRO CPT-XML werken wél in de browser. " +
             "Opening .ifcgeo/.ifcgis project files requires the desktop application.",
           );
         } else {
-          alert(`Kon ${f.name} niet openen: ${err instanceof Error ? err.message : String(err)}`);
+          alert(`Kon ${f.name} cannot open: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
     }

@@ -146,7 +146,7 @@ function StaafBlok({ r }: { r: SegmentStiffnessResponse }) {
         <div className="rpt-figuur-bijschrift">
           {t("report.eisFiguurBijschrift", {
             defaultValue:
-              "Buigstijfheid EI per segment langs staaf {{staaf}}. De streeplijn is de ongescheurde E_c·I_c = {{ei0}} kNm²; {{gescheurd}} van de {{totaal}} segmenten is gescheurd. Laagste waarde {{min}} kNm² ({{factor}}·E_c·I_c).",
+              "Bending stiffness EI per segment along member {{staaf}}. The dashed line is the uncracked E_c·I_c = {{ei0}} kNm²; {{gescheurd}} of the {{totaal}} segments are cracked. Lowest value {{min}} kNm² ({{factor}}·E_c·I_c).",
             staaf: r.beam_id,
             ei0: fmtValue(eiRef, 0),
             gescheurd: gescheurdAantal,
@@ -242,7 +242,7 @@ function StaafBlok({ r }: { r: SegmentStiffnessResponse }) {
         )}{" "}
         {t("report.eisM0Uitleg", {
           defaultValue:
-            "M₀ is het moment bij κ = 0. Het moment wordt om de geometrische middenvezel h/2 genomen en niet om het plastisch zwaartepunt, dus bij een asymmetrische wapeningskorf onder druk is M(κ = 0) niet nul; de secans is daarom EI = (M_Ed − M₀)/κ en niet M_Ed/κ. De kolom EI / E_cI_c zet die stijfheid af tegen de ongescheurde E_c·I_c = {{ei0}} kNm² — in de uiterste grenstoestand een vergelijkingswaarde en geen rekenwaarde, want 5.8.6(5) laat de betontrek weg en dan bestaat er geen ongescheurde tak.",
+            "M₀ is the moment at κ = 0. The moment is taken about the geometric mid-fibre h/2 and not about the plastic centroid, so for an asymmetric reinforcement cage under compression M(κ = 0) is not zero; the secant is therefore EI = (M_Ed − M₀)/κ and not M_Ed/κ. The column EI / E_cI_c relates that stiffness to the uncracked E_c·I_c = {{ei0}} kNm² — in the ultimate limit state a comparison value and not a design value, because 5.8.6(5) omits the concrete tension and then no uncracked branch exists.",
           ei0: fmtValue(eiRef, 0),
         })}
       </p>
@@ -300,7 +300,7 @@ function CombinatieBlok({ c, segmentLengteMm }: { c: StijfheidCombinatie; segmen
             <td>
               {t("report.eisSegmentlengteWaarde", {
                 defaultValue:
-                  "gewenst {{doel}} mm; werkelijk {{echt}} mm ({{aantal}} segmenten op de langste staaf). Indelingsregel: {{regel}}",
+                  "requested {{doel}} mm; actual {{echt}} mm ({{aantal}} segments on the longest member). Division rule: {{regel}}",
                 doel: nl(segmentLengteMm, 0),
                 echt: eerste ? nl(eerste.segment_length_mm, 1) : "—",
                 aantal: c.staven.reduce((n, r) => Math.max(n, r.segment_count), 0),
@@ -313,7 +313,7 @@ function CombinatieBlok({ c, segmentLengteMm }: { c: StijfheidCombinatie; segmen
             <td>
               {t("report.eisRondenWaarde", {
                 defaultValue:
-                  "{{n}} raamwerkoplossing(en) na de segmentindeling (ronde 0). Elke ronde: oplossen, per segment (N, M) naar de rekenkern, nieuwe EI terug. De tabellen hieronder tonen de LAATSTE ronde — de krachten waarmee is opgelost, en de EI die daaruit volgt; die wijkt hoogstens de tolerantie af van de EI waarmee diezelfde krachten zijn bepaald.",
+                  "{{n}} frame solution(s) after the segment division (round 0). Each round: solve, send (N, M) per segment to the engine, receive the new EI. The tables below show the LAST round — the internal forces the frame was solved with, and the EI that follows from them; that EI differs from the EI used to obtain those forces by at most the tolerance.",
                 n: c.ronden,
               })}
             </td>
@@ -329,7 +329,7 @@ function CombinatieBlok({ c, segmentLengteMm }: { c: StijfheidCombinatie; segmen
                   ? t("report.eisGeenMaat", "geen maat beschikbaar")
                   : t("report.eisGehaald", {
                       defaultValue:
-                        "gehaald: {{waarde}} % in de laatste ronde (staaf {{staaf}}, segment {{segment}})",
+                        "achieved: {{waarde}} % in the last round (member {{staaf}}, segment {{segment}})",
                       waarde: nl(100 * waarde, 3),
                       staaf: staaf ?? "—",
                       segment: segment === null ? "—" : segment + 1,
@@ -374,7 +374,7 @@ function CombinatieBlok({ c, segmentLengteMm }: { c: StijfheidCombinatie; segmen
                   {" "}
                   — {t("report.eisGeklemd", {
                     defaultValue:
-                      "{{n}} segment(en) op die ondergrens geklemd; een geklemde waarde is een numerieke ondergrens en geen rekenuitkomst.",
+                      "{{n}} segment(s) clamped at that lower bound; a clamped value is a numerical lower bound and not a calculation result.",
                     n: geklemd,
                   })}
                 </span>
@@ -413,7 +413,7 @@ function CombinatieBlok({ c, segmentLengteMm }: { c: StijfheidCombinatie; segmen
                   {" — "}
                   {t("report.eisKruip519", {
                     defaultValue:
-                      "UGT: φ_ef = φ(∞,t₀)·M₀Eqp/M₀Ed per staaf (5.8.4(2) (5.19)), eerste-orde-momenten op de doorsnede met het grootste |M₀Ed| (5.8.4(3)); de afleiding staat bij de staaf.",
+                      "ULS: φ_ef = φ(∞,t₀)·M₀Eqp/M₀Ed per member (5.8.4(2) (5.19)), first-order moments at the section with the largest |M₀Ed| (5.8.4(3)); the derivation is given with the member.",
                   })}
                 </>
               )}
@@ -489,7 +489,7 @@ export default function BetonStijfheidSection() {
             {alle &&
               t("report.eisAlleCombinaties", {
                 defaultValue:
-                  "Alle {{n}} fysisch gerekende combinaties staan hieronder; kies in de zijbalk één combinatie om alleen die te tonen.",
+                  "All {{n}} combinations analysed with non-linear material are shown below; select a single combination in the sidebar to show only that one.",
                 n: combinaties.length,
               })}
           </p>
@@ -504,7 +504,7 @@ export default function BetonStijfheidSection() {
                 <span className="rpt-eis-nok">
                   {t("report.eisZonderKruipKop", {
                     defaultValue:
-                      "ZONDER KRUIP GEREKEND — staaf/staven {{ids}}: er is geen kruipcoëfficiënt φ(∞,t₀) opgegeven (art. 3.1.4), dus φ_ef = 0.",
+                      "CALCULATED WITHOUT CREEP — member(s) {{ids}}: no creep coefficient φ(∞,t₀) was given (cl. 3.1.4), so φ_ef = 0.",
                     ids: zonderKruip.join(", "),
                   })}
                 </span>{" "}
@@ -521,7 +521,7 @@ export default function BetonStijfheidSection() {
               <p>
                 {t("report.eisOvergeslagenKop", {
                   defaultValue:
-                    "{{n}} betonstaaf/-staven rekende NIET fysisch niet-lineair mee en hield de ongescheurde stijfheid E_cm·I_c van de bruto doorsnede — voor die staven is de uitkomst die van de tweede orde P-Δ alleen:",
+                    "{{n}} concrete member(s) did NOT take part in the materially non-linear analysis and kept the uncracked stiffness E_cm·I_c of the gross cross-section — for those members the result is that of the geometric second order (P-Δ) alone:",
                   n: overgeslagen.length,
                 })}
               </p>

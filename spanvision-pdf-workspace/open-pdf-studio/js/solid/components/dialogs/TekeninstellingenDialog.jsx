@@ -180,8 +180,8 @@ export default function TekeninstellingenDialog() {
             </button>
             <button class="ai-plan-btn" style="width:auto;padding:4px 8px"
               disabled={data().regelsets.length <= 1}
-              title={tt('delete', 'Verwijderen')} onClick={handleDelete}>
-              {tt('delete', 'Verwijderen')}
+              title={tt('delete', "Delete")} onClick={handleDelete}>
+              {tt('delete', "Delete")}
             </button>
           </div>
           <Show when={renaming()}>

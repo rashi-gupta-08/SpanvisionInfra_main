@@ -154,7 +154,7 @@ export default function IfcxPreviewDialog({ open, onClose }: IfcxPreviewDialogPr
         <div className="ifcx-preview-footer">
           <span className="ifcx-preview-info">
             {ifcxText
-              ? `${ifcxText.length.toLocaleString("nl-NL")} bytes IFCX (IFC4X3_ADD2)`
+              ? `${ifcxText.length.toLocaleString("en-GB")} bytes IFCX (IFC4X3_ADD2)`
               : ""}
           </span>
           <button

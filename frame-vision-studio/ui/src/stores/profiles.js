@@ -59,7 +59,7 @@ export async function loadProfiles() {
     const categories = await fetchProfileData();
     libraryCategories.set(categories);
   } catch (e) {
-    console.error("Profielen laden failed:", e);
+    console.error("Failed to load sections:", e);
   }
   await refreshCustomProfiles();
 }
@@ -76,7 +76,7 @@ export async function refreshCustomProfiles() {
     const byId = new Map((Array.isArray(list) ? list : []).map((p) => [p.id, p]));
     customProfiles.set([...byId.values()]);
   } catch (e) {
-    console.error("Eigen profielen laden failed:", e);
+    console.error("Failed to load custom sections:", e);
   }
 }
 
@@ -89,7 +89,7 @@ async function fetchProfileData() {
       const json = await invoke("load_profile_library");
       return JSON.parse(json);
     } catch (e) {
-      console.warn("Profielen laden via command mislukt, gebruik fallback:", e);
+      console.warn("Failed to load sections using the command; using fallback:", e);
     }
   }
 

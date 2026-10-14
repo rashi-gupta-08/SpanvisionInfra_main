@@ -122,7 +122,7 @@ export default function SectionsSection() {
               <p className="rpt-note">
                 {t("report.verloopSectieNoot", {
                   defaultValue:
-                    "Verlopend profiel: deze staven verlopen van {{begin}} naar {{eind}}. De eigenschappen hieronder zijn die van het beginprofiel; de doorsneden langs de staaf staan bij de toetsing van elke staaf.",
+                    "Tapered member: these members vary from {{begin}} to {{eind}}. The properties below are those of the starting profile; the cross-sections along the member are given with the check of each member.",
                   begin: profile,
                   eind: profileEnd,
                 })}

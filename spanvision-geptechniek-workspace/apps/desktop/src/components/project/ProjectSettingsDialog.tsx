@@ -253,7 +253,7 @@ export default function ProjectSettingsDialog({ open, onClose }: ProjectSettings
 
           <div className="ps-footer">
             <button type="button" onClick={onClose}>{t("cancel", "Annuleer")}</button>
-            <button type="submit" className="btn-primary">{t("save", "Opslaan")}</button>
+            <button type="submit" className="btn-primary">{t("save", "Save")}</button>
           </div>
         </form>
       )}

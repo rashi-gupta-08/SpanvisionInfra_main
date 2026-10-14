@@ -197,7 +197,7 @@ export default function ProjectList({
               onClick={() => setShowCreate(false)}
               disabled={creating}
             >
-              {t("projectsPanel.cancel", "Annuleren")}
+              {t("projectsPanel.cancel", "Cancel")}
             </button>
           </div>
         </form>
@@ -215,7 +215,7 @@ export default function ProjectList({
       <div className="project-list__items">
         {loading ? (
           <p className="project-list__notice">
-            {t("projectsPanel.loading", "Laden...")}
+            {t("projectsPanel.loading", "Loading...")}
           </p>
         ) : projects.length === 0 ? (
           <p className="project-list__notice">

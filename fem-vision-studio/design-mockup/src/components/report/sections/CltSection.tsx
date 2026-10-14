@@ -229,12 +229,12 @@ function OpbouwVanIy({ r, mech }: { r: CltBeamCheckResult; mech: CltMechanica })
         {zelfdeE
           ? t("report.cltIefNetGelijk", {
               defaultValue:
-                "Alle lengtelagen hebben dezelfde E-modulus (E_ref = {{e}} N/mm²), dus de meetkundige som Σ(I_i + A_i·a_i²) is gelijk aan I_ef,net = (EI)_ef/E_ref. I_ef,net is een vergelijkingsgrootheid met een massieve doorsnede; de toetsing rekent met (EI)_ef zelf.",
+                "All longitudinal layers have the same modulus of elasticity (E_ref = {{e}} N/mm²), so the geometric sum Σ(I_i + A_i·a_i²) equals I_ef,net = (EI)_ef/E_ref. I_ef,net is a comparison quantity against a solid cross-section; the check uses (EI)_ef itself.",
               e: fmtValue(eRef ?? 0, 0),
             })
           : t("report.cltIefNetAfwijkend", {
               defaultValue:
-                "De lengtelagen hebben NIET dezelfde E-modulus, dus de meetkundige som Σ(I_i + A_i·a_i²) = {{som}}·10⁶ mm⁴ is niet gelijk aan I_ef,net = (EI)_ef/E_ref = {{ief}}·10⁶ mm⁴ met E_ref = {{e}} N/mm² (de bovenste lengtelaag). I_ef,net is een vergelijkingsgrootheid; de toetsing rekent met (EI)_ef zelf.",
+                "The longitudinal layers do NOT have the same modulus of elasticity, so the geometric sum Σ(I_i + A_i·a_i²) = {{som}}·10⁶ mm⁴ does not equal I_ef,net = (EI)_ef/E_ref = {{ief}}·10⁶ mm⁴ with E_ref = {{e}} N/mm² (the top longitudinal layer). I_ef,net is a comparison quantity; the check uses (EI)_ef itself.",
               som: fmtValue(somI / 1e6, 1),
               ief: fmtValue(r.layup.i_ef_net_mm4 / 1e6, 1),
               e: fmtValue(eRef ?? 0, 0),
@@ -427,7 +427,7 @@ export default function CltSection() {
             {weggelaten > 0 &&
               t("report.cltStaafKeuzeNoot", {
                 defaultValue:
-                  "Van {{aantal}} van de {{totaal}} CLT-staven is de uitwerking op verzoek weggelaten; die staven staan wel in het toetsingsoverzicht.",
+                  "For {{aantal}} of the {{totaal}} CLT members the derivation has been omitted on request; those members are still listed in the check overview.",
                 aantal: weggelaten,
                 totaal: clt.length,
               })}

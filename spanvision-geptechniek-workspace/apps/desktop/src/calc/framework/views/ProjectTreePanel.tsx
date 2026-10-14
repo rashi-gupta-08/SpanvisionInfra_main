@@ -120,7 +120,7 @@ export function ProjectTreePanel({ onAddClick }: Props) {
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`Verwijder "${c.name}"?`)) {
+                        if (confirm(`Delete "${c.name}"?`)) {
                           remove(activeDocId, c.id);
                         }
                       }}

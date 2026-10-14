@@ -59,7 +59,7 @@ const fmt = (v: number, dec = 2): string =>
 export function buildReportHtml(input: ReportInput): string {
   const { nodes, beams, supports, loads, loadCases, result } = input;
   const title = input.projectName?.trim() || "Open FEM2D Studio — rapport";
-  const now = new Date().toLocaleString("nl-NL");
+  const now = new Date().toLocaleString("en-GB");
 
   const sections: string[] = [];
 

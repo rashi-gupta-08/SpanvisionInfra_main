@@ -74,7 +74,7 @@ export const KNIKGEVALLEN: {
     schoring: "Ongeschoord",
     letter: "b",
     factor: 2.0,
-    label: "b) onder ingeklemd, boven volledig vrij (console) — l₀ = 2·l",
+    label: "b) fixed at the base, free at the top (cantilever) — l₀ = 2·l",
   },
   {
     geval: "TweezijdigIngeklemdOngeschoord",

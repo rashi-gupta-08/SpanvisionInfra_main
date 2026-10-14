@@ -157,7 +157,7 @@ export default function ProjectSection() {
       )}
       <div className="rpt-doc-kind">{t("report.docKind", "Rekenrapport")}</div>
       <h1 className="rpt-project-title">
-        {info.name || t("report.unnamedProject", "Naamloos project")}
+        {info.name || t("report.unnamedProject", "Untitled project")}
       </h1>
       {info.location && <div className="rpt-project-location">{info.location}</div>}
       <table className="rpt-meta-table">

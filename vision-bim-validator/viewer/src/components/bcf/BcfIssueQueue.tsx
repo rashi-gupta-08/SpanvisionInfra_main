@@ -15,7 +15,7 @@ function statusLabel(state: BcfIssue["pushState"]): string {
     case "queued": return "";
     case "pushing": return "Generating...";
     case "pushed": return "Gepusht";
-    case "failed": return "Mislukt";
+    case "failed": return "Failed";
   }
 }
 

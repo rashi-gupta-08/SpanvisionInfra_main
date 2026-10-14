@@ -130,7 +130,7 @@ export default function ReportShell({ onDetach }: ReportShellProps) {
   const showStale = hasModel && data.combinationResults === null;
 
   const dims = pageDimsMm(pageSize, orientation);
-  const headerText = info.name || t("report.unnamedProject", "Naamloos project");
+  const headerText = info.name || t("report.unnamedProject", "Untitled project");
 
   // Enkelzijdig drukwerk: binnenmarge = links, buitenmarge = rechts
   // (zie ReportOpmaak in reportStore).

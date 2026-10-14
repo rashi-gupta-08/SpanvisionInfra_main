@@ -160,7 +160,7 @@ export default function ReportPreview() {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error("[ReportPreview] PDF openen failed:", e);
-      setError(`PDF openen mislukt: ${String(e)}`);
+      setError(`Failed to open PDF: ${String(e)}`);
     }
   };
 
@@ -175,7 +175,7 @@ export default function ReportPreview() {
       <div className="report-sidebar-body">
         {/* Project header */}
         <div className="report-project-summary">
-          <div className="report-project-title">{projectMeta.title || t("report.untitled", "Naamloos project")}</div>
+          <div className="report-project-title">{projectMeta.title || t("report.untitled", "Untitled project")}</div>
           {projectMeta.client && (
             <div className="report-project-sub">{projectMeta.client}</div>
           )}
@@ -187,7 +187,7 @@ export default function ReportPreview() {
         {/* Section toggles */}
         <div className="report-sidebar-section">
           <div className="report-sidebar-section-title">
-            {t("report.sections", "Onderdelen")}
+            {t("report.sections", "Sections")}
           </div>
           <div className="report-section-list">
             <SectionToggle label={t("report.section.cover", "Cover and back page")}
@@ -300,7 +300,7 @@ export default function ReportPreview() {
     previewArea = (
       <div className="report-pages-wrapper">
         <div className="report-error">
-          <p>{t("report.error", "Rapport-fout")}: {error}</p>
+          <p>{t("report.error", "Report error")}: {error}</p>
         </div>
       </div>
     );
@@ -353,7 +353,7 @@ function SectionToggle({
   hint?: string;
 }) {
   return (
-    <label className="report-section-toggle" title={hint ?? "Filteren werkt nog niet — komt eraan"}>
+    <label className="report-section-toggle" title={hint ?? "Filtering is coming soon"}>
       <input
         type="checkbox"
         checked={checked}

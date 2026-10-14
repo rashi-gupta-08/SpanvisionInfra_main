@@ -268,7 +268,7 @@ export default function PrintQueueWindow() {
       <div class="pq-body">
         <Show when={ordered().length > 0} fallback={
           <div class="pq-empty">
-            Nog geen afdrukopdrachten.<br/>
+            No print jobs yet.<br/>
             Print vanuit een programma naar <b>"Spanvision PDF Printer"</b> — of <b>sleep een PDF hierheen</b> — en de opdracht verschijnt hier.
           </div>
         }>

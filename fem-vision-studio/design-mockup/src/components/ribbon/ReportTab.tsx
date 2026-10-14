@@ -256,7 +256,7 @@ export default function ReportTab({ scheefstandToelichting, analyseToelichting, 
         notifyWarning(
           t("report.kernPdf", "Rekenrapport"),
           t("report.kernPdfGeenDekkingslijn", {
-            defaultValue: "Zonder dekkingslijn in het rapport: {{staven}}",
+            defaultValue: "Without a curtailment diagram in the report: {{staven}}",
             staven: dekkingslijnen.mislukt
               .map((m) => `staaf ${m.beamId} — ${m.reason}`)
               .join("; "),

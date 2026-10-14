@@ -195,7 +195,7 @@ export default function HelpPanel() {
                           type="button"
                           className={`help-chip${it.isCode ? " is-code" : ""}`}
                           onClick={() => it.insert && insert(it.insert)}
-                          title={it.insert ? `Voeg in: ${it.insert}` : undefined}
+                          title={it.insert ? `Insert: ${it.insert}` : undefined}
                         >
                           {it.label}
                         </button>

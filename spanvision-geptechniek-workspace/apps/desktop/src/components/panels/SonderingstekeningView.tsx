@@ -1194,12 +1194,12 @@ export default function SonderingstekeningView() {
           setToast("Move the pointer and click to place (Esc to cancel)");
           setTimeout(() => setToast(null), 2600);
         } else {
-          setToast("Dit object kun je niet verplaatsen");
+          setToast("This object cannot be moved");
           setTimeout(() => setToast(null), 2200);
         }
       } else {
         moveArmedRef.current = true;
-        setToast("Klik het object dat je wilt verplaatsen");
+        setToast("Click the object you want to move");
         setTimeout(() => setToast(null), 3000);
       }
     };
@@ -1645,7 +1645,7 @@ export default function SonderingstekeningView() {
           if (!Number.isFinite(dist) || dist <= 0) return;
           cadStepRef.current = { kind: "offset-hint", lineId: ln.id, dist };
           setToast(
-            `Offset ${dist} m — klik aan de zijde waar de kopie moet komen`,
+            `Offset ${dist} m — click the side where the copy should appear`,
           );
           setTimeout(() => setToast(null), 3500);
           return;
@@ -1794,7 +1794,7 @@ export default function SonderingstekeningView() {
       const b2 = llToRd(l2.lat2, l2.lon2);
       const inter = lineIntersectionRd(a1, b1, a2, b2);
       if (!inter) {
-        setToast("Lijnen zijn parallel — no snijpunt, no angle mogelijk");
+        setToast("Lines are parallel — no intersection or angle is available");
         setTimeout(() => setToast(null), 2800);
         cadStepRef.current = null;
         setCadMode(null);
@@ -3769,7 +3769,7 @@ export default function SonderingstekeningView() {
       setToast("DWG/DXF import is planned. The file is recognized but cannot yet be displayed.");
       setTimeout(() => setToast(null), 4000);
     } else {
-      setToast(`Bestandstype .${ext} wordt nog niet ondersteund`);
+      setToast(`Bestandstype .${ext} is not supported yet`);
       setTimeout(() => setToast(null), 3000);
     }
   }, []);
@@ -4273,7 +4273,7 @@ export default function SonderingstekeningView() {
         }
       } catch (err) {
         console.error("tekening-export-pdf failed", err);
-        setToast(`PDF-export mislukt: ${String(err).slice(0, 160)}`);
+        setToast(`PDF export failed: ${String(err).slice(0, 160)}`);
       } finally {
         exporting = false;
         setExportSuppress(false);
@@ -4321,7 +4321,7 @@ export default function SonderingstekeningView() {
       } else if (sel.kind === "overlay" && overlayLayerRef.current) {
         setOverlayRotation((d) => ((d + deg) % 360 + 360) % 360);
       } else {
-        setToast("Dit objecttype kun je niet roteren");
+        setToast("This object type cannot be rotated");
         setTimeout(() => setToast(null), 2200);
       }
     };
@@ -4355,7 +4355,7 @@ export default function SonderingstekeningView() {
         trim: "Trim — click the cutting edge",
         extend: "Extend — click the boundary line",
         mirror: "Mirror — select a line, then click two points to define the mirror axis",
-        offset: "Offset — klik een lijn om de bron te kiezen (afstand wordt daarna gevraagd)",
+        offset: "Offset — click a source line (you will then be asked for the distance)",
       };
       setToast(hints[m]);
       setTimeout(() => setToast(null), 4500);
@@ -4374,7 +4374,7 @@ export default function SonderingstekeningView() {
       vlakDraftRef.current = [];
       vlakDraftLayerRef.current?.clearLayers();
       setVlakMode(true); vlakModeRef.current = true;
-      setToast("Vlak — klik de hoekpunten; Enter of dubbelklik sluit, Esc annuleert");
+      setToast("Area — click the vertices; Enter or double-click closes, Esc cancels");
       setTimeout(() => setToast(null), 4500);
     };
     // Opmerking-tool: volgende klik plaatst een tekst-note.
@@ -4385,7 +4385,7 @@ export default function SonderingstekeningView() {
       setVlakMode(false); vlakModeRef.current = false;
       setCadMode(null); cadModeRef.current = null; cadStepRef.current = null;
       setNoteMode(true); noteModeRef.current = true;
-      setToast("Opmerking — klik waar de tekst moet komen");
+      setToast("Note — click where the text should appear");
       setTimeout(() => setToast(null), 3500);
     };
     const onUpdateVlak = (e: Event) => {

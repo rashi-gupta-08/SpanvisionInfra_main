@@ -7,7 +7,6 @@
     "dev": "vite --host 127.0.0.1 --port 4230 --strictPort",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4230 --strictPort",
-    "test:bridge": "node --test test/bridge.test.mjs",
     "test:bridge:browser": "node test/bridge-browser.mjs",
     "test:cover:browser": "node test/bridge-browser.mjs"
   },
@@ -15,8 +14,7 @@
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "6.4.299",
     "solid-js": "^1.9.11",
-    "tesseract.js": "7.0.0",
-    "three": "0.183.2"
+    "tesseract.js": "7.0.0"
   },
   "devDependencies": {
     "vite": "^7.3.1",

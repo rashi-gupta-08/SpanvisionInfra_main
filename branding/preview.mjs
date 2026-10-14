@@ -4,14 +4,18 @@ import path from 'node:path';
 import { root,brand,digest,fingerprint } from './common.mjs';
 import { startStl, stopStl } from './stl.mjs';
 import { startBim, stopBim } from './bim.mjs';
+import {createHandler} from '../commerce/server.mjs';
+import {readLocalEnvironment} from '../commerce/local-env.mjs';
 const children=[];
 const servers=[];
 const status=brand.modules.map(module=>({...module,available:false,message:'Preview has not started.'}));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.wasm':'application/wasm','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.ico':'image/x-icon','.woff':'font/woff','.woff2':'font/woff2','.ttf':'font/ttf','.pdf':'application/pdf','.md':'text/plain; charset=utf-8','.txt':'text/plain; charset=utf-8','.ifc':'application/octet-stream'};
 export function serve(directory,port,hub=false,cad=false) {
+ const accountHandler=hub?createHandler({env:{...readLocalEnvironment(),SITE_URL:`http://127.0.0.1:${port}`}}):null;
  const server=http.createServer((req,res)=>{
    res.setHeader('Cache-Control','no-store');
    if(cad){res.setHeader('Cross-Origin-Opener-Policy','same-origin');res.setHeader('Cross-Origin-Embedder-Policy','require-corp');}
+   if(accountHandler&&/^\/api\/(account|billing|admin)(?:\/|\?|$)/.test(req.url||''))return accountHandler(req,res);
    if(hub&&req.url==='/__suite/status'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({modules:status}));return;}
    if(port===brand.modules.find(item=>item.id==='fem')?.port && /^\/api\/(toetsing|doorsnede)$/.test(req.url)) {
      if(req.method!=='POST'){res.writeHead(405,{'Allow':'POST'}).end();return;}

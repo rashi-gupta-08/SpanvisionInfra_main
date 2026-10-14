@@ -1,0 +1,20 @@
+{
+  "verifiedAt": "2026-10-14T05:47:08.045Z",
+  "origin": "https://www.spanvisioninfra.com",
+  "passed": true,
+  "checks": [
+    "Production Neon authentication configured",
+    "Anonymous administration denied",
+    "Exact apex login link redirects to the configured site and enables sign-in",
+    "Live signup form shows the active eight-character password policy",
+    "Live reset form shows the active eight-character password policy",
+    "Live backend rejects a too-short password before account creation",
+    "Real generated password signs in to the pinned administrator",
+    "Browser automatically redirects to admin",
+    "Verified session has all account plans",
+    "Database setup requirement shown clearly",
+    "Sign-out clears administrator access"
+  ],
+  "errors": [],
+  "databaseAvailable": false
+}

@@ -135,8 +135,12 @@ function App() {
   }
   function changeScreen() {
     setScreen(currentScreen());setError('');setSuccess('');
+    recoverAccountConnection();
     window.scrollTo({top:0,behavior:'instant'});
     if(modal?.open)closeScan();
+  }
+  function recoverAccountConnection(){
+    if(!account.loading()&&(account.error()||account.config()?.authAvailable===false))void account.refresh();
   }
   onMount(()=>{
     account.refresh();
@@ -146,8 +150,9 @@ function App() {
     onCleanup(()=>{window.removeEventListener('spanvision:mode-change',syncMode);window.removeEventListener('spanvision:mode-observed',syncMode);});
     window.addEventListener('hashchange',changeScreen);
     refreshStatus();
-    const onFocus=()=>refreshStatus();window.addEventListener('focus',onFocus);
-    onCleanup(()=>{window.removeEventListener('hashchange',changeScreen);window.removeEventListener('focus',onFocus);requestController?.abort();clearScan();});
+    const onFocus=()=>{refreshStatus();recoverAccountConnection();};window.addEventListener('focus',onFocus);
+    window.addEventListener('online',recoverAccountConnection);
+    onCleanup(()=>{window.removeEventListener('hashchange',changeScreen);window.removeEventListener('focus',onFocus);window.removeEventListener('online',recoverAccountConnection);requestController?.abort();clearScan();});
   });
   function submitProfile(event) {
     event.preventDefault();setError('');setSuccess('');

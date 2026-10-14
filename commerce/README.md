@@ -1,6 +1,18 @@
 # Spanvision Infra home, accounts and billing
 
-Updated: **10 October 2026**.
+Updated: **14 October 2026**.
+
+## Neon integration — 14 October 2026
+
+The owner selected Neon in Singapore and supplied the production Auth URL. The existing website account function supports Neon Managed Better Auth and private PostgreSQL storage, including the single pinned super admin, plan grants and audits. Use `neon-schema.sql` for this provider. The integration was deployed to `https://www.spanvisioninfra.com` on 14 October 2026. The designated administrator was created and email-verified; real password sign-in, automatic admin redirection, all-plan access and sign-out passed on the live site. Private account-table database configuration is still pending, so user/plan management shows an explicit setup notice. Source and verification updates are included in the `version/V.1.0` release; private credentials and the operator's local setup record are excluded.
+
+The 14 October login recovery update distinguishes network errors from missing authentication setup, adds a retry button, and rechecks availability when connectivity returns or the browser regains focus. It retries only reads, never sign-in or billing submissions. This update initially passed thirty account/recovery browser checks, forty-five server tests and eight real production checks; the password update below adds further checks.
+
+The later password update uses a shared **8–128 character** policy for registration and password reset. The owner selected eight after the active Neon provider rejected six. Both form fields, server validation and public configuration agree; existing account passwords are unchanged. Updated checks: 47 server tests, 16 account-flow browser checks and 11 production checks. The earlier 18 connection-recovery checks are recorded separately.
+
+Fresh checkouts install the account function's locked dependencies with `npm ci --prefix commerce`; `npm run setup:suite` also includes this step whenever the hub is selected. Before enabling user/plan writes, apply `neon-schema.sql` to the production database and configure a restricted server-only `DATABASE_URL`. Authentication uses server-only `NEON_AUTH_BASE_URL`, `SITE_URL`, `SESSION_SECRET` and the verified administrator's `SUPER_ADMIN_USER_ID`. Keep `PRICING_APPROVED=false` until paid offers are ready. No database password or session secret belongs in a `VITE_` setting, source file or test report.
+
+The Supabase instructions and 10 October deployment record below describe the legacy implementation, which remains supported when no Neon URL is configured. They are not the setup instructions for the selected Neon project. No Supabase account is needed for the Neon path.
 
 These additions use the existing live site at `https://spanvision-infra.vercel.app/`. Home opens first and keeps the Spanvision Infra company heading, supplied logo and architecture animation. Pricing, FAQ, sign-in and create-account links sit in the main navigation; Tools opens the existing catalogue of all 16 workspaces. No separate site or replacement brand has been created. Dark remains the default; light mode and reduced motion are supported.
 

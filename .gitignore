@@ -127,3 +127,4 @@ node_modules.audit-incomplete/
 *.mov
 *.webm
 *.avi
+/output/spanvision-promo/

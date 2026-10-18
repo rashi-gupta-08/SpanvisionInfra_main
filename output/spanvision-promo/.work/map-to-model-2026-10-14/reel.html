@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spanvision Infra — Map to Model</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#080a0c;color:white;font-family:'Segoe UI',Arial,sans-serif}
+body{background:radial-gradient(ellipse at 50% 51%,#20262c 0%,#0b0e11 47%,#07090b 80%)}
+#stage{position:absolute;top:360px;width:1080px;height:1170px;mask-image:linear-gradient(to bottom,transparent 0%,black 12%,black 87%,transparent 100%)}
+#vignette{position:absolute;inset:0;pointer-events:none;background:linear-gradient(#080a0c 0%,transparent 24%,transparent 69%,#080a0c 88%)}
+#brand{position:absolute;top:98px;left:112px;right:112px;display:flex;align-items:center;justify-content:center;gap:24px}
+.mark{width:85px;height:58px;background:url('/logo.png') top center/85px auto no-repeat;filter:invert(1) grayscale(1);mix-blend-mode:screen}
+#brandname{font-size:25px;font-weight:600;letter-spacing:6px;color:#ced4da}
+#eyebrow{position:absolute;top:219px;left:100px;right:100px;text-align:center;letter-spacing:6px;font-size:23px;font-weight:500;color:#a9b3be}
+#headline{position:absolute;top:288px;left:80px;right:80px;text-align:center;font-family:'Arial Black','Segoe UI',sans-serif;font-size:94px;line-height:1.05;letter-spacing:-3px;font-weight:900;white-space:pre-line;text-shadow:0 5px 22px #0009}
+#detail{position:absolute;left:110px;right:110px;top:1422px;text-align:center;letter-spacing:4px;font-size:27px;font-weight:500;color:#c7cfd7}
+#cta{position:absolute;top:1450px;left:92px;right:92px;text-align:center;opacity:0;transform:translateY(15px)}
+#launch{display:inline-block;border:1px solid #ccd3d9;border-radius:35px;padding:11px 33px;font-size:25px;letter-spacing:5px;background:#11171a99}
+#dm{margin-top:31px;font-family:'Arial Black','Segoe UI',sans-serif;font-size:58px;letter-spacing:-1px;font-weight:900}
+#handle{margin-top:30px;font-size:24px;letter-spacing:5px;color:#b6c1cb}
+#caption{position:absolute;bottom:267px;left:115px;right:115px;text-align:center;font-size:42px;line-height:1.22;font-weight:650;color:#fff;white-space:pre-line}
+#caption span{display:inline-block;padding:13px 21px;background:#030507b8;border-radius:12px;max-width:100%}
+#credit{position:absolute;bottom:128px;left:115px;right:115px;text-align:center;font-size:18px;color:#87909b;line-height:1.4;letter-spacing:.2px}
+</style>
+<script type="importmap">{"imports":{"three":"/three/three.module.js"}}</script>
+</head>
+<body>
+<div id="stage"></div><div id="vignette"></div>
+<div id="brand"><div class="mark"></div><div id="brandname">SPANVISION INFRA</div></div>
+<div id="eyebrow"></div><div id="headline"></div><div id="detail"></div>
+<div id="cta"><div id="launch">LAUNCHING SOON</div><div id="dm">DM FOR PREBOOKINGS</div><div id="handle">@SPANVISIONINFRA</div></div>
+<div id="caption"><span></span></div>
+<div id="credit">Utrecht sample · 3DBAG (TU Delft / 3DGI, CC BY 4.0)<br>OpenStreetMap contributors · PDOK / Kadaster</div>
+<script type="module">
+import * as THREE from 'three';
+const info=await (await fetch('/audio-info.json')).json();
+const cues=info.cues;const find=w=>cues.find(c=>c.word===w).start;
+const T={choose:find('choose')-.06,select:find('select')-.06,export:find('export')-.06,vision:find('Vision')-.06,brand:find('Spanvision')-.06};
+const clamp=x=>Math.max(0,Math.min(1,x));const smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
+const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x090c0f,.0006);
+const camera=new THREE.PerspectiveCamera(40,1080/1170,.1,1800);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+renderer.setSize(1080,1170);renderer.setPixelRatio(1);renderer.setClearColor(0x090c0f,0);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;
+document.querySelector('#stage').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd6e5f3,0x18232b,1.1));
+const key=new THREE.DirectionalLight(0xfff3df,3.2);key.position.set(-90,180,100);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-145,right:145,top:145,bottom:-145,near:5,far:500});
+key.shadow.bias=-.0003;key.shadow.normalBias=.25;key.shadow.radius=4;scene.add(key);
+const rim=new THREE.DirectionalLight(0xb8d8ee,2);rim.position.set(130,110,-120);scene.add(rim);
+const fill=new THREE.DirectionalLight(0xffffff,.8);fill.position.set(25,45,100);scene.add(fill);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(1800,1800),new THREE.MeshStandardMaterial({color:0x030507,roughness:.85,metalness:.10}));
+floor.rotation.x=-Math.PI/2;floor.position.y=-1.2;floor.receiveShadow=true;scene.add(floor);
+const grid=new THREE.GridHelper(1000,50,0x28333e,0x1d2730);grid.position.y=-1.1;grid.material.transparent=true;grid.material.opacity=.35;scene.add(grid);
+const group=new THREE.Group();scene.add(group);
+async function stl(file,material){
+ const buffer=await (await fetch('/geometry/'+file)).arrayBuffer();const view=new DataView(buffer);const count=view.getUint32(80,true);
+ const vertices=new Float32Array(count*9);
+ for(let i=0;i<count;i++)for(let j=0;j<3;j++){
+   const at=84+i*50+12+j*12,k=i*9+j*3;
+   vertices[k]=view.getFloat32(at,true)-75;vertices[k+1]=view.getFloat32(at+8,true);vertices[k+2]=-(view.getFloat32(at+4,true)-73.0683);
+ }
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(vertices,3));geometry.computeVertexNormals();
+ const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;
+}
+const base=await stl('live-utrecht_1_base.stl',new THREE.MeshStandardMaterial({color:0x46515c,metalness:.52,roughness:.48}));
+const land=await stl('live-utrecht_2_land.stl',new THREE.MeshStandardMaterial({color:0x8b969f,metalness:.4,roughness:.62}));
+const buildings=await stl('live-utrecht_4_buildings.stl',new THREE.MeshStandardMaterial({color:0xaab8c3,metalness:.32,roughness:.55,flatShading:true}));
+const edges=new THREE.LineSegments(new THREE.EdgesGeometry(buildings.geometry,25),new THREE.LineBasicMaterial({color:0x27323b,transparent:true,opacity:.49}));buildings.add(edges);
+const borderPts=[[-75,1.4,-73.07],[75,1.4,-73.07],[75,1.4,73.07],[-75,1.4,73.07],[-75,1.4,-73.07]].map(p=>new THREE.Vector3(...p));
+const border=new THREE.Line(new THREE.BufferGeometry().setFromPoints(borderPts),new THREE.LineBasicMaterial({color:0xf0f4f8,transparent:true,opacity:.6}));group.add(border);
+const shots=[
+ {start:0,title:'YOUR NEXT MODEL\nSTARTS HERE.',tag:'MAP DATA. NEW POSSIBILITIES.',detail:'VISION STL · 3D STUDIO'},
+ {start:T.choose,title:'CHOOSE YOUR\nLOCATION.',tag:'START WITH YOUR SITE',detail:'SELECT YOUR AREA'},
+ {start:T.select,title:'FROM MAP\nTO MODEL.',tag:'BRING YOUR AREA INTO 3D',detail:'MAP → MODEL → EXPORT'},
+ {start:T.export,title:'STL + 3MF.\nREADY TO EXPORT.',tag:'CREATE YOUR NEXT SCALE MODEL',detail:'REAL MODEL. PRACTICAL FILES.'},
+ {start:T.vision,title:'VISION STL\n3D STUDIO.',tag:'PART OF THE SPANVISION TOOLKIT',detail:'LOCATION · AREA · EXPORT'},
+ {start:T.brand,title:'SPANVISION\nINFRA.',tag:'YOUR NEXT ENGINEERING TOOLKIT',detail:''}
+];
+let lastShot=-1;
+function update(t){
+ let shot=0;for(let i=0;i<shots.length;i++)if(t>=shots[i].start)shot=i;
+ const s=shots[shot];const entering=smooth((t-s.start)/.30);
+ if(lastShot!==shot){document.querySelector('#headline').textContent=s.title;document.querySelector('#eyebrow').textContent=s.tag;document.querySelector('#detail').textContent=s.detail;lastShot=shot}
+ document.querySelector('#headline').style.opacity=entering;document.querySelector('#headline').style.transform=`translateY(${(1-entering)*22}px)`;
+ const closing=smooth((t-T.brand)/.7);
+ const choose=smooth((t-T.choose)/.6)*(1-smooth((t-T.select)/.8));
+ const az=.79+t*.052;
+ const radius=305+10*Math.sin(t*.24)+closing*10;
+ const height=174+choose*105+closing*3;
+ camera.position.set(Math.cos(az)*radius,height,Math.sin(az)*radius);camera.lookAt(0,11,0);
+ buildings.scale.y=1-choose*.925;
+ const exploded=smooth((t-T.export)/.6)*(1-smooth((t-T.vision)/.6));
+ buildings.position.y=exploded*12;land.position.y=exploded*4;group.position.y=0;
+ border.material.opacity=.4+choose*.5;
+ document.querySelector('#stage').style.opacity=1-closing*.12;
+ document.querySelector('#detail').style.opacity=1-closing;
+ document.querySelector('#cta').style.opacity=closing;document.querySelector('#cta').style.transform=`translateY(${(1-closing)*15}px)`;
+ const cue=cues.find(c=>t>=c.start&&t<c.end&&t<T.brand);
+ document.querySelector('#caption').style.opacity=cue?1:0;
+ if(cue)document.querySelector('#caption span').textContent=cue.text;
+ renderer.render(scene,camera);
+}
+window.renderFrame=async t=>{update(t);await new Promise(resolve=>requestAnimationFrame(resolve))};
+window.reelReady=true;window.timeline=T;await window.renderFrame(.7);
+</script>
+</body></html>

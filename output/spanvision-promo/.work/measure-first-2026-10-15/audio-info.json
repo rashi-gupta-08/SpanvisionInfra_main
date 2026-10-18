@@ -1,0 +1,64 @@
+{
+  "duration": 16,
+  "voice": "en-US-AvaMultilingualNeural",
+  "voice_duration": 14.5888125,
+  "native_rate_percent": 0,
+  "continuous_narration": true,
+  "phrase_stitching": false,
+  "time_stretching": false,
+  "script": "Before you trust a measurement, set the drawing scale using a known dimension, then check distances and measure areas in Vision Portable Document Studio, Spanvision Infra's P D F tool. Launching soon, so DM for prebookings.",
+  "cues": [
+    {
+      "word": "Before",
+      "text": "Before you trust a measurement\u2026",
+      "start": 0.3606875,
+      "end": 2.0756875
+    },
+    {
+      "word": "set",
+      "text": "Set the drawing scale.",
+      "start": 2.1106875,
+      "end": 4.975687499999999
+    },
+    {
+      "word": "distances",
+      "text": "Check distances.",
+      "start": 5.0106874999999995,
+      "end": 6.263187499999999
+    },
+    {
+      "word": "areas",
+      "text": "Measure areas.",
+      "start": 6.298187499999999,
+      "end": 6.913187499999999
+    },
+    {
+      "word": "Vision",
+      "text": "Vision Portable\nDocument Studio",
+      "start": 6.9481874999999995,
+      "end": 9.0631875
+    },
+    {
+      "word": "Spanvision",
+      "text": "Spanvision Infra\u2019s PDF tool.",
+      "start": 9.0981875,
+      "end": 11.763187499999999
+    },
+    {
+      "word": "Launching",
+      "text": "Launching soon.",
+      "start": 11.7981875,
+      "end": 13.263187499999999
+    },
+    {
+      "word": "DM",
+      "text": "DM for prebookings.",
+      "start": 13.2981875,
+      "end": 14.9388125
+    }
+  ],
+  "ffmpeg": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\output\\spanvision-promo\\.render-deps\\imageio_ffmpeg\\binaries\\ffmpeg-win-x86_64-v7.1.exe",
+  "work": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\output\\spanvision-promo\\.work\\measure-first-2026-10-15",
+  "source_take": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\output\\spanvision-promo\\.work\\measure-first-2026-10-15\\continuous-English-portable-document-v3-rate-0.mp3",
+  "output": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\output\\spanvision-promo\\spanvision-measure-first-portable-document-2026-10-15-16s.mp4"
+}

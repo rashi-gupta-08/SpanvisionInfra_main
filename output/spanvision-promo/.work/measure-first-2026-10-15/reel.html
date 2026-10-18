@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Spanvision Infra — Measure First</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#090b0e;color:#fff;font-family:'Segoe UI',Arial,sans-serif}
+body{background:radial-gradient(ellipse at 50% 55%,#222b34 0%,#10151a 38%,#07090c 80%)}
+#grid{position:absolute;inset:0;opacity:.17;background-image:linear-gradient(#697c8c 1px,transparent 1px),linear-gradient(90deg,#697c8c 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse at center,#000,transparent 77%)}
+#brand{position:absolute;top:105px;left:100px;right:100px;display:flex;align-items:center;justify-content:center;gap:23px}
+#mark{width:76px;height:53px;background:url('/logo.png') center top/76px auto;filter:invert(1) grayscale(1);mix-blend-mode:screen}
+#name{font-size:26px;letter-spacing:6px;font-weight:600;color:#d3dbe2}
+#tag{position:absolute;top:222px;left:90px;right:90px;text-align:center;font-size:21px;letter-spacing:3.3px;color:#9aa9b7}
+#headline{position:absolute;top:290px;left:70px;right:70px;text-align:center;white-space:pre-line;font-family:'Arial Black','Segoe UI',sans-serif;font-size:103px;font-weight:900;line-height:1.04;letter-spacing:-4px;text-shadow:0 6px 25px #0008}
+#drawing{position:absolute;top:618px;left:60px;width:960px;height:825px;transform-origin:50% 50%;filter:drop-shadow(0 24px 28px #0009)}
+svg{width:100%;height:100%;overflow:visible}
+.line{fill:none;stroke:#cbd6df;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.thin{stroke:#8193a3;stroke-width:1.5;fill:none}
+.wall{fill:none;stroke:#f0f5f9;stroke-width:10;stroke-linejoin:miter}
+.dim{fill:none;stroke:#f1f6fa;stroke-width:2.5}
+.label{fill:#e1eaf1;font:500 21px 'Segoe UI';letter-spacing:2px}
+.small{fill:#879aab;font:500 15px 'Segoe UI';letter-spacing:2px}
+.number{fill:#fff;font:650 31px 'Segoe UI'}
+#scaleBadge{position:absolute;top:1374px;left:calc(50% - 145px);width:290px;text-align:center;padding:16px 20px;border:1px solid #c9d5df99;border-radius:60px;background:#0d141be6;color:#e5edf3;letter-spacing:4px;font-size:27px}
+#feature{position:absolute;top:1493px;left:100px;right:100px;display:flex;gap:18px;justify-content:center}
+#feature span{padding:13px 22px;font-size:23px;letter-spacing:3px;color:#afc0ce;border:1px solid #9bafbd55;background:#080c10a0;border-radius:5px}
+#caption{position:absolute;bottom:268px;left:100px;right:100px;text-align:center;font-size:42px;line-height:1.2;font-weight:650;white-space:pre-line}
+#caption span{display:inline-block;padding:11px 20px;background:#05080bd4;border-radius:10px}
+#cta{position:absolute;top:1420px;left:75px;right:75px;text-align:center;opacity:0}
+#launch{display:inline-block;border:1px solid #d6e0e7;border-radius:50px;padding:11px 30px;letter-spacing:5px;font-size:25px}
+#dm{font-family:'Arial Black','Segoe UI',sans-serif;font-size:59px;font-weight:900;letter-spacing:-1px;margin-top:33px}
+#handle{margin-top:27px;font-size:24px;letter-spacing:4px;color:#b0c1ce}
+#note{position:absolute;bottom:144px;left:100px;right:100px;text-align:center;font-size:19px;letter-spacing:2px;color:#758896}
+</style></head><body>
+<div id="grid"></div><div id="brand"><div id="mark"></div><div id="name">SPANVISION INFRA</div></div>
+<div id="tag"></div><div id="headline"></div>
+<div id="drawing"><svg viewBox="0 0 960 825" role="img" aria-label="Illustrative architectural floor plan with scale, length and area annotations">
+<defs>
+ <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#263845"/><stop offset="1" stop-color="#111c26"/></linearGradient>
+ <pattern id="hatch" width="17" height="17" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="17" stroke="#a8d3ec" stroke-opacity=".32" stroke-width="3"/></pattern>
+ <pattern id="dot" width="34" height="34" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#648397" opacity=".38"/></pattern>
+ <clipPath id="roomClip"><rect x="140" y="180" width="340" height="425" /></clipPath>
+</defs>
+<rect x="18" y="18" width="924" height="784" rx="5" fill="url(#paper)" stroke="#6d879a" stroke-opacity=".5"/>
+<rect x="18" y="18" width="924" height="784" fill="url(#dot)"/>
+<text x="57" y="69" class="small">ILLUSTRATIVE PLAN</text><text x="900" y="69" class="small" text-anchor="end">A-101</text>
+<g id="areaFill" clip-path="url(#roomClip)" opacity="0"><rect x="140" y="180" width="340" height="425" fill="#91b9d0" fill-opacity=".18"/><rect x="140" y="180" width="340" height="425" fill="url(#hatch)"/></g>
+<g id="planLines">
+ <path class="wall" d="M140 180H820V690H140Z M480 180V690 M480 435H820 M140 605H480"/>
+ <path stroke="#1a2934" stroke-width="13" d="M480 505V578 M590 435H663 M261 605H334 M820 550V623 M140 289V389 M820 254V354 M240 180H360 M580 180H710 M600 690H730" fill="none"/>
+ <path class="thin" d="M480 578H553 A73 73 0 0 0 480 505 M590 435V362 A73 73 0 0 1 663 435 M334 605V532 A73 73 0 0 0 261 605 M820 623H747 A73 73 0 0 1 820 550"/>
+ <path class="line" d="M140 289V389 M146 289V389 M820 254V354 M814 254V354 M240 180H360 M240 186H360 M580 180H710 M580 186H710 M600 690H730 M600 684H730"/>
+ <g class="thin"><rect x="180" y="220" width="90" height="170" rx="5"/><rect x="187" y="230" width="76" height="36" rx="6"/><line x1="180" y1="274" x2="270" y2="274"/><rect x="622" y="224" width="126" height="85" rx="14"/><circle cx="612" cy="260" r="17"/><circle cx="759" cy="260" r="17"/><circle cx="655" cy="212" r="17"/><circle cx="715" cy="212" r="17"/><path d="M538 485H586V618H773V658H538Z"/><rect x="662" y="509" width="91" height="50" rx="9"/></g>
+ <text x="303" y="462" class="label" text-anchor="middle">ROOM 01</text><text x="649" y="369" class="label" text-anchor="middle">ROOM 02</text><text x="654" y="590" class="label" text-anchor="middle">ROOM 03</text>
+</g>
+<g id="distance" opacity="0">
+ <path class="dim" d="M140 160V103 M820 160V103 M140 119H820 M131 130L149 108 M811 130L829 108"/>
+ <rect x="418" y="88" width="125" height="45" fill="#1c2c38"/>
+ <text x="480" y="121" class="number" text-anchor="middle">8.00 m</text>
+ <path class="thin" d="M115 180H72 M115 690H72 M86 180V690 M76 189L95 170 M76 700L95 681"/>
+ <text x="66" y="436" class="label" text-anchor="middle" transform="rotate(-90 66 436)">6.00 m</text>
+</g>
+<g id="areaLabel" opacity="0">
+ <rect x="202" y="330" width="218" height="92" rx="9" fill="#101c25" stroke="#bdd4e3" stroke-opacity=".8"/>
+ <text x="311" y="365" class="small" text-anchor="middle">ROOM AREA</text><text x="311" y="402" class="number" text-anchor="middle">20.00 m²</text>
+ <path class="thin" d="M152 580H463 M156 574L147 586 M469 574L460 586"/><text x="310" y="568" class="small" text-anchor="middle">4.00 m</text>
+ <text x="458" y="431" class="small" transform="rotate(-90 458 431)" text-anchor="middle">5.00 m</text>
+</g>
+<g id="crosshair" opacity=".7"><circle r="14" fill="none" stroke="#eff7ff" stroke-width="1.5"/><path d="M-24 0H-8 M8 0H24 M0-24V-8 M0 8V24" stroke="#eff7ff" stroke-width="1.5"/></g>
+<path class="thin" d="M57 735H901"/><text x="57" y="770" class="small">SCALE · LENGTH · AREA</text><text x="900" y="770" class="small" text-anchor="end">SPANVISION INFRA</text>
+</svg></div>
+<div id="scaleBadge">SET SCALE</div><div id="feature"><span>SCALE</span><span>DISTANCE</span><span>AREA</span></div>
+<div id="caption"><span></span></div><div id="cta"><div id="launch">LAUNCHING SOON</div><div id="dm">DM FOR PREBOOKINGS</div><div id="handle">@SPANVISIONINFRA</div></div>
+<div id="note">ILLUSTRATIVE PLAN · DIMENSIONS IN METRES</div>
+<script>
+(async()=>{
+const info=await(await fetch('/audio-info.json')).json(),cues=info.cues;
+const find=w=>cues.find(c=>c.word===w).start;
+const T={scale:find('set')-.08,distance:find('distances')-.08,area:find('areas')-.08,brand:find('Vision')-.08};
+const clamp=x=>Math.max(0,Math.min(1,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
+const $=id=>document.getElementById(id);
+const shots=[{t:0,head:'TRUST THE\nMEASUREMENT?',tag:'THE SCALE COMES FIRST'},
+ {t:T.scale,head:'SET THE\nSCALE.',tag:'START WITH A KNOWN DIMENSION'},
+ {t:T.distance,head:'CHECK THE\nDISTANCE.',tag:'MEASURE DIRECTLY ON YOUR PLAN'},
+ {t:T.area,head:'MEASURE\nTHE AREA.',tag:'FROM DRAWING TO DIMENSION'},
+ {t:T.brand,head:'VISION PORTABLE\nDOCUMENT STUDIO.',tag:'PDF EDITING + DRAWING MEASUREMENTS'}];
+let last=-1;
+function render(t){
+ let si=0;for(let i=0;i<shots.length;i++)if(t>=shots[i].t)si=i;
+ const s=shots[si],entry=smooth((t-s.t)/.25),closing=smooth((t-T.brand)/.55);
+ if(si!==last){$('headline').textContent=s.head;$('headline').style.fontSize=si===4?'76px':'103px';$('tag').textContent=s.tag;last=si}
+ $('headline').style.opacity=entry;$('headline').style.transform=`translateY(${(1-entry)*18}px)`;
+ const intro=smooth(t/1.1),angle=-3.4+3.0*smooth(t/7),scale=1.06-.07*smooth(t/12)-closing*.09;
+ $('drawing').style.transform=`perspective(1400px) rotateX(${7*(1-smooth(t/9))}deg) rotateZ(${angle}deg) scale(${scale}) translateY(${-closing*50}px)`;
+ $('drawing').style.opacity=.36+.64*intro;
+ $('planLines').style.opacity=.32+.68*intro;
+ const dim=smooth((t-T.distance)/.6),area=smooth((t-T.area)/.8),sc=smooth((t-T.scale)/.65);
+ $('distance').style.opacity=dim;$('areaFill').style.opacity=area;$('areaLabel').style.opacity=area;
+ $('scaleBadge').textContent=sc>.68?'SCALE 1:100':'SET SCALE';
+ $('scaleBadge').style.opacity=1-closing;$('feature').style.opacity=1-closing;
+ const cx=140+680*smooth((t-T.distance+.2)/.9),cy=119+280*smooth((t-T.area)/.8);
+ $('crosshair').setAttribute('transform',`translate(${cx} ${cy})`);$('crosshair').style.opacity=(1-closing)*(.35+.35*Math.sin(t*3)**2);
+ $('cta').style.opacity=closing;$('cta').style.transform=`translateY(${(1-closing)*18}px)`;
+ const cue=cues.find(c=>t>=c.start&&t<c.end&&t<T.brand);
+ $('caption').style.opacity=cue?1:0;if(cue)$('caption').firstElementChild.textContent=cue.text;
+}
+window.timeline=T;window.previewMoments=[.8,T.scale+.8,T.distance+.7,T.area+.9,T.brand+.8,info.duration-1.2];
+window.renderFrame=async t=>{render(t);await new Promise(resolve=>requestAnimationFrame(resolve))};
+await window.renderFrame(.8);window.reelReady=true;
+})();
+</script></body></html>

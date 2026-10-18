@@ -1,0 +1,27 @@
+{
+  "file": "C:\\Users\\dell\\Documents\\ChatGPT\\own CAD\\output\\spanvision-promo\\spanvision-map-to-model-2026-10-14-16s.mp4",
+  "duration_seconds": 16.0,
+  "resolution": [
+    1080,
+    1920
+  ],
+  "fps": 30,
+  "frames": 480,
+  "video_codec": "H264",
+  "audio_codec": "AAC",
+  "voice_duration_seconds": 14.528,
+  "native_rate_percent": 0,
+  "continuous_voiceover": true,
+  "phrase_stitching": false,
+  "time_stretching": false,
+  "audio_peak_amplitude": 0.737,
+  "full_video_audio_decode": "passed",
+  "size_bytes": 5792063,
+  "source_geometry": "Actual live Utrecht STL export, 35 buildings",
+  "illustrative_transitions": "Flattening and exploding the export for storytelling; no fabricated website UI",
+  "voice_silences_over_180ms": [
+    0.22325,
+    0.418333,
+    0.35275
+  ]
+}

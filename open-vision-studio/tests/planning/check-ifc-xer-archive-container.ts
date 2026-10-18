@@ -107,7 +107,7 @@ const validButChangedChunk = `${archive.byteChunks[0]![0] === 'A' ? 'B' : 'A'}${
 expect('10d geldige base64 met gewijzigde bytes ⇒ hash-mismatch',
   dropsArchiveWith(ifc.replace(archive.byteChunks[0]!, validButChangedChunk), 'Sha256', 'hash-mismatch'));
 expect('10e selector naar ontbrekende documentview ⇒ metadata-invalid, nooit stil',
-  dropsArchiveWith(ifc.replace("IFCTEXT('P6-ARCHIVE')", "IFCTEXT('P6-ONTBREEKT')"), 'documentview', 'metadata-invalid'));
+  dropsArchiveWith(ifc.replace("IFCTEXT('P6-ARCHIVE')", "IFCTEXT('P6-ONTBREEKT')"), 'missing document view', 'metadata-invalid'));
 const hugeCount = 4_294_967_296;
 const hugeLength = hugeCount * 196_608;
 const hugeBytes = replaceIntegerProperty(

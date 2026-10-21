@@ -1,6 +1,5 @@
 import brand from './brand.json';
 import { isLocalPreview, moduleUrl } from './module-url';
-import { waitForBackend } from '../../deployment/service-readiness.mjs';
 import './launch.css';
 
 const id = new URL(location.href).searchParams.get('tool');
@@ -19,13 +18,6 @@ function delay(milliseconds, signal) {
     if (signal.aborted) cancel();
     else signal.addEventListener('abort', cancel, { once: true });
   });
-}
-
-async function waitForService(signal) {
-  const started = performance.now();
-  await waitForBackend(id, `/__suite/ready/${id}`, { signal, onWaiting() {
-    status.textContent = performance.now() - started > 45000 ? 'The service is still starting. You can wait here or open the workspace directly.' : 'Preparing workspace. The service may need a moment to start…';
-  } });
 }
 
 function updateAppearance() {
@@ -52,8 +44,7 @@ async function openWorkspace() {
   directLink.removeAttribute('href');
   status.textContent = 'Opening workspace…';
   const started = performance.now();
-  let stage = 'availability';
-  let timeout = setTimeout(() => request.abort(), 12000);
+  const timeout = setTimeout(() => request.abort(), 12000);
   try {
     if (!module) throw new Error('This tool could not be found. Choose a tool from the workspace.');
     const response = await fetch('/__suite/status', { cache: 'no-store', signal: request.signal });
@@ -64,14 +55,11 @@ async function openWorkspace() {
     const url = moduleUrl(module, state, window.SpanvisionAppearance.getMode(), location.hostname);
     if (!url || (!isLocalPreview(location.hostname) && new URL(url).protocol !== 'https:')) throw new Error('This workspace has no valid deployment address.');
     if (!isLocalPreview(location.hostname) && ['bim', 'stl', 'fem'].includes(id)) {
-      stage = 'startup';
       directLink.href = url;
       direct.hidden = false;
-      status.textContent = 'Starting the service. You can wait here or open the workspace directly.';
-      clearTimeout(timeout);
-      timeout = setTimeout(() => request.abort(), 185000);
-      await waitForService(request.signal);
     }
+    // Opening a page must not depend on a separate calculation or health service.
+    // Navigating to Render also wakes the service without a second proxy request.
     await delay(Math.max(0, 700 - (performance.now() - started)), request.signal);
     if (request.signal.aborted) throw new Error('Tool availability took too long to respond. Please try again.');
     location.replace(url);
@@ -79,7 +67,7 @@ async function openWorkspace() {
     if (request !== controller) return;
     splash.dataset.state = 'error';
     splash.setAttribute('aria-busy', 'false');
-    status.textContent = request.signal.aborted ? (stage === 'startup' ? 'The service is taking longer to start. Open the workspace directly or try again.' : 'Tool availability took too long to respond. Please try again.') : error.message;
+    status.textContent = request.signal.aborted ? 'Tool availability took too long to respond. Please try again.' : error.message;
     actions.hidden = false;
     document.getElementById('splash-retry').hidden = !module;
   } finally {

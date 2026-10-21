@@ -31,12 +31,21 @@ try {
           await page.getByRole('button', { name: '3D BAG', exact: true }).click();
         }
         await page.locator(`.leaflet-container[data-map-country-code="${area.countryCode}"]`).first().waitFor({ timeout: 15000 });
-        const actual = await page.locator('.leaflet-container[data-map-country-code]').first().evaluate(element => ({ country: element.dataset.mapCountry, latitude: Number(element.dataset.mapLatitude), longitude: Number(element.dataset.mapLongitude), message: element.querySelector('.sv-map-location').textContent, gpsCalls: window.__auditGpsCalls }));
+        const actual = await page.locator('.leaflet-container[data-map-country-code]').first().evaluate(element => {
+          const workspace = element.closest('.mini-map-workspace') || element;
+          const bar = workspace.querySelector('.sv-map-location');
+          const mapRect = element.getBoundingClientRect(), barRect = bar.getBoundingClientRect();
+          return { country: element.dataset.mapCountry, latitude: Number(element.dataset.mapLatitude), longitude: Number(element.dataset.mapLongitude), message: bar.textContent, gpsCalls: window.__auditGpsCalls, external: workspace !== element, overlapsMap: mapRect.x < barRect.right && mapRect.right > barRect.x && mapRect.y < barRect.bottom && mapRect.bottom > barRect.y };
+        });
         assert.equal(actual.country, area.country);
         assert.ok(Math.abs(actual.latitude - area.latitude) < 0.0001, JSON.stringify(actual));
         assert.ok(Math.abs(actual.longitude - area.longitude) < 0.0001, JSON.stringify(actual));
         assert.ok(actual.message.includes(area.country));
         assert.equal(actual.gpsCalls, 0);
+        if (target.id === 'geo') {
+          assert.equal(actual.external, true);
+          assert.equal(actual.overlapsMap, false, 'The location toolbar must not cover the small map');
+        }
         results.push({ tool: target.id, country: area.country, result: 'passed' });
         console.log(`PASS ${target.id}: ${area.country}, real map centered without a GPS prompt`);
       } finally { await context.close(); }

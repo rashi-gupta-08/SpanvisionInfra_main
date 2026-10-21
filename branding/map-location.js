@@ -40,7 +40,7 @@
     }).finally(() => { pending = undefined; });
     return pending;
   }
-  function attachMap(map, { autoLocate = true, zoom = 14 } = {}) {
+  function attachMap(map, { autoLocate = true, zoom = 14, controlContainer } = {}) {
     controllers.get(map)?.destroy();
     const container = map.getContainer();
     const bar = document.createElement('div');
@@ -49,7 +49,7 @@
     button.type = 'button'; button.textContent = 'Use my location';
     const status = document.createElement('span');
     status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
-    bar.append(button, status); container.append(bar);
+    bar.append(button, status); (controlContainer || container).append(bar);
     let alive = true, request = 0, locating = false;
     function publish(kind, position) {
       container.dataset.locationSource = kind;

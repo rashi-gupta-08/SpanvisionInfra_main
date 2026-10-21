@@ -41,6 +41,22 @@ test('readiness can be cancelled and cannot wait forever', async () => {
   }), /longer to start/);
 });
 
+test('BIM readiness tolerates a slow health response without accepting a proxy error page', async () => {
+  const calls = [];
+  await waitForBackend('bim', '/__suite/ready/bim', {
+    sleep: async () => {},
+    fetcher: async (url, options) => {
+      calls.push({ url, ...options });
+      if (calls.length === 1) return new Response('<html>502</html>', { status: 502 });
+      await new Promise(resolve => setTimeout(resolve, 40));
+      options.signal.throwIfAborted();
+      return Response.json({ status: 'healthy' });
+    },
+  });
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(call => call.method === 'GET' && call.credentials === 'omit'));
+});
+
 test('STL uses the private session and rejects an HTML fallback instead of treating it as data', async () => {
   const original = globalThis.fetch;
   try {

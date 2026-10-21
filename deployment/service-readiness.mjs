@@ -16,8 +16,8 @@ function delay(ms, signal) {
 
 // Only GET health checks are retried. Uploads and calculations are never replayed.
 export async function waitForBackend(id, url, {
-  signal, timeoutMs = 120000, onWaiting = () => {}, fetcher = fetch,
-  sleep = delay, intervalMs = 1500, attemptMs = 8000,
+  signal, timeoutMs = 180000, onWaiting = () => {}, fetcher = fetch,
+  sleep = delay, intervalMs = 1500, attemptMs = 45000,
 } = {}) {
   const deadline = AbortSignal.timeout(timeoutMs);
   const bounded = signal ? AbortSignal.any([signal, deadline]) : deadline;

@@ -2033,9 +2033,9 @@ export function verzamelIfcBeperkingen(
   const platen = (model.plates?.length ?? 0) - geexporteerdePlaten.size;
   if (platen > 0) {
     regels.push(
-      `${platen} ${platen === 1 ? "plaat" : "platen"} zonder hoekknopen: die ` +
-      "kunnen niet als IfcStructuralSurfaceMember getekend worden en staan " +
-      "niet in het bestand.",
+      `${platen} ${platen === 1 ? "plate" : "plates"} without corner nodes: these ` +
+      "cannot be represented as IfcStructuralSurfaceMember and are omitted " +
+      "from the file.",
     );
   }
 
@@ -2046,33 +2046,33 @@ export function verzamelIfcBeperkingen(
   ).length;
   if (randlasten > 0) {
     regels.push(
-      `${randlasten} ${randlasten === 1 ? "randbelasting" : "randbelastingen"} op een plaat ` +
-      "(randlast of puntlast op een plaatrand): hoort bij een plaat die niet in het " +
-      "bestand staat en valt dus mee weg.",
+      `${randlasten} plate edge ${randlasten === 1 ? "load" : "loads"} ` +
+      "(distributed or point loads on a plate edge): the associated plate is " +
+      "missing from the file, so these loads are also omitted.",
     );
   }
 
   if (opties.zonderLasten === true) {
     if (model.loads.length > 0 || model.loadCases.length > 0) {
       regels.push(
-        `Structurele export: ${model.loads.length} belasting${model.loads.length === 1 ? "" : "en"} ` +
-        `en ${model.loadCases.length} belastinggeval${model.loadCases.length === 1 ? "" : "len"} ` +
-        "zijn bewust weggelaten — dit bestand bevat alleen het draagsysteem.",
+        `Structural export: ${model.loads.length} load${model.loads.length === 1 ? "" : "s"} ` +
+        `and ${model.loadCases.length} load case${model.loadCases.length === 1 ? "" : "s"} ` +
+        "are intentionally omitted; this file contains only the structural system.",
       );
     }
   } else {
     if (model.eigenGewicht === true) {
       regels.push(
-        "Eigen gewicht staat aan, maar is in het model geen belasting; het " +
-        "wordt niet als zelfgewichtsbelasting in het bestand gezet.",
+        "Self-weight is enabled, but is not a model load; it is not included " +
+        "as a self-weight load in the file.",
       );
     }
     const combinaties = model.aantalCombinaties ?? 0;
     if (combinaties > 0 && !model.combinations) {
       regels.push(
-        `${combinaties} belastingcombinatie${combinaties === 1 ? "" : "s"}: alleen de ` +
-        "losse belastinggevallen worden geëxporteerd, niet de combinaties " +
-        "met hun factoren.",
+        `${combinaties} load combination${combinaties === 1 ? "" : "s"}: only the ` +
+        "individual load cases are exported, without the combinations " +
+        "and their factors.",
       );
     }
   }
@@ -2088,13 +2088,13 @@ export function verzamelIfcBeperkingen(
   }
   if (zonderDoorsnede.size > 0) {
     regels.push(
-      `Doorsnede onbekend voor ${[...zonderDoorsnede].sort().join(", ")}: die staven ` +
-      "krijgen wel materiaal en profielnaam, maar geen parametrische " +
-      "doorsnede (IFC4 kent geen profiel zonder afmetingen)" +
+      `Unknown section for ${[...zonderDoorsnede].sort().join(", ")}: these members ` +
+      "include material and profile names, but no parametric " +
+      "section (IFC4 requires profile dimensions)" +
       (opties.zonderBouwkundig === true
         ? "."
-        : ", en dus ook geen IfcBeam of IfcColumn — een ligger zonder " +
-          "doorsnede is geen ligger."),
+        : ", and therefore no IfcBeam or IfcColumn; a physical member " +
+          "requires a section."),
     );
   }
 
@@ -2104,8 +2104,8 @@ export function verzamelIfcBeperkingen(
   const losseStaven = model.beams.filter(b => !knoopIds.has(b.from) || !knoopIds.has(b.to));
   if (losseStaven.length > 0) {
     regels.push(
-      `${losseStaven.length} staaf/staven verwijzen naar een knoop die niet bestaat ` +
-      `(${losseStaven.map(b => b.id).join(", ")}) — die staven zijn overgeslagen.`,
+      `${losseStaven.length} member(s) reference a node that does not exist ` +
+      `(${losseStaven.map(b => b.id).join(", ")}); these members are omitted.`,
     );
   }
   if (opties.zonderLasten !== true) {
@@ -2118,8 +2118,8 @@ export function verzamelIfcBeperkingen(
     });
     if (losseLasten.length > 0) {
       regels.push(
-        `${losseLasten.length} belasting(en) verwijzen naar een knoop of staaf die niet ` +
-        `bestaat (${losseLasten.map(l => l.id).join(", ")}) — die zijn overgeslagen.`,
+        `${losseLasten.length} load(s) reference a node or member that does not ` +
+        `exist (${losseLasten.map(l => l.id).join(", ")}); these loads are omitted.`,
       );
     }
   }
@@ -2128,9 +2128,9 @@ export function verzamelIfcBeperkingen(
   if (opties.zonderBouwkundig === true) {
     if (model.beams.length > 0) {
       regels.push(
-        "Bouwkundig model bewust weggelaten: er staan geen IfcBeam, IfcColumn " +
-        "of IfcReinforcingBar in het bestand — alleen het rekenmodel met zijn " +
-        "eigenschappensets.",
+        "The physical model is intentionally omitted: the file contains no IfcBeam, IfcColumn " +
+        "or IfcReinforcingBar entities; only the analytical model and its " +
+        "property sets are included.",
       );
     }
   } else {
@@ -2142,9 +2142,9 @@ export function verzamelIfcBeperkingen(
     });
     if (nulLengte.length > 0) {
       regels.push(
-        `${nulLengte.length} staaf/staven met lengte nul (${nulLengte.map(b => b.id).join(", ")}): ` +
-        "die krijgen geen bouwkundig element, want een extrusie met diepte 0 " +
-        "is geen geldige IfcPositiveLengthMeasure.",
+        `${nulLengte.length} zero-length member(s) (${nulLengte.map(b => b.id).join(", ")}): ` +
+        "no physical element is created because an extrusion depth of 0 " +
+        "is not a valid IfcPositiveLengthMeasure.",
       );
     }
 
@@ -2164,32 +2164,32 @@ export function verzamelIfcBeperkingen(
     }
     if (clt.size > 0) {
       regels.push(
-        `Kruislaaghout (${[...clt].sort().join(", ")}): het bouwkundige element is de ` +
-        "volle strook b × Σt als massieve rechthoek. De laagopbouw met haar " +
-        "afwisselende vezelrichting staat er niet in; daarvoor kent IFC4 " +
-        "alleen een gelaagd materiaal, en dat is een andere beschrijving dan " +
-        "de doorsnede waarmee hier gerekend is.",
+        `Cross-laminated timber (${[...clt].sort().join(", ")}): the physical element is ` +
+        "a solid rectangle of width b and total thickness Σt. The layer arrangement " +
+        "and alternating grain directions are not included. IFC4 provides " +
+        "layered materials, which describe a different representation from " +
+        "the section used in this calculation.",
       );
     }
     if (lVormig.size > 0) {
       regels.push(
-        `L-vormige betondoorsnede (${[...lVormig].sort().join(", ")}): het lijf is aan de ` +
-        "LINKERzijde getekend. Het model legt niet vast aan welke rand de " +
-        "flens uitkraagt — alleen dát er één uitkragend deel is.",
+        `L-shaped concrete section (${[...lVormig].sort().join(", ")}): the web is drawn on the ` +
+        "LEFT side. The model records a projecting flange, but does not specify " +
+        "which edge it projects from.",
       );
     }
     if (betonZonderKorf.length > 0) {
       regels.push(
-        `${betonZonderKorf.length} betonstaaf/staven zonder wapeningskorf ` +
-        `(${betonZonderKorf.join(", ")}): daar staat geen IfcReinforcingBar bij. ` +
-        "Er is met opzet geen standaardkorf.",
+        `${betonZonderKorf.length} concrete member(s) without a reinforcement cage ` +
+        `(${betonZonderKorf.join(", ")}): no IfcReinforcingBar is included for these members. ` +
+        "A default cage is intentionally not assumed.",
       );
     }
     if (metKorf > 0) {
       regels.push(
-        `Beugels van ${metKorf} betonstaaf/staven: elke reeks staat als ÉÉN ` +
-        "IfcReinforcingBar (.LIGATURE.) in het bestand, met aantal en " +
-        "hart-op-hart in de set OpenFEM2D_Beugels — niet als losse beugels.",
+        `Stirrups for ${metKorf} concrete member(s): each series is represented by ONE ` +
+        "IfcReinforcingBar (.LIGATURE.) in the file, with count and " +
+        "centre-to-centre spacing in the OpenFEM2D_Beugels property set, rather than individual stirrups.",
       );
     }
   }
@@ -2200,16 +2200,16 @@ export function verzamelIfcBeperkingen(
     const zonder = model.beams.filter(b => !getoetst.has(b.id));
     if (getoetst.size === 0) {
       regels.push(
-        "Geen toetsresultaten in het bestand: er is niet getoetst, of de " +
-        "uitslag is niet meegegeven. Draai de toetsing vóór de export, dan " +
-        "krijgt elke staaf de set OpenFEM2D_Toetsing met de maatgevende " +
-        "toets, het normartikel en de unity check.",
+        "No design-check results in the file: checks have not been run, or their " +
+        "results were not supplied. Run the checks before exporting so " +
+        "each member receives the OpenFEM2D_Toetsing property set with its governing " +
+        "check, standard clause and unity check.",
       );
     } else if (zonder.length > 0) {
       regels.push(
-        `${zonder.length} van de ${model.beams.length} staven hebben geen toetsuitslag ` +
-        `(${zonder.map(b => b.id).join(", ")}): die dragen geen set ` +
-        "OpenFEM2D_Toetsing. Zie het toetsingspaneel voor de reden per staaf.",
+        `${zonder.length} of ${model.beams.length} members have no design-check results ` +
+        `(${zonder.map(b => b.id).join(", ")}): these do not carry the ` +
+        "OpenFEM2D_Toetsing property set. See the checks panel for each member's reason.",
       );
     }
   }

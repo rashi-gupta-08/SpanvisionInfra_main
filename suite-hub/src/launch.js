@@ -8,6 +8,8 @@ const module = brand.modules.find(tool => tool.id === id);
 const splash = document.querySelector('.tool-splash');
 const status = document.getElementById('splash-status');
 const actions = document.getElementById('splash-actions');
+const direct = document.getElementById('splash-direct');
+const directLink = document.getElementById('splash-open');
 let controller;
 
 function delay(milliseconds, signal) {
@@ -22,7 +24,7 @@ function delay(milliseconds, signal) {
 async function waitForService(signal) {
   const started = performance.now();
   await waitForBackend(id, `/__suite/ready/${id}`, { signal, onWaiting() {
-    status.textContent = performance.now() - started > 45000 ? 'The workspace is still starting. Please wait…' : 'Preparing workspace…';
+    status.textContent = performance.now() - started > 45000 ? 'The service is still starting. You can wait here or open the workspace directly.' : 'Preparing workspace. The service may need a moment to start…';
   } });
 }
 
@@ -46,6 +48,8 @@ async function openWorkspace() {
   splash.dataset.state = 'loading';
   splash.setAttribute('aria-busy', 'true');
   actions.hidden = true;
+  direct.hidden = true;
+  directLink.removeAttribute('href');
   status.textContent = 'Opening workspace…';
   const started = performance.now();
   let stage = 'availability';
@@ -61,8 +65,11 @@ async function openWorkspace() {
     if (!url || (!isLocalPreview(location.hostname) && new URL(url).protocol !== 'https:')) throw new Error('This workspace has no valid deployment address.');
     if (!isLocalPreview(location.hostname) && ['bim', 'stl', 'fem'].includes(id)) {
       stage = 'startup';
+      directLink.href = url;
+      direct.hidden = false;
+      status.textContent = 'Starting the service. You can wait here or open the workspace directly.';
       clearTimeout(timeout);
-      timeout = setTimeout(() => request.abort(), 120000);
+      timeout = setTimeout(() => request.abort(), 185000);
       await waitForService(request.signal);
     }
     await delay(Math.max(0, 700 - (performance.now() - started)), request.signal);
@@ -72,7 +79,7 @@ async function openWorkspace() {
     if (request !== controller) return;
     splash.dataset.state = 'error';
     splash.setAttribute('aria-busy', 'false');
-    status.textContent = request.signal.aborted ? (stage === 'startup' ? 'This workspace is taking longer to start. Please try again shortly.' : 'Tool availability took too long to respond. Please try again.') : error.message;
+    status.textContent = request.signal.aborted ? (stage === 'startup' ? 'The service is taking longer to start. Open the workspace directly or try again.' : 'Tool availability took too long to respond. Please try again.') : error.message;
     actions.hidden = false;
     document.getElementById('splash-retry').hidden = !module;
   } finally {

@@ -742,7 +742,14 @@ window.addEventListener('spanvision:map-location', event => {
   const place=[event.detail.city,event.detail.country].filter(Boolean).join(', ');
   $('map-region-label').textContent=place ? 'YOUR AREA: '+place : 'YOUR LOCATION';
 });
+// Keep both controls in Leaflet's layout so longer location messages cannot cover the instructions.
+const guidanceControl=L.control({position:'bottomleft'});
+guidanceControl.onAdd=()=>{const guidance=$('map-guidance');L.DomEvent.disableClickPropagation(guidance);return guidance;};
+guidanceControl.addTo(map);
 window.SpanvisionLocation.attachMap(map,{autoLocate:!project.bbox_wgs84&&!hasSavedMapView});
+const locationControl=L.control({position:'bottomleft'});
+locationControl.onAdd=()=>{const control=map.getContainer().querySelector('.sv-map-location');L.DomEvent.disableClickPropagation(control);L.DomEvent.disableScrollPropagation(control);return control;};
+locationControl.addTo(map);
 function saveMapView(layerName){let previous={};try{previous=JSON.parse(localStorage.getItem('oststl.map')||'{}');const center=map.getCenter();localStorage.setItem('oststl.map',JSON.stringify({center:[center.lat,center.lng],zoom:map.getZoom(),layer:layerName||previous.layer||'Map'}));}catch{}}
 map.on('moveend',()=>saveMapView());map.on('baselayerchange',event=>saveMapView(event.name));
 if(project.design.filename){$('design-controls').classList.remove('hidden');$('design-info').classList.remove('hidden');$('design-info').textContent='Saved design: '+project.design.filename;ensureDesignMarker();}
